@@ -367,6 +367,72 @@
         color: var(--primary);
         text-decoration: none;
     }
+
+    .compatibility-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+        margin-bottom: 1.5rem;
+    }
+
+    .compatibility-section h3 {
+        font-size: 1.125rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .compatibility-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .compatibility-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .compatibility-group h4 {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .compatibility-group h4 .cluster-name {
+        color: var(--gray-900);
+        font-weight: 600;
+    }
+
+    .compatible-devices {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+    }
+
+    .compatible-device {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        background: var(--gray-100);
+        border-radius: 0.25rem;
+        font-size: 0.8125rem;
+        text-decoration: none;
+        color: var(--gray-700);
+        transition: background 0.15s, color 0.15s;
+    }
+
+    .compatible-device:hover {
+        background: var(--primary);
+        color: white;
+    }
+
+    .more-devices {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8125rem;
+        color: var(--gray-500);
+    }
 {% endblock %}
 
 {% block body %}
@@ -406,6 +472,34 @@
             {% endif %}
         </div>
     </div>
+
+    {% if compatibleDevices is not empty %}
+        <div class="compatibility-section">
+            <h3>Device Compatibility</h3>
+            <p style="font-size: 0.875rem; color: var(--gray-500); margin-bottom: 1rem;">
+                Based on client clusters, this device can communicate with:
+            </p>
+            {% for clusterId, data in compatibleDevices %}
+                <div class="compatibility-group">
+                    <h4>
+                        <span class="cluster-name">{{ data.name }}</span>
+                        <span style="color: var(--gray-400);">({{ data.total }} device{{ data.total != 1 ? 's' : '' }})</span>
+                    </h4>
+                    <div class="compatible-devices">
+                        {% for compatDevice in data.devices %}
+                            <a href="{{ path('device_show', {id: compatDevice.id}) }}" class="compatible-device">
+                                {{ compatDevice.product_name ?? 'Unknown' }}
+                                <span style="opacity: 0.6; font-size: 0.75rem;">({{ compatDevice.vendor_name ?? 'Unknown' }})</span>
+                            </a>
+                        {% endfor %}
+                        {% if data.total > data.devices|length %}
+                            <span class="more-devices">+{{ data.total - data.devices|length }} more</span>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
 
     {% if endpoints is not empty %}
         <div class="section">

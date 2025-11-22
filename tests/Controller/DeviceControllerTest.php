@@ -197,4 +197,83 @@ class DeviceControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('.device-header', 'Eve');
     }
+
+    /**
+     * Test that device compatibility section shows when device has client clusters.
+     *
+     * Eve Motion has On/Off client cluster (6), which means it can control devices
+     * that have On/Off server cluster (like Eve Energy, Hue bulbs).
+     */
+    public function testDeviceShowPageDisplaysCompatibilityForClientClusters(): void
+    {
+        $client = static::createClient();
+
+        // Find Eve Motion device (has On/Off client cluster)
+        $crawler = $client->request('GET', '/', ['q' => 'Eve Motion']);
+        $this->assertResponseIsSuccessful();
+
+        $deviceLink = $crawler->filter('.device-info h3 a')->first();
+        $crawler = $client->click($deviceLink->link());
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('.device-header', 'Eve Motion');
+
+        // Should have compatibility section because Eve Motion has On/Off client cluster
+        $this->assertSelectorExists('.compatibility-section');
+        $this->assertSelectorTextContains('.compatibility-section h3', 'Device Compatibility');
+
+        // Should show On/Off cluster compatibility (Eve Motion can control On/Off devices)
+        $this->assertSelectorTextContains('.compatibility-section', 'On/Off');
+
+        // Should list compatible devices (Eve Energy and Hue bulb have On/Off server)
+        $compatibleDevices = $crawler->filter('.compatible-device');
+        $this->assertGreaterThan(0, $compatibleDevices->count(), 'Should list compatible devices');
+    }
+
+    /**
+     * Test that devices without client clusters don't show compatibility section.
+     *
+     * Eve Door & Window only has server clusters, no client clusters,
+     * so it shouldn't show the "can communicate with" section.
+     */
+    public function testDeviceShowPageHidesCompatibilityWhenNoClientClusters(): void
+    {
+        $client = static::createClient();
+
+        // Find Eve Door & Window (has no client clusters)
+        $crawler = $client->request('GET', '/', ['q' => 'Eve Door']);
+        $this->assertResponseIsSuccessful();
+
+        $deviceLink = $crawler->filter('.device-info h3 a')->first();
+        $crawler = $client->click($deviceLink->link());
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('.device-header', 'Eve Door');
+
+        // Should NOT have compatibility section (no client clusters)
+        $this->assertSelectorNotExists('.compatibility-section');
+    }
+
+    /**
+     * Test that compatible device links work correctly.
+     */
+    public function testDeviceCompatibilityLinksWork(): void
+    {
+        $client = static::createClient();
+
+        // Find Eve Motion (has compatibility)
+        $crawler = $client->request('GET', '/', ['q' => 'Eve Motion']);
+        $deviceLink = $crawler->filter('.device-info h3 a')->first();
+        $crawler = $client->click($deviceLink->link());
+
+        $this->assertResponseIsSuccessful();
+
+        // Click on a compatible device link
+        $compatibleDeviceLink = $crawler->filter('.compatible-device')->first();
+        if ($compatibleDeviceLink->count() > 0) {
+            $client->click($compatibleDeviceLink->link());
+            $this->assertResponseIsSuccessful();
+            $this->assertSelectorExists('.device-header');
+        }
+    }
 }
