@@ -114,5 +114,5 @@ deploy:
 		--exclude='vendor/' \
 		--exclude='.claude/' \
 		./ $(SFTP_USER)@$(SFTP_HOST):$(SFTP_PATH)/
-	ssh $(SFTP_USER)@$(SFTP_HOST) "cd $(SFTP_PATH) && composer install --no-dev --optimize-autoloader"
+	ssh $(SFTP_USER)@$(SFTP_HOST) "cd $(SFTP_PATH) && composer install --no-dev --optimize-autoloader && php bin/console cache:clear --env=prod"
 	@echo "Deployment complete"
