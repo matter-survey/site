@@ -1,0 +1,272 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Matter Survey - Cluster Analytics{% endblock %}
+
+{% block header_subtitle %}<p>Which Matter clusters are implemented across devices</p>{% endblock %}
+
+{% block extra_styles %}
+    .dashboard-nav {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .dashboard-nav a {
+        padding: 0.5rem 1rem;
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: 0.375rem;
+        text-decoration: none;
+        color: var(--gray-700);
+        font-size: 0.875rem;
+    }
+
+    .dashboard-nav a:hover {
+        background: var(--gray-100);
+    }
+
+    .dashboard-nav a.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    .stats-row {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 1rem 1.5rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+    }
+
+    .stat-card .value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .stat-card .label {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+    }
+
+    .section {
+        background: white;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+        margin-bottom: 2rem;
+    }
+
+    .section-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .section-header h2 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .section-header p {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        margin: 0.25rem 0 0;
+    }
+
+    .cluster-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .cluster-table th,
+    .cluster-table td {
+        padding: 0.75rem 1.25rem;
+        text-align: left;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .cluster-table th {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--gray-500);
+        text-transform: uppercase;
+    }
+
+    .cluster-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .cluster-table tr:hover td {
+        background: var(--gray-50);
+    }
+
+    .cluster-name {
+        font-weight: 500;
+    }
+
+    .cluster-id {
+        font-size: 0.75rem;
+        color: var(--gray-400);
+        font-family: monospace;
+    }
+
+    .progress-bar {
+        width: 150px;
+        height: 8px;
+        background: var(--gray-100);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-bar .fill {
+        height: 100%;
+        background: var(--primary);
+        border-radius: 4px;
+    }
+
+    .co-occurrence-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+        padding: 1.25rem;
+    }
+
+    .co-occurrence-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: var(--gray-50);
+        border-radius: 0.375rem;
+    }
+
+    .co-occurrence-item .clusters {
+        flex: 1;
+    }
+
+    .co-occurrence-item .cluster-pair {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .co-occurrence-item .cluster-ids {
+        font-size: 0.7rem;
+        color: var(--gray-400);
+        font-family: monospace;
+    }
+
+    .co-occurrence-item .count {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--primary);
+        white-space: nowrap;
+    }
+
+    .badge-required {
+        display: inline-block;
+        padding: 0.125rem 0.375rem;
+        background: var(--green-100);
+        color: var(--green-700);
+        border-radius: 9999px;
+        font-size: 0.625rem;
+        font-weight: 500;
+        margin-left: 0.5rem;
+    }
+{% endblock %}
+
+{% block body %}
+    <div class="dashboard-nav">
+        <a href="{{ path('stats_dashboard') }}">Overview</a>
+        <a href="{{ path('stats_clusters') }}" class="active">Clusters</a>
+        <a href="{{ path('stats_device_types') }}">Device Types</a>
+        <a href="{{ path('stats_binding') }}">Binding</a>
+        <a href="{{ path('stats_versions') }}">Versions</a>
+        <a href="{{ path('device_index') }}">Browse Devices</a>
+        <a href="{{ path('vendor_index') }}">Vendors</a>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="value">{{ clusterStats|length }}</div>
+            <div class="label">Unique Clusters</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">{{ stats.total_devices|number_format }}</div>
+            <div class="label">Total Devices</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>Cluster Popularity</h2>
+            <p>How many devices implement each cluster</p>
+        </div>
+        <table class="cluster-table">
+            <thead>
+                <tr>
+                    <th>Cluster</th>
+                    <th>Devices</th>
+                    <th>Coverage</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set maxCluster = clusterStats|first %}
+                {% for cluster in clusterStats %}
+                    <tr>
+                        <td>
+                            <span class="cluster-name">{{ cluster.name }}</span>
+                            <span class="cluster-id">0x{{ '%04X'|format(cluster.cluster_id) }}</span>
+                            {% if cluster.cluster_id in [29, 31, 40, 48, 49, 62, 63] %}
+                                <span class="badge-required">Required</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ cluster.product_count }}</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="fill" style="width: {{ maxCluster.product_count > 0 ? (cluster.product_count / maxCluster.product_count * 100) : 0 }}%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: var(--gray-500);">No cluster data available yet.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>Cluster Co-occurrence</h2>
+            <p>Which clusters commonly appear together on the same device</p>
+        </div>
+        <div class="co-occurrence-grid">
+            {% for pair in clusterCoOccurrence %}
+                <div class="co-occurrence-item">
+                    <div class="clusters">
+                        <div class="cluster-pair">
+                            {{ matterRegistry.getClusterName(pair.cluster_a) }}
+                            +
+                            {{ matterRegistry.getClusterName(pair.cluster_b) }}
+                        </div>
+                        <div class="cluster-ids">
+                            0x{{ '%04X'|format(pair.cluster_a) }} + 0x{{ '%04X'|format(pair.cluster_b) }}
+                        </div>
+                    </div>
+                    <div class="count">{{ pair.co_occurrence_count }} devices</div>
+                </div>
+            {% else %}
+                <p style="color: var(--gray-500); grid-column: 1 / -1; text-align: center;">No co-occurrence data available yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

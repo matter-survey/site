@@ -195,4 +195,227 @@ class DeviceRepository
             ['vendor_fk' => $vendorFk]
         )->fetchOne();
     }
+
+    /**
+     * Get cluster statistics from the cluster_stats view.
+     */
+    public function getClusterStats(): array
+    {
+        return $this->db->executeQuery('
+            SELECT cluster_id, product_count
+            FROM cluster_stats
+            ORDER BY product_count DESC
+        ')->fetchAllAssociative();
+    }
+
+    /**
+     * Get device type distribution across all products.
+     * Device types are stored as JSON arrays of objects with 'id' and 'revision' fields.
+     */
+    public function getDeviceTypeStats(): array
+    {
+        return $this->db->executeQuery('
+            SELECT
+                json_extract(json_each.value, "$.id") as device_type_id,
+                COUNT(DISTINCT pe.device_id) as product_count
+            FROM product_endpoints pe, json_each(pe.device_types)
+            WHERE json_extract(json_each.value, "$.id") IS NOT NULL
+            GROUP BY json_extract(json_each.value, "$.id")
+            ORDER BY product_count DESC
+        ')->fetchAllAssociative();
+    }
+
+    /**
+     * Get distribution by display category.
+     */
+    public function getCategoryDistribution(\App\Service\MatterRegistry $registry): array
+    {
+        $deviceTypeStats = $this->getDeviceTypeStats();
+        $categoryStats = [];
+
+        foreach ($deviceTypeStats as $dt) {
+            $metadata = $registry->getDeviceTypeMetadata((int) $dt['device_type_id']);
+            $displayCategory = $metadata['displayCategory'] ?? 'Unknown';
+
+            if (!isset($categoryStats[$displayCategory])) {
+                $categoryStats[$displayCategory] = 0;
+            }
+            $categoryStats[$displayCategory] += (int) $dt['product_count'];
+        }
+
+        arsort($categoryStats);
+        return $categoryStats;
+    }
+
+    /**
+     * Get distribution by Matter spec version.
+     */
+    public function getSpecVersionDistribution(\App\Service\MatterRegistry $registry): array
+    {
+        $deviceTypeStats = $this->getDeviceTypeStats();
+        $versionStats = [];
+
+        foreach ($deviceTypeStats as $dt) {
+            $metadata = $registry->getDeviceTypeMetadata((int) $dt['device_type_id']);
+            $specVersion = $metadata['specVersion'] ?? 'Unknown';
+
+            if (!isset($versionStats[$specVersion])) {
+                $versionStats[$specVersion] = 0;
+            }
+            $versionStats[$specVersion] += (int) $dt['product_count'];
+        }
+
+        uksort($versionStats, 'version_compare');
+        return $versionStats;
+    }
+
+    /**
+     * Get top vendors by device count.
+     */
+    public function getTopVendors(int $limit = 10): array
+    {
+        return $this->db->executeQuery('
+            SELECT v.id, v.name, v.slug, v.spec_id, v.device_count
+            FROM vendors v
+            WHERE v.device_count > 0
+            ORDER BY v.device_count DESC
+            LIMIT :limit
+        ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+    }
+
+    /**
+     * Get most recently discovered devices.
+     */
+    public function getRecentDevices(int $limit = 5): array
+    {
+        return $this->db->executeQuery('
+            SELECT * FROM device_summary
+            ORDER BY first_seen DESC
+            LIMIT :limit
+        ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+    }
+
+    /**
+     * Get cluster co-occurrence (which clusters appear together).
+     */
+    public function getClusterCoOccurrence(int $limit = 15): array
+    {
+        return $this->db->executeQuery('
+            SELECT
+                c1.value as cluster_a,
+                c2.value as cluster_b,
+                COUNT(DISTINCT pe.device_id) as co_occurrence_count
+            FROM product_endpoints pe,
+                 json_each(pe.clusters) c1,
+                 json_each(pe.clusters) c2
+            WHERE c1.value < c2.value
+            GROUP BY c1.value, c2.value
+            ORDER BY co_occurrence_count DESC
+            LIMIT :limit
+        ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+    }
+
+    /**
+     * Get devices that support binding (have cluster 30).
+     */
+    public function getBindingCapableDevices(int $limit = 50): array
+    {
+        return $this->db->executeQuery('
+            SELECT * FROM device_summary
+            WHERE supports_binding = 1
+            ORDER BY submission_count DESC
+            LIMIT :limit
+        ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+    }
+
+    /**
+     * Get binding support breakdown by category.
+     * Device types are stored as JSON arrays of objects with 'id' and 'revision' fields.
+     */
+    public function getBindingByCategory(\App\Service\MatterRegistry $registry): array
+    {
+        $rows = $this->db->executeQuery('
+            SELECT
+                pe.device_id,
+                json_extract(json_each.value, "$.id") as device_type_id,
+                MAX(CASE WHEN EXISTS (
+                    SELECT 1 FROM json_each(pe.clusters) WHERE value = 30
+                ) THEN 1 ELSE 0 END) as has_binding
+            FROM product_endpoints pe, json_each(pe.device_types)
+            WHERE json_extract(json_each.value, "$.id") IS NOT NULL
+            GROUP BY pe.device_id, json_extract(json_each.value, "$.id")
+        ')->fetchAllAssociative();
+
+        $categoryStats = [];
+        foreach ($rows as $row) {
+            $metadata = $registry->getDeviceTypeMetadata((int) $row['device_type_id']);
+            $displayCategory = $metadata['displayCategory'] ?? 'Unknown';
+
+            if (!isset($categoryStats[$displayCategory])) {
+                $categoryStats[$displayCategory] = ['total' => 0, 'with_binding' => 0];
+            }
+            $categoryStats[$displayCategory]['total']++;
+            if ($row['has_binding']) {
+                $categoryStats[$displayCategory]['with_binding']++;
+            }
+        }
+
+        // Calculate percentages
+        foreach ($categoryStats as &$stat) {
+            $stat['percentage'] = $stat['total'] > 0
+                ? round(($stat['with_binding'] / $stat['total']) * 100, 1)
+                : 0;
+        }
+
+        uasort($categoryStats, fn($a, $b) => $b['percentage'] <=> $a['percentage']);
+        return $categoryStats;
+    }
+
+    /**
+     * Get products with multiple software/hardware versions (indicating OTA activity).
+     */
+    public function getProductsWithMultipleVersions(int $limit = 30): array
+    {
+        return $this->db->executeQuery('
+            SELECT
+                p.id,
+                p.vendor_name,
+                p.product_name,
+                v.slug as vendor_slug,
+                COUNT(DISTINCT pv.software_version) as software_version_count,
+                COUNT(DISTINCT pv.hardware_version) as hardware_version_count,
+                GROUP_CONCAT(DISTINCT pv.software_version) as software_versions
+            FROM products p
+            LEFT JOIN vendors v ON p.vendor_fk = v.id
+            JOIN product_versions pv ON p.id = pv.device_id
+            GROUP BY p.id
+            HAVING software_version_count > 1 OR hardware_version_count > 1
+            ORDER BY software_version_count DESC, hardware_version_count DESC
+            LIMIT :limit
+        ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+    }
+
+    /**
+     * Get overall version statistics.
+     */
+    public function getVersionStats(): array
+    {
+        $totalProducts = (int) $this->db->executeQuery('SELECT COUNT(*) FROM products')->fetchOne();
+        $productsWithVersions = (int) $this->db->executeQuery('
+            SELECT COUNT(DISTINCT device_id) FROM product_versions
+        ')->fetchOne();
+        $uniqueSoftwareVersions = (int) $this->db->executeQuery('
+            SELECT COUNT(DISTINCT software_version) FROM product_versions WHERE software_version IS NOT NULL
+        ')->fetchOne();
+        $uniqueHardwareVersions = (int) $this->db->executeQuery('
+            SELECT COUNT(DISTINCT hardware_version) FROM product_versions WHERE hardware_version IS NOT NULL
+        ')->fetchOne();
+
+        return [
+            'total_products' => $totalProducts,
+            'products_with_versions' => $productsWithVersions,
+            'unique_software_versions' => $uniqueSoftwareVersions,
+            'unique_hardware_versions' => $uniqueHardwareVersions,
+        ];
+    }
 }

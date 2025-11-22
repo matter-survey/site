@@ -19,6 +19,10 @@ final class Version20241122020000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
+        // Drop views that reference device_endpoints before modifying the table
+        $this->addSql('DROP VIEW IF EXISTS cluster_stats');
+        $this->addSql('DROP VIEW IF EXISTS device_summary');
+
         // SQLite requires table recreation to drop a column
         // First, create a backup table without the has_binding_cluster column
         $this->addSql('
@@ -47,8 +51,7 @@ final class Version20241122020000 extends AbstractMigration
         // Recreate index
         $this->addSql('CREATE INDEX idx_device_endpoints_device ON device_endpoints(device_id)');
 
-        // Update device_summary view to derive supports_binding from clusters JSON
-        $this->addSql('DROP VIEW IF EXISTS device_summary');
+        // Recreate device_summary view to derive supports_binding from clusters JSON
         $this->addSql('
             CREATE VIEW device_summary AS
             SELECT
@@ -70,6 +73,17 @@ final class Version20241122020000 extends AbstractMigration
             LEFT JOIN vendors v ON d.vendor_fk = v.id
             LEFT JOIN device_endpoints de ON d.id = de.device_id
             GROUP BY d.id
+        ');
+
+        // Recreate cluster_stats view
+        $this->addSql('
+            CREATE VIEW cluster_stats AS
+            SELECT
+                json_each.value as cluster_id,
+                COUNT(DISTINCT de.device_id) as device_count
+            FROM device_endpoints de, json_each(de.clusters)
+            GROUP BY json_each.value
+            ORDER BY device_count DESC
         ');
     }
 
