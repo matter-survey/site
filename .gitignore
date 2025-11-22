@@ -1,0 +1,28 @@
+# Dependencies
+/vendor/
+
+# Environment (secrets)
+.env
+.env.*
+!.env.example
+
+# Database
+/data/
+
+# Symfony cache/logs
+/var/
+
+# IDE
+/.idea/
+/.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temp files
+*.tmp
+*.bak
