@@ -9,6 +9,8 @@ use App\Service\MatterRegistry;
 use App\Service\TelemetryService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
 class StatsController extends AbstractController
@@ -105,6 +107,41 @@ class StatsController extends AbstractController
             'groupedDeviceTypes' => $groupedDeviceTypes,
             'missingDeviceTypes' => $missingDeviceTypes,
             'displayCategories' => $displayCategories,
+        ]);
+    }
+
+    #[Route('/device-types/{type}', name: 'stats_device_type_show', methods: ['GET'], requirements: ['type' => '\d+'])]
+    public function deviceTypeShow(int $type, Request $request): Response
+    {
+        $metadata = $this->matterRegistry->getDeviceTypeMetadata($type);
+
+        if ($metadata === null) {
+            throw new NotFoundHttpException(sprintf('Device type %d not found', $type));
+        }
+
+        $page = max(1, $request->query->getInt('page', 1));
+        $limit = 24;
+        $offset = ($page - 1) * $limit;
+
+        $devices = $this->deviceRepo->getDevicesByDeviceType($type, $limit, $offset);
+        $totalDevices = $this->deviceRepo->countDevicesByDeviceType($type);
+        $totalPages = (int) ceil($totalDevices / $limit);
+
+        return $this->render('stats/device_type_show.html.twig', [
+            'deviceType' => [
+                'id' => $type,
+                'name' => $metadata['name'],
+                'description' => $metadata['description'] ?? '',
+                'specVersion' => $metadata['specVersion'] ?? null,
+                'icon' => $metadata['icon'] ?? 'device',
+                'category' => $metadata['category'] ?? null,
+                'displayCategory' => $metadata['displayCategory'] ?? 'System',
+            ],
+            'devices' => $devices,
+            'totalDevices' => $totalDevices,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'matterRegistry' => $this->matterRegistry,
         ]);
     }
 

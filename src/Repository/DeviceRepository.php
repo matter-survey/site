@@ -231,6 +231,51 @@ class DeviceRepository
     }
 
     /**
+     * Get devices that implement a specific device type.
+     */
+    public function getDevicesByDeviceType(int $deviceTypeId, int $limit = 50, int $offset = 0): array
+    {
+        return $this->db->executeQuery('
+            SELECT DISTINCT ds.*
+            FROM device_summary ds
+            JOIN product_endpoints pe ON ds.id = pe.device_id
+            WHERE EXISTS (
+                SELECT 1 FROM json_each(pe.device_types)
+                WHERE json_extract(value, "$.id") = :device_type_id
+            )
+            ORDER BY ds.submission_count DESC, ds.last_seen DESC
+            LIMIT :limit OFFSET :offset
+        ', [
+            'device_type_id' => $deviceTypeId,
+            'limit' => $limit,
+            'offset' => $offset,
+        ], [
+            'device_type_id' => \Doctrine\DBAL\ParameterType::INTEGER,
+            'limit' => \Doctrine\DBAL\ParameterType::INTEGER,
+            'offset' => \Doctrine\DBAL\ParameterType::INTEGER,
+        ])->fetchAllAssociative();
+    }
+
+    /**
+     * Count devices that implement a specific device type.
+     */
+    public function countDevicesByDeviceType(int $deviceTypeId): int
+    {
+        return (int) $this->db->executeQuery('
+            SELECT COUNT(DISTINCT pe.device_id)
+            FROM product_endpoints pe
+            WHERE EXISTS (
+                SELECT 1 FROM json_each(pe.device_types)
+                WHERE json_extract(value, "$.id") = :device_type_id
+            )
+        ', [
+            'device_type_id' => $deviceTypeId,
+        ], [
+            'device_type_id' => \Doctrine\DBAL\ParameterType::INTEGER,
+        ])->fetchOne();
+    }
+
+    /**
      * Get distribution by display category.
      */
     public function getCategoryDistribution(\App\Service\MatterRegistry $registry): array

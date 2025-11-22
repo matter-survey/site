@@ -106,6 +106,13 @@
         border-radius: 0.5rem;
         display: flex;
         gap: 0.75rem;
+        text-decoration: none;
+        color: inherit;
+        transition: background 0.15s;
+    }
+
+    .device-type-card:hover {
+        background: var(--gray-100);
     }
 
     .device-type-icon {
@@ -293,7 +300,7 @@
                 </div>
                 <div class="device-type-grid">
                     {% for dt in groupedDeviceTypes[category] %}
-                        <div class="device-type-card">
+                        <a href="{{ path('stats_device_type_show', {type: dt.id}) }}" class="device-type-card">
                             <div class="device-type-icon icon-{{ dt.icon }}"></div>
                             <div class="device-type-info">
                                 <div class="device-type-name">
@@ -305,7 +312,7 @@
                                 <div class="device-type-meta">ID: {{ dt.id }}</div>
                             </div>
                             <div class="device-type-count">{{ dt.count }}</div>
-                        </div>
+                        </a>
                     {% endfor %}
                 </div>
             </div>
