@@ -80,7 +80,6 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                         'endpoint_id' => 1,
                         'device_types' => [['id' => 34, 'revision' => 1]], // Speaker
                         'clusters' => [6, 8, 29], // OnOff, LevelControl, Descriptor
-                        'has_binding_cluster' => false,
                     ],
                 ],
             ],
@@ -96,7 +95,6 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                         'endpoint_id' => 1,
                         'device_types' => [['id' => 35, 'revision' => 1]], // Casting Video Player
                         'clusters' => [29, 1283], // Descriptor, MediaPlayback
-                        'has_binding_cluster' => false,
                     ],
                 ],
             ],
@@ -112,8 +110,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                     [
                         'endpoint_id' => 1,
                         'device_types' => [['id' => 263, 'revision' => 1]], // Occupancy Sensor
-                        'clusters' => [29, 1030], // Descriptor, OccupancySensing
-                        'has_binding_cluster' => true,
+                        'clusters' => [29, 30, 1030], // Descriptor, Binding, OccupancySensing
                     ],
                 ],
             ],
@@ -128,8 +125,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                     [
                         'endpoint_id' => 1,
                         'device_types' => [['id' => 266, 'revision' => 1]], // Outlet
-                        'clusters' => [6, 29, 1794], // OnOff, Descriptor, ElectricalMeasurement
-                        'has_binding_cluster' => true,
+                        'clusters' => [6, 29, 30, 1794], // OnOff, Descriptor, Binding, ElectricalMeasurement
                     ],
                 ],
             ],
@@ -145,7 +141,6 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                         'endpoint_id' => 1,
                         'device_types' => [['id' => 21, 'revision' => 1]], // Contact Sensor
                         'clusters' => [29, 69], // Descriptor, BooleanState
-                        'has_binding_cluster' => false,
                     ],
                 ],
             ],
@@ -161,8 +156,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                     [
                         'endpoint_id' => 1,
                         'device_types' => [['id' => 269, 'revision' => 1]], // Extended Color Light
-                        'clusters' => [6, 8, 768, 29], // OnOff, LevelControl, ColorControl, Descriptor
-                        'has_binding_cluster' => true,
+                        'clusters' => [6, 8, 30, 768, 29], // OnOff, LevelControl, Binding, ColorControl, Descriptor
                     ],
                 ],
             ],
@@ -178,7 +172,6 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                         'endpoint_id' => 0,
                         'device_types' => [['id' => 22, 'revision' => 1]], // Root Node
                         'clusters' => [29, 31, 40], // Descriptor, AccessControl, BasicInformation
-                        'has_binding_cluster' => false,
                     ],
                 ],
             ],
@@ -194,8 +187,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                     [
                         'endpoint_id' => 1,
                         'device_types' => [['id' => 269, 'revision' => 1]], // Extended Color Light
-                        'clusters' => [6, 8, 768, 29], // OnOff, LevelControl, ColorControl, Descriptor
-                        'has_binding_cluster' => true,
+                        'clusters' => [6, 8, 30, 768, 29], // OnOff, LevelControl, Binding, ColorControl, Descriptor
                     ],
                 ],
             ],

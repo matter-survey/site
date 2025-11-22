@@ -185,7 +185,11 @@ components:
           example: [6, 8, 30]
         has_binding_cluster:
           type: boolean
-          description: Whether the endpoint supports the Binding cluster (0x001E)
+          deprecated: true
+          description: |
+            Deprecated: This field is now derived from the clusters array.
+            A device supports bindings if cluster 30 (0x001E) is present in clusters.
+            This field will be ignored on submission and may be removed in a future version.
           example: true
 
     DeviceType:

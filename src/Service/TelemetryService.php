@@ -166,7 +166,7 @@ class TelemetryService
                 'endpoint_id' => $endpoint['endpoint_id'] ?? 0,
                 'device_types' => $endpoint['device_types'] ?? [],
                 'clusters' => $endpoint['clusters'] ?? [],
-                'has_binding_cluster' => $endpoint['has_binding_cluster'] ?? false,
+                // Note: has_binding_cluster is deprecated; binding support is derived from clusters
             ]);
         }
 

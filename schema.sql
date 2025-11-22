@@ -34,7 +34,6 @@ CREATE TABLE IF NOT EXISTS device_endpoints (
     endpoint_id INTEGER NOT NULL,
     device_types JSON NOT NULL,  -- [{id: int, revision: int}]
     clusters JSON NOT NULL,      -- [int, int, ...]
-    has_binding_cluster BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE,
     UNIQUE(device_id, endpoint_id)
 );
@@ -67,6 +66,7 @@ CREATE INDEX IF NOT EXISTS idx_submissions_installation ON submissions(installat
 -- Views for common queries
 
 -- Device summary with endpoint count
+-- supports_binding is derived by checking if any endpoint has cluster 30 (0x001E Binding)
 CREATE VIEW IF NOT EXISTS device_summary AS
 SELECT
     d.id,
@@ -78,7 +78,9 @@ SELECT
     d.first_seen,
     d.last_seen,
     COUNT(DISTINCT de.endpoint_id) as endpoint_count,
-    MAX(de.has_binding_cluster) as supports_binding
+    MAX(CASE WHEN EXISTS (
+        SELECT 1 FROM json_each(de.clusters) WHERE value = 30
+    ) THEN 1 ELSE 0 END) as supports_binding
 FROM devices d
 LEFT JOIN device_endpoints de ON d.id = de.device_id
 GROUP BY d.id;

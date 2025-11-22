@@ -9,6 +9,8 @@ use Doctrine\DBAL\Connection;
 
 class DeviceRepository
 {
+    private const BINDING_CLUSTER_ID = 30; // 0x001E
+
     private Connection $db;
 
     public function __construct(DatabaseService $databaseService)
@@ -71,18 +73,16 @@ class DeviceRepository
     public function upsertEndpoint(int $deviceId, array $endpointData): void
     {
         $this->db->executeStatement('
-            INSERT INTO device_endpoints (device_id, endpoint_id, device_types, clusters, has_binding_cluster)
-            VALUES (:device_id, :endpoint_id, :device_types, :clusters, :has_binding_cluster)
+            INSERT INTO device_endpoints (device_id, endpoint_id, device_types, clusters)
+            VALUES (:device_id, :endpoint_id, :device_types, :clusters)
             ON CONFLICT(device_id, endpoint_id) DO UPDATE SET
                 device_types = excluded.device_types,
-                clusters = excluded.clusters,
-                has_binding_cluster = excluded.has_binding_cluster
+                clusters = excluded.clusters
         ', [
             'device_id' => $deviceId,
             'endpoint_id' => $endpointData['endpoint_id'],
             'device_types' => json_encode($endpointData['device_types'] ?? []),
             'clusters' => json_encode($endpointData['clusters'] ?? []),
-            'has_binding_cluster' => $endpointData['has_binding_cluster'] ? 1 : 0,
         ]);
     }
 
@@ -119,7 +119,7 @@ class DeviceRepository
     public function getDeviceEndpoints(int $deviceId): array
     {
         $rows = $this->db->executeQuery('
-            SELECT endpoint_id, device_types, clusters, has_binding_cluster
+            SELECT endpoint_id, device_types, clusters
             FROM device_endpoints
             WHERE device_id = :device_id
             ORDER BY endpoint_id
@@ -129,7 +129,8 @@ class DeviceRepository
         foreach ($rows as $row) {
             $row['device_types'] = json_decode($row['device_types'], true);
             $row['clusters'] = json_decode($row['clusters'], true);
-            $row['has_binding_cluster'] = (bool) $row['has_binding_cluster'];
+            // Derive binding support from clusters array
+            $row['has_binding_cluster'] = \in_array(self::BINDING_CLUSTER_ID, $row['clusters'] ?? [], true);
             $endpoints[] = $row;
         }
 
