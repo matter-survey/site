@@ -164,11 +164,49 @@
 
     .version-group .endpoint {
         margin: 0;
+        padding: 1rem;
         border-bottom: 1px solid var(--gray-100);
     }
 
     .version-group .endpoint:last-child {
         border-bottom: none;
+    }
+
+    .version-diff {
+        margin-top: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background: var(--gray-50);
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+    }
+
+    .version-diff .diff-title {
+        font-weight: 600;
+        color: var(--gray-600);
+        margin-bottom: 0.25rem;
+    }
+
+    .diff-added {
+        color: #166534;
+    }
+
+    .diff-removed {
+        color: #991b1b;
+    }
+
+    .diff-added::before {
+        content: "+ ";
+        font-weight: 600;
+    }
+
+    .diff-removed::before {
+        content: "− ";
+        font-weight: 600;
+    }
+
+    .diff-item {
+        display: inline-block;
+        margin-right: 0.5rem;
     }
 
     .endpoint-header {
@@ -372,6 +410,7 @@
     {% if endpoints is not empty %}
         <div class="section">
             <h3>Endpoints by Version</h3>
+            {# Group endpoints by version #}
             {% set groupedEndpoints = {} %}
             {% for ep in endpoints %}
                 {% set versionKey = (ep.software_version ?? 'unknown') ~ '|' ~ (ep.hardware_version ?? 'unknown') %}
@@ -381,20 +420,70 @@
                 {% set groupedEndpoints = groupedEndpoints|merge({(versionKey): groupedEndpoints[versionKey]|merge([ep])}) %}
             {% endfor %}
 
+            {# Build cluster lookup by version and endpoint for diff comparison #}
+            {% set versionKeys = groupedEndpoints|keys %}
+            {% set previousVersionData = {} %}
+
             {% for versionKey, versionEndpoints in groupedEndpoints %}
                 {% set versionParts = versionKey|split('|') %}
                 {% set swVersion = versionParts[0] %}
                 {% set hwVersion = versionParts[1] %}
+                {% set versionIndex = loop.index0 %}
+                {% set prevVersionKey = versionIndex > 0 ? versionKeys[versionIndex - 1] : null %}
+
                 <div class="version-group">
                     <div class="version-header">
                         <span class="version-label">
                             SW: {{ swVersion != 'unknown' ? swVersion : 'N/A' }}
                             {% if hwVersion != 'unknown' %} / HW: {{ hwVersion }}{% endif %}
+                            {% if loop.first %}<span class="badge" style="margin-left: 0.5rem; font-size: 0.625rem;">Latest</span>{% endif %}
                         </span>
                         <span class="endpoint-count">{{ versionEndpoints|length }} endpoint{{ versionEndpoints|length != 1 ? 's' : '' }}</span>
                     </div>
 
                     {% for ep in versionEndpoints %}
+                        {# Find matching endpoint in previous version for diff #}
+                        {% set prevEndpoint = null %}
+                        {% if prevVersionKey and groupedEndpoints[prevVersionKey] is defined %}
+                            {% for prevEp in groupedEndpoints[prevVersionKey] %}
+                                {% if prevEp.endpoint_id == ep.endpoint_id %}
+                                    {% set prevEndpoint = prevEp %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+
+                        {# Calculate cluster diff #}
+                        {% set addedServerClusters = [] %}
+                        {% set removedServerClusters = [] %}
+                        {% set addedClientClusters = [] %}
+                        {% set removedClientClusters = [] %}
+
+                        {% if prevEndpoint %}
+                            {# Find added server clusters (in current but not in prev) #}
+                            {% for cluster in ep.server_clusters %}
+                                {% if cluster not in prevEndpoint.server_clusters %}
+                                    {% set addedServerClusters = addedServerClusters|merge([cluster]) %}
+                                {% endif %}
+                            {% endfor %}
+                            {# Find removed server clusters (in prev but not in current) #}
+                            {% for cluster in prevEndpoint.server_clusters %}
+                                {% if cluster not in ep.server_clusters %}
+                                    {% set removedServerClusters = removedServerClusters|merge([cluster]) %}
+                                {% endif %}
+                            {% endfor %}
+                            {# Find added client clusters #}
+                            {% for cluster in ep.client_clusters %}
+                                {% if cluster not in prevEndpoint.client_clusters %}
+                                    {% set addedClientClusters = addedClientClusters|merge([cluster]) %}
+                                {% endif %}
+                            {% endfor %}
+                            {# Find removed client clusters #}
+                            {% for cluster in prevEndpoint.client_clusters %}
+                                {% if cluster not in ep.client_clusters %}
+                                    {% set removedClientClusters = removedClientClusters|merge([cluster]) %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
                         <div class="endpoint">
                             <div class="endpoint-header">
                                 <h4>Endpoint {{ ep.endpoint_id }}</h4>
@@ -442,6 +531,41 @@
                                     <span class="tag tag-client">{{ matterRegistry.getClusterName(cluster) }}</span>
                                 {% endfor %}
                             </div>
+                        </div>
+                    {% endif %}
+
+                    {# Show diff from previous version #}
+                    {% if addedServerClusters|length > 0 or removedServerClusters|length > 0 or addedClientClusters|length > 0 or removedClientClusters|length > 0 %}
+                        <div class="version-diff">
+                            <div class="diff-title">Changes from previous version:</div>
+                            {% if addedServerClusters|length > 0 %}
+                                <div>
+                                    {% for cluster in addedServerClusters %}
+                                        <span class="diff-item diff-added">{{ matterRegistry.getClusterName(cluster) }} (server)</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if removedServerClusters|length > 0 %}
+                                <div>
+                                    {% for cluster in removedServerClusters %}
+                                        <span class="diff-item diff-removed">{{ matterRegistry.getClusterName(cluster) }} (server)</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if addedClientClusters|length > 0 %}
+                                <div>
+                                    {% for cluster in addedClientClusters %}
+                                        <span class="diff-item diff-added">{{ matterRegistry.getClusterName(cluster) }} (client)</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if removedClientClusters|length > 0 %}
+                                <div>
+                                    {% for cluster in removedClientClusters %}
+                                        <span class="diff-item diff-removed">{{ matterRegistry.getClusterName(cluster) }} (client)</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
                     {% endif %}
                         </div>

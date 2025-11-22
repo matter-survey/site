@@ -347,4 +347,86 @@ class ApiControllerTest extends WebTestCase
             $this->assertStringContainsString('On/Off', $content);
         }
     }
+
+    public function testVersionDiffShowsAddedAndRemovedClusters(): void
+    {
+        $client = static::createClient();
+
+        // Submit version 1.0 with basic clusters
+        $client->request('POST', '/api/submit', [], [], [
+            'CONTENT_TYPE' => 'application/json',
+        ], json_encode([
+            'installation_id' => '550e8400-e29b-41d4-a716-446655440020',
+            'schema_version' => 2,
+            'devices' => [
+                [
+                    'vendor_id' => 0x6666,
+                    'vendor_name' => 'Diff Test Vendor',
+                    'product_id' => 0x0010,
+                    'product_name' => 'Diff Test Light',
+                    'hardware_version' => '1.0',
+                    'software_version' => '1.0.0',
+                    'endpoints' => [
+                        [
+                            'endpoint_id' => 1,
+                            'device_types' => [['id' => 256, 'revision' => 1]],
+                            'server_clusters' => [6, 8, 29], // OnOff, LevelControl, Descriptor
+                            'client_clusters' => [],
+                        ],
+                    ],
+                ],
+            ],
+        ]));
+        $this->assertResponseIsSuccessful();
+
+        // Submit version 2.0 with added Binding cluster and OnOff client
+        $client->request('POST', '/api/submit', [], [], [
+            'CONTENT_TYPE' => 'application/json',
+        ], json_encode([
+            'installation_id' => '550e8400-e29b-41d4-a716-446655440020',
+            'schema_version' => 2,
+            'devices' => [
+                [
+                    'vendor_id' => 0x6666,
+                    'vendor_name' => 'Diff Test Vendor',
+                    'product_id' => 0x0010,
+                    'product_name' => 'Diff Test Light',
+                    'hardware_version' => '1.0',
+                    'software_version' => '2.0.0',
+                    'endpoints' => [
+                        [
+                            'endpoint_id' => 1,
+                            'device_types' => [['id' => 256, 'revision' => 1]],
+                            'server_clusters' => [6, 29, 30], // Removed LevelControl, added Binding
+                            'client_clusters' => [6], // Added OnOff client
+                        ],
+                    ],
+                ],
+            ],
+        ]));
+        $this->assertResponseIsSuccessful();
+
+        // Visit device page and verify diff is shown
+        $crawler = $client->request('GET', '/');
+        $deviceLink = $crawler->filter('a:contains("Diff Test Light")');
+        $this->assertGreaterThan(0, $deviceLink->count(), 'Device link should exist');
+
+        $client->click($deviceLink->link());
+        $this->assertResponseIsSuccessful();
+
+        $content = $client->getResponse()->getContent();
+
+        // Should show both versions
+        $this->assertStringContainsString('2.0.0', $content);
+        $this->assertStringContainsString('1.0.0', $content);
+
+        // Should show diff section
+        $this->assertStringContainsString('Changes from previous version', $content);
+
+        // Should show added Binding cluster (server)
+        $this->assertStringContainsString('Binding', $content);
+
+        // Should show added OnOff client
+        $this->assertStringContainsString('On/Off', $content);
+    }
 }
