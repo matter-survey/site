@@ -411,7 +411,7 @@ class ApiControllerTest extends WebTestCase
         $deviceLink = $crawler->filter('a:contains("Diff Test Light")');
         $this->assertGreaterThan(0, $deviceLink->count(), 'Device link should exist');
 
-        $client->click($deviceLink->link());
+        $crawler = $client->click($deviceLink->link());
         $this->assertResponseIsSuccessful();
 
         $content = $client->getResponse()->getContent();
@@ -428,5 +428,20 @@ class ApiControllerTest extends WebTestCase
 
         // Should show added OnOff client
         $this->assertStringContainsString('On/Off', $content);
+
+        // Verify diff is on the NEWER version (2.0.0), not the older one
+        // Find the version group containing 2.0.0 and verify it has the diff section
+        $versionGroups = $crawler->filter('.version-group');
+        $this->assertGreaterThanOrEqual(2, $versionGroups->count(), 'Should have at least 2 version groups');
+
+        // First version group should be the latest (2.0.0) and should contain the diff
+        $latestVersionGroup = $versionGroups->first();
+        $this->assertStringContainsString('2.0.0', $latestVersionGroup->text());
+        $this->assertStringContainsString('Changes from previous version', $latestVersionGroup->text());
+
+        // Last version group (1.0.0) should NOT have a diff section (it's the baseline)
+        $oldestVersionGroup = $versionGroups->last();
+        $this->assertStringContainsString('1.0.0', $oldestVersionGroup->text());
+        $this->assertStringNotContainsString('Changes from previous version', $oldestVersionGroup->text());
     }
 }

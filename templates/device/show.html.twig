@@ -410,75 +410,80 @@
     {% if endpoints is not empty %}
         <div class="section">
             <h3>Endpoints by Version</h3>
-            {# Group endpoints by version #}
-            {% set groupedEndpoints = {} %}
+            {# Group endpoints by hardware version, then by software version #}
+            {% set hwGroups = {} %}
             {% for ep in endpoints %}
-                {% set versionKey = (ep.software_version ?? 'unknown') ~ '|' ~ (ep.hardware_version ?? 'unknown') %}
-                {% if groupedEndpoints[versionKey] is not defined %}
-                    {% set groupedEndpoints = groupedEndpoints|merge({(versionKey): []}) %}
+                {% set hwKey = ep.hardware_version ?? 'unknown' %}
+                {% set swKey = ep.software_version ?? 'unknown' %}
+                {% if hwGroups[hwKey] is not defined %}
+                    {% set hwGroups = hwGroups|merge({(hwKey): {}}) %}
                 {% endif %}
-                {% set groupedEndpoints = groupedEndpoints|merge({(versionKey): groupedEndpoints[versionKey]|merge([ep])}) %}
+                {% if hwGroups[hwKey][swKey] is not defined %}
+                    {% set hwGroups = hwGroups|merge({(hwKey): hwGroups[hwKey]|merge({(swKey): []})}) %}
+                {% endif %}
+                {% set hwGroups = hwGroups|merge({(hwKey): hwGroups[hwKey]|merge({(swKey): hwGroups[hwKey][swKey]|merge([ep])})}) %}
             {% endfor %}
 
-            {# Build cluster lookup by version and endpoint for diff comparison #}
-            {% set versionKeys = groupedEndpoints|keys %}
-            {% set previousVersionData = {} %}
+            {% for hwVersion, swGroups in hwGroups %}
+                <div class="hardware-group" style="margin-bottom: 2rem;">
+                    <h4 style="font-size: 1rem; color: var(--gray-600); margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--gray-200);">
+                        Hardware: {{ hwVersion != 'unknown' ? hwVersion : 'N/A' }}
+                    </h4>
 
-            {% for versionKey, versionEndpoints in groupedEndpoints %}
-                {% set versionParts = versionKey|split('|') %}
-                {% set swVersion = versionParts[0] %}
-                {% set hwVersion = versionParts[1] %}
-                {% set versionIndex = loop.index0 %}
-                {% set prevVersionKey = versionIndex > 0 ? versionKeys[versionIndex - 1] : null %}
+                    {% set swVersionKeys = swGroups|keys %}
+
+                    {% for swVersion, versionEndpoints in swGroups %}
+                        {% set swVersionIndex = loop.index0 %}
+                        {# Look at next software version (older, since sorted DESC) within same hardware #}
+                        {% set olderSwVersion = not loop.last ? swVersionKeys[swVersionIndex + 1] : null %}
 
                 <div class="version-group">
                     <div class="version-header">
                         <span class="version-label">
                             SW: {{ swVersion != 'unknown' ? swVersion : 'N/A' }}
-                            {% if hwVersion != 'unknown' %} / HW: {{ hwVersion }}{% endif %}
                             {% if loop.first %}<span class="badge" style="margin-left: 0.5rem; font-size: 0.625rem;">Latest</span>{% endif %}
                         </span>
                         <span class="endpoint-count">{{ versionEndpoints|length }} endpoint{{ versionEndpoints|length != 1 ? 's' : '' }}</span>
                     </div>
 
                     {% for ep in versionEndpoints %}
-                        {# Find matching endpoint in previous version for diff #}
-                        {% set prevEndpoint = null %}
-                        {% if prevVersionKey and groupedEndpoints[prevVersionKey] is defined %}
-                            {% for prevEp in groupedEndpoints[prevVersionKey] %}
-                                {% if prevEp.endpoint_id == ep.endpoint_id %}
-                                    {% set prevEndpoint = prevEp %}
+                        {# Find matching endpoint in older software version (within same hardware) for diff #}
+                        {% set olderEndpoint = null %}
+                        {% if olderSwVersion and swGroups[olderSwVersion] is defined %}
+                            {% for olderEp in swGroups[olderSwVersion] %}
+                                {% if olderEp.endpoint_id == ep.endpoint_id %}
+                                    {% set olderEndpoint = olderEp %}
                                 {% endif %}
                             {% endfor %}
                         {% endif %}
 
-                        {# Calculate cluster diff #}
+                        {# Calculate cluster diff (what changed from older version to this version) #}
                         {% set addedServerClusters = [] %}
                         {% set removedServerClusters = [] %}
                         {% set addedClientClusters = [] %}
                         {% set removedClientClusters = [] %}
 
-                        {% if prevEndpoint %}
-                            {# Find added server clusters (in current but not in prev) #}
+                        {% if olderEndpoint %}
+                            {# Find added server clusters (in current but not in older) #}
                             {% for cluster in ep.server_clusters %}
-                                {% if cluster not in prevEndpoint.server_clusters %}
+                                {% if cluster not in olderEndpoint.server_clusters %}
                                     {% set addedServerClusters = addedServerClusters|merge([cluster]) %}
                                 {% endif %}
                             {% endfor %}
-                            {# Find removed server clusters (in prev but not in current) #}
-                            {% for cluster in prevEndpoint.server_clusters %}
+                            {# Find removed server clusters (in older but not in current) #}
+                            {% for cluster in olderEndpoint.server_clusters %}
                                 {% if cluster not in ep.server_clusters %}
                                     {% set removedServerClusters = removedServerClusters|merge([cluster]) %}
                                 {% endif %}
                             {% endfor %}
                             {# Find added client clusters #}
                             {% for cluster in ep.client_clusters %}
-                                {% if cluster not in prevEndpoint.client_clusters %}
+                                {% if cluster not in olderEndpoint.client_clusters %}
                                     {% set addedClientClusters = addedClientClusters|merge([cluster]) %}
                                 {% endif %}
                             {% endfor %}
                             {# Find removed client clusters #}
-                            {% for cluster in prevEndpoint.client_clusters %}
+                            {% for cluster in olderEndpoint.client_clusters %}
                                 {% if cluster not in ep.client_clusters %}
                                     {% set removedClientClusters = removedClientClusters|merge([cluster]) %}
                                 {% endif %}
@@ -571,7 +576,9 @@
                         </div>
                     {% endfor %}
                 </div>
-            {% endfor %}
+                    {% endfor %}{# end swVersion loop #}
+                </div>{# end hardware-group #}
+            {% endfor %}{# end hwVersion loop #}
         </div>
     {% endif %}
 
