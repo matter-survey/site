@@ -1,0 +1,430 @@
+# Matter Cluster Definitions
+# Based on Matter 1.4 Specification
+
+# Global Clusters (System/Infrastructure)
+- id: 3
+  name: Identify
+  description: Allows a device to be identified by triggering a visual or audible indicator, helping users locate devices during commissioning or troubleshooting.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 4
+  name: Groups
+  description: Enables devices to be organized into groups for coordinated control, allowing a single command to affect multiple devices simultaneously.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 5
+  name: Scenes
+  description: Stores and recalls pre-configured device states, enabling complex automations with a single command (deprecated in favor of Scenes Management).
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 29
+  name: Descriptor
+  description: Provides information about the device's endpoints, clusters, and device types. Every endpoint must implement this cluster.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 30
+  name: Binding
+  description: Establishes relationships between devices, enabling direct device-to-device communication without a controller in the middle.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 31
+  name: Access Control
+  description: Manages permissions and access control lists (ACLs) that determine which nodes can interact with the device.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 40
+  name: Basic Information
+  description: Provides essential device information including vendor, product name, serial number, and software version.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 41
+  name: OTA Software Update Provider
+  description: Enables a device to serve firmware updates to other devices on the network.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 42
+  name: OTA Software Update Requestor
+  description: Allows a device to request and receive firmware updates from an OTA provider.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 43
+  name: Localization Configuration
+  description: Configures the device's locale settings for language and regional preferences.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 44
+  name: Time Format Localization
+  description: Configures time and date display formats (12/24 hour, date order).
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 45
+  name: Unit Localization
+  description: Configures measurement unit preferences (metric vs imperial).
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 46
+  name: Power Source Configuration
+  description: Describes available power sources and their configuration on the device.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 47
+  name: Power Source
+  description: Reports power source status including battery level, charging state, and power characteristics.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 48
+  name: General Commissioning
+  description: Manages the commissioning process for adding a device to a Matter fabric.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 49
+  name: Network Commissioning
+  description: Configures network connectivity (WiFi, Thread, Ethernet) during device setup.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 50
+  name: Diagnostic Logs
+  description: Provides access to device diagnostic logs for troubleshooting.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 51
+  name: General Diagnostics
+  description: Reports general device health metrics including uptime, reboot counts, and hardware faults.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 52
+  name: Software Diagnostics
+  description: Reports software-related diagnostics including memory usage and thread metrics.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 53
+  name: Thread Network Diagnostics
+  description: Reports Thread network statistics and connectivity metrics.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 54
+  name: WiFi Network Diagnostics
+  description: Reports WiFi network statistics including signal strength and connection quality.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 55
+  name: Ethernet Network Diagnostics
+  description: Reports Ethernet network statistics and connectivity status.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 56
+  name: Time Synchronization
+  description: Synchronizes device time with trusted time sources for accurate timestamps.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 57
+  name: Bridged Device Basic Information
+  description: Provides basic information about devices connected through a bridge from non-Matter protocols.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 60
+  name: Administrator Commissioning
+  description: Controls the commissioning window for adding new administrators to the device.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 62
+  name: Node Operational Credentials
+  description: Manages the device's operational certificates for secure fabric communication.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 63
+  name: Group Key Management
+  description: Manages cryptographic keys used for secure group communication.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 64
+  name: Fixed Label
+  description: Provides fixed, manufacturer-defined labels for the device.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+- id: 65
+  name: User Label
+  description: Allows users to assign custom labels to devices for organization.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: true
+
+# Application Clusters - General
+- id: 6
+  name: On/Off
+  description: Controls the on/off state of a device. The most fundamental control cluster used by lights, switches, plugs, and many other devices.
+  specVersion: "1.0"
+  category: general
+  isGlobal: false
+
+- id: 8
+  name: Level Control
+  description: Controls the level or intensity of a device, such as brightness for lights or speed for fans. Supports smooth transitions.
+  specVersion: "1.0"
+  category: general
+  isGlobal: false
+
+- id: 69
+  name: Boolean State
+  description: Reports a simple true/false state, used by contact sensors and other binary state devices.
+  specVersion: "1.0"
+  category: general
+  isGlobal: false
+
+- id: 80
+  name: Mode Select
+  description: Allows selection between predefined operating modes on a device.
+  specVersion: "1.0"
+  category: general
+  isGlobal: false
+
+# Application Clusters - Lighting
+- id: 768
+  name: Color Control
+  description: Controls the color output of a light, supporting hue/saturation, XY color space, and color temperature modes.
+  specVersion: "1.0"
+  category: lighting
+  isGlobal: false
+
+- id: 769
+  name: Ballast Configuration
+  description: Configures ballast parameters for fluorescent or LED lighting fixtures.
+  specVersion: "1.0"
+  category: lighting
+  isGlobal: false
+
+# Application Clusters - Closures
+- id: 257
+  name: Door Lock
+  description: Controls door locks including lock/unlock operations, user management, and access schedules.
+  specVersion: "1.0"
+  category: closures
+  isGlobal: false
+
+- id: 258
+  name: Window Covering
+  description: Controls motorized window coverings like blinds, shades, and curtains with lift and tilt positioning.
+  specVersion: "1.0"
+  category: closures
+  isGlobal: false
+
+# Application Clusters - HVAC
+- id: 512
+  name: Pump Configuration and Control
+  description: Monitors and controls pump devices including flow rate and pressure settings.
+  specVersion: "1.0"
+  category: hvac
+  isGlobal: false
+
+- id: 513
+  name: Thermostat
+  description: Controls heating and cooling systems with setpoints, modes, and schedules for climate control.
+  specVersion: "1.0"
+  category: hvac
+  isGlobal: false
+
+- id: 514
+  name: Fan Control
+  description: Controls fan speed, direction, and operating modes.
+  specVersion: "1.0"
+  category: hvac
+  isGlobal: false
+
+- id: 516
+  name: Thermostat User Interface Configuration
+  description: Configures the user interface behavior of thermostat devices.
+  specVersion: "1.0"
+  category: hvac
+  isGlobal: false
+
+# Application Clusters - Measurement & Sensing
+- id: 1024
+  name: Illuminance Measurement
+  description: Reports ambient light levels in lux, used by light sensors.
+  specVersion: "1.0"
+  category: measurement
+  isGlobal: false
+
+- id: 1026
+  name: Temperature Measurement
+  description: Reports temperature readings in degrees Celsius, used by temperature sensors and thermostats.
+  specVersion: "1.0"
+  category: measurement
+  isGlobal: false
+
+- id: 1027
+  name: Pressure Measurement
+  description: Reports atmospheric or fluid pressure measurements.
+  specVersion: "1.0"
+  category: measurement
+  isGlobal: false
+
+- id: 1028
+  name: Flow Measurement
+  description: Reports fluid flow rate measurements.
+  specVersion: "1.0"
+  category: measurement
+  isGlobal: false
+
+- id: 1029
+  name: Relative Humidity Measurement
+  description: Reports relative humidity percentage, used by humidity sensors.
+  specVersion: "1.0"
+  category: measurement
+  isGlobal: false
+
+- id: 1030
+  name: Occupancy Sensing
+  description: Detects presence or motion in a space, used by motion sensors and occupancy detectors.
+  specVersion: "1.0"
+  category: measurement
+  isGlobal: false
+
+# Application Clusters - Security
+- id: 1280
+  name: IAS Zone
+  description: Reports security zone status for intrusion detection and alarm systems.
+  specVersion: "1.0"
+  category: security
+  isGlobal: false
+
+# Application Clusters - Media
+- id: 1283
+  name: Wake on LAN
+  description: Enables remote wake-up of media devices over the network.
+  specVersion: "1.0"
+  category: media
+  isGlobal: false
+
+- id: 1284
+  name: Channel
+  description: Controls TV channel selection and provides channel list information.
+  specVersion: "1.0"
+  category: media
+  isGlobal: false
+
+- id: 1285
+  name: Target Navigator
+  description: Navigates between content targets like apps, inputs, or channels on media devices.
+  specVersion: "1.0"
+  category: media
+  isGlobal: false
+
+- id: 1286
+  name: Media Playback
+  description: Controls media playback including play, pause, seek, and playback speed.
+  specVersion: "1.0"
+  category: media
+  isGlobal: false
+
+- id: 1287
+  name: Media Input
+  description: Manages input source selection on media devices (HDMI, USB, etc.).
+  specVersion: "1.0"
+  category: media
+  isGlobal: false
+
+- id: 1288
+  name: Low Power
+  description: Manages low-power and sleep states for media devices.
+  specVersion: "1.0"
+  category: media
+  isGlobal: false
+
+- id: 1289
+  name: Keypad Input
+  description: Receives keypad/remote control button presses for media device control.
+  specVersion: "1.0"
+  category: media
+  isGlobal: false
+
+- id: 1290
+  name: Content Launcher
+  description: Launches content by URL, search query, or content ID on media devices.
+  specVersion: "1.0"
+  category: media
+  isGlobal: false
+
+- id: 1291
+  name: Audio Output
+  description: Manages audio output settings and speaker selection on media devices.
+  specVersion: "1.0"
+  category: media
+  isGlobal: false
+
+- id: 1292
+  name: Application Launcher
+  description: Launches and manages applications on smart TV platforms.
+  specVersion: "1.0"
+  category: media
+  isGlobal: false
+
+- id: 1293
+  name: Application Basic
+  description: Provides basic information about applications running on media devices.
+  specVersion: "1.0"
+  category: media
+  isGlobal: false
+
+- id: 1294
+  name: Account Login
+  description: Manages account authentication for streaming services on media devices.
+  specVersion: "1.0"
+  category: media
+  isGlobal: false

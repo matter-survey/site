@@ -110,6 +110,12 @@
 
     .cluster-name {
         font-weight: 500;
+        color: var(--primary);
+        text-decoration: none;
+    }
+
+    .cluster-name:hover {
+        text-decoration: underline;
     }
 
     .cluster-id {
@@ -242,7 +248,7 @@
                 {% for cluster in clusterStats %}
                     <tr>
                         <td>
-                            <span class="cluster-name">{{ cluster.name }}</span>
+                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.cluster_id)}) }}" class="cluster-name">{{ cluster.name }}</a>
                             <span class="cluster-id">0x{{ '%04X'|format(cluster.cluster_id) }}</span>
                             {% if cluster.cluster_id in [29, 31, 40, 48, 49, 62, 63] %}
                                 <span class="badge-required">Required</span>

@@ -653,4 +653,98 @@ class DeviceRepository
 
         return (int) $this->db->executeQuery($sql, $params, $types)->fetchOne();
     }
+
+    /**
+     * Get devices that implement a specific cluster (as either server or client).
+     */
+    public function getDevicesByCluster(int $clusterId, int $limit = 50, int $offset = 0): array
+    {
+        return $this->db->executeQuery('
+            SELECT DISTINCT ds.*
+            FROM device_summary ds
+            JOIN product_endpoints pe ON ds.id = pe.device_id
+            WHERE EXISTS (
+                SELECT 1 FROM json_each(pe.server_clusters) WHERE value = :cluster_id
+            ) OR EXISTS (
+                SELECT 1 FROM json_each(pe.client_clusters) WHERE value = :cluster_id
+            )
+            ORDER BY ds.submission_count DESC, ds.last_seen DESC
+            LIMIT :limit OFFSET :offset
+        ', [
+            'cluster_id' => $clusterId,
+            'limit' => $limit,
+            'offset' => $offset,
+        ], [
+            'cluster_id' => \Doctrine\DBAL\ParameterType::INTEGER,
+            'limit' => \Doctrine\DBAL\ParameterType::INTEGER,
+            'offset' => \Doctrine\DBAL\ParameterType::INTEGER,
+        ])->fetchAllAssociative();
+    }
+
+    /**
+     * Count devices that implement a specific cluster (as either server or client).
+     */
+    public function countDevicesByCluster(int $clusterId): int
+    {
+        return (int) $this->db->executeQuery('
+            SELECT COUNT(DISTINCT pe.device_id)
+            FROM product_endpoints pe
+            WHERE EXISTS (
+                SELECT 1 FROM json_each(pe.server_clusters) WHERE value = :cluster_id
+            ) OR EXISTS (
+                SELECT 1 FROM json_each(pe.client_clusters) WHERE value = :cluster_id
+            )
+        ', [
+            'cluster_id' => $clusterId,
+        ], [
+            'cluster_id' => \Doctrine\DBAL\ParameterType::INTEGER,
+        ])->fetchOne();
+    }
+
+    /**
+     * Get device types that require a specific cluster (from the device_types table).
+     */
+    public function getDeviceTypesRequiringCluster(int $clusterId): array
+    {
+        return $this->db->executeQuery('
+            SELECT dt.id, dt.hex_id, dt.name, dt.display_category, dt.icon,
+                   CASE
+                       WHEN EXISTS (
+                           SELECT 1 FROM json_each(dt.mandatory_server_clusters)
+                           WHERE json_extract(value, "$.id") = :cluster_id
+                       ) THEN "mandatory_server"
+                       WHEN EXISTS (
+                           SELECT 1 FROM json_each(dt.optional_server_clusters)
+                           WHERE json_extract(value, "$.id") = :cluster_id
+                       ) THEN "optional_server"
+                       WHEN EXISTS (
+                           SELECT 1 FROM json_each(dt.mandatory_client_clusters)
+                           WHERE json_extract(value, "$.id") = :cluster_id
+                       ) THEN "mandatory_client"
+                       WHEN EXISTS (
+                           SELECT 1 FROM json_each(dt.optional_client_clusters)
+                           WHERE json_extract(value, "$.id") = :cluster_id
+                       ) THEN "optional_client"
+                   END as requirement_type
+            FROM device_types dt
+            WHERE EXISTS (
+                SELECT 1 FROM json_each(dt.mandatory_server_clusters)
+                WHERE json_extract(value, "$.id") = :cluster_id
+            ) OR EXISTS (
+                SELECT 1 FROM json_each(dt.optional_server_clusters)
+                WHERE json_extract(value, "$.id") = :cluster_id
+            ) OR EXISTS (
+                SELECT 1 FROM json_each(dt.mandatory_client_clusters)
+                WHERE json_extract(value, "$.id") = :cluster_id
+            ) OR EXISTS (
+                SELECT 1 FROM json_each(dt.optional_client_clusters)
+                WHERE json_extract(value, "$.id") = :cluster_id
+            )
+            ORDER BY dt.name
+        ', [
+            'cluster_id' => $clusterId,
+        ], [
+            'cluster_id' => \Doctrine\DBAL\ParameterType::INTEGER,
+        ])->fetchAllAssociative();
+    }
 }

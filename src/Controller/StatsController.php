@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Repository\ClusterRepository;
 use App\Repository\DeviceRepository;
 use App\Service\MatterRegistry;
 use App\Service\TelemetryService;
@@ -19,6 +20,7 @@ class StatsController extends AbstractController
         private DeviceRepository $deviceRepo,
         private TelemetryService $telemetryService,
         private MatterRegistry $matterRegistry,
+        private ClusterRepository $clusterRepo,
     ) {}
 
     #[Route('/dashboard', name: 'stats_dashboard', methods: ['GET'])]
@@ -182,6 +184,38 @@ class StatsController extends AbstractController
             'stats' => $stats,
             'productsWithMultipleVersions' => $productsWithMultipleVersions,
             'versionStats' => $versionStats,
+        ]);
+    }
+
+    #[Route('/cluster/{hexId}', name: 'stats_cluster_show', methods: ['GET'], requirements: ['hexId' => '0x[0-9A-Fa-f]+'])]
+    public function clusterShow(string $hexId, Request $request): Response
+    {
+        $cluster = $this->clusterRepo->findByHexId($hexId);
+
+        if ($cluster === null) {
+            throw new NotFoundHttpException(\sprintf('Cluster %s not found', $hexId));
+        }
+
+        $page = max(1, $request->query->getInt('page', 1));
+        $limit = 24;
+        $offset = ($page - 1) * $limit;
+
+        // Get devices that implement this cluster (as server or client)
+        $devices = $this->deviceRepo->getDevicesByCluster($cluster->getId(), $limit, $offset);
+        $totalDevices = $this->deviceRepo->countDevicesByCluster($cluster->getId());
+        $totalPages = (int) ceil($totalDevices / $limit);
+
+        // Get device types that require this cluster
+        $deviceTypesRequiring = $this->deviceRepo->getDeviceTypesRequiringCluster($cluster->getId());
+
+        return $this->render('stats/cluster_show.html.twig', [
+            'cluster' => $cluster,
+            'devices' => $devices,
+            'totalDevices' => $totalDevices,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'deviceTypesRequiring' => $deviceTypesRequiring,
+            'matterRegistry' => $this->matterRegistry,
         ]);
     }
 }

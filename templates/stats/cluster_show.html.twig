@@ -1,0 +1,403 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ cluster.name }} - Matter Survey{% endblock %}
+
+{% block og_title %}{{ cluster.name }} - Matter Cluster{% endblock %}
+{% block og_description %}{{ cluster.description ?? cluster.name ~ ' is a Matter cluster' }}. {{ totalDevices }} device{{ totalDevices != 1 ? 's' : '' }} implement{{ totalDevices == 1 ? 's' : '' }} this cluster.{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "DefinedTerm",
+    "name": {{ cluster.name|json_encode|raw }},
+    "description": {{ (cluster.description ?? cluster.name ~ ' cluster from the Matter specification')|json_encode|raw }},
+    "termCode": "{{ cluster.hexId }}",
+    "url": "{{ url('stats_cluster_show', {hexId: cluster.hexId}) }}",
+    "inDefinedTermSet": {
+        "@type": "DefinedTermSet",
+        "name": "Matter Clusters",
+        "description": "Clusters defined in the Matter smart home specification"
+    },
+    "additionalProperty": [
+        {
+            "@type": "PropertyValue",
+            "name": "Cluster ID",
+            "value": "{{ cluster.id }}"
+        },
+        {
+            "@type": "PropertyValue",
+            "name": "Hex ID",
+            "value": "{{ cluster.hexId }}"
+        },
+        {
+            "@type": "PropertyValue",
+            "name": "Category",
+            "value": "{{ cluster.category ?? 'Unknown' }}"
+        },
+        {
+            "@type": "PropertyValue",
+            "name": "Type",
+            "value": "{{ cluster.global ? 'Global' : 'Application' }}"
+        },
+        {
+            "@type": "PropertyValue",
+            "name": "Devices Implementing",
+            "value": "{{ totalDevices }}"
+        }
+    ]
+}
+</script>
+{% endblock %}
+
+{% block extra_styles %}
+    .breadcrumb {
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+    }
+
+    .breadcrumb a {
+        color: var(--primary);
+        text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+        text-decoration: underline;
+    }
+
+    .cluster-header {
+        background: white;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .cluster-header h1 {
+        font-size: 1.5rem;
+        margin: 0 0 0.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .cluster-header .hex-id {
+        font-size: 0.875rem;
+        font-family: monospace;
+        color: var(--gray-400);
+        font-weight: normal;
+    }
+
+    .cluster-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-top: 1rem;
+        font-size: 0.875rem;
+        color: var(--gray-600);
+    }
+
+    .cluster-meta .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .cluster-meta .meta-label {
+        color: var(--gray-400);
+    }
+
+    .cluster-description {
+        margin-top: 1rem;
+        color: var(--gray-700);
+        line-height: 1.6;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .badge-global {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .badge-application {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .badge-category {
+        background: var(--gray-100);
+        color: var(--gray-700);
+    }
+
+    .section {
+        background: white;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+        margin-bottom: 1.5rem;
+    }
+
+    .section-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .section-header h2 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .section-header p {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        margin: 0.25rem 0 0;
+    }
+
+    .device-type-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1rem;
+        padding: 1.25rem;
+    }
+
+    .device-type-card {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: var(--gray-50);
+        border-radius: 0.375rem;
+        text-decoration: none;
+        color: inherit;
+        transition: background-color 0.15s;
+    }
+
+    .device-type-card:hover {
+        background: var(--gray-100);
+    }
+
+    .device-type-card .icon {
+        font-size: 1.25rem;
+    }
+
+    .device-type-card .info {
+        flex: 1;
+    }
+
+    .device-type-card .name {
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+
+    .device-type-card .requirement {
+        font-size: 0.7rem;
+        color: var(--gray-500);
+    }
+
+    .device-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+        padding: 1.25rem;
+    }
+
+    .device-card {
+        display: block;
+        padding: 1rem;
+        background: var(--gray-50);
+        border-radius: 0.5rem;
+        text-decoration: none;
+        color: inherit;
+        transition: background-color 0.15s;
+    }
+
+    .device-card:hover {
+        background: var(--gray-100);
+    }
+
+    .device-card .name {
+        font-weight: 600;
+        color: var(--gray-900);
+        margin-bottom: 0.25rem;
+    }
+
+    .device-card .vendor {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 1.25rem;
+        border-top: 1px solid var(--gray-200);
+    }
+
+    .pagination a, .pagination span {
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.375rem;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+
+    .pagination a {
+        background: white;
+        border: 1px solid var(--gray-200);
+        color: var(--gray-700);
+    }
+
+    .pagination a:hover {
+        background: var(--gray-100);
+    }
+
+    .pagination .current {
+        background: var(--primary);
+        color: white;
+    }
+
+    .empty-state {
+        padding: 2rem;
+        text-align: center;
+        color: var(--gray-500);
+    }
+{% endblock %}
+
+{% macro deviceTypeIcon(icon) %}
+    {%- set icons = {
+        'lightbulb': '&#x1f4a1;',
+        'plug': '&#x1F50C;',
+        'thermometer': '&#x1F321;',
+        'lock': '&#x1F512;',
+        'motion-sensor': '&#x1F3C3;',
+        'door-open': '&#x1F6AA;',
+        'blinds': '&#x1FA9F;',
+        'fan': '&#x1F4A8;',
+        'tv': '&#x1F4FA;',
+        'volume-up': '&#x1F50A;',
+        'toggle-on': '&#x1F518;',
+        'server': '&#x1F5A5;',
+        'bridge': '&#x1F309;',
+        'device': '&#x1F4F1;'
+    } -%}
+    {{- icons[icon] ?? '&#x1F4F1;' | raw -}}
+{% endmacro %}
+
+{% block body %}
+    <div class="breadcrumb">
+        <a href="{{ path('stats_clusters') }}">Clusters</a> &raquo; {{ cluster.name }}
+    </div>
+
+    <div class="cluster-header">
+        <h1>
+            {{ cluster.name }}
+            <span class="hex-id">{{ cluster.hexId }}</span>
+        </h1>
+
+        <div class="cluster-meta">
+            <div class="meta-item">
+                <span class="badge {{ cluster.global ? 'badge-global' : 'badge-application' }}">
+                    {{ cluster.global ? 'Global Cluster' : 'Application Cluster' }}
+                </span>
+            </div>
+            {% if cluster.category %}
+            <div class="meta-item">
+                <span class="badge badge-category">{{ cluster.category|capitalize }}</span>
+            </div>
+            {% endif %}
+            {% if cluster.specVersion %}
+            <div class="meta-item">
+                <span class="meta-label">Spec:</span> Matter {{ cluster.specVersion }}
+            </div>
+            {% endif %}
+            <div class="meta-item">
+                <span class="meta-label">Devices:</span> {{ totalDevices }}
+            </div>
+        </div>
+
+        {% if cluster.description %}
+        <div class="cluster-description">
+            {{ cluster.description }}
+        </div>
+        {% endif %}
+    </div>
+
+    {% if deviceTypesRequiring|length > 0 %}
+    <div class="section">
+        <div class="section-header">
+            <h2>Device Types Using This Cluster</h2>
+            <p>Device types in the Matter spec that reference this cluster</p>
+        </div>
+        <div class="device-type-grid">
+            {% for dt in deviceTypesRequiring %}
+                <a href="{{ path('stats_device_type_show', {type: dt.id}) }}" class="device-type-card">
+                    <span class="icon">{{ _self.deviceTypeIcon(dt.icon) }}</span>
+                    <div class="info">
+                        <div class="name">{{ dt.name }}</div>
+                        <div class="requirement">
+                            {% if dt.requirement_type == 'mandatory_server' %}
+                                Mandatory Server
+                            {% elseif dt.requirement_type == 'optional_server' %}
+                                Optional Server
+                            {% elseif dt.requirement_type == 'mandatory_client' %}
+                                Mandatory Client
+                            {% elseif dt.requirement_type == 'optional_client' %}
+                                Optional Client
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="section">
+        <div class="section-header">
+            <h2>Devices Implementing This Cluster</h2>
+            <p>{{ totalDevices }} device{{ totalDevices != 1 ? 's' : '' }} in the survey implement this cluster</p>
+        </div>
+
+        {% if devices|length > 0 %}
+            <div class="device-grid">
+                {% for device in devices %}
+                    <a href="{{ path('device_show', {id: device.id}) }}" class="device-card">
+                        <div class="name">{{ device.product_name ?? 'Unknown Device' }}</div>
+                        <div class="vendor">{{ device.vendor_name ?? 'Unknown Vendor' }}</div>
+                    </a>
+                {% endfor %}
+            </div>
+
+            {% if totalPages > 1 %}
+            <div class="pagination">
+                {% if currentPage > 1 %}
+                    <a href="{{ path('stats_cluster_show', {hexId: cluster.hexId, page: currentPage - 1}) }}">&laquo; Prev</a>
+                {% endif %}
+
+                {% for page in max(1, currentPage - 2)..min(totalPages, currentPage + 2) %}
+                    {% if page == currentPage %}
+                        <span class="current">{{ page }}</span>
+                    {% else %}
+                        <a href="{{ path('stats_cluster_show', {hexId: cluster.hexId, page: page}) }}">{{ page }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if currentPage < totalPages %}
+                    <a href="{{ path('stats_cluster_show', {hexId: cluster.hexId, page: currentPage + 1}) }}">Next &raquo;</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-state">
+                No devices in the survey implement this cluster yet.
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

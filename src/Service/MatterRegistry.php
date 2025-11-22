@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Entity\Cluster;
 use App\Entity\DeviceType;
+use App\Repository\ClusterRepository;
 use App\Repository\DeviceTypeRepository;
 
 /**
  * Registry for Matter cluster and device type name lookups.
  *
- * Device type data is loaded from the database (device_types table) which contains
- * comprehensive information extracted from the Matter 1.4 Device Library Specification.
+ * Data is loaded from the database which contains comprehensive information
+ * extracted from the Matter 1.4 Device Library Specification.
  */
 class MatterRegistry
 {
@@ -21,8 +23,15 @@ class MatterRegistry
      */
     private ?array $extendedDeviceTypes = null;
 
+    /**
+     * Cluster data loaded from database.
+     * @var array<int, array>|null
+     */
+    private ?array $clusters = null;
+
     public function __construct(
         private ?DeviceTypeRepository $deviceTypeRepository = null,
+        private ?ClusterRepository $clusterRepository = null,
     ) {}
 
     private const CLUSTER_NAMES = [
@@ -694,7 +703,103 @@ class MatterRegistry
 
     public function getClusterName(int $id): string
     {
-        return self::CLUSTER_NAMES[$id] ?? sprintf('Cluster 0x%04X', $id);
+        // Try database first
+        $clusters = $this->loadClusters();
+        if (isset($clusters[$id])) {
+            return $clusters[$id]['name'];
+        }
+
+        // Fallback to hardcoded names
+        return self::CLUSTER_NAMES[$id] ?? \sprintf('Cluster 0x%04X', $id);
+    }
+
+    /**
+     * Get full metadata for a cluster.
+     *
+     * @return array{id: int, hexId: string, name: string, description: ?string, specVersion: ?string, category: ?string, isGlobal: bool}|null
+     */
+    public function getClusterMetadata(int $id): ?array
+    {
+        $clusters = $this->loadClusters();
+        return $clusters[$id] ?? null;
+    }
+
+    /**
+     * Get the description for a cluster.
+     */
+    public function getClusterDescription(int $id): ?string
+    {
+        $cluster = $this->getClusterMetadata($id);
+        return $cluster['description'] ?? null;
+    }
+
+    /**
+     * Get the category for a cluster.
+     */
+    public function getClusterCategory(int $id): ?string
+    {
+        $cluster = $this->getClusterMetadata($id);
+        return $cluster['category'] ?? null;
+    }
+
+    /**
+     * Check if a cluster is a global/utility cluster.
+     */
+    public function isGlobalCluster(int $id): bool
+    {
+        $cluster = $this->getClusterMetadata($id);
+        return $cluster['isGlobal'] ?? false;
+    }
+
+    /**
+     * Get the hex ID for a cluster.
+     */
+    public function getClusterHexId(int $id): string
+    {
+        $cluster = $this->getClusterMetadata($id);
+        return $cluster['hexId'] ?? \sprintf('0x%04X', $id);
+    }
+
+    /**
+     * Load cluster data from database.
+     *
+     * @return array<int, array>
+     */
+    private function loadClusters(): array
+    {
+        if ($this->clusters !== null) {
+            return $this->clusters;
+        }
+
+        $this->clusters = [];
+
+        if ($this->clusterRepository === null) {
+            return $this->clusters;
+        }
+
+        $clusterEntities = $this->clusterRepository->findAll();
+
+        foreach ($clusterEntities as $cluster) {
+            $this->clusters[$cluster->getId()] = $this->clusterEntityToArray($cluster);
+        }
+
+        return $this->clusters;
+    }
+
+    /**
+     * Convert a Cluster entity to array format.
+     */
+    private function clusterEntityToArray(Cluster $cluster): array
+    {
+        return [
+            'id' => $cluster->getId(),
+            'hexId' => $cluster->getHexId(),
+            'name' => $cluster->getName(),
+            'description' => $cluster->getDescription(),
+            'specVersion' => $cluster->getSpecVersion(),
+            'category' => $cluster->getCategory(),
+            'isGlobal' => $cluster->isGlobal(),
+        ];
     }
 
     /**
