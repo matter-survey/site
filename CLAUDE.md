@@ -84,6 +84,25 @@ Single workflow in `.github/workflows/ci.yml`:
 - `code-quality` job: composer validate, security audit
 - `deploy` job: runs after test/code-quality pass, only on main branch push
 
+## Structured Data & SEO
+
+All public-facing pages should include structured data markup:
+
+- **Schema.org JSON-LD** - For search engine rich snippets and knowledge graphs
+- **OpenGraph meta tags** - For social media link previews (Facebook, Slack, Discord)
+- **Twitter Cards** - For Twitter/X previews
+
+### Entity Mappings
+
+| Entity | Schema.org Type | Template |
+|--------|-----------------|----------|
+| Product (device) | `Product` | `device/show.html.twig` |
+| Vendor | `Organization` | `vendor/show.html.twig` |
+| DeviceType | `DefinedTerm` | `stats/device_type_show.html.twig` |
+| Homepage | `WebSite` + `SearchAction` | `device/index.html.twig` |
+
+When creating new pages with entities, include appropriate JSON-LD in the `structured_data` block and OpenGraph tags in the `og_meta` block.
+
 ## Commit Guidelines
 
 Use semantic commits (e.g., `feat:`, `fix:`, `ci:`, `docs:`, `refactor:`, `chore:`).

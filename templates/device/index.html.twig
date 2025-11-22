@@ -2,6 +2,43 @@
 
 {% block title %}Matter Survey - Device Index{% endblock %}
 
+{% block og_title %}Matter Survey - Smart Home Device Database{% endblock %}
+{% block og_description %}Community-driven database of {{ stats.total_devices|number_format }} Matter smart home devices. Search and explore device capabilities, clusters, and binding support from {{ stats.total_installations|number_format }} contributors.{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Matter Survey",
+    "description": "Community-driven database of Matter smart home device capabilities",
+    "url": "{{ url('device_index') }}",
+    "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "{{ url('device_index') }}?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+    }
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "Matter Devices",
+    "description": "Browse all Matter-compatible smart home devices",
+    "url": "{{ url('device_index') }}",
+    "numberOfItems": {{ stats.total_devices }},
+    "isPartOf": {
+        "@type": "WebSite",
+        "name": "Matter Survey"
+    }
+}
+</script>
+{% endblock %}
+
 {% block extra_styles %}
     .stats {
         display: grid;

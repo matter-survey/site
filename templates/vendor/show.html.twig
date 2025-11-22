@@ -2,6 +2,34 @@
 
 {% block title %}{{ vendor.name }} - Matter Survey{% endblock %}
 
+{% block og_title %}{{ vendor.name }} - Matter Device Manufacturer{% endblock %}
+{% block og_description %}{{ vendor.name }} is a Matter smart home device manufacturer with {{ totalDevices }} device{{ totalDevices != 1 ? 's' : '' }} in the Matter Survey database. Browse their Matter-compatible products and capabilities.{% endblock %}
+{% block og_type %}profile{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": {{ vendor.name|json_encode|raw }},
+    "description": {{ ("Matter smart home device manufacturer with " ~ totalDevices ~ " known device(s)")|json_encode|raw }},
+    "url": "{{ url('vendor_show', {slug: vendor.slug}) }}",
+    "additionalProperty": [
+        {
+            "@type": "PropertyValue",
+            "name": "Matter Vendor ID",
+            "value": "{{ vendor.specId ?? 'N/A' }}"
+        },
+        {
+            "@type": "PropertyValue",
+            "name": "Device Count",
+            "value": "{{ totalDevices }}"
+        }
+    ]
+}
+</script>
+{% endblock %}
+
 {% block extra_styles %}
     .breadcrumb {
         margin-bottom: 1rem;

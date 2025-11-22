@@ -4,6 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Matter Survey{% endblock %}</title>
+
+    {# OpenGraph meta tags #}
+    <meta property="og:site_name" content="Matter Survey">
+    {% block og_meta %}
+    <meta property="og:title" content="{% block og_title %}Matter Survey{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Community-driven database of Matter smart home device capabilities{% endblock %}">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    {% endblock %}
+
+    {# Twitter Card meta tags #}
+    <meta name="twitter:card" content="summary">
+    {% block twitter_meta %}
+    <meta name="twitter:title" content="{{ block('og_title') }}">
+    <meta name="twitter:description" content="{{ block('og_description') }}">
+    {% endblock %}
+
+    {# Standard meta description #}
+    <meta name="description" content="{{ block('og_description') }}">
+
+    {# JSON-LD Structured Data #}
+    {% block structured_data %}{% endblock %}
+
     <style>
         :root {
             --primary: #2563eb;

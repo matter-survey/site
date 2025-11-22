@@ -55,6 +55,49 @@
 
 {% block title %}{{ device.product_name ?? 'Unknown Device' }} - Matter Survey{% endblock %}
 
+{% block og_title %}{{ device.product_name ?? 'Unknown Device' }} by {{ device.vendor_name ?? 'Unknown Vendor' }}{% endblock %}
+{% block og_description %}Matter smart home device: {{ device.product_name ?? 'Unknown Device' }} from {{ device.vendor_name ?? 'Unknown Vendor' }}. Vendor ID: {{ device.vendor_id }}, Product ID: {{ device.product_id }}. View device capabilities, endpoints, and compatible devices.{% endblock %}
+{% block og_type %}product{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": {{ (device.product_name ?? 'Unknown Device')|json_encode|raw }},
+    "description": {{ ("Matter smart home device with " ~ (endpoints|length) ~ " endpoint(s)")|json_encode|raw }},
+    "productID": "{{ device.vendor_id }}:{{ device.product_id }}",
+    "sku": "{{ device.vendor_id }}-{{ device.product_id }}",
+    "category": "Smart Home Device",
+    "manufacturer": {
+        "@type": "Organization",
+        "name": {{ (device.vendor_name ?? 'Unknown Vendor')|json_encode|raw }}
+        {%- if device.vendor_slug %},
+        "url": "{{ url('vendor_show', {slug: device.vendor_slug}) }}"
+        {%- endif %}
+
+    },
+    "additionalProperty": [
+        {
+            "@type": "PropertyValue",
+            "name": "Vendor ID",
+            "value": "{{ device.vendor_id }}"
+        },
+        {
+            "@type": "PropertyValue",
+            "name": "Product ID",
+            "value": "{{ device.product_id }}"
+        },
+        {
+            "@type": "PropertyValue",
+            "name": "Supports Binding",
+            "value": "{{ device.supports_binding ? 'Yes' : 'No' }}"
+        }
+    ]
+}
+</script>
+{% endblock %}
+
 {% block header_subtitle %}{% endblock %}
 
 {% block extra_styles %}

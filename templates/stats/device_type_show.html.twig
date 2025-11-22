@@ -2,6 +2,54 @@
 
 {% block title %}{{ deviceType.name }} - Matter Survey{% endblock %}
 
+{% block og_title %}{{ deviceType.name }} - Matter Device Type{% endblock %}
+{% block og_description %}{{ deviceType.description ?? deviceType.name ~ ' is a Matter device type' }}. {{ totalDevices }} device{{ totalDevices != 1 ? 's' : '' }} implement{{ totalDevices == 1 ? 's' : '' }} this type. Spec version: {{ deviceType.specVersion ?? '1.0' }}.{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "DefinedTerm",
+    "name": {{ deviceType.name|json_encode|raw }},
+    "description": {{ (deviceType.description ?? deviceType.name ~ ' device type from the Matter specification')|json_encode|raw }},
+    "termCode": "{{ deviceType.id }}",
+    "url": "{{ url('stats_device_type_show', {type: deviceType.id}) }}",
+    "inDefinedTermSet": {
+        "@type": "DefinedTermSet",
+        "name": "Matter Device Types",
+        "description": "Device types defined in the Matter smart home specification"
+    },
+    "additionalProperty": [
+        {
+            "@type": "PropertyValue",
+            "name": "Device Type ID",
+            "value": "{{ deviceType.id }}"
+        },
+        {
+            "@type": "PropertyValue",
+            "name": "Hex ID",
+            "value": "{{ deviceType.hexId|default('0x' ~ '%04X'|format(deviceType.id)) }}"
+        },
+        {
+            "@type": "PropertyValue",
+            "name": "Spec Version",
+            "value": "{{ deviceType.specVersion ?? '1.0' }}"
+        },
+        {
+            "@type": "PropertyValue",
+            "name": "Category",
+            "value": "{{ deviceType.displayCategory ?? 'Unknown' }}"
+        },
+        {
+            "@type": "PropertyValue",
+            "name": "Devices Implementing",
+            "value": "{{ totalDevices }}"
+        }
+    ]
+}
+</script>
+{% endblock %}
+
 {% block extra_styles %}
     .breadcrumb {
         margin-bottom: 1rem;

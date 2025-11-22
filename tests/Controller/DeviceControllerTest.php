@@ -328,4 +328,89 @@ class DeviceControllerTest extends WebTestCase
         $this->assertSelectorTextContains('.compatibility-section', 'Can provide data to');
         $this->assertSelectorTextContains('.compatibility-section', 'On/Off');
     }
+
+    // ========================================
+    // Structured Data Tests
+    // ========================================
+
+    public function testIndexPageHasOpenGraphMetaTags(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/');
+
+        $this->assertResponseIsSuccessful();
+
+        // Check OpenGraph meta tags
+        $this->assertSelectorExists('meta[property="og:site_name"]');
+        $this->assertSelectorExists('meta[property="og:title"]');
+        $this->assertSelectorExists('meta[property="og:description"]');
+        $this->assertSelectorExists('meta[property="og:type"]');
+
+        // Check Twitter Card meta tags
+        $this->assertSelectorExists('meta[name="twitter:card"]');
+        $this->assertSelectorExists('meta[name="twitter:title"]');
+        $this->assertSelectorExists('meta[name="twitter:description"]');
+    }
+
+    public function testIndexPageHasWebSiteJsonLd(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/');
+
+        $this->assertResponseIsSuccessful();
+
+        // Check JSON-LD script exists
+        $jsonLdScripts = $crawler->filter('script[type="application/ld+json"]');
+        $this->assertGreaterThan(0, $jsonLdScripts->count(), 'Page should have JSON-LD structured data');
+
+        // Parse and validate first JSON-LD block (WebSite)
+        $jsonLd = json_decode($jsonLdScripts->first()->text(), true);
+        $this->assertNotNull($jsonLd, 'JSON-LD should be valid JSON');
+        $this->assertEquals('https://schema.org', $jsonLd['@context']);
+        $this->assertEquals('WebSite', $jsonLd['@type']);
+        $this->assertEquals('Matter Survey', $jsonLd['name']);
+        $this->assertArrayHasKey('potentialAction', $jsonLd);
+        $this->assertEquals('SearchAction', $jsonLd['potentialAction']['@type']);
+    }
+
+    public function testDeviceShowPageHasProductJsonLd(): void
+    {
+        $client = static::createClient();
+
+        // Get device from index
+        $crawler = $client->request('GET', '/');
+        $deviceLink = $crawler->filter('.device-info h3 a')->first();
+        $crawler = $client->click($deviceLink->link());
+
+        $this->assertResponseIsSuccessful();
+
+        // Check JSON-LD script exists
+        $jsonLdScripts = $crawler->filter('script[type="application/ld+json"]');
+        $this->assertGreaterThan(0, $jsonLdScripts->count(), 'Device page should have JSON-LD');
+
+        // Parse and validate JSON-LD
+        $jsonLd = json_decode($jsonLdScripts->first()->text(), true);
+        $this->assertNotNull($jsonLd, 'JSON-LD should be valid JSON');
+        $this->assertEquals('https://schema.org', $jsonLd['@context']);
+        $this->assertEquals('Product', $jsonLd['@type']);
+        $this->assertArrayHasKey('name', $jsonLd);
+        $this->assertArrayHasKey('manufacturer', $jsonLd);
+        $this->assertEquals('Organization', $jsonLd['manufacturer']['@type']);
+    }
+
+    public function testDeviceShowPageHasProductOpenGraph(): void
+    {
+        $client = static::createClient();
+
+        // Get device from index
+        $crawler = $client->request('GET', '/');
+        $deviceLink = $crawler->filter('.device-info h3 a')->first();
+        $crawler = $client->click($deviceLink->link());
+
+        $this->assertResponseIsSuccessful();
+
+        // Check OpenGraph type is product
+        $ogType = $crawler->filter('meta[property="og:type"]')->attr('content');
+        $this->assertEquals('product', $ogType);
+    }
 }
