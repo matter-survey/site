@@ -3,7 +3,7 @@
 -include .env
 export
 
-.PHONY: help install dev prod clean lint test db-init db-reset deploy
+.PHONY: help install dev prod clean lint test db-init db-reset db-migrate deploy
 
 # Default target
 help:
@@ -18,9 +18,11 @@ help:
 	@echo "  test        Run tests"
 	@echo ""
 	@echo "Database:"
-	@echo "  db-init     Initialize database with schema"
+	@echo "  db-migrate  Run database migrations"
+	@echo "  db-init     Initialize database (run migrations)"
 	@echo "  db-reset    Reset database (WARNING: deletes all data)"
 	@echo "  db-backup   Backup database to timestamped file"
+	@echo "  db-status   Show migration status"
 	@echo ""
 	@echo "Production:"
 	@echo "  prod        Install production dependencies"
@@ -55,16 +57,18 @@ lint-fix:
 	vendor/bin/php-cs-fixer fix
 
 # Database
-db-init:
+db-migrate:
 	@mkdir -p data
-	sqlite3 data/matter-survey.db < schema.sql
-	@echo "Database initialized at data/matter-survey.db"
+	php bin/console doctrine:migrations:migrate --no-interaction
+
+db-init: db-migrate
+	@echo "Database initialized via migrations"
 
 db-reset:
 	@echo "WARNING: This will delete all data!"
 	@read -p "Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ]
 	rm -f data/matter-survey.db
-	$(MAKE) db-init
+	$(MAKE) db-migrate
 
 db-backup:
 	@mkdir -p backups
@@ -75,6 +79,9 @@ db-stats:
 	@sqlite3 data/matter-survey.db "SELECT 'Devices:', COUNT(*) FROM devices; \
 		SELECT 'Installations:', COUNT(*) FROM installations; \
 		SELECT 'Submissions:', COUNT(*) FROM submissions;"
+
+db-status:
+	php bin/console doctrine:migrations:status
 
 # Docker
 docker-up:
@@ -115,5 +122,5 @@ deploy:
 		--exclude='vendor/' \
 		--exclude='.claude/' \
 		./ $(SFTP_USER)@$(SFTP_HOST):$(SFTP_PATH)/
-	ssh $(SFTP_USER)@$(SFTP_HOST) "cd $(SFTP_PATH) && composer install --no-dev --optimize-autoloader && php bin/console cache:clear --env=prod"
+	ssh $(SFTP_USER)@$(SFTP_HOST) "cd $(SFTP_PATH) && composer install --no-dev --optimize-autoloader && php bin/console doctrine:migrations:migrate --no-interaction && php bin/console cache:clear --env=prod"
 	@echo "Deployment complete"
