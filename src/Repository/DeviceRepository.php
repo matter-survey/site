@@ -137,12 +137,12 @@ class DeviceRepository
 
         $endpoints = [];
         foreach ($rows as $row) {
-            $row['device_types'] = json_decode($row['device_types'], true);
-            $row['server_clusters'] = json_decode($row['server_clusters'], true);
-            $row['client_clusters'] = json_decode($row['client_clusters'], true);
+            $row['device_types'] = json_decode($row['device_types'], true) ?? [];
+            $row['server_clusters'] = json_decode($row['server_clusters'], true) ?? [];
+            $row['client_clusters'] = json_decode($row['client_clusters'], true) ?? [];
             // Derive binding support from either server or client clusters
-            $row['has_binding_cluster'] = \in_array(self::BINDING_CLUSTER_ID, $row['server_clusters'] ?? [], true)
-                || \in_array(self::BINDING_CLUSTER_ID, $row['client_clusters'] ?? [], true);
+            $row['has_binding_cluster'] = \in_array(self::BINDING_CLUSTER_ID, $row['server_clusters'], true)
+                || \in_array(self::BINDING_CLUSTER_ID, $row['client_clusters'], true);
             $endpoints[] = $row;
         }
 
@@ -169,11 +169,11 @@ class DeviceRepository
 
         $endpoints = [];
         foreach ($rows as $row) {
-            $row['device_types'] = json_decode($row['device_types'], true);
-            $row['server_clusters'] = json_decode($row['server_clusters'], true);
-            $row['client_clusters'] = json_decode($row['client_clusters'], true);
-            $row['has_binding_cluster'] = \in_array(self::BINDING_CLUSTER_ID, $row['server_clusters'] ?? [], true)
-                || \in_array(self::BINDING_CLUSTER_ID, $row['client_clusters'] ?? [], true);
+            $row['device_types'] = json_decode($row['device_types'], true) ?? [];
+            $row['server_clusters'] = json_decode($row['server_clusters'], true) ?? [];
+            $row['client_clusters'] = json_decode($row['client_clusters'], true) ?? [];
+            $row['has_binding_cluster'] = \in_array(self::BINDING_CLUSTER_ID, $row['server_clusters'], true)
+                || \in_array(self::BINDING_CLUSTER_ID, $row['client_clusters'], true);
             $endpoints[] = $row;
         }
 
