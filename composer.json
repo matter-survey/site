@@ -8,6 +8,7 @@
         "nelmio/cors-bundle": "^2.4",
         "symfony/cache": "^7.0",
         "symfony/dotenv": "^7.3",
+        "symfony/flex": "^2.10",
         "symfony/framework-bundle": "^7.0",
         "symfony/rate-limiter": "^7.0",
         "symfony/runtime": "^7.0",
@@ -32,7 +33,8 @@
     },
     "scripts": {
         "auto-scripts": {
-            "cache:clear": "symfony-cmd"
+            "cache:clear": "symfony-cmd",
+            "assets:install %PUBLIC_DIR%": "symfony-cmd"
         }
     },
     "extra": {
