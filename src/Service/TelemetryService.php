@@ -195,11 +195,11 @@ class TelemetryService
     public function getStats(): array
     {
         return [
-            'total_devices' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM devices')->fetchOne(),
+            'total_devices' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM products')->fetchOne(),
             'total_vendors' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM vendors')->fetchOne(),
             'total_installations' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM installations')->fetchOne(),
             'total_submissions' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM submissions')->fetchOne(),
-            'bindable_devices' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM device_summary WHERE supports_binding = 1')->fetchOne(),
+            'bindable_devices' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM product_summary WHERE supports_binding = 1')->fetchOne(),
         ];
     }
 }

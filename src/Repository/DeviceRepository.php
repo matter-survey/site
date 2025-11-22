@@ -25,7 +25,7 @@ class DeviceRepository
     {
         // Check if device already exists
         $existing = $this->db->executeQuery(
-            'SELECT id FROM devices WHERE vendor_id = :vendor_id AND product_id = :product_id',
+            'SELECT id FROM products WHERE vendor_id = :vendor_id AND product_id = :product_id',
             [
                 'vendor_id' => $deviceData['vendor_id'],
                 'product_id' => $deviceData['product_id'],
@@ -35,14 +35,14 @@ class DeviceRepository
         $isNew = ($existing === false);
 
         $result = $this->db->executeQuery('
-            INSERT INTO devices (vendor_id, vendor_name, vendor_fk, product_id, product_name, last_seen, submission_count)
+            INSERT INTO products (vendor_id, vendor_name, vendor_fk, product_id, product_name, last_seen, submission_count)
             VALUES (:vendor_id, :vendor_name, :vendor_fk, :product_id, :product_name, CURRENT_TIMESTAMP, 1)
             ON CONFLICT(vendor_id, product_id) DO UPDATE SET
-                vendor_name = COALESCE(excluded.vendor_name, devices.vendor_name),
-                vendor_fk = COALESCE(excluded.vendor_fk, devices.vendor_fk),
-                product_name = COALESCE(excluded.product_name, devices.product_name),
+                vendor_name = COALESCE(excluded.vendor_name, products.vendor_name),
+                vendor_fk = COALESCE(excluded.vendor_fk, products.vendor_fk),
+                product_name = COALESCE(excluded.product_name, products.product_name),
                 last_seen = CURRENT_TIMESTAMP,
-                submission_count = devices.submission_count + 1
+                submission_count = products.submission_count + 1
             RETURNING id
         ', [
             'vendor_id' => $deviceData['vendor_id'],
@@ -58,11 +58,11 @@ class DeviceRepository
     public function upsertVersion(int $deviceId, ?string $hardwareVersion, ?string $softwareVersion): void
     {
         $this->db->executeStatement('
-            INSERT INTO device_versions (device_id, hardware_version, software_version, last_seen, count)
+            INSERT INTO product_versions (device_id, hardware_version, software_version, last_seen, count)
             VALUES (:device_id, :hardware_version, :software_version, CURRENT_TIMESTAMP, 1)
             ON CONFLICT(device_id, hardware_version, software_version) DO UPDATE SET
                 last_seen = CURRENT_TIMESTAMP,
-                count = device_versions.count + 1
+                count = product_versions.count + 1
         ', [
             'device_id' => $deviceId,
             'hardware_version' => $hardwareVersion,
@@ -73,7 +73,7 @@ class DeviceRepository
     public function upsertEndpoint(int $deviceId, array $endpointData): void
     {
         $this->db->executeStatement('
-            INSERT INTO device_endpoints (device_id, endpoint_id, device_types, clusters)
+            INSERT INTO product_endpoints (device_id, endpoint_id, device_types, clusters)
             VALUES (:device_id, :endpoint_id, :device_types, :clusters)
             ON CONFLICT(device_id, endpoint_id) DO UPDATE SET
                 device_types = excluded.device_types,
@@ -103,7 +103,7 @@ class DeviceRepository
 
     public function getDeviceCount(): int
     {
-        return (int) $this->db->executeQuery('SELECT COUNT(*) FROM devices')->fetchOne();
+        return (int) $this->db->executeQuery('SELECT COUNT(*) FROM products')->fetchOne();
     }
 
     public function getDevice(int $id): ?array
@@ -120,7 +120,7 @@ class DeviceRepository
     {
         $rows = $this->db->executeQuery('
             SELECT endpoint_id, device_types, clusters
-            FROM device_endpoints
+            FROM product_endpoints
             WHERE device_id = :device_id
             ORDER BY endpoint_id
         ', ['device_id' => $deviceId])->fetchAllAssociative();
@@ -141,7 +141,7 @@ class DeviceRepository
     {
         return $this->db->executeQuery('
             SELECT hardware_version, software_version, count, first_seen, last_seen
-            FROM device_versions
+            FROM product_versions
             WHERE device_id = :device_id
             ORDER BY count DESC
         ', ['device_id' => $deviceId])->fetchAllAssociative();
@@ -191,7 +191,7 @@ class DeviceRepository
     public function getDeviceCountByVendor(int $vendorFk): int
     {
         return (int) $this->db->executeQuery(
-            'SELECT COUNT(*) FROM devices WHERE vendor_fk = :vendor_fk',
+            'SELECT COUNT(*) FROM products WHERE vendor_fk = :vendor_fk',
             ['vendor_fk' => $vendorFk]
         )->fetchOne();
     }

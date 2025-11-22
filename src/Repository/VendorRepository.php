@@ -102,7 +102,7 @@ class VendorRepository extends ServiceEntityRepository
         $conn = $this->getEntityManager()->getConnection();
 
         $count = $conn->executeQuery(
-            'SELECT COUNT(*) FROM devices WHERE vendor_fk = :vendorId',
+            'SELECT COUNT(*) FROM products WHERE vendor_fk = :vendorId',
             ['vendorId' => $vendor->getId()]
         )->fetchOne();
 
