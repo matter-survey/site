@@ -21,7 +21,7 @@ info:
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: https://matter-survey.58lab.org/api
+  - url: https://matter-survey.org/api
     description: Production server
 
 paths:
