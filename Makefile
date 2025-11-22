@@ -136,5 +136,5 @@ deploy:
 		--exclude='/vendor/' \
 		--exclude='.claude/' \
 		./ $(SFTP_USER)@$(SFTP_HOST):$(SFTP_PATH)/
-	ssh $(SFTP_USER)@$(SFTP_HOST) "cd $(SFTP_PATH) && composer install --no-dev --optimize-autoloader && php bin/console doctrine:migrations:migrate --no-interaction && php bin/console doctrine:fixtures:load --group=device_types --append --no-interaction && php bin/console cache:clear --env=prod"
+	ssh $(SFTP_USER)@$(SFTP_HOST) "cd $(SFTP_PATH) && composer install --no-dev --optimize-autoloader && php bin/console cache:clear --env=prod && php bin/console doctrine:migrations:migrate --no-interaction && php bin/console doctrine:fixtures:load --group=device_types --append --no-interaction"
 	@echo "Deployment complete"
