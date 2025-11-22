@@ -1,0 +1,109 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Vendors - Matter Survey{% endblock %}
+
+{% block extra_styles %}
+    .vendor-list {
+        background: white;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+        overflow: hidden;
+    }
+
+    .vendor-item {
+        padding: 1rem;
+        border-bottom: 1px solid var(--gray-200);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .vendor-item:last-child {
+        border-bottom: none;
+    }
+
+    .vendor-item:hover {
+        background: var(--gray-50);
+    }
+
+    .vendor-info h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .vendor-info h3 a {
+        color: var(--gray-900);
+        text-decoration: none;
+    }
+
+    .vendor-info h3 a:hover {
+        color: var(--primary);
+    }
+
+    .vendor-meta {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+    }
+
+    .vendor-count {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        background: var(--gray-100);
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+    }
+
+    .page-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .page-header h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-header p {
+        color: var(--gray-500);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--gray-500);
+    }
+{% endblock %}
+
+{% block body %}
+    <div class="page-header">
+        <h1>Vendors</h1>
+        <p>{{ vendors|length }} vendor{{ vendors|length != 1 ? 's' : '' }} with Matter devices</p>
+    </div>
+
+    {% if vendors is empty %}
+        <div class="empty-state">
+            <p>No vendors in the database yet.</p>
+        </div>
+    {% else %}
+        <div class="vendor-list">
+            {% for vendor in vendors %}
+                <div class="vendor-item">
+                    <div class="vendor-info">
+                        <h3>
+                            <a href="{{ path('vendor_show', {slug: vendor.slug}) }}">
+                                {{ vendor.name }}
+                            </a>
+                        </h3>
+                        <div class="vendor-meta">
+                            Vendor ID: {{ vendor.specId ?? 'N/A' }}
+                        </div>
+                    </div>
+                    <span class="vendor-count">
+                        {{ vendor.deviceCount }} device{{ vendor.deviceCount != 1 ? 's' : '' }}
+                    </span>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

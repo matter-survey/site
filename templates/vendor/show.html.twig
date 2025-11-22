@@ -1,62 +1,39 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Matter Survey - Device Index{% endblock %}
+{% block title %}{{ vendor.name }} - Matter Survey{% endblock %}
 
 {% block extra_styles %}
-    .stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 1rem;
-        margin-bottom: 2rem;
+    .breadcrumb {
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
     }
 
-    .stat-card {
+    .breadcrumb a {
+        color: var(--primary);
+        text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+        text-decoration: underline;
+    }
+
+    .vendor-header {
         background: white;
-        padding: 1rem;
         border-radius: 0.5rem;
         border: 1px solid var(--gray-200);
-    }
-
-    .stat-card .value {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: var(--primary);
-    }
-
-    .stat-card .label {
-        font-size: 0.875rem;
-        color: var(--gray-500);
-    }
-
-    .search-box {
+        padding: 1.5rem;
         margin-bottom: 1.5rem;
     }
 
-    .search-box form {
-        display: flex;
-        gap: 0.5rem;
+    .vendor-header h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
     }
 
-    .search-box input[type="text"] {
-        flex: 1;
-        padding: 0.5rem 1rem;
-        border: 1px solid var(--gray-300);
-        border-radius: 0.375rem;
-        font-size: 1rem;
-    }
-
-    .search-box button {
-        padding: 0.5rem 1rem;
-        background: var(--primary);
-        color: white;
-        border: none;
-        border-radius: 0.375rem;
-        cursor: pointer;
-        font-size: 1rem;
-    }
-
-    .search-box button:hover {
-        background: var(--primary-dark);
+    .vendor-header .meta {
+        color: var(--gray-500);
+        font-size: 0.875rem;
     }
 
     .device-list {
@@ -141,40 +118,26 @@
 {% endblock %}
 
 {% block body %}
-    <div class="stats">
-        <div class="stat-card">
-            <div class="value">{{ stats.total_devices|number_format }}</div>
-            <div class="label">Known Devices</div>
-        </div>
-        <div class="stat-card">
-            <div class="value">{{ stats.bindable_devices|number_format }}</div>
-            <div class="label">Support Binding</div>
-        </div>
-        <div class="stat-card">
-            <div class="value">{{ stats.total_installations|number_format }}</div>
-            <div class="label">Contributors</div>
-        </div>
-        <div class="stat-card">
-            <div class="value">{{ stats.total_submissions|number_format }}</div>
-            <div class="label">Submissions</div>
-        </div>
+    <div class="breadcrumb">
+        <a href="{{ path('device_index') }}">Home</a>
+        &rarr;
+        <a href="{{ path('vendor_index') }}">Vendors</a>
+        &rarr;
+        {{ vendor.name }}
     </div>
 
-    <div class="search-box">
-        <form method="get" action="{{ path('device_index') }}">
-            <input type="text" name="q" placeholder="Search by vendor or product name..." value="{{ search }}">
-            <button type="submit">Search</button>
-        </form>
+    <div class="vendor-header">
+        <h1>{{ vendor.name }}</h1>
+        <div class="meta">
+            Vendor ID: {{ vendor.specId ?? 'N/A' }}
+            &middot;
+            {{ totalDevices }} device{{ totalDevices != 1 ? 's' : '' }}
+        </div>
     </div>
 
     {% if devices is empty %}
         <div class="empty-state">
-            {% if search != '' %}
-                <p>No devices found matching "{{ search }}"</p>
-            {% else %}
-                <p>No devices in the database yet.</p>
-                <p>Install the Matter Binding Helper integration to contribute!</p>
-            {% endif %}
+            <p>No devices from this vendor in the database.</p>
         </div>
     {% else %}
         <div class="device-list">
@@ -187,14 +150,6 @@
                             </a>
                         </h3>
                         <div class="device-meta">
-                            {% if device.vendor_slug %}
-                                <a href="{{ path('vendor_show', {slug: device.vendor_slug}) }}">{{ device.vendor_name ?? 'Unknown Vendor' }}</a>
-                            {% else %}
-                                {{ device.vendor_name ?? 'Unknown Vendor' }}
-                            {% endif %}
-                            &middot;
-                            Vendor ID: {{ device.vendor_id ?? 'N/A' }}
-                            &middot;
                             Product ID: {{ device.product_id ?? 'N/A' }}
                             &middot;
                             Seen {{ device.submission_count|number_format }} time{{ device.submission_count != 1 ? 's' : '' }}
@@ -210,22 +165,22 @@
             {% endfor %}
         </div>
 
-        {% if totalPages > 1 and search == '' %}
+        {% if totalPages > 1 %}
             <div class="pagination">
                 {% if page > 1 %}
-                    <a href="{{ path('device_index', {page: page - 1}) }}">&laquo; Prev</a>
+                    <a href="{{ path('vendor_show', {slug: vendor.slug, page: page - 1}) }}">&laquo; Prev</a>
                 {% endif %}
 
                 {% for i in max(1, page - 2)..min(totalPages, page + 2) %}
                     {% if i == page %}
                         <span class="current">{{ i }}</span>
                     {% else %}
-                        <a href="{{ path('device_index', {page: i}) }}">{{ i }}</a>
+                        <a href="{{ path('vendor_show', {slug: vendor.slug, page: i}) }}">{{ i }}</a>
                     {% endif %}
                 {% endfor %}
 
                 {% if page < totalPages %}
-                    <a href="{{ path('device_index', {page: page + 1}) }}">Next &raquo;</a>
+                    <a href="{{ path('vendor_show', {slug: vendor.slug, page: page + 1}) }}">Next &raquo;</a>
                 {% endif %}
             </div>
         {% endif %}

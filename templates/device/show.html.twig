@@ -292,12 +292,22 @@
 {% block body %}
     <div class="breadcrumb">
         <a href="{{ path('device_index') }}">All Devices</a> &raquo;
-        {{ device.vendor_name ?? 'Unknown Vendor' }}
+        {% if device.vendor_slug %}
+            <a href="{{ path('vendor_show', {slug: device.vendor_slug}) }}">{{ device.vendor_name ?? 'Unknown Vendor' }}</a>
+        {% else %}
+            {{ device.vendor_name ?? 'Unknown Vendor' }}
+        {% endif %}
     </div>
 
     <div class="device-header">
         <h2>{{ device.product_name ?? 'Unknown Product' }}</h2>
-        <div class="vendor">{{ device.vendor_name ?? 'Unknown Vendor' }}</div>
+        <div class="vendor">
+            {% if device.vendor_slug %}
+                <a href="{{ path('vendor_show', {slug: device.vendor_slug}) }}">{{ device.vendor_name ?? 'Unknown Vendor' }}</a>
+            {% else %}
+                {{ device.vendor_name ?? 'Unknown Vendor' }}
+            {% endif %}
+        </div>
         <div class="device-ids">
             <div class="device-id">
                 <span class="label">Vendor ID:</span>

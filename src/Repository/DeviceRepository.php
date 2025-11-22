@@ -16,13 +16,28 @@ class DeviceRepository
         $this->db = $databaseService->getConnection();
     }
 
-    public function upsertDevice(array $deviceData): int
+    /**
+     * @param bool $isNew Set to true if this was a new device (not an update)
+     */
+    public function upsertDevice(array $deviceData, bool &$isNew = false): int
     {
+        // Check if device already exists
+        $existing = $this->db->executeQuery(
+            'SELECT id FROM devices WHERE vendor_id = :vendor_id AND product_id = :product_id',
+            [
+                'vendor_id' => $deviceData['vendor_id'],
+                'product_id' => $deviceData['product_id'],
+            ]
+        )->fetchOne();
+
+        $isNew = ($existing === false);
+
         $result = $this->db->executeQuery('
-            INSERT INTO devices (vendor_id, vendor_name, product_id, product_name, last_seen, submission_count)
-            VALUES (:vendor_id, :vendor_name, :product_id, :product_name, CURRENT_TIMESTAMP, 1)
+            INSERT INTO devices (vendor_id, vendor_name, vendor_fk, product_id, product_name, last_seen, submission_count)
+            VALUES (:vendor_id, :vendor_name, :vendor_fk, :product_id, :product_name, CURRENT_TIMESTAMP, 1)
             ON CONFLICT(vendor_id, product_id) DO UPDATE SET
                 vendor_name = COALESCE(excluded.vendor_name, devices.vendor_name),
+                vendor_fk = COALESCE(excluded.vendor_fk, devices.vendor_fk),
                 product_name = COALESCE(excluded.product_name, devices.product_name),
                 last_seen = CURRENT_TIMESTAMP,
                 submission_count = devices.submission_count + 1
@@ -30,6 +45,7 @@ class DeviceRepository
         ', [
             'vendor_id' => $deviceData['vendor_id'],
             'vendor_name' => $deviceData['vendor_name'],
+            'vendor_fk' => $deviceData['vendor_fk'] ?? null,
             'product_id' => $deviceData['product_id'],
             'product_name' => $deviceData['product_name'],
         ]);
@@ -146,5 +162,36 @@ class DeviceRepository
         ], [
             'limit' => \Doctrine\DBAL\ParameterType::INTEGER,
         ])->fetchAllAssociative();
+    }
+
+    /**
+     * Get devices by vendor FK.
+     */
+    public function getDevicesByVendor(int $vendorFk, int $limit = 100, int $offset = 0): array
+    {
+        return $this->db->executeQuery('
+            SELECT * FROM device_summary
+            WHERE vendor_fk = :vendor_fk
+            ORDER BY submission_count DESC, last_seen DESC
+            LIMIT :limit OFFSET :offset
+        ', [
+            'vendor_fk' => $vendorFk,
+            'limit' => $limit,
+            'offset' => $offset,
+        ], [
+            'limit' => \Doctrine\DBAL\ParameterType::INTEGER,
+            'offset' => \Doctrine\DBAL\ParameterType::INTEGER,
+        ])->fetchAllAssociative();
+    }
+
+    /**
+     * Count devices by vendor FK.
+     */
+    public function getDeviceCountByVendor(int $vendorFk): int
+    {
+        return (int) $this->db->executeQuery(
+            'SELECT COUNT(*) FROM devices WHERE vendor_fk = :vendor_fk',
+            ['vendor_fk' => $vendorFk]
+        )->fetchOne();
     }
 }

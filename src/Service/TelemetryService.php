@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Repository\DeviceRepository;
+use App\Repository\VendorRepository;
 use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
 class TelemetryService
@@ -15,6 +17,8 @@ class TelemetryService
     public function __construct(
         DatabaseService $databaseService,
         private DeviceRepository $deviceRepo,
+        private VendorRepository $vendorRepo,
+        private EntityManagerInterface $em,
         private LoggerInterface $logger,
     ) {
         $this->db = $databaseService->getConnection();
@@ -45,6 +49,9 @@ class TelemetryService
                     $processedCount++;
                 }
             }
+
+            // Flush ORM changes (vendors)
+            $this->em->flush();
 
             $this->db->commit();
 
@@ -115,12 +122,38 @@ class TelemetryService
             return false;
         }
 
+        $vendorId = $device['vendor_id'] ?? null;
+        $vendorName = $this->sanitizeString($device['vendor_name'] ?? null);
+        $vendorFk = null;
+
+        // Find or create vendor if we have a vendor_id
+        if ($vendorId !== null) {
+            $vendor = $this->vendorRepo->findOrCreateBySpecId((int) $vendorId, $vendorName);
+            $vendorFk = $vendor->getId();
+
+            // If this is a new vendor, we need to flush to get the ID
+            if ($vendorFk === null) {
+                $this->em->flush();
+                $vendorFk = $vendor->getId();
+            }
+        }
+
+        $isNewDevice = false;
         $deviceId = $this->deviceRepo->upsertDevice([
-            'vendor_id' => $device['vendor_id'] ?? null,
-            'vendor_name' => $this->sanitizeString($device['vendor_name'] ?? null),
+            'vendor_id' => $vendorId,
+            'vendor_name' => $vendorName,
+            'vendor_fk' => $vendorFk,
             'product_id' => $device['product_id'] ?? null,
             'product_name' => $this->sanitizeString($device['product_name'] ?? null),
-        ]);
+        ], $isNewDevice);
+
+        // Update vendor device count if this is a new device
+        if ($isNewDevice && $vendorFk !== null) {
+            $vendor = $this->vendorRepo->find($vendorFk);
+            if ($vendor) {
+                $vendor->incrementDeviceCount();
+            }
+        }
 
         $this->deviceRepo->upsertVersion(
             $deviceId,
@@ -163,6 +196,7 @@ class TelemetryService
     {
         return [
             'total_devices' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM devices')->fetchOne(),
+            'total_vendors' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM vendors')->fetchOne(),
             'total_installations' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM installations')->fetchOne(),
             'total_submissions' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM submissions')->fetchOne(),
             'bindable_devices' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM device_summary WHERE supports_binding = 1')->fetchOne(),
