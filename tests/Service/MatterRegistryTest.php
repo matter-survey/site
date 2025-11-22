@@ -5,23 +5,30 @@ declare(strict_types=1);
 namespace App\Tests\Service;
 
 use App\Service\MatterRegistry;
-use PHPUnit\Framework\TestCase;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
-class MatterRegistryTest extends TestCase
+/**
+ * Tests for MatterRegistry service.
+ *
+ * These tests require the database fixtures to be loaded.
+ * Run `make test-reset` before running tests if fixtures are missing.
+ */
+class MatterRegistryTest extends KernelTestCase
 {
     private MatterRegistry $registry;
 
     protected function setUp(): void
     {
-        $this->registry = new MatterRegistry();
+        self::bootKernel();
+        $this->registry = self::getContainer()->get(MatterRegistry::class);
     }
 
     public function testGetClusterNameReturnsKnownCluster(): void
     {
-        $this->assertEquals('On/Off', $this->registry->getClusterName(0x0006));
-        $this->assertEquals('Level Control', $this->registry->getClusterName(0x0008));
-        $this->assertEquals('Color Control', $this->registry->getClusterName(0x0300));
-        $this->assertEquals('Thermostat', $this->registry->getClusterName(0x0201));
+        $this->assertEquals('On/Off', $this->registry->getClusterName(6));
+        $this->assertEquals('Level Control', $this->registry->getClusterName(8));
+        $this->assertEquals('Color Control', $this->registry->getClusterName(768));
+        $this->assertEquals('Thermostat', $this->registry->getClusterName(513));
     }
 
     public function testGetClusterNameReturnsFormattedHexForUnknown(): void
@@ -163,7 +170,7 @@ class MatterRegistryTest extends TestCase
 
         $this->assertIsArray($clusters);
         $this->assertNotEmpty($clusters);
-        $this->assertEquals('On/Off', $clusters[0x0006]);
+        $this->assertEquals('On/Off', $clusters[6]);
     }
 
     public function testGetAllDeviceTypeNames(): void
@@ -182,5 +189,45 @@ class MatterRegistryTest extends TestCase
         $this->assertIsArray($metadata);
         $this->assertNotEmpty($metadata);
         $this->assertArrayHasKey(256, $metadata);
+    }
+
+    public function testGetClusterMetadata(): void
+    {
+        $metadata = $this->registry->getClusterMetadata(6);
+
+        $this->assertIsArray($metadata);
+        $this->assertEquals('On/Off', $metadata['name']);
+        $this->assertEquals('0x0006', $metadata['hexId']);
+        $this->assertArrayHasKey('description', $metadata);
+        $this->assertArrayHasKey('category', $metadata);
+    }
+
+    public function testGetMandatoryServerClusters(): void
+    {
+        $clusters = $this->registry->getMandatoryServerClusters(256); // On/Off Light
+
+        $this->assertIsArray($clusters);
+        $this->assertNotEmpty($clusters);
+
+        // On/Off Light requires Identify, Groups, Scenes Management, On/Off
+        $clusterIds = array_column($clusters, 'id');
+        $this->assertContains(3, $clusterIds); // Identify
+        $this->assertContains(6, $clusterIds); // On/Off
+    }
+
+    public function testGetExtendedDeviceType(): void
+    {
+        $deviceType = $this->registry->getExtendedDeviceType(256);
+
+        $this->assertIsArray($deviceType);
+        $this->assertEquals('On/Off Light', $deviceType['name']);
+        $this->assertArrayHasKey('mandatoryServerClusters', $deviceType);
+        $this->assertArrayHasKey('optionalServerClusters', $deviceType);
+    }
+
+    public function testHasExtendedData(): void
+    {
+        $this->assertTrue($this->registry->hasExtendedData(256));
+        $this->assertFalse($this->registry->hasExtendedData(99999));
     }
 }

@@ -43,7 +43,25 @@ php bin/console doctrine:migrations:migrate
 - **DeviceController** - Device browser with pagination and search (`/`, `/device/{id}`)
 - **TelemetryService** - Processes submissions, logs via `LoggerInterface`
 - **DeviceRepository** - Data access for devices, versions, and endpoints
-- **MatterRegistry** - Lookup for Matter cluster/device type names and metadata
+- **MatterRegistry** - Lookup for Matter cluster/device type names and metadata (database-backed)
+
+### Matter Registry Data
+
+All Matter specification data (clusters, device types) is stored in the database and loaded from YAML fixtures:
+
+- `fixtures/clusters.yaml` - 50+ cluster definitions with names, descriptions, categories
+- `fixtures/device_types.yaml` - 65+ device type definitions with cluster requirements
+
+**Entities:**
+- `Cluster` - id, hexId, name, description, specVersion, category, isGlobal
+- `DeviceType` - id, hexId, name, description, category, displayCategory, icon, cluster requirements
+
+**Fixture Groups:**
+- `clusters` - Load only cluster data
+- `device_types` - Load only device type data
+- `matter` - Load both clusters and device types (used in deploy)
+
+To add new Matter spec data, edit the YAML fixtures and redeploy. Data is loaded via `doctrine:fixtures:load --group=matter --append`.
 
 ### Validation
 

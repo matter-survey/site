@@ -57,7 +57,7 @@ class DeviceTypeRepository extends ServiceEntityRepository
      *
      * @return DeviceType[]
      */
-    public function findByCategory(string $category): array
+    public function findByDisplayCategory(string $category): array
     {
         return $this->createQueryBuilder('dt')
             ->where('dt.displayCategory = :category')
@@ -65,6 +65,48 @@ class DeviceTypeRepository extends ServiceEntityRepository
             ->orderBy('dt.name', 'ASC')
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * Find device types by spec category (e.g., 'lighting', 'hvac', 'sensors').
+     *
+     * @return DeviceType[]
+     */
+    public function findBySpecCategory(string $category): array
+    {
+        return $this->createQueryBuilder('dt')
+            ->where('dt.category = :category')
+            ->setParameter('category', $category)
+            ->orderBy('dt.name', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Get all unique spec categories.
+     *
+     * @return string[]
+     */
+    public function findAllSpecCategories(): array
+    {
+        $result = $this->createQueryBuilder('dt')
+            ->select('DISTINCT dt.category')
+            ->where('dt.category IS NOT NULL')
+            ->orderBy('dt.category', 'ASC')
+            ->getQuery()
+            ->getSingleColumnResult();
+
+        return array_filter($result);
+    }
+
+    /**
+     * Get all unique display categories.
+     *
+     * @return string[]
+     */
+    public function findAllDisplayCategories(): array
+    {
+        return $this->findAllCategories();
     }
 
     /**

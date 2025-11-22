@@ -893,6 +893,27 @@
     - { id: 4, name: "Groups" }
 
 # HVAC Device Types
+- id: 768
+  hexId: "0x0300"
+  name: "Heating/Cooling Unit"
+  description: "A Heating/Cooling Unit is a device capable of heating or cooling a substance (typically air or water) and is part of an HVAC system."
+  specVersion: "1.0"
+  category: "hvac"
+  displayCategory: "Climate"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "thermometer"
+  mandatoryServerClusters:
+    - { id: 6, name: "On/Off" }
+    - { id: 8, name: "Level Control" }
+  optionalServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 4, name: "Groups" }
+    - { id: 98, name: "Scenes Management" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
 - id: 769
   hexId: "0x0301"
   name: "Thermostat"
