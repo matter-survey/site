@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Service\TelemetryService;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,6 +19,7 @@ class ApiController extends AbstractController
     public function __construct(
         private TelemetryService $telemetryService,
         private RateLimiterFactory $apiSubmitLimiter,
+        private LoggerInterface $logger,
     ) {}
 
     #[Route('/', name: 'api_docs_redirect', methods: ['GET'])]
@@ -30,8 +32,10 @@ class ApiController extends AbstractController
     public function submit(Request $request): JsonResponse
     {
         // Rate limiting
-        $limiter = $this->apiSubmitLimiter->create($request->getClientIp() ?? 'unknown');
+        $clientIp = $request->getClientIp() ?? 'unknown';
+        $limiter = $this->apiSubmitLimiter->create($clientIp);
         if (!$limiter->consume()->isAccepted()) {
+            $this->logger->warning('API rate limit exceeded', ['ip' => $clientIp]);
             return $this->json(
                 ['status' => 'error', 'error' => 'Rate limit exceeded. Please try again later.'],
                 Response::HTTP_TOO_MANY_REQUESTS
@@ -49,6 +53,10 @@ class ApiController extends AbstractController
 
         $payload = json_decode($content, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
+            $this->logger->warning('Invalid JSON in API request', [
+                'ip' => $clientIp,
+                'error' => json_last_error_msg(),
+            ]);
             return $this->json(
                 ['status' => 'error', 'error' => 'Invalid JSON: ' . json_last_error_msg()],
                 Response::HTTP_BAD_REQUEST
@@ -56,7 +64,7 @@ class ApiController extends AbstractController
         }
 
         // Process submission
-        $ipHash = hash('sha256', $request->getClientIp() ?? 'unknown');
+        $ipHash = hash('sha256', $clientIp);
         $result = $this->telemetryService->processSubmission($payload, $ipHash);
 
         if ($result['success']) {

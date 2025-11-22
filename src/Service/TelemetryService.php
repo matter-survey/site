@@ -6,16 +6,18 @@ namespace App\Service;
 
 use App\Repository\DeviceRepository;
 use PDO;
+use Psr\Log\LoggerInterface;
 
 class TelemetryService
 {
     private PDO $db;
-    private DeviceRepository $deviceRepo;
 
-    public function __construct(DatabaseService $databaseService, DeviceRepository $deviceRepo)
-    {
+    public function __construct(
+        DatabaseService $databaseService,
+        private DeviceRepository $deviceRepo,
+        private LoggerInterface $logger,
+    ) {
         $this->db = $databaseService->getConnection();
-        $this->deviceRepo = $deviceRepo;
     }
 
     /**
@@ -46,6 +48,11 @@ class TelemetryService
 
             $this->db->commit();
 
+            $this->logger->info('Telemetry submission processed', [
+                'installation_id' => $installationId,
+                'devices_processed' => $processedCount,
+            ]);
+
             return [
                 'success' => true,
                 'message' => "Processed $processedCount devices",
@@ -53,6 +60,11 @@ class TelemetryService
             ];
         } catch (\Exception $e) {
             $this->db->rollBack();
+            $this->logger->error('Telemetry submission failed', [
+                'installation_id' => $installationId,
+                'error' => $e->getMessage(),
+                'exception' => $e,
+            ]);
             return ['success' => false, 'error' => 'Database error: ' . $e->getMessage()];
         }
     }
