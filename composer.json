@@ -1,5 +1,6 @@
 {
     "name": "matter-survey/app",
+    "description": "The matter survey app",
     "type": "project",
     "license": "MIT",
     "require": {
