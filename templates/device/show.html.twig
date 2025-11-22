@@ -540,13 +540,16 @@
             {% for ep in endpoints %}
                 {% set hwKey = ep.hardware_version ?? 'unknown' %}
                 {% set swKey = ep.software_version ?? 'unknown' %}
-                {% if hwGroups[hwKey] is not defined %}
-                    {% set hwGroups = hwGroups|merge({(hwKey): {}}) %}
-                {% endif %}
-                {% if hwGroups[hwKey][swKey] is not defined %}
-                    {% set hwGroups = hwGroups|merge({(hwKey): hwGroups[hwKey]|merge({(swKey): []})}) %}
-                {% endif %}
-                {% set hwGroups = hwGroups|merge({(hwKey): hwGroups[hwKey]|merge({(swKey): hwGroups[hwKey][swKey]|merge([ep])})}) %}
+                {# Get current hw group or empty object #}
+                {% set currentHwGroup = hwGroups[hwKey] ?? {} %}
+                {# Get current sw group or empty array #}
+                {% set currentSwGroup = currentHwGroup[swKey] ?? [] %}
+                {# Add endpoint to sw group #}
+                {% set currentSwGroup = currentSwGroup|merge([ep]) %}
+                {# Update hw group with new sw group #}
+                {% set currentHwGroup = currentHwGroup|merge({(swKey): currentSwGroup}) %}
+                {# Update hwGroups with new hw group #}
+                {% set hwGroups = hwGroups|merge({(hwKey): currentHwGroup}) %}
             {% endfor %}
 
             {% for hwVersion, swGroups in hwGroups %}
