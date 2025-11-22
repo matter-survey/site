@@ -109,6 +109,7 @@ deploy:
 	rsync -avz --delete \
 		--exclude='.git' \
 		--exclude='.env' \
+		--exclude='.env.local' \
 		--exclude='data/' \
 		--exclude='var/' \
 		--exclude='vendor/' \
