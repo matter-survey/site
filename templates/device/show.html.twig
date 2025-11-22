@@ -627,15 +627,17 @@
                             <div class="label">Device Types</div>
                             <div class="tag-list">
                                 {% for dt in ep.device_types %}
-                                    {% set meta = matterRegistry.getDeviceTypeMetadata(dt.id) %}
+                                    {# Handle both object format {"id": 256} and plain integer format 256 #}
+                                    {% set dtId = dt.id is defined ? dt.id : dt %}
+                                    {% set meta = matterRegistry.getDeviceTypeMetadata(dtId) %}
                                     {% set categoryClass = meta ? 'tag-category-' ~ meta.displayCategory|lower : 'tag-primary' %}
                                     <span class="tag {{ categoryClass }}" title="{{ meta.description ?? 'Unknown device type' }}">
                                         <span class="device-icon">{{ _self.deviceIcon(meta.icon ?? 'device') }}</span>
-                                        {{ meta.name ?? ('Device Type ' ~ dt.id) }}
+                                        {{ meta.name ?? ('Device Type ' ~ dtId) }}
                                         {% if meta.specVersion is defined and meta.specVersion != '1.0' %}
                                             <span class="spec-badge">{{ meta.specVersion }}</span>
                                         {% endif %}
-                                        <span class="tag-id">#{{ dt.id }}</span>
+                                        <span class="tag-id">#{{ dtId }}</span>
                                     </span>
                                 {% endfor %}
                             </div>
