@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Repository\DeviceRepository;
-use PDO;
+use Doctrine\DBAL\Connection;
 use Psr\Log\LoggerInterface;
 
 class TelemetryService
 {
-    private PDO $db;
+    private Connection $db;
 
     public function __construct(
         DatabaseService $databaseService,
@@ -88,26 +88,24 @@ class TelemetryService
 
     private function recordInstallation(string $installationId): void
     {
-        $stmt = $this->db->prepare('
+        $this->db->executeStatement('
             INSERT INTO installations (installation_id, last_seen, submission_count)
             VALUES (:id, CURRENT_TIMESTAMP, 1)
             ON CONFLICT(installation_id) DO UPDATE SET
                 last_seen = CURRENT_TIMESTAMP,
                 submission_count = installations.submission_count + 1
-        ');
-        $stmt->execute([':id' => $installationId]);
+        ', ['id' => $installationId]);
     }
 
     private function logSubmission(string $installationId, int $deviceCount, ?string $ipHash): void
     {
-        $stmt = $this->db->prepare('
+        $this->db->executeStatement('
             INSERT INTO submissions (installation_id, device_count, ip_hash)
             VALUES (:installation_id, :device_count, :ip_hash)
-        ');
-        $stmt->execute([
-            ':installation_id' => $installationId,
-            ':device_count' => $deviceCount,
-            ':ip_hash' => $ipHash,
+        ', [
+            'installation_id' => $installationId,
+            'device_count' => $deviceCount,
+            'ip_hash' => $ipHash,
         ]);
     }
 
@@ -163,20 +161,11 @@ class TelemetryService
      */
     public function getStats(): array
     {
-        $stats = [];
-
-        $stmt = $this->db->query('SELECT COUNT(*) as count FROM devices');
-        $stats['total_devices'] = (int) $stmt->fetch()['count'];
-
-        $stmt = $this->db->query('SELECT COUNT(*) as count FROM installations');
-        $stats['total_installations'] = (int) $stmt->fetch()['count'];
-
-        $stmt = $this->db->query('SELECT COUNT(*) as count FROM submissions');
-        $stats['total_submissions'] = (int) $stmt->fetch()['count'];
-
-        $stmt = $this->db->query('SELECT COUNT(*) as count FROM device_summary WHERE supports_binding = 1');
-        $stats['bindable_devices'] = (int) $stmt->fetch()['count'];
-
-        return $stats;
+        return [
+            'total_devices' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM devices')->fetchOne(),
+            'total_installations' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM installations')->fetchOne(),
+            'total_submissions' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM submissions')->fetchOne(),
+            'bindable_devices' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM device_summary WHERE supports_binding = 1')->fetchOne(),
+        ];
     }
 }

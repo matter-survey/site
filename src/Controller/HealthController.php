@@ -24,7 +24,7 @@ class HealthController extends AbstractController
         // Check database connectivity
         try {
             $db = $this->databaseService->getConnection();
-            $db->query('SELECT 1');
+            $db->executeQuery('SELECT 1');
             $checks['database'] = 'ok';
         } catch (\Exception $e) {
             $checks['database'] = 'error';

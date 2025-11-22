@@ -1,5 +1,5 @@
 parameters:
-    database_path: '%kernel.project_dir%/data/matter-survey.db'
+    schema_path: '%kernel.project_dir%/schema.sql'
 
 services:
     _defaults:
@@ -13,5 +13,4 @@ services:
 
     App\Service\DatabaseService:
         arguments:
-            $databasePath: '%database_path%'
-            $schemaPath: '%kernel.project_dir%/schema.sql'
+            $schemaPath: '%schema_path%'
