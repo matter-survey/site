@@ -77,3 +77,35 @@ jobs:
 
       - name: Check for security vulnerabilities
         run: composer audit
+
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [test, code-quality]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SFTP_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy via rsync
+        run: |
+          rsync -avz --delete \
+            --exclude='.git' \
+            --exclude='.env.local' \
+            --exclude='data/' \
+            --exclude='var/' \
+            --exclude='vendor/' \
+            --exclude='.claude/' \
+            ./ ${{ secrets.SFTP_USER }}@${{ secrets.SFTP_HOST }}:${{ secrets.SFTP_PATH }}/
+
+      - name: Install dependencies and clear cache
+        run: |
+          ssh ${{ secrets.SFTP_USER }}@${{ secrets.SFTP_HOST }} "cd ${{ secrets.SFTP_PATH }} && composer install --no-dev --optimize-autoloader && php bin/console cache:clear --env=prod"
