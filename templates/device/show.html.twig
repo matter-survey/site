@@ -135,6 +135,42 @@
         border-bottom: none;
     }
 
+    .version-group {
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--gray-200);
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+
+    .version-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        background: var(--gray-50);
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .version-label {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--gray-700);
+    }
+
+    .endpoint-count {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+    }
+
+    .version-group .endpoint {
+        margin: 0;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .version-group .endpoint:last-child {
+        border-bottom: none;
+    }
+
     .endpoint-header {
         display: flex;
         justify-content: space-between;
@@ -335,15 +371,37 @@
 
     {% if endpoints is not empty %}
         <div class="section">
-            <h3>Endpoints ({{ endpoints|length }})</h3>
+            <h3>Endpoints by Version</h3>
+            {% set groupedEndpoints = {} %}
             {% for ep in endpoints %}
-                <div class="endpoint">
-                    <div class="endpoint-header">
-                        <h4>Endpoint {{ ep.endpoint_id }}</h4>
-                        {% if ep.has_binding_cluster %}
-                            <span class="badge badge-binding">Has Binding Cluster</span>
-                        {% endif %}
+                {% set versionKey = (ep.software_version ?? 'unknown') ~ '|' ~ (ep.hardware_version ?? 'unknown') %}
+                {% if groupedEndpoints[versionKey] is not defined %}
+                    {% set groupedEndpoints = groupedEndpoints|merge({(versionKey): []}) %}
+                {% endif %}
+                {% set groupedEndpoints = groupedEndpoints|merge({(versionKey): groupedEndpoints[versionKey]|merge([ep])}) %}
+            {% endfor %}
+
+            {% for versionKey, versionEndpoints in groupedEndpoints %}
+                {% set versionParts = versionKey|split('|') %}
+                {% set swVersion = versionParts[0] %}
+                {% set hwVersion = versionParts[1] %}
+                <div class="version-group">
+                    <div class="version-header">
+                        <span class="version-label">
+                            SW: {{ swVersion != 'unknown' ? swVersion : 'N/A' }}
+                            {% if hwVersion != 'unknown' %} / HW: {{ hwVersion }}{% endif %}
+                        </span>
+                        <span class="endpoint-count">{{ versionEndpoints|length }} endpoint{{ versionEndpoints|length != 1 ? 's' : '' }}</span>
                     </div>
+
+                    {% for ep in versionEndpoints %}
+                        <div class="endpoint">
+                            <div class="endpoint-header">
+                                <h4>Endpoint {{ ep.endpoint_id }}</h4>
+                                {% if ep.has_binding_cluster %}
+                                    <span class="badge badge-binding">Has Binding Cluster</span>
+                                {% endif %}
+                            </div>
 
                     {% if ep.device_types is not empty %}
                         <div class="device-types">
@@ -386,6 +444,8 @@
                             </div>
                         </div>
                     {% endif %}
+                        </div>
+                    {% endfor %}
                 </div>
             {% endfor %}
         </div>

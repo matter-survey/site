@@ -70,18 +70,22 @@ class DeviceRepository
         ]);
     }
 
-    public function upsertEndpoint(int $deviceId, array $endpointData): void
+    public function upsertEndpoint(int $deviceId, array $endpointData, ?string $hardwareVersion = null, ?string $softwareVersion = null): void
     {
         $this->db->executeStatement('
-            INSERT INTO product_endpoints (device_id, endpoint_id, device_types, server_clusters, client_clusters)
-            VALUES (:device_id, :endpoint_id, :device_types, :server_clusters, :client_clusters)
-            ON CONFLICT(device_id, endpoint_id) DO UPDATE SET
+            INSERT INTO product_endpoints (device_id, endpoint_id, hardware_version, software_version, device_types, server_clusters, client_clusters)
+            VALUES (:device_id, :endpoint_id, :hardware_version, :software_version, :device_types, :server_clusters, :client_clusters)
+            ON CONFLICT(device_id, endpoint_id, hardware_version, software_version) DO UPDATE SET
                 device_types = excluded.device_types,
                 server_clusters = excluded.server_clusters,
-                client_clusters = excluded.client_clusters
+                client_clusters = excluded.client_clusters,
+                last_seen = CURRENT_TIMESTAMP,
+                submission_count = product_endpoints.submission_count + 1
         ', [
             'device_id' => $deviceId,
             'endpoint_id' => $endpointData['endpoint_id'],
+            'hardware_version' => $hardwareVersion,
+            'software_version' => $softwareVersion,
             'device_types' => json_encode($endpointData['device_types'] ?? []),
             'server_clusters' => json_encode($endpointData['server_clusters'] ?? []),
             'client_clusters' => json_encode($endpointData['client_clusters'] ?? []),
@@ -118,13 +122,17 @@ class DeviceRepository
         return $result ?: null;
     }
 
+    /**
+     * Get all endpoints for a device, grouped by version.
+     * Returns endpoints with version info, ordered by version then endpoint_id.
+     */
     public function getDeviceEndpoints(int $deviceId): array
     {
         $rows = $this->db->executeQuery('
-            SELECT endpoint_id, device_types, server_clusters, client_clusters
+            SELECT endpoint_id, hardware_version, software_version, device_types, server_clusters, client_clusters, first_seen, last_seen, submission_count
             FROM product_endpoints
             WHERE device_id = :device_id
-            ORDER BY endpoint_id
+            ORDER BY software_version DESC, hardware_version DESC, endpoint_id
         ', ['device_id' => $deviceId])->fetchAllAssociative();
 
         $endpoints = [];
@@ -139,6 +147,53 @@ class DeviceRepository
         }
 
         return $endpoints;
+    }
+
+    /**
+     * Get endpoints for a specific version of a device.
+     */
+    public function getDeviceEndpointsByVersion(int $deviceId, ?string $hardwareVersion, ?string $softwareVersion): array
+    {
+        $rows = $this->db->executeQuery('
+            SELECT endpoint_id, hardware_version, software_version, device_types, server_clusters, client_clusters, first_seen, last_seen, submission_count
+            FROM product_endpoints
+            WHERE device_id = :device_id
+              AND (hardware_version = :hardware_version OR (hardware_version IS NULL AND :hardware_version IS NULL))
+              AND (software_version = :software_version OR (software_version IS NULL AND :software_version IS NULL))
+            ORDER BY endpoint_id
+        ', [
+            'device_id' => $deviceId,
+            'hardware_version' => $hardwareVersion,
+            'software_version' => $softwareVersion,
+        ])->fetchAllAssociative();
+
+        $endpoints = [];
+        foreach ($rows as $row) {
+            $row['device_types'] = json_decode($row['device_types'], true);
+            $row['server_clusters'] = json_decode($row['server_clusters'], true);
+            $row['client_clusters'] = json_decode($row['client_clusters'], true);
+            $row['has_binding_cluster'] = \in_array(self::BINDING_CLUSTER_ID, $row['server_clusters'] ?? [], true)
+                || \in_array(self::BINDING_CLUSTER_ID, $row['client_clusters'] ?? [], true);
+            $endpoints[] = $row;
+        }
+
+        return $endpoints;
+    }
+
+    /**
+     * Get unique versions that have endpoint data for a device.
+     */
+    public function getDeviceEndpointVersions(int $deviceId): array
+    {
+        return $this->db->executeQuery('
+            SELECT DISTINCT hardware_version, software_version,
+                   MIN(first_seen) as first_seen, MAX(last_seen) as last_seen,
+                   SUM(submission_count) as total_submissions
+            FROM product_endpoints
+            WHERE device_id = :device_id
+            GROUP BY hardware_version, software_version
+            ORDER BY software_version DESC, hardware_version DESC
+        ', ['device_id' => $deviceId])->fetchAllAssociative();
     }
 
     public function getDeviceVersions(int $deviceId): array

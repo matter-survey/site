@@ -42,16 +42,15 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                 'product_name' => $data['productName'],
             ], $isNew);
 
-            // Add version info
-            $this->deviceRepository->upsertVersion(
-                $deviceId,
-                $data['hardwareVersion'] ?? null,
-                $data['softwareVersion'] ?? null
-            );
+            $hardwareVersion = $data['hardwareVersion'] ?? null;
+            $softwareVersion = $data['softwareVersion'] ?? null;
 
-            // Add endpoints
+            // Add version info
+            $this->deviceRepository->upsertVersion($deviceId, $hardwareVersion, $softwareVersion);
+
+            // Add endpoints with version tracking
             foreach ($data['endpoints'] ?? [] as $endpoint) {
-                $this->deviceRepository->upsertEndpoint($deviceId, $endpoint);
+                $this->deviceRepository->upsertEndpoint($deviceId, $endpoint, $hardwareVersion, $softwareVersion);
             }
 
         }

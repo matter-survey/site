@@ -155,19 +155,23 @@ class TelemetryService
             }
         }
 
-        $this->deviceRepo->upsertVersion(
-            $deviceId,
-            $this->sanitizeString($device['hardware_version'] ?? null),
-            $this->sanitizeString($device['software_version'] ?? null)
-        );
+        $hardwareVersion = $this->sanitizeString($device['hardware_version'] ?? null);
+        $softwareVersion = $this->sanitizeString($device['software_version'] ?? null);
+
+        $this->deviceRepo->upsertVersion($deviceId, $hardwareVersion, $softwareVersion);
 
         foreach ($device['endpoints'] ?? [] as $endpoint) {
-            $this->deviceRepo->upsertEndpoint($deviceId, [
-                'endpoint_id' => $endpoint['endpoint_id'] ?? 0,
-                'device_types' => $endpoint['device_types'] ?? [],
-                'server_clusters' => $endpoint['server_clusters'] ?? [],
-                'client_clusters' => $endpoint['client_clusters'] ?? [],
-            ]);
+            $this->deviceRepo->upsertEndpoint(
+                $deviceId,
+                [
+                    'endpoint_id' => $endpoint['endpoint_id'] ?? 0,
+                    'device_types' => $endpoint['device_types'] ?? [],
+                    'server_clusters' => $endpoint['server_clusters'] ?? [],
+                    'client_clusters' => $endpoint['client_clusters'] ?? [],
+                ],
+                $hardwareVersion,
+                $softwareVersion
+            );
         }
 
         return true;
