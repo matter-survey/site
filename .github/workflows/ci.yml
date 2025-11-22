@@ -115,4 +115,4 @@ jobs:
 
       - name: Install dependencies, run migrations, load fixtures, and clear cache
         run: |
-          ssh ${{ secrets.SFTP_USER }}@${{ secrets.SFTP_HOST }} "cd ${{ secrets.SFTP_PATH }} && composer install --no-dev --optimize-autoloader && php bin/console cache:clear --env=prod && php bin/console doctrine:migrations:migrate --no-interaction && php bin/console doctrine:fixtures:load --group=device_types --append --no-interaction"
+          ssh ${{ secrets.SFTP_USER }}@${{ secrets.SFTP_HOST }} "cd ${{ secrets.SFTP_PATH }} && composer install --no-dev --optimize-autoloader && php bin/console cache:clear --env=prod && php bin/console doctrine:migrations:migrate --no-interaction && php bin/console doctrine:fixtures:load --group=matter --append --no-interaction"
