@@ -61,14 +61,18 @@ class DeviceController extends AbstractController
         $endpoints = $this->deviceRepo->getDeviceEndpoints($id);
         $versions = $this->deviceRepo->getDeviceVersions($id);
 
-        // Build device compatibility map based on client clusters
+        // Build device compatibility map based on client clusters (can control/read from)
         $compatibleDevices = $this->buildCompatibilityMap($id, $endpoints);
+
+        // Build inverse compatibility map based on server clusters (can provide data to)
+        $canProvideToDevices = $this->buildInverseCompatibilityMap($id, $endpoints);
 
         return $this->render('device/show.html.twig', [
             'device' => $device,
             'endpoints' => $endpoints,
             'versions' => $versions,
             'compatibleDevices' => $compatibleDevices,
+            'canProvideToDevices' => $canProvideToDevices,
             'matterRegistry' => $this->matterRegistry,
         ]);
     }
@@ -129,6 +133,75 @@ class DeviceController extends AbstractController
         foreach (array_keys($clientClusters) as $clusterId) {
             $devices = $this->deviceRepo->getDevicesWithServerCluster($clusterId, $deviceId, 10);
             $total = $this->deviceRepo->countDevicesWithServerCluster($clusterId, $deviceId);
+
+            if ($total > 0) {
+                $compatibilityMap[$clusterId] = [
+                    'name' => $this->matterRegistry->getClusterName($clusterId),
+                    'devices' => $devices,
+                    'total' => $total,
+                ];
+            }
+        }
+
+        return $compatibilityMap;
+    }
+
+    /**
+     * Build a map of devices that can consume this device's server clusters.
+     * For each server cluster on this device, find devices with matching client clusters.
+     *
+     * @return array<int, array{name: string, devices: array, total: int}>
+     */
+    private function buildInverseCompatibilityMap(int $deviceId, array $endpoints): array
+    {
+        // System/infrastructure clusters to skip (not interesting for device-to-device communication)
+        $skipClusters = [
+            3,    // Identify
+            4,    // Groups
+            5,    // Scenes (legacy)
+            29,   // Descriptor
+            30,   // Binding (meta-cluster, not a capability)
+            31,   // Access Control
+            40,   // Basic Information
+            41,   // OTA Software Update Provider
+            42,   // OTA Software Update Requestor
+            43,   // Localization Configuration
+            44,   // Time Format Localization
+            45,   // Unit Localization
+            46,   // Power Source Configuration
+            47,   // Power Source
+            48,   // General Commissioning
+            49,   // Network Commissioning
+            50,   // Diagnostic Logs
+            51,   // General Diagnostics
+            52,   // Software Diagnostics
+            53,   // Thread Network Diagnostics
+            54,   // WiFi Network Diagnostics
+            55,   // Ethernet Network Diagnostics
+            56,   // Time Synchronization
+            57,   // Bridged Device Basic Information
+            60,   // Administrator Commissioning
+            62,   // Node Operational Credentials
+            63,   // Group Key Management
+            64,   // Fixed Label
+            65,   // User Label
+            98,   // Scenes Management
+        ];
+
+        // Collect unique server clusters across all endpoints
+        $serverClusters = [];
+        foreach ($endpoints as $endpoint) {
+            foreach ($endpoint['server_clusters'] ?? [] as $clusterId) {
+                if (!\in_array($clusterId, $skipClusters, true)) {
+                    $serverClusters[$clusterId] = true;
+                }
+            }
+        }
+
+        $compatibilityMap = [];
+        foreach (array_keys($serverClusters) as $clusterId) {
+            $devices = $this->deviceRepo->getDevicesWithClientCluster($clusterId, $deviceId, 10);
+            $total = $this->deviceRepo->countDevicesWithClientCluster($clusterId, $deviceId);
 
             if ($total > 0) {
                 $compatibilityMap[$clusterId] = [

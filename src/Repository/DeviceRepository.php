@@ -585,4 +585,64 @@ class DeviceRepository
 
         return (int) $this->db->executeQuery($sql, $params, $types)->fetchOne();
     }
+
+    /**
+     * Get devices that have a specific cluster as a CLIENT.
+     * This finds devices that "consume" a capability (can control/read from this device).
+     *
+     * @param int $clusterId The cluster ID to search for
+     * @param int|null $excludeDeviceId Device ID to exclude from results (typically the current device)
+     * @param int $limit Maximum number of results
+     * @return array List of devices with basic info
+     */
+    public function getDevicesWithClientCluster(int $clusterId, ?int $excludeDeviceId = null, int $limit = 10): array
+    {
+        $sql = '
+            SELECT DISTINCT ds.*
+            FROM device_summary ds
+            JOIN product_endpoints pe ON ds.id = pe.device_id
+            WHERE EXISTS (
+                SELECT 1 FROM json_each(pe.client_clusters) WHERE value = :cluster_id
+            )
+        ';
+
+        $params = ['cluster_id' => $clusterId, 'limit' => $limit];
+        $types = ['cluster_id' => \Doctrine\DBAL\ParameterType::INTEGER, 'limit' => \Doctrine\DBAL\ParameterType::INTEGER];
+
+        if ($excludeDeviceId !== null) {
+            $sql .= ' AND ds.id != :exclude_id';
+            $params['exclude_id'] = $excludeDeviceId;
+            $types['exclude_id'] = \Doctrine\DBAL\ParameterType::INTEGER;
+        }
+
+        $sql .= ' ORDER BY ds.submission_count DESC LIMIT :limit';
+
+        return $this->db->executeQuery($sql, $params, $types)->fetchAllAssociative();
+    }
+
+    /**
+     * Get count of devices that have a specific cluster as a CLIENT.
+     */
+    public function countDevicesWithClientCluster(int $clusterId, ?int $excludeDeviceId = null): int
+    {
+        $sql = '
+            SELECT COUNT(DISTINCT ds.id)
+            FROM device_summary ds
+            JOIN product_endpoints pe ON ds.id = pe.device_id
+            WHERE EXISTS (
+                SELECT 1 FROM json_each(pe.client_clusters) WHERE value = :cluster_id
+            )
+        ';
+
+        $params = ['cluster_id' => $clusterId];
+        $types = ['cluster_id' => \Doctrine\DBAL\ParameterType::INTEGER];
+
+        if ($excludeDeviceId !== null) {
+            $sql .= ' AND ds.id != :exclude_id';
+            $params['exclude_id'] = $excludeDeviceId;
+            $types['exclude_id'] = \Doctrine\DBAL\ParameterType::INTEGER;
+        }
+
+        return (int) $this->db->executeQuery($sql, $params, $types)->fetchOne();
+    }
 }

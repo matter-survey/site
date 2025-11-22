@@ -473,31 +473,62 @@
         </div>
     </div>
 
-    {% if compatibleDevices is not empty %}
+    {% if compatibleDevices is not empty or canProvideToDevices is not empty %}
         <div class="compatibility-section">
             <h3>Device Compatibility</h3>
-            <p style="font-size: 0.875rem; color: var(--gray-500); margin-bottom: 1rem;">
-                Based on client clusters, this device can communicate with:
-            </p>
-            {% for clusterId, data in compatibleDevices %}
-                <div class="compatibility-group">
-                    <h4>
-                        <span class="cluster-name">{{ data.name }}</span>
-                        <span style="color: var(--gray-400);">({{ data.total }} device{{ data.total != 1 ? 's' : '' }})</span>
-                    </h4>
-                    <div class="compatible-devices">
-                        {% for compatDevice in data.devices %}
-                            <a href="{{ path('device_show', {id: compatDevice.id}) }}" class="compatible-device">
-                                {{ compatDevice.product_name ?? 'Unknown' }}
-                                <span style="opacity: 0.6; font-size: 0.75rem;">({{ compatDevice.vendor_name ?? 'Unknown' }})</span>
-                            </a>
-                        {% endfor %}
-                        {% if data.total > data.devices|length %}
-                            <span class="more-devices">+{{ data.total - data.devices|length }} more</span>
-                        {% endif %}
+
+            {% if compatibleDevices is not empty %}
+                <p style="font-size: 0.875rem; color: var(--gray-500); margin-bottom: 1rem;">
+                    <strong>Can control or read from:</strong> Based on client clusters
+                </p>
+                {% for clusterId, data in compatibleDevices %}
+                    <div class="compatibility-group">
+                        <h4>
+                            <span class="cluster-name">{{ data.name }}</span>
+                            <span style="color: var(--gray-400);">({{ data.total }} device{{ data.total != 1 ? 's' : '' }})</span>
+                        </h4>
+                        <div class="compatible-devices">
+                            {% for compatDevice in data.devices %}
+                                <a href="{{ path('device_show', {id: compatDevice.id}) }}" class="compatible-device">
+                                    {{ compatDevice.product_name ?? 'Unknown' }}
+                                    <span style="opacity: 0.6; font-size: 0.75rem;">({{ compatDevice.vendor_name ?? 'Unknown' }})</span>
+                                </a>
+                            {% endfor %}
+                            {% if data.total > data.devices|length %}
+                                <span class="more-devices">+{{ data.total - data.devices|length }} more</span>
+                            {% endif %}
+                        </div>
                     </div>
-                </div>
-            {% endfor %}
+                {% endfor %}
+            {% endif %}
+
+            {% if canProvideToDevices is not empty %}
+                {% if compatibleDevices is not empty %}
+                    <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--gray-200);">
+                {% endif %}
+                <p style="font-size: 0.875rem; color: var(--gray-500); margin-bottom: 1rem;">
+                    <strong>Can provide data to:</strong> Based on server clusters
+                </p>
+                {% for clusterId, data in canProvideToDevices %}
+                    <div class="compatibility-group">
+                        <h4>
+                            <span class="cluster-name">{{ data.name }}</span>
+                            <span style="color: var(--gray-400);">({{ data.total }} device{{ data.total != 1 ? 's' : '' }})</span>
+                        </h4>
+                        <div class="compatible-devices">
+                            {% for compatDevice in data.devices %}
+                                <a href="{{ path('device_show', {id: compatDevice.id}) }}" class="compatible-device">
+                                    {{ compatDevice.product_name ?? 'Unknown' }}
+                                    <span style="opacity: 0.6; font-size: 0.75rem;">({{ compatDevice.vendor_name ?? 'Unknown' }})</span>
+                                </a>
+                            {% endfor %}
+                            {% if data.total > data.devices|length %}
+                                <span class="more-devices">+{{ data.total - data.devices|length }} more</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
         </div>
     {% endif %}
 

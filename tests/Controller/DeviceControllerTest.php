@@ -276,4 +276,56 @@ class DeviceControllerTest extends WebTestCase
             $this->assertSelectorExists('.device-header');
         }
     }
+
+    /**
+     * Test that device shows "Can provide data to" section for devices with server clusters.
+     *
+     * Eve Energy has On/Off server cluster, and Eve Motion has On/Off client cluster,
+     * so Eve Energy should show it can provide On/Off data to Eve Motion.
+     */
+    public function testDeviceShowPageDisplaysCanProvideToForServerClusters(): void
+    {
+        $client = static::createClient();
+
+        // Find Eve Energy (has On/Off server cluster)
+        $crawler = $client->request('GET', '/', ['q' => 'Eve Energy']);
+        $this->assertResponseIsSuccessful();
+
+        $deviceLink = $crawler->filter('.device-info h3 a')->first();
+        $crawler = $client->click($deviceLink->link());
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('.device-header', 'Eve Energy');
+
+        // Should have compatibility section because Eve Energy has server clusters
+        // that match other devices' client clusters (On/Off → Eve Motion)
+        $this->assertSelectorExists('.compatibility-section');
+        $this->assertSelectorTextContains('.compatibility-section', 'Can provide data to');
+    }
+
+    /**
+     * Test that Hue bulb shows "Can provide data to" section.
+     *
+     * Hue White and Color Ambiance has On/Off, Level Control, Color Control server clusters.
+     * Eve Motion has On/Off client cluster, so Hue should show it can provide data to it.
+     */
+    public function testDeviceShowPageDisplaysCanProvideToForHueBulb(): void
+    {
+        $client = static::createClient();
+
+        // Find Hue bulb
+        $crawler = $client->request('GET', '/', ['q' => 'Hue White and Color']);
+        $this->assertResponseIsSuccessful();
+
+        $deviceLink = $crawler->filter('.device-info h3 a')->first();
+        $crawler = $client->click($deviceLink->link());
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('.device-header', 'Hue');
+
+        // Should have compatibility section with "Can provide data to"
+        $this->assertSelectorExists('.compatibility-section');
+        $this->assertSelectorTextContains('.compatibility-section', 'Can provide data to');
+        $this->assertSelectorTextContains('.compatibility-section', 'On/Off');
+    }
 }
