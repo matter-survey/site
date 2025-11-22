@@ -1,10 +1,8 @@
 # Dependencies
 /vendor/
 
-# Environment (secrets)
-.env
-.env.*
-!.env.example
+# Environment (local overrides with secrets - use .env.local)
+# .env and .env.test are committed with safe defaults
 
 # Database
 /data/
