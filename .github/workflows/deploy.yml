@@ -31,6 +31,6 @@ jobs:
             --exclude='.claude/' \
             ./ ${{ secrets.SFTP_USER }}@${{ secrets.SFTP_HOST }}:${{ secrets.SFTP_PATH }}/
 
-      - name: Install dependencies
+      - name: Install dependencies and clear cache
         run: |
-          ssh ${{ secrets.SFTP_USER }}@${{ secrets.SFTP_HOST }} "cd ${{ secrets.SFTP_PATH }} && composer install --no-dev --optimize-autoloader"
+          ssh ${{ secrets.SFTP_USER }}@${{ secrets.SFTP_HOST }} "cd ${{ secrets.SFTP_PATH }} && composer install --no-dev --optimize-autoloader && php bin/console cache:clear --env=prod"
