@@ -283,9 +283,9 @@
                 <div class="co-occurrence-item">
                     <div class="clusters">
                         <div class="cluster-pair">
-                            {{ matterRegistry.getClusterName(pair.cluster_a) }}
+                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(pair.cluster_a)}) }}" style="color: inherit; text-decoration: none;">{{ matterRegistry.getClusterName(pair.cluster_a) }}</a>
                             +
-                            {{ matterRegistry.getClusterName(pair.cluster_b) }}
+                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(pair.cluster_b)}) }}" style="color: inherit; text-decoration: none;">{{ matterRegistry.getClusterName(pair.cluster_b) }}</a>
                         </div>
                         <div class="cluster-ids">
                             0x{{ '%04X'|format(pair.cluster_a) }} + 0x{{ '%04X'|format(pair.cluster_b) }}

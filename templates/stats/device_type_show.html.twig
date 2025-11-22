@@ -501,8 +501,10 @@
                             <ul class="cluster-list">
                                 {% for cluster in mandatoryServerClusters %}
                                     <li>
-                                        <span class="cluster-name">{{ cluster.name }}</span>
-                                        <span class="cluster-id">0x{{ '%04X'|format(cluster.id) }}</span>
+                                        <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.id)}) }}">
+                                            <span class="cluster-name">{{ cluster.name }}</span>
+                                            <span class="cluster-id">0x{{ '%04X'|format(cluster.id) }}</span>
+                                        </a>
                                     </li>
                                 {% endfor %}
                             </ul>
@@ -516,8 +518,10 @@
                             <ul class="cluster-list">
                                 {% for cluster in optionalServerClusters %}
                                     <li>
-                                        <span class="cluster-name">{{ cluster.name }}</span>
-                                        <span class="cluster-id">0x{{ '%04X'|format(cluster.id) }}</span>
+                                        <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.id)}) }}">
+                                            <span class="cluster-name">{{ cluster.name }}</span>
+                                            <span class="cluster-id">0x{{ '%04X'|format(cluster.id) }}</span>
+                                        </a>
                                     </li>
                                 {% endfor %}
                             </ul>
@@ -544,8 +548,10 @@
                             <ul class="cluster-list">
                                 {% for cluster in mandatoryClientClusters %}
                                     <li>
-                                        <span class="cluster-name">{{ cluster.name }}</span>
-                                        <span class="cluster-id">0x{{ '%04X'|format(cluster.id) }}</span>
+                                        <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.id)}) }}">
+                                            <span class="cluster-name">{{ cluster.name }}</span>
+                                            <span class="cluster-id">0x{{ '%04X'|format(cluster.id) }}</span>
+                                        </a>
                                     </li>
                                 {% endfor %}
                             </ul>
@@ -559,8 +565,10 @@
                             <ul class="cluster-list">
                                 {% for cluster in optionalClientClusters %}
                                     <li>
-                                        <span class="cluster-name">{{ cluster.name }}</span>
-                                        <span class="cluster-id">0x{{ '%04X'|format(cluster.id) }}</span>
+                                        <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.id)}) }}">
+                                            <span class="cluster-name">{{ cluster.name }}</span>
+                                            <span class="cluster-id">0x{{ '%04X'|format(cluster.id) }}</span>
+                                        </a>
                                     </li>
                                 {% endfor %}
                             </ul>

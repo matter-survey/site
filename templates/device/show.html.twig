@@ -291,6 +291,13 @@
         font-size: 0.8125rem;
         cursor: default;
         position: relative;
+        text-decoration: none;
+        color: inherit;
+        transition: opacity 0.15s;
+    }
+
+    a.tag:hover {
+        opacity: 0.8;
     }
 
     .tag[title]:hover::after {
@@ -527,7 +534,7 @@
                 {% for clusterId, data in compatibleDevices %}
                     <div class="compatibility-group">
                         <h4>
-                            <span class="cluster-name">{{ data.name }}</span>
+                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(clusterId)}) }}" class="cluster-name" style="text-decoration: none;">{{ data.name }}</a>
                             <span style="color: var(--gray-400);">({{ data.total }} device{{ data.total != 1 ? 's' : '' }})</span>
                         </h4>
                         <div class="compatible-devices">
@@ -555,7 +562,7 @@
                 {% for clusterId, data in canProvideToDevices %}
                     <div class="compatibility-group">
                         <h4>
-                            <span class="cluster-name">{{ data.name }}</span>
+                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(clusterId)}) }}" class="cluster-name" style="text-decoration: none;">{{ data.name }}</a>
                             <span style="color: var(--gray-400);">({{ data.total }} device{{ data.total != 1 ? 's' : '' }})</span>
                         </h4>
                         <div class="compatible-devices">
@@ -677,14 +684,14 @@
                                     {% set dtId = dt.id is defined ? dt.id : dt %}
                                     {% set meta = matterRegistry.getDeviceTypeMetadata(dtId) %}
                                     {% set categoryClass = meta ? 'tag-category-' ~ meta.displayCategory|lower : 'tag-primary' %}
-                                    <span class="tag {{ categoryClass }}" title="{{ meta.description ?? 'Unknown device type' }}">
+                                    <a href="{{ path('stats_device_type_show', {type: dtId}) }}" class="tag {{ categoryClass }}" title="{{ meta.description ?? 'Unknown device type' }}">
                                         <span class="device-icon">{{ _self.deviceIcon(meta.icon ?? 'device') }}</span>
                                         {{ meta.name ?? ('Device Type ' ~ dtId) }}
                                         {% if meta.specVersion is defined and meta.specVersion != '1.0' %}
                                             <span class="spec-badge">{{ meta.specVersion }}</span>
                                         {% endif %}
                                         <span class="tag-id">#{{ dtId }}</span>
-                                    </span>
+                                    </a>
                                 {% endfor %}
                             </div>
                         </div>
@@ -695,7 +702,7 @@
                             <div class="label">Server Clusters</div>
                             <div class="tag-list">
                                 {% for cluster in ep.server_clusters %}
-                                    <span class="tag">{{ matterRegistry.getClusterName(cluster) }}</span>
+                                    <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster)}) }}" class="tag">{{ matterRegistry.getClusterName(cluster) }}</a>
                                 {% endfor %}
                             </div>
                         </div>
@@ -706,7 +713,7 @@
                             <div class="label">Client Clusters</div>
                             <div class="tag-list">
                                 {% for cluster in ep.client_clusters %}
-                                    <span class="tag tag-client">{{ matterRegistry.getClusterName(cluster) }}</span>
+                                    <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster)}) }}" class="tag tag-client">{{ matterRegistry.getClusterName(cluster) }}</a>
                                 {% endfor %}
                             </div>
                         </div>
