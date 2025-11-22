@@ -200,6 +200,12 @@
         color: var(--blue-700);
     }
 
+    .tag-client {
+        background: #dbeafe;
+        color: #1e40af;
+        border: 1px dashed #93c5fd;
+    }
+
     /* Category-based colors */
     .tag-category-lights {
         background: #fef3c7;
@@ -359,12 +365,23 @@
                         </div>
                     {% endif %}
 
-                    {% if ep.clusters is not empty %}
+                    {% if ep.server_clusters is not empty %}
                         <div class="clusters">
-                            <div class="label">Clusters</div>
+                            <div class="label">Server Clusters</div>
                             <div class="tag-list">
-                                {% for cluster in ep.clusters %}
+                                {% for cluster in ep.server_clusters %}
                                     <span class="tag">{{ matterRegistry.getClusterName(cluster) }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    {% if ep.client_clusters is not empty %}
+                        <div class="clusters">
+                            <div class="label">Client Clusters</div>
+                            <div class="tag-list">
+                                {% for cluster in ep.client_clusters %}
+                                    <span class="tag tag-client">{{ matterRegistry.getClusterName(cluster) }}</span>
                                 {% endfor %}
                             </div>
                         </div>

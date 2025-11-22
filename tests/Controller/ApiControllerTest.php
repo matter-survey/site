@@ -116,6 +116,7 @@ class ApiControllerTest extends WebTestCase
             'CONTENT_TYPE' => 'application/json',
         ], json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440001',
+            'schema_version' => 2,
             'devices' => [
                 [
                     'vendor_id' => 0x1234,
@@ -127,9 +128,9 @@ class ApiControllerTest extends WebTestCase
                     'endpoints' => [
                         [
                             'endpoint_id' => 1,
-                            'device_types' => [0x0100],
-                            'clusters' => [0x0006, 0x0008],
-                            'has_binding_cluster' => true,
+                            'device_types' => [['id' => 0x0100, 'revision' => 1]],
+                            'server_clusters' => [0x0006, 0x0008, 0x001E], // OnOff, LevelControl, Binding
+                            'client_clusters' => [],
                         ],
                     ],
                 ],

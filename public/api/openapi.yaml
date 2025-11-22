@@ -42,7 +42,7 @@ paths:
               $ref: '#/components/schemas/TelemetrySubmission'
             example:
               installation_id: "550e8400-e29b-41d4-a716-446655440000"
-              schema_version: 1
+              schema_version: 2
               devices:
                 - vendor_id: 4456
                   vendor_name: "Eve Systems"
@@ -55,11 +55,12 @@ paths:
                       device_types:
                         - id: 266
                           revision: 2
-                      clusters:
+                      server_clusters:
                         - 6
                         - 8
-                        - 30
-                      has_binding_cluster: true
+                        - 29
+                      client_clusters:
+                        - 6
       responses:
         '200':
           description: Submission processed successfully
@@ -167,6 +168,10 @@ components:
     Endpoint:
       type: object
       description: Device endpoint with capability information
+      required:
+        - endpoint_id
+        - server_clusters
+        - client_clusters
       properties:
         endpoint_id:
           type: integer
@@ -177,20 +182,23 @@ components:
           description: Matter device types on this endpoint
           items:
             $ref: '#/components/schemas/DeviceType'
-        clusters:
+        server_clusters:
           type: array
-          description: Cluster IDs supported on this endpoint
+          description: |
+            Server cluster IDs implemented on this endpoint.
+            Server clusters expose attributes and accept commands (the "thing being controlled").
           items:
             type: integer
-          example: [6, 8, 30]
-        has_binding_cluster:
-          type: boolean
-          deprecated: true
+          example: [6, 8, 29]
+        client_clusters:
+          type: array
           description: |
-            Deprecated: This field is now derived from the clusters array.
-            A device supports bindings if cluster 30 (0x001E) is present in clusters.
-            This field will be ignored on submission and may be removed in a future version.
-          example: true
+            Client cluster IDs implemented on this endpoint.
+            Client clusters read attributes and send commands (the "controller").
+            Devices with client clusters can use bindings to control other devices.
+          items:
+            type: integer
+          example: [6]
 
     DeviceType:
       type: object

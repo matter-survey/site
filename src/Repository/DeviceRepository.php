@@ -73,16 +73,18 @@ class DeviceRepository
     public function upsertEndpoint(int $deviceId, array $endpointData): void
     {
         $this->db->executeStatement('
-            INSERT INTO product_endpoints (device_id, endpoint_id, device_types, clusters)
-            VALUES (:device_id, :endpoint_id, :device_types, :clusters)
+            INSERT INTO product_endpoints (device_id, endpoint_id, device_types, server_clusters, client_clusters)
+            VALUES (:device_id, :endpoint_id, :device_types, :server_clusters, :client_clusters)
             ON CONFLICT(device_id, endpoint_id) DO UPDATE SET
                 device_types = excluded.device_types,
-                clusters = excluded.clusters
+                server_clusters = excluded.server_clusters,
+                client_clusters = excluded.client_clusters
         ', [
             'device_id' => $deviceId,
             'endpoint_id' => $endpointData['endpoint_id'],
             'device_types' => json_encode($endpointData['device_types'] ?? []),
-            'clusters' => json_encode($endpointData['clusters'] ?? []),
+            'server_clusters' => json_encode($endpointData['server_clusters'] ?? []),
+            'client_clusters' => json_encode($endpointData['client_clusters'] ?? []),
         ]);
     }
 
@@ -119,7 +121,7 @@ class DeviceRepository
     public function getDeviceEndpoints(int $deviceId): array
     {
         $rows = $this->db->executeQuery('
-            SELECT endpoint_id, device_types, clusters
+            SELECT endpoint_id, device_types, server_clusters, client_clusters
             FROM product_endpoints
             WHERE device_id = :device_id
             ORDER BY endpoint_id
@@ -128,9 +130,11 @@ class DeviceRepository
         $endpoints = [];
         foreach ($rows as $row) {
             $row['device_types'] = json_decode($row['device_types'], true);
-            $row['clusters'] = json_decode($row['clusters'], true);
-            // Derive binding support from clusters array
-            $row['has_binding_cluster'] = \in_array(self::BINDING_CLUSTER_ID, $row['clusters'] ?? [], true);
+            $row['server_clusters'] = json_decode($row['server_clusters'], true);
+            $row['client_clusters'] = json_decode($row['client_clusters'], true);
+            // Derive binding support from either server or client clusters
+            $row['has_binding_cluster'] = \in_array(self::BINDING_CLUSTER_ID, $row['server_clusters'] ?? [], true)
+                || \in_array(self::BINDING_CLUSTER_ID, $row['client_clusters'] ?? [], true);
             $endpoints[] = $row;
         }
 
@@ -198,11 +202,12 @@ class DeviceRepository
 
     /**
      * Get cluster statistics from the cluster_stats view.
+     * Returns cluster_id, cluster_type (server/client), and product_count.
      */
     public function getClusterStats(): array
     {
         return $this->db->executeQuery('
-            SELECT cluster_id, product_count
+            SELECT cluster_id, cluster_type, product_count
             FROM cluster_stats
             ORDER BY product_count DESC
         ')->fetchAllAssociative();
@@ -296,7 +301,7 @@ class DeviceRepository
     }
 
     /**
-     * Get cluster co-occurrence (which clusters appear together).
+     * Get cluster co-occurrence (which server clusters appear together).
      */
     public function getClusterCoOccurrence(int $limit = 15): array
     {
@@ -306,8 +311,8 @@ class DeviceRepository
                 c2.value as cluster_b,
                 COUNT(DISTINCT pe.device_id) as co_occurrence_count
             FROM product_endpoints pe,
-                 json_each(pe.clusters) c1,
-                 json_each(pe.clusters) c2
+                 json_each(pe.server_clusters) c1,
+                 json_each(pe.server_clusters) c2
             WHERE c1.value < c2.value
             GROUP BY c1.value, c2.value
             ORDER BY co_occurrence_count DESC
@@ -339,7 +344,9 @@ class DeviceRepository
                 pe.device_id,
                 json_extract(json_each.value, "$.id") as device_type_id,
                 MAX(CASE WHEN EXISTS (
-                    SELECT 1 FROM json_each(pe.clusters) WHERE value = 30
+                    SELECT 1 FROM json_each(pe.server_clusters) WHERE value = 30
+                ) OR EXISTS (
+                    SELECT 1 FROM json_each(pe.client_clusters) WHERE value = 30
                 ) THEN 1 ELSE 0 END) as has_binding
             FROM product_endpoints pe, json_each(pe.device_types)
             WHERE json_extract(json_each.value, "$.id") IS NOT NULL

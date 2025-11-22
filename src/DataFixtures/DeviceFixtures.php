@@ -79,7 +79,8 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                     [
                         'endpoint_id' => 1,
                         'device_types' => [['id' => 34, 'revision' => 1]], // Speaker
-                        'clusters' => [6, 8, 29], // OnOff, LevelControl, Descriptor
+                        'server_clusters' => [6, 8, 29], // OnOff, LevelControl, Descriptor
+                        'client_clusters' => [],
                     ],
                 ],
             ],
@@ -94,7 +95,8 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                     [
                         'endpoint_id' => 1,
                         'device_types' => [['id' => 35, 'revision' => 1]], // Casting Video Player
-                        'clusters' => [29, 1283], // Descriptor, MediaPlayback
+                        'server_clusters' => [29, 1283], // Descriptor, MediaPlayback
+                        'client_clusters' => [],
                     ],
                 ],
             ],
@@ -110,7 +112,8 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                     [
                         'endpoint_id' => 1,
                         'device_types' => [['id' => 263, 'revision' => 1]], // Occupancy Sensor
-                        'clusters' => [29, 30, 1030], // Descriptor, Binding, OccupancySensing
+                        'server_clusters' => [29, 30, 1030], // Descriptor, Binding, OccupancySensing
+                        'client_clusters' => [6], // OnOff client - can control lights via binding
                     ],
                 ],
             ],
@@ -125,7 +128,8 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                     [
                         'endpoint_id' => 1,
                         'device_types' => [['id' => 266, 'revision' => 1]], // Outlet
-                        'clusters' => [6, 29, 30, 1794], // OnOff, Descriptor, Binding, ElectricalMeasurement
+                        'server_clusters' => [6, 29, 30, 1794], // OnOff, Descriptor, Binding, ElectricalMeasurement
+                        'client_clusters' => [],
                     ],
                 ],
             ],
@@ -140,7 +144,8 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                     [
                         'endpoint_id' => 1,
                         'device_types' => [['id' => 21, 'revision' => 1]], // Contact Sensor
-                        'clusters' => [29, 69], // Descriptor, BooleanState
+                        'server_clusters' => [29, 69], // Descriptor, BooleanState
+                        'client_clusters' => [],
                     ],
                 ],
             ],
@@ -156,7 +161,8 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                     [
                         'endpoint_id' => 1,
                         'device_types' => [['id' => 269, 'revision' => 1]], // Extended Color Light
-                        'clusters' => [6, 8, 30, 768, 29], // OnOff, LevelControl, Binding, ColorControl, Descriptor
+                        'server_clusters' => [6, 8, 29, 30, 768], // OnOff, LevelControl, Descriptor, Binding, ColorControl
+                        'client_clusters' => [],
                     ],
                 ],
             ],
@@ -171,7 +177,8 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                     [
                         'endpoint_id' => 0,
                         'device_types' => [['id' => 22, 'revision' => 1]], // Root Node
-                        'clusters' => [29, 31, 40], // Descriptor, AccessControl, BasicInformation
+                        'server_clusters' => [29, 31, 40], // Descriptor, AccessControl, BasicInformation
+                        'client_clusters' => [],
                     ],
                 ],
             ],
@@ -187,7 +194,8 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                     [
                         'endpoint_id' => 1,
                         'device_types' => [['id' => 269, 'revision' => 1]], // Extended Color Light
-                        'clusters' => [6, 8, 30, 768, 29], // OnOff, LevelControl, Binding, ColorControl, Descriptor
+                        'server_clusters' => [6, 8, 29, 30, 768], // OnOff, LevelControl, Descriptor, Binding, ColorControl
+                        'client_clusters' => [],
                     ],
                 ],
             ],

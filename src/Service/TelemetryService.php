@@ -165,8 +165,8 @@ class TelemetryService
             $this->deviceRepo->upsertEndpoint($deviceId, [
                 'endpoint_id' => $endpoint['endpoint_id'] ?? 0,
                 'device_types' => $endpoint['device_types'] ?? [],
-                'clusters' => $endpoint['clusters'] ?? [],
-                // Note: has_binding_cluster is deprecated; binding support is derived from clusters
+                'server_clusters' => $endpoint['server_clusters'] ?? [],
+                'client_clusters' => $endpoint['client_clusters'] ?? [],
             ]);
         }
 
