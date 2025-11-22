@@ -24,10 +24,10 @@ php bin/console cache:clear
 make deploy
 ```
 
-The SQLite database auto-initializes on first request using `schema.sql`. For tests, initialize manually:
+The SQLite database schema is managed via Doctrine Migrations. Run migrations with:
 
 ```bash
-mkdir -p data && sqlite3 data/matter-survey.db < schema.sql
+php bin/console doctrine:migrations:migrate
 ```
 
 ## Architecture
