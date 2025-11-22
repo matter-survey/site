@@ -541,7 +541,9 @@ class DeviceRepository
             SELECT DISTINCT ds.*
             FROM device_summary ds
             JOIN product_endpoints pe ON ds.id = pe.device_id
-            WHERE EXISTS (
+            WHERE pe.server_clusters IS NOT NULL
+              AND pe.server_clusters != \'\'
+              AND EXISTS (
                 SELECT 1 FROM json_each(pe.server_clusters) WHERE value = :cluster_id
             )
         ';
@@ -569,7 +571,9 @@ class DeviceRepository
             SELECT COUNT(DISTINCT ds.id)
             FROM device_summary ds
             JOIN product_endpoints pe ON ds.id = pe.device_id
-            WHERE EXISTS (
+            WHERE pe.server_clusters IS NOT NULL
+              AND pe.server_clusters != \'\'
+              AND EXISTS (
                 SELECT 1 FROM json_each(pe.server_clusters) WHERE value = :cluster_id
             )
         ';
@@ -601,7 +605,9 @@ class DeviceRepository
             SELECT DISTINCT ds.*
             FROM device_summary ds
             JOIN product_endpoints pe ON ds.id = pe.device_id
-            WHERE EXISTS (
+            WHERE pe.client_clusters IS NOT NULL
+              AND pe.client_clusters != \'\'
+              AND EXISTS (
                 SELECT 1 FROM json_each(pe.client_clusters) WHERE value = :cluster_id
             )
         ';
@@ -629,7 +635,9 @@ class DeviceRepository
             SELECT COUNT(DISTINCT ds.id)
             FROM device_summary ds
             JOIN product_endpoints pe ON ds.id = pe.device_id
-            WHERE EXISTS (
+            WHERE pe.client_clusters IS NOT NULL
+              AND pe.client_clusters != \'\'
+              AND EXISTS (
                 SELECT 1 FROM json_each(pe.client_clusters) WHERE value = :cluster_id
             )
         ';
