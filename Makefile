@@ -1,6 +1,7 @@
 # Matter Survey Site - Makefile
 
 -include .env
+-include .env.local
 export
 
 .PHONY: help install dev prod clean lint test db-init db-reset db-migrate deploy
@@ -119,7 +120,7 @@ deploy:
 		--exclude='.env.local' \
 		--exclude='data/' \
 		--exclude='var/' \
-		--exclude='vendor/' \
+		--exclude='/vendor/' \
 		--exclude='.claude/' \
 		./ $(SFTP_USER)@$(SFTP_HOST):$(SFTP_PATH)/
 	ssh $(SFTP_USER)@$(SFTP_HOST) "cd $(SFTP_PATH) && composer install --no-dev --optimize-autoloader && php bin/console doctrine:migrations:migrate --no-interaction && php bin/console cache:clear --env=prod"
