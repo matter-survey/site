@@ -73,31 +73,99 @@ class MatterRegistry
     ];
 
     private const DEVICE_TYPE_NAMES = [
-        10 => 'Door Lock',
-        17 => 'Power Source',
-        21 => 'Contact Sensor',
-        22 => 'Root Node',
-        23 => 'Bridged Node',
-        44 => 'Smoke/CO Alarm',
-        256 => 'On/Off Light',
-        257 => 'Dimmable Light',
-        258 => 'Color Temperature Light',
-        259 => 'On/Off Light Switch',
-        260 => 'Dimmer Switch',
-        261 => 'Color Dimmer Switch',
-        262 => 'Light Sensor',
-        263 => 'Occupancy Sensor',
-        266 => 'On/Off Plug-in Unit',
-        267 => 'Dimmable Plug-in Unit',
-        268 => 'Pump',
-        514 => 'Window Covering',
-        515 => 'Window Covering Controller',
-        769 => 'Thermostat',
-        770 => 'Temperature Sensor',
-        771 => 'Humidity Sensor',
-        772 => 'Fan',
-        773 => 'Air Purifier',
-        774 => 'Air Quality Sensor',
+        // Utility/System Device Types
+        10 => 'Door Lock',                       // 0x000A
+        11 => 'Door Lock Controller',            // 0x000B
+        14 => 'Aggregator',                      // 0x000E
+        15 => 'Generic Switch',                  // 0x000F
+        17 => 'Power Source',                    // 0x0011
+        18 => 'OTA Requestor',                   // 0x0012
+        19 => 'Bridged Node',                    // 0x0013
+        20 => 'OTA Provider',                    // 0x0014
+        21 => 'Contact Sensor',                  // 0x0015
+        22 => 'Root Node',                       // 0x0016
+        23 => 'Solar Power',                     // 0x0017
+        24 => 'Battery Storage',                 // 0x0018
+        25 => 'Secondary Network Interface',     // 0x0019
+
+        // Media Device Types
+        34 => 'Speaker',                         // 0x0022
+        35 => 'Casting Video Player',            // 0x0023
+        36 => 'Content App',                     // 0x0024
+        39 => 'Mode Select',                     // 0x0027
+        40 => 'Basic Video Player',              // 0x0028
+        41 => 'Casting Video Client',            // 0x0029
+        42 => 'Video Remote Control',            // 0x002A
+
+        // HVAC Device Types (0x002x range)
+        43 => 'Fan',                             // 0x002B
+        44 => 'Air Quality Sensor',              // 0x002C
+        45 => 'Air Purifier',                    // 0x002D
+
+        // Sensor Device Types (0x004x range)
+        65 => 'Water Freeze Detector',           // 0x0041
+        66 => 'Water Valve',                     // 0x0042
+        67 => 'Water Leak Detector',             // 0x0043
+        68 => 'Rain Sensor',                     // 0x0044
+
+        // Appliance Device Types (0x007x range)
+        112 => 'Refrigerator',                   // 0x0070
+        113 => 'Temperature Controlled Cabinet', // 0x0071
+        114 => 'Room Air Conditioner',           // 0x0072
+        115 => 'Laundry Washer',                 // 0x0073
+        116 => 'Robotic Vacuum Cleaner',         // 0x0074
+        117 => 'Dishwasher',                     // 0x0075
+        118 => 'Smoke/CO Alarm',                 // 0x0076
+        119 => 'Cook Surface',                   // 0x0077
+        120 => 'Cooktop',                        // 0x0078
+        121 => 'Microwave Oven',                 // 0x0079
+        122 => 'Extractor Hood',                 // 0x007A
+        123 => 'Oven',                           // 0x007B
+        124 => 'Laundry Dryer',                  // 0x007C
+
+        // Network Infrastructure
+        145 => 'Thread Border Router',           // 0x0091
+
+        // Lighting Device Types (0x010x range)
+        256 => 'On/Off Light',                   // 0x0100
+        257 => 'Dimmable Light',                 // 0x0101
+        259 => 'On/Off Light Switch',            // 0x0103
+        260 => 'Dimmer Switch',                  // 0x0104
+        261 => 'Color Dimmer Switch',            // 0x0105
+        262 => 'Light Sensor',                   // 0x0106
+        263 => 'Occupancy Sensor',               // 0x0107
+        266 => 'On/Off Plug-in Unit',            // 0x010A
+        267 => 'Dimmable Plug-in Unit',          // 0x010B
+        268 => 'Color Temperature Light',        // 0x010C
+        269 => 'Extended Color Light',           // 0x010D
+        271 => 'Mounted On/Off Control',         // 0x010F
+        272 => 'Mounted Dimmable Load Control',  // 0x0110
+
+        // Closure Device Types (0x020x range)
+        514 => 'Window Covering',                // 0x0202
+        515 => 'Window Covering Controller',     // 0x0203
+
+        // HVAC Device Types (0x030x range)
+        768 => 'Heating/Cooling Unit',           // 0x0300
+        769 => 'Thermostat',                     // 0x0301
+        770 => 'Temperature Sensor',             // 0x0302
+        771 => 'Pump',                           // 0x0303
+        772 => 'Pump Controller',                // 0x0304
+        773 => 'Pressure Sensor',                // 0x0305
+        774 => 'Flow Sensor',                    // 0x0306
+        775 => 'Humidity Sensor',                // 0x0307
+        777 => 'Heat Pump',                      // 0x0309
+        778 => 'Thermostat Controller',          // 0x030A
+
+        // Energy Management Device Types (0x050x range)
+        1292 => 'EVSE',                          // 0x050C
+        1293 => 'Device Energy Management',      // 0x050D
+        1295 => 'Water Heater',                  // 0x050F
+        1296 => 'Electrical Sensor',             // 0x0510
+
+        // Controller Device Types (0x08xx range)
+        2112 => 'Control Bridge',                // 0x0840
+        2128 => 'On/Off Sensor',                 // 0x0850
     ];
 
     public function getClusterName(int $id): string
