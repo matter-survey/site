@@ -72,100 +72,608 @@ class MatterRegistry
         0x050E => 'Account Login',
     ];
 
-    private const DEVICE_TYPE_NAMES = [
+    /**
+     * Device type metadata with spec version, categories, icons, and descriptions.
+     * Keys are decimal device type IDs (hex shown in comments).
+     */
+    private const DEVICE_TYPE_METADATA = [
         // Utility/System Device Types
-        10 => 'Door Lock',                       // 0x000A
-        11 => 'Door Lock Controller',            // 0x000B
-        14 => 'Aggregator',                      // 0x000E
-        15 => 'Generic Switch',                  // 0x000F
-        17 => 'Power Source',                    // 0x0011
-        18 => 'OTA Requestor',                   // 0x0012
-        19 => 'Bridged Node',                    // 0x0013
-        20 => 'OTA Provider',                    // 0x0014
-        21 => 'Contact Sensor',                  // 0x0015
-        22 => 'Root Node',                       // 0x0016
-        23 => 'Solar Power',                     // 0x0017
-        24 => 'Battery Storage',                 // 0x0018
-        25 => 'Secondary Network Interface',     // 0x0019
+        10 => [ // 0x000A
+            'name' => 'Door Lock',
+            'specVersion' => '1.0',
+            'category' => 'closures',
+            'displayCategory' => 'Security',
+            'icon' => 'lock',
+            'description' => 'Electronically controlled door lock',
+        ],
+        11 => [ // 0x000B
+            'name' => 'Door Lock Controller',
+            'specVersion' => '1.0',
+            'category' => 'closures',
+            'displayCategory' => 'Security',
+            'icon' => 'lock',
+            'description' => 'Controller for door lock devices',
+        ],
+        14 => [ // 0x000E
+            'name' => 'Aggregator',
+            'specVersion' => '1.0',
+            'category' => 'utility',
+            'displayCategory' => 'System',
+            'icon' => 'hub',
+            'description' => 'Aggregates multiple bridged endpoints',
+        ],
+        15 => [ // 0x000F
+            'name' => 'Generic Switch',
+            'specVersion' => '1.0',
+            'category' => 'utility',
+            'displayCategory' => 'System',
+            'icon' => 'toggle-on',
+            'description' => 'Generic switch or button device',
+        ],
+        17 => [ // 0x0011
+            'name' => 'Power Source',
+            'specVersion' => '1.0',
+            'category' => 'utility',
+            'displayCategory' => 'System',
+            'icon' => 'battery',
+            'description' => 'Power source information endpoint',
+        ],
+        18 => [ // 0x0012
+            'name' => 'OTA Requestor',
+            'specVersion' => '1.0',
+            'category' => 'utility',
+            'displayCategory' => 'System',
+            'icon' => 'download',
+            'description' => 'Over-the-air update requestor',
+        ],
+        19 => [ // 0x0013
+            'name' => 'Bridged Node',
+            'specVersion' => '1.0',
+            'category' => 'utility',
+            'displayCategory' => 'System',
+            'icon' => 'bridge',
+            'description' => 'Represents a bridged device from another protocol',
+        ],
+        20 => [ // 0x0014
+            'name' => 'OTA Provider',
+            'specVersion' => '1.0',
+            'category' => 'utility',
+            'displayCategory' => 'System',
+            'icon' => 'upload',
+            'description' => 'Over-the-air update provider',
+        ],
+        21 => [ // 0x0015
+            'name' => 'Contact Sensor',
+            'specVersion' => '1.0',
+            'category' => 'sensors',
+            'displayCategory' => 'Sensors',
+            'icon' => 'door-open',
+            'description' => 'Detects open/closed state of doors or windows',
+        ],
+        22 => [ // 0x0016
+            'name' => 'Root Node',
+            'specVersion' => '1.0',
+            'category' => 'utility',
+            'displayCategory' => 'System',
+            'icon' => 'server',
+            'description' => 'Root endpoint of a Matter node',
+        ],
+        23 => [ // 0x0017
+            'name' => 'Solar Power',
+            'specVersion' => '1.4',
+            'category' => 'energy',
+            'displayCategory' => 'Energy',
+            'icon' => 'solar-panel',
+            'description' => 'Solar panel or photovoltaic system',
+        ],
+        24 => [ // 0x0018
+            'name' => 'Battery Storage',
+            'specVersion' => '1.4',
+            'category' => 'energy',
+            'displayCategory' => 'Energy',
+            'icon' => 'battery-full',
+            'description' => 'Battery energy storage system',
+        ],
+        25 => [ // 0x0019
+            'name' => 'Secondary Network Interface',
+            'specVersion' => '1.4',
+            'category' => 'utility',
+            'displayCategory' => 'System',
+            'icon' => 'network-wired',
+            'description' => 'Secondary network commissioning interface',
+        ],
 
         // Media Device Types
-        34 => 'Speaker',                         // 0x0022
-        35 => 'Casting Video Player',            // 0x0023
-        36 => 'Content App',                     // 0x0024
-        39 => 'Mode Select',                     // 0x0027
-        40 => 'Basic Video Player',              // 0x0028
-        41 => 'Casting Video Client',            // 0x0029
-        42 => 'Video Remote Control',            // 0x002A
+        34 => [ // 0x0022
+            'name' => 'Speaker',
+            'specVersion' => '1.0',
+            'category' => 'media',
+            'displayCategory' => 'Entertainment',
+            'icon' => 'volume-up',
+            'description' => 'Audio speaker device',
+        ],
+        35 => [ // 0x0023
+            'name' => 'Casting Video Player',
+            'specVersion' => '1.0',
+            'category' => 'media',
+            'displayCategory' => 'Entertainment',
+            'icon' => 'tv',
+            'description' => 'Video player that accepts cast content',
+        ],
+        36 => [ // 0x0024
+            'name' => 'Content App',
+            'specVersion' => '1.0',
+            'category' => 'media',
+            'displayCategory' => 'Entertainment',
+            'icon' => 'play-circle',
+            'description' => 'Content application on a video player',
+        ],
+        39 => [ // 0x0027
+            'name' => 'Mode Select',
+            'specVersion' => '1.0',
+            'category' => 'utility',
+            'displayCategory' => 'System',
+            'icon' => 'sliders',
+            'description' => 'Device with selectable operating modes',
+        ],
+        40 => [ // 0x0028
+            'name' => 'Basic Video Player',
+            'specVersion' => '1.0',
+            'category' => 'media',
+            'displayCategory' => 'Entertainment',
+            'icon' => 'tv',
+            'description' => 'Basic video playback device',
+        ],
+        41 => [ // 0x0029
+            'name' => 'Casting Video Client',
+            'specVersion' => '1.0',
+            'category' => 'media',
+            'displayCategory' => 'Entertainment',
+            'icon' => 'cast',
+            'description' => 'Client that casts content to video players',
+        ],
+        42 => [ // 0x002A
+            'name' => 'Video Remote Control',
+            'specVersion' => '1.0',
+            'category' => 'media',
+            'displayCategory' => 'Entertainment',
+            'icon' => 'remote',
+            'description' => 'Remote control for video devices',
+        ],
 
         // HVAC Device Types (0x002x range)
-        43 => 'Fan',                             // 0x002B
-        44 => 'Air Quality Sensor',              // 0x002C
-        45 => 'Air Purifier',                    // 0x002D
+        43 => [ // 0x002B
+            'name' => 'Fan',
+            'specVersion' => '1.2',
+            'category' => 'hvac',
+            'displayCategory' => 'Climate',
+            'icon' => 'fan',
+            'description' => 'Controllable fan device',
+        ],
+        44 => [ // 0x002C
+            'name' => 'Air Quality Sensor',
+            'specVersion' => '1.2',
+            'category' => 'sensors',
+            'displayCategory' => 'Sensors',
+            'icon' => 'wind',
+            'description' => 'Measures air quality parameters',
+        ],
+        45 => [ // 0x002D
+            'name' => 'Air Purifier',
+            'specVersion' => '1.2',
+            'category' => 'hvac',
+            'displayCategory' => 'Climate',
+            'icon' => 'leaf',
+            'description' => 'Air purification device',
+        ],
 
         // Sensor Device Types (0x004x range)
-        65 => 'Water Freeze Detector',           // 0x0041
-        66 => 'Water Valve',                     // 0x0042
-        67 => 'Water Leak Detector',             // 0x0043
-        68 => 'Rain Sensor',                     // 0x0044
+        65 => [ // 0x0041
+            'name' => 'Water Freeze Detector',
+            'specVersion' => '1.3',
+            'category' => 'sensors',
+            'displayCategory' => 'Sensors',
+            'icon' => 'snowflake',
+            'description' => 'Detects freezing water conditions',
+        ],
+        66 => [ // 0x0042
+            'name' => 'Water Valve',
+            'specVersion' => '1.3',
+            'category' => 'closures',
+            'displayCategory' => 'Security',
+            'icon' => 'faucet',
+            'description' => 'Controllable water valve',
+        ],
+        67 => [ // 0x0043
+            'name' => 'Water Leak Detector',
+            'specVersion' => '1.3',
+            'category' => 'sensors',
+            'displayCategory' => 'Sensors',
+            'icon' => 'droplet',
+            'description' => 'Detects water leaks',
+        ],
+        68 => [ // 0x0044
+            'name' => 'Rain Sensor',
+            'specVersion' => '1.3',
+            'category' => 'sensors',
+            'displayCategory' => 'Sensors',
+            'icon' => 'cloud-rain',
+            'description' => 'Detects rain or precipitation',
+        ],
 
         // Appliance Device Types (0x007x range)
-        112 => 'Refrigerator',                   // 0x0070
-        113 => 'Temperature Controlled Cabinet', // 0x0071
-        114 => 'Room Air Conditioner',           // 0x0072
-        115 => 'Laundry Washer',                 // 0x0073
-        116 => 'Robotic Vacuum Cleaner',         // 0x0074
-        117 => 'Dishwasher',                     // 0x0075
-        118 => 'Smoke/CO Alarm',                 // 0x0076
-        119 => 'Cook Surface',                   // 0x0077
-        120 => 'Cooktop',                        // 0x0078
-        121 => 'Microwave Oven',                 // 0x0079
-        122 => 'Extractor Hood',                 // 0x007A
-        123 => 'Oven',                           // 0x007B
-        124 => 'Laundry Dryer',                  // 0x007C
+        112 => [ // 0x0070
+            'name' => 'Refrigerator',
+            'specVersion' => '1.2',
+            'category' => 'appliances',
+            'displayCategory' => 'Appliances',
+            'icon' => 'snowflake',
+            'description' => 'Refrigerator or freezer appliance',
+        ],
+        113 => [ // 0x0071
+            'name' => 'Temperature Controlled Cabinet',
+            'specVersion' => '1.2',
+            'category' => 'appliances',
+            'displayCategory' => 'Appliances',
+            'icon' => 'box',
+            'description' => 'Temperature-controlled storage cabinet',
+        ],
+        114 => [ // 0x0072
+            'name' => 'Room Air Conditioner',
+            'specVersion' => '1.2',
+            'category' => 'hvac',
+            'displayCategory' => 'Climate',
+            'icon' => 'snowflake',
+            'description' => 'Room air conditioning unit',
+        ],
+        115 => [ // 0x0073
+            'name' => 'Laundry Washer',
+            'specVersion' => '1.2',
+            'category' => 'appliances',
+            'displayCategory' => 'Appliances',
+            'icon' => 'washing-machine',
+            'description' => 'Clothes washing machine',
+        ],
+        116 => [ // 0x0074
+            'name' => 'Robotic Vacuum Cleaner',
+            'specVersion' => '1.2',
+            'category' => 'appliances',
+            'displayCategory' => 'Appliances',
+            'icon' => 'robot',
+            'description' => 'Autonomous vacuum cleaning robot',
+        ],
+        117 => [ // 0x0075
+            'name' => 'Dishwasher',
+            'specVersion' => '1.2',
+            'category' => 'appliances',
+            'displayCategory' => 'Appliances',
+            'icon' => 'utensils',
+            'description' => 'Automatic dishwashing appliance',
+        ],
+        118 => [ // 0x0076
+            'name' => 'Smoke/CO Alarm',
+            'specVersion' => '1.2',
+            'category' => 'sensors',
+            'displayCategory' => 'Sensors',
+            'icon' => 'bell',
+            'description' => 'Smoke and carbon monoxide detector',
+        ],
+        119 => [ // 0x0077
+            'name' => 'Cook Surface',
+            'specVersion' => '1.3',
+            'category' => 'appliances',
+            'displayCategory' => 'Appliances',
+            'icon' => 'fire',
+            'description' => 'Individual cooking surface or burner',
+        ],
+        120 => [ // 0x0078
+            'name' => 'Cooktop',
+            'specVersion' => '1.3',
+            'category' => 'appliances',
+            'displayCategory' => 'Appliances',
+            'icon' => 'fire',
+            'description' => 'Cooktop with multiple cooking surfaces',
+        ],
+        121 => [ // 0x0079
+            'name' => 'Microwave Oven',
+            'specVersion' => '1.3',
+            'category' => 'appliances',
+            'displayCategory' => 'Appliances',
+            'icon' => 'microwave',
+            'description' => 'Microwave cooking appliance',
+        ],
+        122 => [ // 0x007A
+            'name' => 'Extractor Hood',
+            'specVersion' => '1.3',
+            'category' => 'appliances',
+            'displayCategory' => 'Appliances',
+            'icon' => 'wind',
+            'description' => 'Kitchen ventilation hood',
+        ],
+        123 => [ // 0x007B
+            'name' => 'Oven',
+            'specVersion' => '1.3',
+            'category' => 'appliances',
+            'displayCategory' => 'Appliances',
+            'icon' => 'fire',
+            'description' => 'Conventional or convection oven',
+        ],
+        124 => [ // 0x007C
+            'name' => 'Laundry Dryer',
+            'specVersion' => '1.3',
+            'category' => 'appliances',
+            'displayCategory' => 'Appliances',
+            'icon' => 'wind',
+            'description' => 'Clothes drying appliance',
+        ],
 
         // Network Infrastructure
-        145 => 'Thread Border Router',           // 0x0091
+        145 => [ // 0x0091
+            'name' => 'Thread Border Router',
+            'specVersion' => '1.4',
+            'category' => 'utility',
+            'displayCategory' => 'System',
+            'icon' => 'router',
+            'description' => 'Thread network border router',
+        ],
 
         // Lighting Device Types (0x010x range)
-        256 => 'On/Off Light',                   // 0x0100
-        257 => 'Dimmable Light',                 // 0x0101
-        259 => 'On/Off Light Switch',            // 0x0103
-        260 => 'Dimmer Switch',                  // 0x0104
-        261 => 'Color Dimmer Switch',            // 0x0105
-        262 => 'Light Sensor',                   // 0x0106
-        263 => 'Occupancy Sensor',               // 0x0107
-        266 => 'On/Off Plug-in Unit',            // 0x010A
-        267 => 'Dimmable Plug-in Unit',          // 0x010B
-        268 => 'Color Temperature Light',        // 0x010C
-        269 => 'Extended Color Light',           // 0x010D
-        271 => 'Mounted On/Off Control',         // 0x010F
-        272 => 'Mounted Dimmable Load Control',  // 0x0110
+        256 => [ // 0x0100
+            'name' => 'On/Off Light',
+            'specVersion' => '1.0',
+            'category' => 'lighting',
+            'displayCategory' => 'Lights',
+            'icon' => 'lightbulb',
+            'description' => 'Simple on/off light',
+        ],
+        257 => [ // 0x0101
+            'name' => 'Dimmable Light',
+            'specVersion' => '1.0',
+            'category' => 'lighting',
+            'displayCategory' => 'Lights',
+            'icon' => 'lightbulb',
+            'description' => 'Light with adjustable brightness',
+        ],
+        259 => [ // 0x0103
+            'name' => 'On/Off Light Switch',
+            'specVersion' => '1.0',
+            'category' => 'lighting',
+            'displayCategory' => 'Lights',
+            'icon' => 'toggle-on',
+            'description' => 'Physical switch for on/off lights',
+        ],
+        260 => [ // 0x0104
+            'name' => 'Dimmer Switch',
+            'specVersion' => '1.0',
+            'category' => 'lighting',
+            'displayCategory' => 'Lights',
+            'icon' => 'sliders',
+            'description' => 'Physical switch for dimmable lights',
+        ],
+        261 => [ // 0x0105
+            'name' => 'Color Dimmer Switch',
+            'specVersion' => '1.0',
+            'category' => 'lighting',
+            'displayCategory' => 'Lights',
+            'icon' => 'palette',
+            'description' => 'Physical switch for color lights',
+        ],
+        262 => [ // 0x0106
+            'name' => 'Light Sensor',
+            'specVersion' => '1.0',
+            'category' => 'sensors',
+            'displayCategory' => 'Sensors',
+            'icon' => 'sun',
+            'description' => 'Measures ambient light level',
+        ],
+        263 => [ // 0x0107
+            'name' => 'Occupancy Sensor',
+            'specVersion' => '1.0',
+            'category' => 'sensors',
+            'displayCategory' => 'Sensors',
+            'icon' => 'motion-sensor',
+            'description' => 'Detects presence or motion',
+        ],
+        266 => [ // 0x010A
+            'name' => 'On/Off Plug-in Unit',
+            'specVersion' => '1.0',
+            'category' => 'lighting',
+            'displayCategory' => 'Lights',
+            'icon' => 'plug',
+            'description' => 'Switchable plug-in outlet',
+        ],
+        267 => [ // 0x010B
+            'name' => 'Dimmable Plug-in Unit',
+            'specVersion' => '1.0',
+            'category' => 'lighting',
+            'displayCategory' => 'Lights',
+            'icon' => 'plug',
+            'description' => 'Dimmable plug-in outlet',
+        ],
+        268 => [ // 0x010C
+            'name' => 'Color Temperature Light',
+            'specVersion' => '1.0',
+            'category' => 'lighting',
+            'displayCategory' => 'Lights',
+            'icon' => 'lightbulb',
+            'description' => 'Light with adjustable color temperature',
+        ],
+        269 => [ // 0x010D
+            'name' => 'Extended Color Light',
+            'specVersion' => '1.0',
+            'category' => 'lighting',
+            'displayCategory' => 'Lights',
+            'icon' => 'palette',
+            'description' => 'Full color RGB light',
+        ],
+        271 => [ // 0x010F
+            'name' => 'Mounted On/Off Control',
+            'specVersion' => '1.4',
+            'category' => 'lighting',
+            'displayCategory' => 'Lights',
+            'icon' => 'toggle-on',
+            'description' => 'Wall-mounted on/off control',
+        ],
+        272 => [ // 0x0110
+            'name' => 'Mounted Dimmable Load Control',
+            'specVersion' => '1.4',
+            'category' => 'lighting',
+            'displayCategory' => 'Lights',
+            'icon' => 'sliders',
+            'description' => 'Wall-mounted dimmer control',
+        ],
 
         // Closure Device Types (0x020x range)
-        514 => 'Window Covering',                // 0x0202
-        515 => 'Window Covering Controller',     // 0x0203
+        514 => [ // 0x0202
+            'name' => 'Window Covering',
+            'specVersion' => '1.0',
+            'category' => 'closures',
+            'displayCategory' => 'Security',
+            'icon' => 'blinds',
+            'description' => 'Motorized blinds, shades, or curtains',
+        ],
+        515 => [ // 0x0203
+            'name' => 'Window Covering Controller',
+            'specVersion' => '1.0',
+            'category' => 'closures',
+            'displayCategory' => 'Security',
+            'icon' => 'blinds',
+            'description' => 'Controller for window coverings',
+        ],
 
         // HVAC Device Types (0x030x range)
-        768 => 'Heating/Cooling Unit',           // 0x0300
-        769 => 'Thermostat',                     // 0x0301
-        770 => 'Temperature Sensor',             // 0x0302
-        771 => 'Pump',                           // 0x0303
-        772 => 'Pump Controller',                // 0x0304
-        773 => 'Pressure Sensor',                // 0x0305
-        774 => 'Flow Sensor',                    // 0x0306
-        775 => 'Humidity Sensor',                // 0x0307
-        777 => 'Heat Pump',                      // 0x0309
-        778 => 'Thermostat Controller',          // 0x030A
+        768 => [ // 0x0300
+            'name' => 'Heating/Cooling Unit',
+            'specVersion' => '1.0',
+            'category' => 'hvac',
+            'displayCategory' => 'Climate',
+            'icon' => 'thermometer',
+            'description' => 'Heating or cooling unit',
+        ],
+        769 => [ // 0x0301
+            'name' => 'Thermostat',
+            'specVersion' => '1.0',
+            'category' => 'hvac',
+            'displayCategory' => 'Climate',
+            'icon' => 'thermometer',
+            'description' => 'Temperature control thermostat',
+        ],
+        770 => [ // 0x0302
+            'name' => 'Temperature Sensor',
+            'specVersion' => '1.0',
+            'category' => 'sensors',
+            'displayCategory' => 'Sensors',
+            'icon' => 'thermometer',
+            'description' => 'Measures ambient temperature',
+        ],
+        771 => [ // 0x0303
+            'name' => 'Pump',
+            'specVersion' => '1.0',
+            'category' => 'hvac',
+            'displayCategory' => 'Climate',
+            'icon' => 'water',
+            'description' => 'Controllable pump device',
+        ],
+        772 => [ // 0x0304
+            'name' => 'Pump Controller',
+            'specVersion' => '1.0',
+            'category' => 'hvac',
+            'displayCategory' => 'Climate',
+            'icon' => 'water',
+            'description' => 'Controller for pump devices',
+        ],
+        773 => [ // 0x0305
+            'name' => 'Pressure Sensor',
+            'specVersion' => '1.0',
+            'category' => 'sensors',
+            'displayCategory' => 'Sensors',
+            'icon' => 'gauge',
+            'description' => 'Measures pressure',
+        ],
+        774 => [ // 0x0306
+            'name' => 'Flow Sensor',
+            'specVersion' => '1.0',
+            'category' => 'sensors',
+            'displayCategory' => 'Sensors',
+            'icon' => 'water',
+            'description' => 'Measures fluid flow rate',
+        ],
+        775 => [ // 0x0307
+            'name' => 'Humidity Sensor',
+            'specVersion' => '1.0',
+            'category' => 'sensors',
+            'displayCategory' => 'Sensors',
+            'icon' => 'droplet',
+            'description' => 'Measures relative humidity',
+        ],
+        777 => [ // 0x0309
+            'name' => 'Heat Pump',
+            'specVersion' => '1.4',
+            'category' => 'hvac',
+            'displayCategory' => 'Climate',
+            'icon' => 'thermometer',
+            'description' => 'Heat pump heating/cooling system',
+        ],
+        778 => [ // 0x030A
+            'name' => 'Thermostat Controller',
+            'specVersion' => '1.4',
+            'category' => 'hvac',
+            'displayCategory' => 'Climate',
+            'icon' => 'thermometer',
+            'description' => 'External thermostat controller',
+        ],
 
         // Energy Management Device Types (0x050x range)
-        1292 => 'EVSE',                          // 0x050C
-        1293 => 'Device Energy Management',      // 0x050D
-        1295 => 'Water Heater',                  // 0x050F
-        1296 => 'Electrical Sensor',             // 0x0510
+        1292 => [ // 0x050C
+            'name' => 'EVSE',
+            'specVersion' => '1.3',
+            'category' => 'energy',
+            'displayCategory' => 'Energy',
+            'icon' => 'charging-station',
+            'description' => 'Electric vehicle charging station',
+        ],
+        1293 => [ // 0x050D
+            'name' => 'Device Energy Management',
+            'specVersion' => '1.4',
+            'category' => 'energy',
+            'displayCategory' => 'Energy',
+            'icon' => 'bolt',
+            'description' => 'Energy management controller',
+        ],
+        1295 => [ // 0x050F
+            'name' => 'Water Heater',
+            'specVersion' => '1.4',
+            'category' => 'energy',
+            'displayCategory' => 'Energy',
+            'icon' => 'fire',
+            'description' => 'Electric water heater',
+        ],
+        1296 => [ // 0x0510
+            'name' => 'Electrical Sensor',
+            'specVersion' => '1.4',
+            'category' => 'energy',
+            'displayCategory' => 'Energy',
+            'icon' => 'bolt',
+            'description' => 'Electrical power/energy sensor',
+        ],
 
         // Controller Device Types (0x08xx range)
-        2112 => 'Control Bridge',                // 0x0840
-        2128 => 'On/Off Sensor',                 // 0x0850
+        2112 => [ // 0x0840
+            'name' => 'Control Bridge',
+            'specVersion' => '1.0',
+            'category' => 'utility',
+            'displayCategory' => 'System',
+            'icon' => 'bridge',
+            'description' => 'Bridge controller device',
+        ],
+        2128 => [ // 0x0850
+            'name' => 'On/Off Sensor',
+            'specVersion' => '1.0',
+            'category' => 'sensors',
+            'displayCategory' => 'Sensors',
+            'icon' => 'toggle-on',
+            'description' => 'Binary on/off state sensor',
+        ],
     ];
 
     public function getClusterName(int $id): string
@@ -173,9 +681,140 @@ class MatterRegistry
         return self::CLUSTER_NAMES[$id] ?? sprintf('Cluster 0x%04X', $id);
     }
 
+    /**
+     * Get the display name for a device type.
+     */
     public function getDeviceTypeName(int $id): string
     {
-        return self::DEVICE_TYPE_NAMES[$id] ?? "Device Type $id";
+        return self::DEVICE_TYPE_METADATA[$id]['name'] ?? "Device Type $id";
+    }
+
+    /**
+     * Get full metadata for a device type.
+     *
+     * @return array{name: string, specVersion: string, category: string, displayCategory: string, icon: string, description: string}|null
+     */
+    public function getDeviceTypeMetadata(int $id): ?array
+    {
+        return self::DEVICE_TYPE_METADATA[$id] ?? null;
+    }
+
+    /**
+     * Get the Matter specification version for a device type.
+     */
+    public function getDeviceTypeSpecVersion(int $id): ?string
+    {
+        return self::DEVICE_TYPE_METADATA[$id]['specVersion'] ?? null;
+    }
+
+    /**
+     * Get the icon identifier for a device type.
+     */
+    public function getDeviceTypeIcon(int $id): ?string
+    {
+        return self::DEVICE_TYPE_METADATA[$id]['icon'] ?? null;
+    }
+
+    /**
+     * Get the description for a device type.
+     */
+    public function getDeviceTypeDescription(int $id): ?string
+    {
+        return self::DEVICE_TYPE_METADATA[$id]['description'] ?? null;
+    }
+
+    /**
+     * Get the spec category for a device type (e.g., 'lighting', 'hvac', 'sensors').
+     */
+    public function getDeviceTypeCategory(int $id): ?string
+    {
+        return self::DEVICE_TYPE_METADATA[$id]['category'] ?? null;
+    }
+
+    /**
+     * Get the display category for a device type (e.g., 'Lights', 'Climate', 'Sensors').
+     */
+    public function getDeviceTypeDisplayCategory(int $id): ?string
+    {
+        return self::DEVICE_TYPE_METADATA[$id]['displayCategory'] ?? null;
+    }
+
+    /**
+     * Get all device types that belong to a specific spec category.
+     *
+     * @return array<int, array{name: string, specVersion: string, category: string, displayCategory: string, icon: string, description: string}>
+     */
+    public function getDeviceTypesByCategory(string $category): array
+    {
+        return array_filter(
+            self::DEVICE_TYPE_METADATA,
+            fn(array $meta) => $meta['category'] === $category
+        );
+    }
+
+    /**
+     * Get all device types that belong to a specific display category.
+     *
+     * @return array<int, array{name: string, specVersion: string, category: string, displayCategory: string, icon: string, description: string}>
+     */
+    public function getDeviceTypesByDisplayCategory(string $displayCategory): array
+    {
+        return array_filter(
+            self::DEVICE_TYPE_METADATA,
+            fn(array $meta) => $meta['displayCategory'] === $displayCategory
+        );
+    }
+
+    /**
+     * Get all device types introduced in a specific Matter specification version.
+     *
+     * @return array<int, array{name: string, specVersion: string, category: string, displayCategory: string, icon: string, description: string}>
+     */
+    public function getDeviceTypesBySpecVersion(string $specVersion): array
+    {
+        return array_filter(
+            self::DEVICE_TYPE_METADATA,
+            fn(array $meta) => $meta['specVersion'] === $specVersion
+        );
+    }
+
+    /**
+     * Get all unique spec categories.
+     *
+     * @return string[]
+     */
+    public function getAllCategories(): array
+    {
+        return array_values(array_unique(
+            array_column(self::DEVICE_TYPE_METADATA, 'category')
+        ));
+    }
+
+    /**
+     * Get all unique display categories.
+     *
+     * @return string[]
+     */
+    public function getAllDisplayCategories(): array
+    {
+        return array_values(array_unique(
+            array_column(self::DEVICE_TYPE_METADATA, 'displayCategory')
+        ));
+    }
+
+    /**
+     * Get all unique spec versions.
+     *
+     * @return string[]
+     */
+    public function getAllSpecVersions(): array
+    {
+        $versions = array_unique(
+            array_column(self::DEVICE_TYPE_METADATA, 'specVersion')
+        );
+        usort($versions, 'version_compare');
+
+        return array_values($versions);
     }
 
     public function getAllClusterNames(): array
@@ -183,8 +822,26 @@ class MatterRegistry
         return self::CLUSTER_NAMES;
     }
 
+    /**
+     * Get all device type names (backward compatible).
+     *
+     * @return array<int, string>
+     */
     public function getAllDeviceTypeNames(): array
     {
-        return self::DEVICE_TYPE_NAMES;
+        return array_map(
+            fn(array $meta) => $meta['name'],
+            self::DEVICE_TYPE_METADATA
+        );
+    }
+
+    /**
+     * Get all device type metadata.
+     *
+     * @return array<int, array{name: string, specVersion: string, category: string, displayCategory: string, icon: string, description: string}>
+     */
+    public function getAllDeviceTypeMetadata(): array
+    {
+        return self::DEVICE_TYPE_METADATA;
     }
 }
