@@ -212,6 +212,134 @@
         border: 1px solid var(--gray-200);
     }
 
+    .cluster-section {
+        background: white;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+        margin-bottom: 1.5rem;
+    }
+
+    .cluster-section-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .cluster-section-header h2 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .cluster-section-header .count {
+        background: var(--gray-100);
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        color: var(--gray-600);
+    }
+
+    .cluster-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        padding: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .cluster-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .cluster-card {
+        background: var(--gray-50);
+        border-radius: 0.375rem;
+        padding: 1rem;
+    }
+
+    .cluster-card h3 {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--gray-700);
+        margin-bottom: 0.5rem;
+    }
+
+    .cluster-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .cluster-list li {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--gray-200);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.875rem;
+    }
+
+    .cluster-list li:last-child {
+        border-bottom: none;
+    }
+
+    .cluster-list .cluster-name {
+        color: var(--gray-900);
+        font-weight: 500;
+    }
+
+    .cluster-list .cluster-id {
+        color: var(--gray-500);
+        font-size: 0.75rem;
+        font-family: monospace;
+    }
+
+    .cluster-list a {
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .cluster-list a:hover .cluster-name {
+        color: var(--primary);
+    }
+
+    .empty-clusters {
+        padding: 1.5rem;
+        text-align: center;
+        color: var(--gray-500);
+        font-size: 0.875rem;
+    }
+
+    .mandatory-badge {
+        display: inline-block;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.625rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .mandatory-badge.required {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .mandatory-badge.optional {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 2rem 0 1rem;
+        color: var(--gray-900);
+    }
+
     .icon-lightbulb::before { content: '💡'; }
     .icon-thermometer::before { content: '🌡️'; }
     .icon-lock::before { content: '🔒'; }
@@ -282,11 +410,22 @@
                     <div class="description">{{ deviceType.description }}</div>
                 {% endif %}
                 <div class="meta">
-                    <span>Device Type ID: {{ deviceType.id }} (0x{{ '%04X'|format(deviceType.id) }})</span>
+                    <span>Device Type ID: {{ deviceType.id }} ({{ deviceType.hexId|default('0x' ~ '%04X'|format(deviceType.id)) }})</span>
                     {% if deviceType.displayCategory %}
                         <span class="category-tag category-tag-{{ deviceType.displayCategory|lower|replace({' ': '-'}) }}">{{ deviceType.displayCategory }}</span>
                     {% endif %}
+                    {% if deviceType.class %}
+                        <span>Class: {{ deviceType.class }}</span>
+                    {% endif %}
+                    {% if deviceType.scope %}
+                        <span>Scope: {{ deviceType.scope }}</span>
+                    {% endif %}
                 </div>
+                {% if deviceType.superset %}
+                    <div class="meta" style="margin-top: 0.5rem;">
+                        <span>Extends: <strong>{{ deviceType.superset }}</strong></span>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -297,6 +436,98 @@
             <div class="label">Device{{ totalDevices != 1 ? 's' : '' }} Implementing</div>
         </div>
     </div>
+
+    {% if mandatoryServerClusters|length > 0 or optionalServerClusters|length > 0 or mandatoryClientClusters|length > 0 or optionalClientClusters|length > 0 %}
+        <h2 class="section-title">Cluster Requirements</h2>
+
+        <div class="cluster-section">
+            <div class="cluster-section-header">
+                <h2>Server Clusters</h2>
+                <span class="count">{{ mandatoryServerClusters|length + optionalServerClusters|length }} total</span>
+            </div>
+            {% if mandatoryServerClusters|length > 0 or optionalServerClusters|length > 0 %}
+                <div class="cluster-grid">
+                    <div class="cluster-card">
+                        <h3>Mandatory <span class="mandatory-badge required">Required</span></h3>
+                        {% if mandatoryServerClusters|length > 0 %}
+                            <ul class="cluster-list">
+                                {% for cluster in mandatoryServerClusters %}
+                                    <li>
+                                        <span class="cluster-name">{{ cluster.name }}</span>
+                                        <span class="cluster-id">0x{{ '%04X'|format(cluster.id) }}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="empty-clusters">None required</p>
+                        {% endif %}
+                    </div>
+                    <div class="cluster-card">
+                        <h3>Optional <span class="mandatory-badge optional">Optional</span></h3>
+                        {% if optionalServerClusters|length > 0 %}
+                            <ul class="cluster-list">
+                                {% for cluster in optionalServerClusters %}
+                                    <li>
+                                        <span class="cluster-name">{{ cluster.name }}</span>
+                                        <span class="cluster-id">0x{{ '%04X'|format(cluster.id) }}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="empty-clusters">None specified</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="empty-clusters">No server clusters specified for this device type.</div>
+            {% endif %}
+        </div>
+
+        <div class="cluster-section">
+            <div class="cluster-section-header">
+                <h2>Client Clusters</h2>
+                <span class="count">{{ mandatoryClientClusters|length + optionalClientClusters|length }} total</span>
+            </div>
+            {% if mandatoryClientClusters|length > 0 or optionalClientClusters|length > 0 %}
+                <div class="cluster-grid">
+                    <div class="cluster-card">
+                        <h3>Mandatory <span class="mandatory-badge required">Required</span></h3>
+                        {% if mandatoryClientClusters|length > 0 %}
+                            <ul class="cluster-list">
+                                {% for cluster in mandatoryClientClusters %}
+                                    <li>
+                                        <span class="cluster-name">{{ cluster.name }}</span>
+                                        <span class="cluster-id">0x{{ '%04X'|format(cluster.id) }}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="empty-clusters">None required</p>
+                        {% endif %}
+                    </div>
+                    <div class="cluster-card">
+                        <h3>Optional <span class="mandatory-badge optional">Optional</span></h3>
+                        {% if optionalClientClusters|length > 0 %}
+                            <ul class="cluster-list">
+                                {% for cluster in optionalClientClusters %}
+                                    <li>
+                                        <span class="cluster-name">{{ cluster.name }}</span>
+                                        <span class="cluster-id">0x{{ '%04X'|format(cluster.id) }}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="empty-clusters">None specified</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="empty-clusters">No client clusters specified for this device type.</div>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <h2 class="section-title">Devices Implementing This Type</h2>
 
     {% if devices is empty %}
         <div class="empty-state">

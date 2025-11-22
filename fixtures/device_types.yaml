@@ -1,0 +1,1563 @@
+# Matter 1.4 Device Library - Device Type Definitions
+# Extracted from CSA Matter 1.4 Device Library Specification
+# Source: https://csa-iot.org/wp-content/uploads/2025/11/23-27351-005_Matter-1.4-Device-Library-Specification.pdf
+
+# Utility Device Types
+- id: 22
+  hexId: "0x0016"
+  name: "Root Node"
+  description: "This defines conformance for a root node endpoint. This endpoint is akin to a 'read me first' endpoint that describes itself and the other endpoints that make up the node."
+  specVersion: "1.0"
+  category: "utility"
+  displayCategory: "System"
+  class: "Node"
+  scope: "Node"
+  superset: null
+  icon: "server"
+  mandatoryServerClusters:
+    - { id: 40, name: "Basic Information" }
+    - { id: 31, name: "Access Control" }
+    - { id: 63, name: "Group Key Management" }
+    - { id: 48, name: "General Commissioning" }
+    - { id: 60, name: "Administrator Commissioning" }
+    - { id: 62, name: "Node Operational Credentials" }
+    - { id: 51, name: "General Diagnostics" }
+  optionalServerClusters:
+    - { id: 46, name: "Power Source Configuration" }
+    - { id: 56, name: "Time Synchronization" }
+    - { id: 49, name: "Network Commissioning" }
+    - { id: 43, name: "Localization Configuration" }
+    - { id: 44, name: "Time Format Localization" }
+    - { id: 45, name: "Unit Localization" }
+    - { id: 50, name: "Diagnostic Logs" }
+    - { id: 52, name: "Software Diagnostics" }
+    - { id: 55, name: "Ethernet Network Diagnostics" }
+    - { id: 54, name: "Wi-Fi Network Diagnostics" }
+    - { id: 53, name: "Thread Network Diagnostics" }
+    - { id: 70, name: "ICD Management" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 17
+  hexId: "0x0011"
+  name: "Power Source"
+  description: "A Power Source device type represents a source of power for the node."
+  specVersion: "1.0"
+  category: "utility"
+  displayCategory: "System"
+  class: "Utility"
+  scope: "Node"
+  superset: null
+  icon: "battery"
+  mandatoryServerClusters:
+    - { id: 47, name: "Power Source" }
+  optionalServerClusters: []
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 18
+  hexId: "0x0012"
+  name: "OTA Requestor"
+  description: "An OTA Requestor is a device that is capable of receiving an OTA software update."
+  specVersion: "1.0"
+  category: "utility"
+  displayCategory: "System"
+  class: "Utility"
+  scope: "Node"
+  superset: null
+  icon: "download"
+  mandatoryServerClusters:
+    - { id: 42, name: "OTA Software Update Requestor" }
+  optionalServerClusters: []
+  mandatoryClientClusters:
+    - { id: 41, name: "OTA Software Update Provider" }
+  optionalClientClusters: []
+
+- id: 20
+  hexId: "0x0014"
+  name: "OTA Provider"
+  description: "An OTA Provider is a node that is capable of providing an OTA software update to other nodes on the same fabric."
+  specVersion: "1.0"
+  category: "utility"
+  displayCategory: "System"
+  class: "Utility"
+  scope: "Node"
+  superset: null
+  icon: "upload"
+  mandatoryServerClusters:
+    - { id: 41, name: "OTA Software Update Provider" }
+  optionalServerClusters: []
+  mandatoryClientClusters: []
+  optionalClientClusters:
+    - { id: 42, name: "OTA Software Update Requestor" }
+
+- id: 19
+  hexId: "0x0013"
+  name: "Bridged Node"
+  description: "This defines conformance for a Bridged Node root endpoint. A Bridged Node endpoint represents a device on a foreign network, but is not the root endpoint of the bridge itself."
+  specVersion: "1.0"
+  category: "utility"
+  displayCategory: "System"
+  class: "Utility"
+  scope: "Endpoint"
+  superset: null
+  icon: "bridge"
+  mandatoryServerClusters:
+    - { id: 57, name: "Bridged Device Basic Information" }
+  optionalServerClusters:
+    - { id: 46, name: "Power Source Configuration" }
+    - { id: 47, name: "Power Source" }
+    - { id: 1872, name: "Ecosystem Information" }
+    - { id: 60, name: "Administrator Commissioning" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 14
+  hexId: "0x000E"
+  name: "Aggregator"
+  description: "This device type aggregates endpoints as a collection. Clusters on the endpoint provide functionality for the collection of descendant endpoints present in the PartsList."
+  specVersion: "1.0"
+  category: "utility"
+  displayCategory: "System"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "hub"
+  mandatoryServerClusters: []
+  optionalServerClusters:
+    - { id: 37, name: "Actions" }
+    - { id: 3, name: "Identify" }
+    - { id: 1873, name: "Commissioner Control" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 39
+  hexId: "0x0027"
+  name: "Mode Select"
+  description: "This defines conformance to the Mode Select device type for devices with selectable operating modes."
+  specVersion: "1.0"
+  category: "utility"
+  displayCategory: "System"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "sliders"
+  mandatoryServerClusters:
+    - { id: 80, name: "Mode Select" }
+  optionalServerClusters: []
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 25
+  hexId: "0x0019"
+  name: "Secondary Network Interface"
+  description: "A Secondary Network Interface device provides an additional network interface supported by the Node, supplementing the primary interface hosted by the Root Node endpoint."
+  specVersion: "1.4"
+  category: "utility"
+  displayCategory: "System"
+  class: "Utility"
+  scope: "Endpoint"
+  superset: null
+  icon: "network-wired"
+  mandatoryServerClusters:
+    - { id: 49, name: "Network Commissioning" }
+  optionalServerClusters:
+    - { id: 55, name: "Ethernet Network Diagnostics" }
+    - { id: 54, name: "Wi-Fi Network Diagnostics" }
+    - { id: 53, name: "Thread Network Diagnostics" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 304
+  hexId: "0x0130"
+  name: "Joint Fabric Administrator"
+  description: "A Joint Fabric Administrator device provides capabilities to manage the Joint Fabric Datastore and issue an ICAC signed by the Joint Fabric Anchor Root CA."
+  specVersion: "1.4"
+  category: "utility"
+  displayCategory: "System"
+  class: "Utility"
+  scope: "Endpoint"
+  superset: null
+  icon: "server"
+  mandatoryServerClusters:
+    - { id: 1874, name: "Joint Fabric Datastore" }
+    - { id: 1875, name: "Joint Fabric PKI" }
+  optionalServerClusters: []
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+# Lighting Device Types
+- id: 256
+  hexId: "0x0100"
+  name: "On/Off Light"
+  description: "The On/Off Light is a lighting device that is capable of being switched on or off by means of a bound controller device such as an On/Off Light Switch or a Dimmer Switch."
+  specVersion: "1.0"
+  category: "lighting"
+  displayCategory: "Lights"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "lightbulb"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 4, name: "Groups" }
+    - { id: 98, name: "Scenes Management" }
+    - { id: 6, name: "On/Off" }
+  optionalServerClusters:
+    - { id: 8, name: "Level Control" }
+  mandatoryClientClusters: []
+  optionalClientClusters:
+    - { id: 1030, name: "Occupancy Sensing" }
+
+- id: 257
+  hexId: "0x0101"
+  name: "Dimmable Light"
+  description: "A Dimmable Light is a lighting device that is capable of being switched on or off and the intensity of its light adjusted by means of a bound controller device."
+  specVersion: "1.0"
+  category: "lighting"
+  displayCategory: "Lights"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: "On/Off Light"
+  icon: "lightbulb"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 4, name: "Groups" }
+    - { id: 98, name: "Scenes Management" }
+    - { id: 6, name: "On/Off" }
+    - { id: 8, name: "Level Control" }
+  optionalServerClusters: []
+  mandatoryClientClusters: []
+  optionalClientClusters:
+    - { id: 1030, name: "Occupancy Sensing" }
+
+- id: 268
+  hexId: "0x010C"
+  name: "Color Temperature Light"
+  description: "A Color Temperature Light is a lighting device that is capable of being switched on or off, the intensity of its light adjusted, and its color temperature adjusted."
+  specVersion: "1.0"
+  category: "lighting"
+  displayCategory: "Lights"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: "Dimmable Light"
+  icon: "lightbulb"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 4, name: "Groups" }
+    - { id: 98, name: "Scenes Management" }
+    - { id: 6, name: "On/Off" }
+    - { id: 8, name: "Level Control" }
+    - { id: 768, name: "Color Control" }
+  optionalServerClusters: []
+  mandatoryClientClusters: []
+  optionalClientClusters:
+    - { id: 1030, name: "Occupancy Sensing" }
+
+- id: 269
+  hexId: "0x010D"
+  name: "Extended Color Light"
+  description: "An Extended Color Light is a lighting device that supports color adjustment by means of hue/saturation, enhanced hue, color looping, XY coordinates, and color temperature."
+  specVersion: "1.0"
+  category: "lighting"
+  displayCategory: "Lights"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: "Color Temperature Light"
+  icon: "palette"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 4, name: "Groups" }
+    - { id: 98, name: "Scenes Management" }
+    - { id: 6, name: "On/Off" }
+    - { id: 8, name: "Level Control" }
+    - { id: 768, name: "Color Control" }
+  optionalServerClusters: []
+  mandatoryClientClusters: []
+  optionalClientClusters:
+    - { id: 1030, name: "Occupancy Sensing" }
+
+# Smart Plugs/Outlets and Actuators
+- id: 266
+  hexId: "0x010A"
+  name: "On/Off Plug-in Unit"
+  description: "An On/Off Plug-in Unit is a device that provides power to another device that is plugged into it, and is capable of switching that provided power on or off."
+  specVersion: "1.0"
+  category: "lighting"
+  displayCategory: "Lights"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "plug"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 4, name: "Groups" }
+    - { id: 98, name: "Scenes Management" }
+    - { id: 6, name: "On/Off" }
+  optionalServerClusters:
+    - { id: 8, name: "Level Control" }
+  mandatoryClientClusters: []
+  optionalClientClusters:
+    - { id: 1030, name: "Occupancy Sensing" }
+
+- id: 267
+  hexId: "0x010B"
+  name: "Dimmable Plug-In Unit"
+  description: "A Dimmable Plug-In Unit is a device that provides power to another device and is capable of being switched on or off and have its level adjusted. Typically used to control conventional non-communicating lights through phase cutting."
+  specVersion: "1.0"
+  category: "lighting"
+  displayCategory: "Lights"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "plug"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 4, name: "Groups" }
+    - { id: 98, name: "Scenes Management" }
+    - { id: 6, name: "On/Off" }
+    - { id: 8, name: "Level Control" }
+  optionalServerClusters: []
+  mandatoryClientClusters: []
+  optionalClientClusters:
+    - { id: 1030, name: "Occupancy Sensing" }
+
+- id: 271
+  hexId: "0x010F"
+  name: "Mounted On/Off Control"
+  description: "A Mounted On/Off Control is a fixed device that provides power to another device that is plugged into it, and is capable of switching that provided power on or off."
+  specVersion: "1.4"
+  category: "lighting"
+  displayCategory: "Lights"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "toggle-on"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 4, name: "Groups" }
+    - { id: 98, name: "Scenes Management" }
+    - { id: 6, name: "On/Off" }
+  optionalServerClusters:
+    - { id: 8, name: "Level Control" }
+  mandatoryClientClusters: []
+  optionalClientClusters:
+    - { id: 1030, name: "Occupancy Sensing" }
+
+- id: 272
+  hexId: "0x0110"
+  name: "Mounted Dimmable Load Control"
+  description: "A Mounted Dimmable Load Control is a fixed device that provides power and dimming control. Typically used to control a conventional non-communicating light through its mains connection using phase cutting."
+  specVersion: "1.4"
+  category: "lighting"
+  displayCategory: "Lights"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "sliders"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 4, name: "Groups" }
+    - { id: 98, name: "Scenes Management" }
+    - { id: 6, name: "On/Off" }
+    - { id: 8, name: "Level Control" }
+  optionalServerClusters: []
+  mandatoryClientClusters: []
+  optionalClientClusters:
+    - { id: 1030, name: "Occupancy Sensing" }
+
+- id: 771
+  hexId: "0x0303"
+  name: "Pump"
+  description: "A Pump device is a pump that may have variable speed. It may have optional built-in sensors and a regulation mechanism. It is typically used for pumping fluids like water."
+  specVersion: "1.0"
+  category: "hvac"
+  displayCategory: "Climate"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "water"
+  mandatoryServerClusters:
+    - { id: 6, name: "On/Off" }
+    - { id: 512, name: "Pump Configuration and Control" }
+    - { id: 3, name: "Identify" }
+  optionalServerClusters:
+    - { id: 8, name: "Level Control" }
+    - { id: 4, name: "Groups" }
+    - { id: 98, name: "Scenes Management" }
+    - { id: 1026, name: "Temperature Measurement" }
+    - { id: 1027, name: "Pressure Measurement" }
+    - { id: 1028, name: "Flow Measurement" }
+  mandatoryClientClusters: []
+  optionalClientClusters:
+    - { id: 1026, name: "Temperature Measurement" }
+    - { id: 1027, name: "Pressure Measurement" }
+    - { id: 1028, name: "Flow Measurement" }
+    - { id: 1030, name: "Occupancy Sensing" }
+
+- id: 66
+  hexId: "0x0042"
+  name: "Water Valve"
+  description: "A Water Valve is a device that controls the flow of water in a plumbing system."
+  specVersion: "1.3"
+  category: "closures"
+  displayCategory: "Security"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "faucet"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 129, name: "Valve Configuration and Control" }
+  optionalServerClusters:
+    - { id: 1028, name: "Flow Measurement" }
+  mandatoryClientClusters: []
+  optionalClientClusters:
+    - { id: 1028, name: "Flow Measurement" }
+
+# Switches and Controls
+- id: 259
+  hexId: "0x0103"
+  name: "On/Off Light Switch"
+  description: "An On/Off Light Switch is a controller device that, when bound to a lighting device such as an On/Off Light, is capable of being used to switch the device on or off."
+  specVersion: "1.0"
+  category: "lighting"
+  displayCategory: "Lights"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "toggle-on"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+  optionalServerClusters: []
+  mandatoryClientClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 6, name: "On/Off" }
+  optionalClientClusters:
+    - { id: 4, name: "Groups" }
+    - { id: 98, name: "Scenes Management" }
+
+- id: 260
+  hexId: "0x0104"
+  name: "Dimmer Switch"
+  description: "A Dimmer Switch is a controller device that, when bound to a lighting device such as a Dimmable Light, is capable of being used to switch the device on or off and adjust the intensity of the light being emitted."
+  specVersion: "1.0"
+  category: "lighting"
+  displayCategory: "Lights"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: "On/Off Light Switch"
+  icon: "sliders"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+  optionalServerClusters: []
+  mandatoryClientClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 6, name: "On/Off" }
+    - { id: 8, name: "Level Control" }
+  optionalClientClusters:
+    - { id: 4, name: "Groups" }
+    - { id: 98, name: "Scenes Management" }
+
+- id: 261
+  hexId: "0x0105"
+  name: "Color Dimmer Switch"
+  description: "A Color Dimmer Switch is a controller device that, when bound to a lighting device such as an Extended Color Light, is capable of being used to adjust the color of the light being emitted."
+  specVersion: "1.0"
+  category: "lighting"
+  displayCategory: "Lights"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: "Dimmer Switch"
+  icon: "palette"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+  optionalServerClusters: []
+  mandatoryClientClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 6, name: "On/Off" }
+    - { id: 8, name: "Level Control" }
+    - { id: 768, name: "Color Control" }
+  optionalClientClusters:
+    - { id: 4, name: "Groups" }
+    - { id: 98, name: "Scenes Management" }
+
+- id: 2112
+  hexId: "0x0840"
+  name: "Control Bridge"
+  description: "A Control Bridge is a controller device that, when bound to a lighting device, is capable of being used to switch the device on or off, adjust the intensity and color of the light being emitted, and set scenes."
+  specVersion: "1.0"
+  category: "utility"
+  displayCategory: "System"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "bridge"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+  optionalServerClusters: []
+  mandatoryClientClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 4, name: "Groups" }
+    - { id: 98, name: "Scenes Management" }
+    - { id: 6, name: "On/Off" }
+    - { id: 8, name: "Level Control" }
+    - { id: 768, name: "Color Control" }
+  optionalClientClusters:
+    - { id: 1024, name: "Illuminance Measurement" }
+    - { id: 1030, name: "Occupancy Sensing" }
+
+- id: 772
+  hexId: "0x0304"
+  name: "Pump Controller"
+  description: "A Pump Controller device is capable of configuring and controlling a Pump device."
+  specVersion: "1.0"
+  category: "hvac"
+  displayCategory: "Climate"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "water"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+  optionalServerClusters: []
+  mandatoryClientClusters:
+    - { id: 6, name: "On/Off" }
+    - { id: 512, name: "Pump Configuration and Control" }
+  optionalClientClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 4, name: "Groups" }
+    - { id: 8, name: "Level Control" }
+    - { id: 98, name: "Scenes Management" }
+    - { id: 1026, name: "Temperature Measurement" }
+    - { id: 1027, name: "Pressure Measurement" }
+    - { id: 1028, name: "Flow Measurement" }
+
+- id: 15
+  hexId: "0x000F"
+  name: "Generic Switch"
+  description: "A Generic Switch is a device that can report its state (pressed, released, etc.) and can be bound to other devices to control them."
+  specVersion: "1.0"
+  category: "utility"
+  displayCategory: "System"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "toggle-on"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 59, name: "Switch" }
+  optionalServerClusters: []
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+# Sensor Device Types
+- id: 21
+  hexId: "0x0015"
+  name: "Contact Sensor"
+  description: "A Contact Sensor detects the open/closed state of doors, windows, or other physical objects."
+  specVersion: "1.0"
+  category: "sensors"
+  displayCategory: "Sensors"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "door-open"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 69, name: "Boolean State" }
+  optionalServerClusters:
+    - { id: 128, name: "Boolean State Configuration" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 262
+  hexId: "0x0106"
+  name: "Light Sensor"
+  description: "A Light Sensor device is a measurement and sensing device that is capable of measuring and reporting the intensity of light (illuminance) to which the sensor is being subjected."
+  specVersion: "1.0"
+  category: "sensors"
+  displayCategory: "Sensors"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "sun"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 1024, name: "Illuminance Measurement" }
+  optionalServerClusters: []
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 263
+  hexId: "0x0107"
+  name: "Occupancy Sensor"
+  description: "An Occupancy Sensor is a measurement and sensing device that is capable of measuring and reporting the occupancy state in a designated area."
+  specVersion: "1.0"
+  category: "sensors"
+  displayCategory: "Sensors"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "motion-sensor"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 1030, name: "Occupancy Sensing" }
+  optionalServerClusters:
+    - { id: 128, name: "Boolean State Configuration" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 770
+  hexId: "0x0302"
+  name: "Temperature Sensor"
+  description: "A Temperature Sensor device reports measurements of temperature."
+  specVersion: "1.0"
+  category: "sensors"
+  displayCategory: "Sensors"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "thermometer"
+  mandatoryServerClusters:
+    - { id: 1026, name: "Temperature Measurement" }
+    - { id: 3, name: "Identify" }
+  optionalServerClusters: []
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 773
+  hexId: "0x0305"
+  name: "Pressure Sensor"
+  description: "A Pressure Sensor device measures and reports the pressure of a fluid."
+  specVersion: "1.0"
+  category: "sensors"
+  displayCategory: "Sensors"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "gauge"
+  mandatoryServerClusters:
+    - { id: 1027, name: "Pressure Measurement" }
+    - { id: 3, name: "Identify" }
+  optionalServerClusters: []
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 774
+  hexId: "0x0306"
+  name: "Flow Sensor"
+  description: "A Flow Sensor device measures and reports the flow rate of a fluid."
+  specVersion: "1.0"
+  category: "sensors"
+  displayCategory: "Sensors"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "water"
+  mandatoryServerClusters:
+    - { id: 1028, name: "Flow Measurement" }
+    - { id: 3, name: "Identify" }
+  optionalServerClusters: []
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 775
+  hexId: "0x0307"
+  name: "Humidity Sensor"
+  description: "A Humidity Sensor (Relative humidity sensor) reports humidity measurements."
+  specVersion: "1.0"
+  category: "sensors"
+  displayCategory: "Sensors"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "droplet"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 1029, name: "Relative Humidity Measurement" }
+  optionalServerClusters: []
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 2128
+  hexId: "0x0850"
+  name: "On/Off Sensor"
+  description: "An On/Off Sensor is a measurement and sensing device that, when bound to a lighting device, is capable of being used to switch the device on or off."
+  specVersion: "1.0"
+  category: "sensors"
+  displayCategory: "Sensors"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "toggle-on"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+  optionalServerClusters: []
+  mandatoryClientClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 6, name: "On/Off" }
+  optionalClientClusters:
+    - { id: 4, name: "Groups" }
+    - { id: 98, name: "Scenes Management" }
+    - { id: 8, name: "Level Control" }
+    - { id: 768, name: "Color Control" }
+
+- id: 118
+  hexId: "0x0076"
+  name: "Smoke CO Alarm"
+  description: "A Smoke CO Alarm device is capable of sensing smoke, carbon monoxide or both. It is capable of issuing a visual and audible alert to indicate elevated concentration of smoke or carbon monoxide."
+  specVersion: "1.2"
+  category: "sensors"
+  displayCategory: "Sensors"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "bell"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 92, name: "Smoke CO Alarm" }
+  optionalServerClusters:
+    - { id: 4, name: "Groups" }
+    - { id: 1029, name: "Relative Humidity Measurement" }
+    - { id: 1026, name: "Temperature Measurement" }
+    - { id: 1036, name: "Carbon Monoxide Concentration Measurement" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 44
+  hexId: "0x002C"
+  name: "Air Quality Sensor"
+  description: "An Air Quality Sensor is a device designed to monitor and measure various parameters related to the quality of ambient air in indoor or outdoor environments."
+  specVersion: "1.2"
+  category: "sensors"
+  displayCategory: "Sensors"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "wind"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 91, name: "Air Quality" }
+  optionalServerClusters:
+    - { id: 1026, name: "Temperature Measurement" }
+    - { id: 1029, name: "Relative Humidity Measurement" }
+    - { id: 1036, name: "Carbon Monoxide Concentration Measurement" }
+    - { id: 1037, name: "Carbon Dioxide Concentration Measurement" }
+    - { id: 1043, name: "Nitrogen Dioxide Concentration Measurement" }
+    - { id: 1045, name: "Ozone Concentration Measurement" }
+    - { id: 1067, name: "Formaldehyde Concentration Measurement" }
+    - { id: 1068, name: "PM1 Concentration Measurement" }
+    - { id: 1066, name: "PM2.5 Concentration Measurement" }
+    - { id: 1069, name: "PM10 Concentration Measurement" }
+    - { id: 1071, name: "Radon Concentration Measurement" }
+    - { id: 1070, name: "Total Volatile Organic Compounds Concentration Measurement" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 65
+  hexId: "0x0041"
+  name: "Water Freeze Detector"
+  description: "A Water Freeze Detector detects freezing water conditions that could cause pipe damage."
+  specVersion: "1.3"
+  category: "sensors"
+  displayCategory: "Sensors"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "snowflake"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 69, name: "Boolean State" }
+  optionalServerClusters:
+    - { id: 128, name: "Boolean State Configuration" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 67
+  hexId: "0x0043"
+  name: "Water Leak Detector"
+  description: "A Water Leak Detector detects the presence of water leaks."
+  specVersion: "1.3"
+  category: "sensors"
+  displayCategory: "Sensors"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "droplet"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 69, name: "Boolean State" }
+  optionalServerClusters:
+    - { id: 128, name: "Boolean State Configuration" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 68
+  hexId: "0x0044"
+  name: "Rain Sensor"
+  description: "A Rain Sensor detects rain or precipitation."
+  specVersion: "1.3"
+  category: "sensors"
+  displayCategory: "Sensors"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "cloud-rain"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 69, name: "Boolean State" }
+  optionalServerClusters:
+    - { id: 128, name: "Boolean State Configuration" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+# Closure Device Types
+- id: 10
+  hexId: "0x000A"
+  name: "Door Lock"
+  description: "A Door Lock is a device used to secure a door. It is possible to actuate a door lock either by means of a manual or a remote method."
+  specVersion: "1.0"
+  category: "closures"
+  displayCategory: "Security"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "lock"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 257, name: "Door Lock" }
+  optionalServerClusters:
+    - { id: 4, name: "Groups" }
+    - { id: 98, name: "Scenes Management" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 11
+  hexId: "0x000B"
+  name: "Door Lock Controller"
+  description: "A Door Lock Controller is a device capable of controlling a door lock."
+  specVersion: "1.0"
+  category: "closures"
+  displayCategory: "Security"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "lock"
+  mandatoryServerClusters: []
+  optionalServerClusters:
+    - { id: 56, name: "Time Synchronization" }
+  mandatoryClientClusters:
+    - { id: 257, name: "Door Lock" }
+  optionalClientClusters:
+    - { id: 4, name: "Groups" }
+    - { id: 98, name: "Scenes Management" }
+
+- id: 514
+  hexId: "0x0202"
+  name: "Window Covering"
+  description: "A Window Covering device is a motorized device that controls blinds, shades, or curtains."
+  specVersion: "1.0"
+  category: "closures"
+  displayCategory: "Security"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "blinds"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 258, name: "Window Covering" }
+  optionalServerClusters:
+    - { id: 4, name: "Groups" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 515
+  hexId: "0x0203"
+  name: "Window Covering Controller"
+  description: "A Window Covering Controller is a device that controls an automatic window covering."
+  specVersion: "1.0"
+  category: "closures"
+  displayCategory: "Security"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "blinds"
+  mandatoryServerClusters: []
+  optionalServerClusters:
+    - { id: 3, name: "Identify" }
+  mandatoryClientClusters:
+    - { id: 258, name: "Window Covering" }
+  optionalClientClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 4, name: "Groups" }
+
+# HVAC Device Types
+- id: 769
+  hexId: "0x0301"
+  name: "Thermostat"
+  description: "A Thermostat device is capable of having either built-in or separate sensors for temperature, humidity or occupancy. It allows the desired temperature to be set either remotely or locally."
+  specVersion: "1.0"
+  category: "hvac"
+  displayCategory: "Climate"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "thermometer"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 513, name: "Thermostat" }
+  optionalServerClusters:
+    - { id: 4, name: "Groups" }
+    - { id: 516, name: "Thermostat User Interface Configuration" }
+    - { id: 155, name: "Energy Preference" }
+  mandatoryClientClusters: []
+  optionalClientClusters:
+    - { id: 514, name: "Fan Control" }
+    - { id: 1026, name: "Temperature Measurement" }
+    - { id: 1029, name: "Relative Humidity Measurement" }
+    - { id: 1030, name: "Occupancy Sensing" }
+
+- id: 43
+  hexId: "0x002B"
+  name: "Fan"
+  description: "A Fan device is typically standalone or mounted on a ceiling or wall and is used to circulate air in a room."
+  specVersion: "1.2"
+  category: "hvac"
+  displayCategory: "Climate"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "fan"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 4, name: "Groups" }
+    - { id: 514, name: "Fan Control" }
+  optionalServerClusters:
+    - { id: 6, name: "On/Off" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 45
+  hexId: "0x002D"
+  name: "Air Purifier"
+  description: "An Air Purifier is a standalone device that is designed to clean the air in a room."
+  specVersion: "1.2"
+  category: "hvac"
+  displayCategory: "Climate"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "leaf"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 514, name: "Fan Control" }
+  optionalServerClusters:
+    - { id: 4, name: "Groups" }
+    - { id: 6, name: "On/Off" }
+    - { id: 113, name: "HEPA Filter Monitoring" }
+    - { id: 114, name: "Activated Carbon Filter Monitoring" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 778
+  hexId: "0x030A"
+  name: "Thermostat Controller"
+  description: "A Thermostat Controller is an external thermostat controller that can control a thermostat device."
+  specVersion: "1.4"
+  category: "hvac"
+  displayCategory: "Climate"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "thermometer"
+  mandatoryServerClusters: []
+  optionalServerClusters:
+    - { id: 3, name: "Identify" }
+  mandatoryClientClusters:
+    - { id: 513, name: "Thermostat" }
+  optionalClientClusters: []
+
+# Media Device Types
+- id: 40
+  hexId: "0x0028"
+  name: "Basic Video Player"
+  description: "A Basic Video Player represents a device that is able to play media to a physical output or to a display screen which is part of the device."
+  specVersion: "1.0"
+  category: "media"
+  displayCategory: "Entertainment"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "tv"
+  mandatoryServerClusters:
+    - { id: 6, name: "On/Off" }
+    - { id: 1286, name: "Media Playback" }
+    - { id: 1289, name: "Keypad Input" }
+  optionalServerClusters:
+    - { id: 1283, name: "Wake on LAN" }
+    - { id: 1284, name: "Channel" }
+    - { id: 1285, name: "Target Navigator" }
+    - { id: 1287, name: "Media Input" }
+    - { id: 1288, name: "Low Power" }
+    - { id: 1291, name: "Audio Output" }
+    - { id: 1295, name: "Content Control" }
+    - { id: 151, name: "Messages" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 35
+  hexId: "0x0023"
+  name: "Casting Video Player"
+  description: "A Casting Video Player represents a device that is able to play media and accept cast content from other devices."
+  specVersion: "1.0"
+  category: "media"
+  displayCategory: "Entertainment"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "tv"
+  mandatoryServerClusters:
+    - { id: 6, name: "On/Off" }
+    - { id: 1286, name: "Media Playback" }
+    - { id: 1289, name: "Keypad Input" }
+    - { id: 1290, name: "Content Launcher" }
+  optionalServerClusters:
+    - { id: 1283, name: "Wake on LAN" }
+    - { id: 1284, name: "Channel" }
+    - { id: 1285, name: "Target Navigator" }
+    - { id: 1287, name: "Media Input" }
+    - { id: 1288, name: "Low Power" }
+    - { id: 1291, name: "Audio Output" }
+    - { id: 1292, name: "Application Launcher" }
+    - { id: 1294, name: "Account Login" }
+    - { id: 1295, name: "Content Control" }
+    - { id: 151, name: "Messages" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 34
+  hexId: "0x0022"
+  name: "Speaker"
+  description: "A Speaker device controls audio playback and volume."
+  specVersion: "1.0"
+  category: "media"
+  displayCategory: "Entertainment"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "volume-up"
+  mandatoryServerClusters:
+    - { id: 6, name: "On/Off" }
+    - { id: 8, name: "Level Control" }
+  optionalServerClusters: []
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 36
+  hexId: "0x0024"
+  name: "Content App"
+  description: "A Content App is usually an application built by a Content Provider. A Casting Video Player with a Content App Platform is able to launch Content Apps and represent these apps as separate endpoints."
+  specVersion: "1.0"
+  category: "media"
+  displayCategory: "Entertainment"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "play-circle"
+  mandatoryServerClusters:
+    - { id: 1289, name: "Keypad Input" }
+    - { id: 1292, name: "Application Launcher" }
+    - { id: 1293, name: "Application Basic" }
+  optionalServerClusters:
+    - { id: 30, name: "Binding" }
+    - { id: 1284, name: "Channel" }
+    - { id: 1285, name: "Target Navigator" }
+    - { id: 1286, name: "Media Playback" }
+    - { id: 1290, name: "Content Launcher" }
+    - { id: 1294, name: "Account Login" }
+  mandatoryClientClusters: []
+  optionalClientClusters:
+    - { id: 1296, name: "Content App Observer" }
+
+- id: 41
+  hexId: "0x0029"
+  name: "Casting Video Client"
+  description: "A Casting Video Client is a client that can launch content on a Casting Video Player, for example, a Smart Speaker or a Content Provider phone app."
+  specVersion: "1.0"
+  category: "media"
+  displayCategory: "Entertainment"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "cast"
+  mandatoryServerClusters:
+    - { id: 1296, name: "Content App Observer" }
+  optionalServerClusters: []
+  mandatoryClientClusters:
+    - { id: 6, name: "On/Off" }
+    - { id: 1289, name: "Keypad Input" }
+    - { id: 1290, name: "Content Launcher" }
+    - { id: 1293, name: "Application Basic" }
+  optionalClientClusters:
+    - { id: 8, name: "Level Control" }
+    - { id: 1283, name: "Wake on LAN" }
+    - { id: 1284, name: "Channel" }
+    - { id: 1285, name: "Target Navigator" }
+    - { id: 1286, name: "Media Playback" }
+    - { id: 1287, name: "Media Input" }
+    - { id: 1288, name: "Low Power" }
+    - { id: 1291, name: "Audio Output" }
+    - { id: 1292, name: "Application Launcher" }
+    - { id: 1294, name: "Account Login" }
+    - { id: 1295, name: "Content Control" }
+    - { id: 151, name: "Messages" }
+
+- id: 42
+  hexId: "0x002A"
+  name: "Video Remote Control"
+  description: "A Video Remote Control is a client that can control a Video Player, for example, a traditional universal remote control."
+  specVersion: "1.0"
+  category: "media"
+  displayCategory: "Entertainment"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "remote"
+  mandatoryServerClusters: []
+  optionalServerClusters: []
+  mandatoryClientClusters:
+    - { id: 6, name: "On/Off" }
+    - { id: 1286, name: "Media Playback" }
+    - { id: 1289, name: "Keypad Input" }
+  optionalClientClusters:
+    - { id: 8, name: "Level Control" }
+    - { id: 1283, name: "Wake on LAN" }
+    - { id: 1284, name: "Channel" }
+    - { id: 1285, name: "Target Navigator" }
+    - { id: 1287, name: "Media Input" }
+    - { id: 1288, name: "Low Power" }
+    - { id: 1290, name: "Content Launcher" }
+    - { id: 1291, name: "Audio Output" }
+    - { id: 1292, name: "Application Launcher" }
+    - { id: 1294, name: "Account Login" }
+    - { id: 1295, name: "Content Control" }
+
+# Robotic Device Types
+- id: 116
+  hexId: "0x0074"
+  name: "Robotic Vacuum Cleaner"
+  description: "A Robotic Vacuum Cleaner is an autonomous vacuum cleaning robot."
+  specVersion: "1.2"
+  category: "appliances"
+  displayCategory: "Appliances"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "robot"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 84, name: "RVC Run Mode" }
+    - { id: 97, name: "RVC Operational State" }
+  optionalServerClusters:
+    - { id: 85, name: "RVC Clean Mode" }
+    - { id: 336, name: "Service Area" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+# Appliances Device Types
+- id: 115
+  hexId: "0x0073"
+  name: "Laundry Washer"
+  description: "A Laundry Washer represents a device that is capable of laundering consumer items."
+  specVersion: "1.2"
+  category: "appliances"
+  displayCategory: "Appliances"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "washing-machine"
+  mandatoryServerClusters:
+    - { id: 96, name: "Operational State" }
+  optionalServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 81, name: "Laundry Washer Mode" }
+    - { id: 6, name: "On/Off" }
+    - { id: 83, name: "Laundry Washer Controls" }
+    - { id: 86, name: "Temperature Control" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 112
+  hexId: "0x0070"
+  name: "Refrigerator"
+  description: "A Refrigerator represents a device that contains one or more cabinets that are capable of chilling or freezing food."
+  specVersion: "1.2"
+  category: "appliances"
+  displayCategory: "Appliances"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "snowflake"
+  mandatoryServerClusters: []
+  optionalServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 82, name: "Refrigerator And Temperature Controlled Cabinet Mode" }
+    - { id: 87, name: "Refrigerator Alarm" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 114
+  hexId: "0x0072"
+  name: "Room Air Conditioner"
+  description: "A Room Air Conditioner is a device with the primary function of controlling the air temperature in a single room."
+  specVersion: "1.2"
+  category: "hvac"
+  displayCategory: "Climate"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "snowflake"
+  mandatoryServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 6, name: "On/Off" }
+    - { id: 513, name: "Thermostat" }
+  optionalServerClusters:
+    - { id: 4, name: "Groups" }
+    - { id: 98, name: "Scenes Management" }
+    - { id: 514, name: "Fan Control" }
+    - { id: 516, name: "Thermostat User Interface Configuration" }
+    - { id: 1026, name: "Temperature Measurement" }
+    - { id: 1029, name: "Relative Humidity Measurement" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 113
+  hexId: "0x0071"
+  name: "Temperature Controlled Cabinet"
+  description: "A Temperature Controlled Cabinet represents a single cabinet that is capable of having its temperature controlled, such as a refrigerator compartment, freezer, or oven cavity."
+  specVersion: "1.2"
+  category: "appliances"
+  displayCategory: "Appliances"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "box"
+  mandatoryServerClusters:
+    - { id: 86, name: "Temperature Control" }
+  optionalServerClusters:
+    - { id: 1026, name: "Temperature Measurement" }
+    - { id: 82, name: "Refrigerator and Temperature Controlled Cabinet Mode" }
+    - { id: 73, name: "Oven Mode" }
+    - { id: 72, name: "Oven Cavity Operational State" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 117
+  hexId: "0x0075"
+  name: "Dishwasher"
+  description: "A Dishwasher is a device that is capable of washing dishes, cutlery, and other items associated with food preparation and consumption."
+  specVersion: "1.2"
+  category: "appliances"
+  displayCategory: "Appliances"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "utensils"
+  mandatoryServerClusters:
+    - { id: 96, name: "Operational State" }
+  optionalServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 6, name: "On/Off" }
+    - { id: 86, name: "Temperature Control" }
+    - { id: 89, name: "Dishwasher Mode" }
+    - { id: 93, name: "Dishwasher Alarm" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 124
+  hexId: "0x007C"
+  name: "Laundry Dryer"
+  description: "A Laundry Dryer represents a device that is capable of drying laundry items."
+  specVersion: "1.3"
+  category: "appliances"
+  displayCategory: "Appliances"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "wind"
+  mandatoryServerClusters:
+    - { id: 96, name: "Operational State" }
+  optionalServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 81, name: "Laundry Washer Mode" }
+    - { id: 6, name: "On/Off" }
+    - { id: 74, name: "Laundry Dryer Controls" }
+    - { id: 86, name: "Temperature Control" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 119
+  hexId: "0x0077"
+  name: "Cook Surface"
+  description: "A Cook Surface device type represents a heating object on a cooktop or other similar device. It SHALL only be used when composed as part of another device type."
+  specVersion: "1.3"
+  category: "appliances"
+  displayCategory: "Appliances"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "fire"
+  mandatoryServerClusters: []
+  optionalServerClusters:
+    - { id: 86, name: "Temperature Control" }
+    - { id: 1026, name: "Temperature Measurement" }
+    - { id: 6, name: "On/Off" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 120
+  hexId: "0x0078"
+  name: "Cooktop"
+  description: "A Cooktop is a cooking surface that heats food either by transferring currents from an electromagnetic field or through traditional gas or electric burners."
+  specVersion: "1.3"
+  category: "appliances"
+  displayCategory: "Appliances"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "fire"
+  mandatoryServerClusters:
+    - { id: 6, name: "On/Off" }
+  optionalServerClusters:
+    - { id: 3, name: "Identify" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 123
+  hexId: "0x007B"
+  name: "Oven"
+  description: "An Oven represents a device that contains one or more cabinets, and optionally a single cooktop, that are all capable of heating food."
+  specVersion: "1.3"
+  category: "appliances"
+  displayCategory: "Appliances"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "fire"
+  mandatoryServerClusters: []
+  optionalServerClusters:
+    - { id: 3, name: "Identify" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 122
+  hexId: "0x007A"
+  name: "Extractor Hood"
+  description: "An Extractor Hood is a device generally installed above a cooking surface in residential kitchens. It reduces odors by either extracting or recirculating and filtering the air."
+  specVersion: "1.3"
+  category: "appliances"
+  displayCategory: "Appliances"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "wind"
+  mandatoryServerClusters:
+    - { id: 514, name: "Fan Control" }
+  optionalServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 113, name: "HEPA Filter Monitoring" }
+    - { id: 114, name: "Activated Carbon Filter Monitoring" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 121
+  hexId: "0x0079"
+  name: "Microwave Oven"
+  description: "A Microwave Oven is a device with the primary function of heating foods and beverages using a magnetron."
+  specVersion: "1.3"
+  category: "appliances"
+  displayCategory: "Appliances"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "microwave"
+  mandatoryServerClusters:
+    - { id: 96, name: "Operational State" }
+    - { id: 94, name: "Microwave Oven Mode" }
+    - { id: 95, name: "Microwave Oven Control" }
+  optionalServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 514, name: "Fan Control" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+# Energy Device Types
+- id: 1292
+  hexId: "0x050C"
+  name: "EVSE"
+  description: "An EVSE (Electric Vehicle Supply Equipment) is a device that allows an EV to be connected to the mains electricity supply to allow it to be charged or discharged (Vehicle to Grid/Home)."
+  specVersion: "1.3"
+  category: "energy"
+  displayCategory: "Energy"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "charging-station"
+  mandatoryServerClusters:
+    - { id: 153, name: "Energy EVSE" }
+    - { id: 157, name: "Energy EVSE Mode" }
+  optionalServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 1026, name: "Temperature Measurement" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 1293
+  hexId: "0x050D"
+  name: "Device Energy Management"
+  description: "A Device Energy Management device provides reporting and optionally adjustment of the electrical power planned on being consumed or produced by the device."
+  specVersion: "1.4"
+  category: "energy"
+  displayCategory: "Energy"
+  class: "Utility"
+  scope: "Endpoint"
+  superset: null
+  icon: "bolt"
+  mandatoryServerClusters:
+    - { id: 152, name: "Device Energy Management" }
+  optionalServerClusters:
+    - { id: 159, name: "Device Energy Management Mode" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 1295
+  hexId: "0x050F"
+  name: "Water Heater"
+  description: "A Water Heater is a device that heats water for showers, baths, and other uses. It can be set to a preset temperature and supports boost commands for rapid heating."
+  specVersion: "1.4"
+  category: "energy"
+  displayCategory: "Energy"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "fire"
+  mandatoryServerClusters:
+    - { id: 513, name: "Thermostat" }
+    - { id: 148, name: "Water Heater Management" }
+    - { id: 158, name: "Water Heater Mode" }
+  optionalServerClusters:
+    - { id: 3, name: "Identify" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 1296
+  hexId: "0x0510"
+  name: "Electrical Sensor"
+  description: "An Electrical Sensor device measures the electrical power and/or energy being imported and/or exported."
+  specVersion: "1.4"
+  category: "energy"
+  displayCategory: "Energy"
+  class: "Utility"
+  scope: "Endpoint"
+  superset: null
+  icon: "bolt"
+  mandatoryServerClusters:
+    - { id: 156, name: "Power Topology" }
+  optionalServerClusters:
+    - { id: 144, name: "Electrical Power Measurement" }
+    - { id: 145, name: "Electrical Energy Measurement" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 23
+  hexId: "0x0017"
+  name: "Solar Power"
+  description: "A Solar Power device allows a solar panel array, which can optionally be comprised of parallel strings of solar panels, and its associated controller and inverter, to be monitored and controlled by an Energy Management System."
+  specVersion: "1.4"
+  category: "energy"
+  displayCategory: "Energy"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "solar-panel"
+  mandatoryServerClusters: []
+  optionalServerClusters:
+    - { id: 3, name: "Identify" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 24
+  hexId: "0x0018"
+  name: "Battery Storage"
+  description: "A Battery Storage device allows a DC battery, which can optionally be comprised of parallel strings of battery packs and associated controller, and an AC inverter, to be monitored and controlled by an Energy Management System."
+  specVersion: "1.4"
+  category: "energy"
+  displayCategory: "Energy"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "battery-full"
+  mandatoryServerClusters: []
+  optionalServerClusters:
+    - { id: 3, name: "Identify" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 777
+  hexId: "0x0309"
+  name: "Heat Pump"
+  description: "A Heat Pump device uses electrical energy to heat either spaces or water tanks using ground, water or air as the heat source."
+  specVersion: "1.4"
+  category: "energy"
+  displayCategory: "Energy"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "thermometer"
+  mandatoryServerClusters: []
+  optionalServerClusters:
+    - { id: 3, name: "Identify" }
+    - { id: 513, name: "Thermostat" }
+  mandatoryClientClusters: []
+  optionalClientClusters:
+    - { id: 513, name: "Thermostat" }
+
+# Network Infrastructure Device Types
+- id: 144
+  hexId: "0x0090"
+  name: "Network Infrastructure Manager"
+  description: "A Network Infrastructure Manager provides interfaces that allow for the management of the Wi-Fi, Thread, and Ethernet networks underlying a Matter deployment."
+  specVersion: "1.4"
+  category: "utility"
+  displayCategory: "System"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "router"
+  mandatoryServerClusters:
+    - { id: 1105, name: "Wi-Fi Network Management" }
+    - { id: 1106, name: "Thread Border Router Management" }
+    - { id: 1107, name: "Thread Network Directory" }
+  optionalServerClusters: []
+  mandatoryClientClusters: []
+  optionalClientClusters: []
+
+- id: 145
+  hexId: "0x0091"
+  name: "Thread Border Router"
+  description: "A Thread Border Router device type provides interfaces for querying and configuring the associated Thread network."
+  specVersion: "1.4"
+  category: "utility"
+  displayCategory: "System"
+  class: "Simple"
+  scope: "Endpoint"
+  superset: null
+  icon: "router"
+  mandatoryServerClusters:
+    - { id: 53, name: "Thread Network Diagnostics" }
+    - { id: 1106, name: "Thread Border Router Management" }
+  optionalServerClusters:
+    - { id: 1107, name: "Thread Network Directory" }
+  mandatoryClientClusters: []
+  optionalClientClusters: []

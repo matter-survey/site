@@ -4,11 +4,27 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Entity\DeviceType;
+use App\Repository\DeviceTypeRepository;
+
 /**
  * Registry for Matter cluster and device type name lookups.
+ *
+ * Device type data is loaded from the database (device_types table) which contains
+ * comprehensive information extracted from the Matter 1.4 Device Library Specification.
  */
 class MatterRegistry
 {
+    /**
+     * Extended device type data loaded from database.
+     * @var array<int, array>|null
+     */
+    private ?array $extendedDeviceTypes = null;
+
+    public function __construct(
+        private ?DeviceTypeRepository $deviceTypeRepository = null,
+    ) {}
+
     private const CLUSTER_NAMES = [
         0x0003 => 'Identify',
         0x0004 => 'Groups',
@@ -843,5 +859,164 @@ class MatterRegistry
     public function getAllDeviceTypeMetadata(): array
     {
         return self::DEVICE_TYPE_METADATA;
+    }
+
+    /**
+     * Load extended device type data from database.
+     *
+     * @return array<int, array>
+     */
+    private function loadExtendedDeviceTypes(): array
+    {
+        if ($this->extendedDeviceTypes !== null) {
+            return $this->extendedDeviceTypes;
+        }
+
+        $this->extendedDeviceTypes = [];
+
+        if ($this->deviceTypeRepository === null) {
+            return $this->extendedDeviceTypes;
+        }
+
+        $deviceTypes = $this->deviceTypeRepository->findAll();
+
+        foreach ($deviceTypes as $deviceType) {
+            $this->extendedDeviceTypes[$deviceType->getId()] = $this->entityToArray($deviceType);
+        }
+
+        return $this->extendedDeviceTypes;
+    }
+
+    /**
+     * Convert a DeviceType entity to the array format used throughout the codebase.
+     */
+    private function entityToArray(DeviceType $deviceType): array
+    {
+        return [
+            'id' => $deviceType->getId(),
+            'hexId' => $deviceType->getHexId(),
+            'name' => $deviceType->getName(),
+            'description' => $deviceType->getDescription(),
+            'specVersion' => $deviceType->getSpecVersion(),
+            'category' => $deviceType->getCategory(),
+            'displayCategory' => $deviceType->getDisplayCategory(),
+            'class' => $deviceType->getDeviceClass(),
+            'scope' => $deviceType->getScope(),
+            'superset' => $deviceType->getSuperset(),
+            'icon' => $deviceType->getIcon(),
+            'mandatoryServerClusters' => $deviceType->getMandatoryServerClusters(),
+            'optionalServerClusters' => $deviceType->getOptionalServerClusters(),
+            'mandatoryClientClusters' => $deviceType->getMandatoryClientClusters(),
+            'optionalClientClusters' => $deviceType->getOptionalClientClusters(),
+        ];
+    }
+
+    /**
+     * Get extended device type data including cluster requirements.
+     *
+     * @return array|null The full device type data with cluster information
+     */
+    public function getExtendedDeviceType(int $id): ?array
+    {
+        $extended = $this->loadExtendedDeviceTypes();
+        return $extended[$id] ?? null;
+    }
+
+    /**
+     * Get all extended device type data.
+     *
+     * @return array<int, array>
+     */
+    public function getAllExtendedDeviceTypes(): array
+    {
+        return $this->loadExtendedDeviceTypes();
+    }
+
+    /**
+     * Get mandatory server clusters for a device type.
+     *
+     * @return array<array{id: int, name: string}>
+     */
+    public function getMandatoryServerClusters(int $deviceTypeId): array
+    {
+        $extended = $this->getExtendedDeviceType($deviceTypeId);
+        return $extended['mandatoryServerClusters'] ?? [];
+    }
+
+    /**
+     * Get optional server clusters for a device type.
+     *
+     * @return array<array{id: int, name: string}>
+     */
+    public function getOptionalServerClusters(int $deviceTypeId): array
+    {
+        $extended = $this->getExtendedDeviceType($deviceTypeId);
+        return $extended['optionalServerClusters'] ?? [];
+    }
+
+    /**
+     * Get mandatory client clusters for a device type.
+     *
+     * @return array<array{id: int, name: string}>
+     */
+    public function getMandatoryClientClusters(int $deviceTypeId): array
+    {
+        $extended = $this->getExtendedDeviceType($deviceTypeId);
+        return $extended['mandatoryClientClusters'] ?? [];
+    }
+
+    /**
+     * Get optional client clusters for a device type.
+     *
+     * @return array<array{id: int, name: string}>
+     */
+    public function getOptionalClientClusters(int $deviceTypeId): array
+    {
+        $extended = $this->getExtendedDeviceType($deviceTypeId);
+        return $extended['optionalClientClusters'] ?? [];
+    }
+
+    /**
+     * Get device type superset (parent device type name).
+     */
+    public function getDeviceTypeSuperset(int $id): ?string
+    {
+        $extended = $this->getExtendedDeviceType($id);
+        return $extended['superset'] ?? null;
+    }
+
+    /**
+     * Get device type class (Simple, Utility, Node, Dynamic).
+     */
+    public function getDeviceTypeClass(int $id): ?string
+    {
+        $extended = $this->getExtendedDeviceType($id);
+        return $extended['class'] ?? null;
+    }
+
+    /**
+     * Get device type scope (Endpoint, Node).
+     */
+    public function getDeviceTypeScope(int $id): ?string
+    {
+        $extended = $this->getExtendedDeviceType($id);
+        return $extended['scope'] ?? null;
+    }
+
+    /**
+     * Get the hex ID string for a device type (e.g., "0x0100").
+     */
+    public function getDeviceTypeHexId(int $id): string
+    {
+        $extended = $this->getExtendedDeviceType($id);
+        return $extended['hexId'] ?? sprintf('0x%04X', $id);
+    }
+
+    /**
+     * Check if extended data is available for a device type.
+     */
+    public function hasExtendedData(int $id): bool
+    {
+        return $this->getExtendedDeviceType($id) !== null;
     }
 }

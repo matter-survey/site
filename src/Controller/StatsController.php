@@ -127,16 +127,27 @@ class StatsController extends AbstractController
         $totalDevices = $this->deviceRepo->countDevicesByDeviceType($type);
         $totalPages = (int) ceil($totalDevices / $limit);
 
+        // Get extended data from YAML fixture
+        $extendedData = $this->matterRegistry->getExtendedDeviceType($type);
+
         return $this->render('stats/device_type_show.html.twig', [
             'deviceType' => [
                 'id' => $type,
+                'hexId' => $this->matterRegistry->getDeviceTypeHexId($type),
                 'name' => $metadata['name'],
-                'description' => $metadata['description'] ?? '',
+                'description' => $extendedData['description'] ?? $metadata['description'] ?? '',
                 'specVersion' => $metadata['specVersion'] ?? null,
                 'icon' => $metadata['icon'] ?? 'device',
                 'category' => $metadata['category'] ?? null,
                 'displayCategory' => $metadata['displayCategory'] ?? 'System',
+                'class' => $extendedData['class'] ?? null,
+                'scope' => $extendedData['scope'] ?? null,
+                'superset' => $extendedData['superset'] ?? null,
             ],
+            'mandatoryServerClusters' => $this->matterRegistry->getMandatoryServerClusters($type),
+            'optionalServerClusters' => $this->matterRegistry->getOptionalServerClusters($type),
+            'mandatoryClientClusters' => $this->matterRegistry->getMandatoryClientClusters($type),
+            'optionalClientClusters' => $this->matterRegistry->getOptionalClientClusters($type),
             'devices' => $devices,
             'totalDevices' => $totalDevices,
             'currentPage' => $page,
