@@ -4,7 +4,7 @@
 -include .env.local
 export
 
-.PHONY: help install dev prod clean lint test db-init db-reset db-migrate deploy
+.PHONY: help install dev prod clean lint test db-init db-reset db-migrate db-fixtures test-reset deploy
 
 # Default target
 help:
@@ -22,8 +22,13 @@ help:
 	@echo "  db-migrate  Run database migrations"
 	@echo "  db-init     Initialize database (run migrations)"
 	@echo "  db-reset    Reset database (WARNING: deletes all data)"
+	@echo "  db-fixtures Load fixtures into dev database"
 	@echo "  db-backup   Backup database to timestamped file"
 	@echo "  db-status   Show migration status"
+	@echo ""
+	@echo "Testing:"
+	@echo "  test        Run tests"
+	@echo "  test-reset  Reset test database and reload fixtures"
 	@echo ""
 	@echo "Production:"
 	@echo "  prod        Install production dependencies"
@@ -84,6 +89,15 @@ db-stats:
 db-status:
 	php bin/console doctrine:migrations:status
 
+db-fixtures:
+	php bin/console doctrine:fixtures:load --no-interaction
+
+# Testing
+test-reset:
+	rm -f data/matter-survey-test.db
+	php bin/console doctrine:migrations:migrate --no-interaction --env=test
+	php bin/console doctrine:fixtures:load --no-interaction --env=test
+
 # Docker
 docker-up:
 	docker compose up -d
@@ -97,7 +111,6 @@ docker-logs:
 docker-build:
 	docker compose build --no-cache
 
-# Testing
 test:
 	vendor/bin/phpunit
 

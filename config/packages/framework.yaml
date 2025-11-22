@@ -10,3 +10,9 @@ framework:
             limit: 10
             interval: '1 minute'
             cache_pool: cache.app
+
+when@test:
+    framework:
+        rate_limiter:
+            api_submit:
+                policy: 'no_limit'
