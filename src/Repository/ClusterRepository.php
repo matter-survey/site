@@ -29,12 +29,16 @@ class ClusterRepository extends ServiceEntityRepository
 
     /**
      * Find a cluster by its hex ID (e.g., "0x0006").
+     * Case-insensitive match to handle both 0x003F and 0x003f.
      */
     public function findByHexId(string $hexId): ?Cluster
     {
+        // Normalize to uppercase for consistent matching
+        $normalizedHexId = strtoupper($hexId);
+
         return $this->createQueryBuilder('c')
-            ->where('c.hexId = :hexId')
-            ->setParameter('hexId', $hexId)
+            ->where('UPPER(c.hexId) = :hexId')
+            ->setParameter('hexId', $normalizedHexId)
             ->getQuery()
             ->getOneOrNullResult();
     }

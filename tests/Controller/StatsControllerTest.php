@@ -587,4 +587,64 @@ class StatsControllerTest extends WebTestCase
             $this->assertSelectorExists('.device-header');
         }
     }
+
+    // === Cluster Show Page Tests ===
+
+    public function testClusterShowPageLoads(): void
+    {
+        $client = static::createClient();
+        // On/Off cluster (0x0006) should exist in fixtures
+        $client->request('GET', '/cluster/0x0006');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('.cluster-header h1', 'On/Off');
+    }
+
+    public function testClusterShowPageLoadsWithLowercaseHex(): void
+    {
+        $client = static::createClient();
+        // Should work with lowercase hex too
+        $client->request('GET', '/cluster/0x0006');
+
+        $this->assertResponseIsSuccessful();
+    }
+
+    public function testClusterShowPageHasStructuredData(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/cluster/0x0006');
+
+        $this->assertResponseIsSuccessful();
+
+        // Check JSON-LD exists
+        $jsonLdScripts = $crawler->filter('script[type="application/ld+json"]');
+        $this->assertGreaterThan(0, $jsonLdScripts->count());
+
+        $jsonLd = json_decode($jsonLdScripts->first()->text(), true);
+        $this->assertEquals('DefinedTerm', $jsonLd['@type']);
+    }
+
+    public function testClusterShowPageLinksFromClustersIndex(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/clusters');
+
+        $this->assertResponseIsSuccessful();
+
+        // Click on a cluster name link
+        $clusterLink = $crawler->filter('.cluster-table .cluster-name')->first();
+        if ($clusterLink->count() > 0) {
+            $client->click($clusterLink->link());
+            $this->assertResponseIsSuccessful();
+            $this->assertSelectorExists('.cluster-header');
+        }
+    }
+
+    public function testClusterShowPage404ForNonexistentCluster(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/cluster/0xFFFF');
+
+        $this->assertResponseStatusCodeSame(404);
+    }
 }
