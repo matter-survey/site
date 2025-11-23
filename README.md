@@ -1,6 +1,6 @@
 # Matter Survey
 
-A community-driven database of Matter device capabilities, powered by anonymized telemetry from the [Matter Binding Helper](https://github.com/cedricziel/ha-matter-helper) Home Assistant integration.
+A community-driven database of Matter device capabilities, powered by anonymized telemetry from the [Matter Binding Helper](https://github.com/cedricziel/ha-matter-binding-helper) Home Assistant integration.
 
 ## Features
 

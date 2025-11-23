@@ -15,7 +15,7 @@ info:
   version: 1.0.0
   contact:
     name: Matter Binding Helper
-    url: https://github.com/cedricziel/ha-matter-helper
+    url: https://github.com/cedricziel/ha-matter-binding-helper
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
