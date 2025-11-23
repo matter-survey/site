@@ -182,7 +182,6 @@
         margin-bottom: 1.5rem;
         border: 1px solid var(--gray-200);
         border-radius: 0.5rem;
-        overflow: hidden;
     }
 
     .version-header {
@@ -303,25 +302,38 @@
         opacity: 0.8;
     }
 
+    .tag[title] {
+        position: relative;
+    }
+
+    .tag[title]:hover::before {
+        content: '';
+        position: absolute;
+        bottom: 100%;
+        left: 1rem;
+        border: 6px solid transparent;
+        border-top-color: #1f2937;
+        z-index: 10000;
+    }
+
     .tag[title]:hover::after {
         content: attr(title);
         position: absolute;
-        bottom: 100%;
-        left: 50%;
-        transform: translateX(-50%);
+        bottom: calc(100% + 10px);
+        left: 0;
         background: #1f2937;
         color: #ffffff;
         padding: 0.5rem 0.75rem;
         border-radius: 0.375rem;
         font-size: 0.8125rem;
-        z-index: 10;
-        margin-bottom: 0.375rem;
+        z-index: 9999;
         width: max-content;
         max-width: 400px;
         white-space: normal;
-        text-align: center;
+        text-align: left;
         line-height: 1.5;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        pointer-events: none;
     }
 
     .tag-primary {
