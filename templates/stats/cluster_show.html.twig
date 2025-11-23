@@ -287,7 +287,7 @@
         'bridge': '&#x1F309;',
         'device': '&#x1F4F1;'
     } -%}
-    {{- icons[icon] ?? '&#x1F4F1;' | raw -}}
+    {{- (icons[icon] ?? '&#x1F4F1;')|raw -}}
 {% endmacro %}
 
 {% block body %}
