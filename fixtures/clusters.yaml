@@ -262,6 +262,177 @@
   category: general
   isGlobal: false
 
+# Application Clusters - Appliances
+- id: 81
+  name: Temperature Control
+  description: Provides an interface for controlling the temperature setting of appliances like ovens, refrigerators, and water heaters.
+  specVersion: "1.2"
+  category: appliance
+  isGlobal: false
+
+- id: 83
+  name: RVC Run Mode
+  description: Controls operating modes for robotic vacuum cleaners, such as mapping, cleaning, or idle modes.
+  specVersion: "1.2"
+  category: appliance
+  isGlobal: false
+
+- id: 84
+  name: RVC Clean Mode
+  description: Controls cleaning modes for robotic vacuum cleaners, such as vacuum only, mop only, or vacuum and mop.
+  specVersion: "1.2"
+  category: appliance
+  isGlobal: false
+
+- id: 87
+  name: Laundry Washer Mode
+  description: Controls operating modes for laundry washers, such as normal, delicate, heavy duty, and whites cycles.
+  specVersion: "1.2"
+  category: appliance
+  isGlobal: false
+
+- id: 88
+  name: Laundry Washer Controls
+  description: Controls specific settings for laundry washers including spin speed, rinse options, and water temperature.
+  specVersion: "1.2"
+  category: appliance
+  isGlobal: false
+
+- id: 89
+  name: Dishwasher Mode
+  description: Controls operating modes for dishwashers, such as normal, heavy, light, and quick wash cycles.
+  specVersion: "1.2"
+  category: appliance
+  isGlobal: false
+
+- id: 93
+  name: Dishwasher Alarm
+  description: Provides alarm functionality for dishwashers, alerting users to conditions like door open, water leak, or cycle complete.
+  specVersion: "1.2"
+  category: appliance
+  isGlobal: false
+
+- id: 96
+  name: Operational State
+  description: Provides a generic interface for reporting and controlling operational state of devices. Used as a base for appliance-specific operational states.
+  specVersion: "1.2"
+  category: appliance
+  isGlobal: false
+
+- id: 115
+  name: Refrigerator Alarm
+  description: Provides alarm functionality for refrigerators, alerting users to conditions like door left open or temperature excursions.
+  specVersion: "1.2"
+  category: appliance
+  isGlobal: false
+
+- id: 116
+  name: RVC Operational State
+  description: Reports operational state for robotic vacuum cleaners including running, paused, stopped, charging, docked, and error states.
+  specVersion: "1.2"
+  category: appliance
+  isGlobal: false
+
+- id: 71
+  name: Timer
+  description: Provides countdown timer functionality for appliances, allowing users to set time-limited operations.
+  specVersion: "1.3"
+  category: appliance
+  isGlobal: false
+
+- id: 72
+  name: Oven Cavity Operational State
+  description: Reports operational state for oven cavities including preheating, cooking, and cooling states.
+  specVersion: "1.3"
+  category: appliance
+  isGlobal: false
+
+- id: 73
+  name: Oven Mode
+  description: Controls operating modes for ovens, such as bake, broil, convection, and self-clean.
+  specVersion: "1.3"
+  category: appliance
+  isGlobal: false
+
+- id: 94
+  name: Microwave Oven Mode
+  description: Controls operating modes for microwave ovens including defrost, reheat, and cooking power levels.
+  specVersion: "1.3"
+  category: appliance
+  isGlobal: false
+
+- id: 95
+  name: Microwave Oven Control
+  description: Controls microwave oven settings including cooking time, power level, and watt settings.
+  specVersion: "1.3"
+  category: appliance
+  isGlobal: false
+
+- id: 98
+  name: Scenes Management
+  description: Enhanced scenes functionality replacing the deprecated Scenes cluster. Stores and recalls device states with improved fabric-scoped scene management.
+  specVersion: "1.4"
+  category: utility
+  isGlobal: false
+
+# Application Clusters - Energy Management
+- id: 151
+  name: Energy EVSE
+  description: Controls Electric Vehicle Supply Equipment (EVSE) for EV charging, including charging state, power limits, and session management.
+  specVersion: "1.3"
+  category: energy
+  isGlobal: false
+
+- id: 152
+  name: Energy Preference
+  description: Allows devices to report and configure energy usage preferences and constraints for energy management.
+  specVersion: "1.3"
+  category: energy
+  isGlobal: false
+
+- id: 153
+  name: Energy EVSE Mode
+  description: Controls operating modes for EV chargers, such as manual or automatic charging schedules.
+  specVersion: "1.3"
+  category: energy
+  isGlobal: false
+
+- id: 157
+  name: Device Energy Management
+  description: Provides a standard interface for devices to report energy consumption forecasts and accept power adjustment requests from energy management systems.
+  specVersion: "1.3"
+  category: energy
+  isGlobal: false
+
+- id: 159
+  name: Device Energy Management Mode
+  description: Controls energy management operating modes for devices, allowing prioritization of efficiency vs performance.
+  specVersion: "1.3"
+  category: energy
+  isGlobal: false
+
+# Application Clusters - Water Management
+- id: 148
+  name: Valve Configuration and Control
+  description: Controls motorized valves for water, gas, and other fluids including open/close states and flow monitoring.
+  specVersion: "1.3"
+  category: closures
+  isGlobal: false
+
+- id: 149
+  name: Water Heater Management
+  description: Controls water heater operations including temperature setpoints, modes, and boost heating.
+  specVersion: "1.4"
+  category: appliance
+  isGlobal: false
+
+- id: 150
+  name: Water Heater Mode
+  description: Controls operating modes for water heaters such as off, manual, and auto scheduling modes.
+  specVersion: "1.4"
+  category: appliance
+  isGlobal: false
+
 # Application Clusters - Lighting
 - id: 768
   name: Color Control
@@ -385,7 +556,91 @@
   category: measurement
   isGlobal: false
 
-# Application Clusters - Security
+- id: 91
+  name: Air Quality
+  description: Reports overall air quality index from good to extremely poor, typically aggregating multiple air quality measurements.
+  specVersion: "1.2"
+  category: measurement
+  isGlobal: false
+
+- id: 1037
+  name: Carbon Monoxide Concentration Measurement
+  description: Reports carbon monoxide concentration in parts per million (PPM).
+  specVersion: "1.2"
+  category: measurement
+  isGlobal: false
+
+- id: 1038
+  name: Carbon Dioxide Concentration Measurement
+  description: Reports carbon dioxide concentration in parts per million (PPM).
+  specVersion: "1.2"
+  category: measurement
+  isGlobal: false
+
+- id: 1043
+  name: Nitrogen Dioxide Concentration Measurement
+  description: Reports nitrogen dioxide concentration levels for air quality monitoring.
+  specVersion: "1.2"
+  category: measurement
+  isGlobal: false
+
+- id: 1045
+  name: Ozone Concentration Measurement
+  description: Reports ozone concentration levels for air quality monitoring.
+  specVersion: "1.2"
+  category: measurement
+  isGlobal: false
+
+- id: 1066
+  name: PM2.5 Concentration Measurement
+  description: Reports PM2.5 particulate matter concentration for air quality monitoring.
+  specVersion: "1.2"
+  category: measurement
+  isGlobal: false
+
+- id: 1067
+  name: Formaldehyde Concentration Measurement
+  description: Reports formaldehyde concentration levels for indoor air quality monitoring.
+  specVersion: "1.2"
+  category: measurement
+  isGlobal: false
+
+- id: 1068
+  name: PM1 Concentration Measurement
+  description: Reports PM1 particulate matter concentration for air quality monitoring.
+  specVersion: "1.2"
+  category: measurement
+  isGlobal: false
+
+- id: 1069
+  name: PM10 Concentration Measurement
+  description: Reports PM10 particulate matter concentration for air quality monitoring.
+  specVersion: "1.2"
+  category: measurement
+  isGlobal: false
+
+- id: 1070
+  name: Total Volatile Organic Compounds Concentration Measurement
+  description: Reports TVOC concentration levels for indoor air quality monitoring.
+  specVersion: "1.2"
+  category: measurement
+  isGlobal: false
+
+- id: 1071
+  name: Radon Concentration Measurement
+  description: Reports radon gas concentration for indoor air quality and safety monitoring.
+  specVersion: "1.2"
+  category: measurement
+  isGlobal: false
+
+# Application Clusters - Security & Safety
+- id: 92
+  name: Smoke CO Alarm
+  description: Provides smoke and carbon monoxide detection with alarm states, test functionality, and interconnected alarm support across multiple devices.
+  specVersion: "1.2"
+  category: safety
+  isGlobal: false
+
 - id: 1280
   name: IAS Zone
   description: Reports security zone status for intrusion detection and alarm systems.
