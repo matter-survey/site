@@ -66,9 +66,9 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
     private function getDeviceData(): array
     {
         return [
-            // Apple devices
+            // Apple devices (specId: 4937)
             [
-                'vendorRef' => VendorFixtures::VENDOR_APPLE,
+                'vendorRef' => 'vendor-4937',
                 'productId' => 1,
                 'productName' => 'HomePod mini',
                 'hardwareVersion' => '1.0',
@@ -84,7 +84,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                 ],
             ],
             [
-                'vendorRef' => VendorFixtures::VENDOR_APPLE,
+                'vendorRef' => 'vendor-4937',
                 'productId' => 2,
                 'productName' => 'Apple TV 4K',
                 'hardwareVersion' => '2.0',
@@ -99,9 +99,9 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                     ],
                 ],
             ],
-            // Eve devices
+            // Eve devices (specId: 4874)
             [
-                'vendorRef' => VendorFixtures::VENDOR_EVE,
+                'vendorRef' => 'vendor-4874',
                 'productId' => 100,
                 'productName' => 'Eve Motion',
                 'hardwareVersion' => '1.0',
@@ -117,7 +117,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                 ],
             ],
             [
-                'vendorRef' => VendorFixtures::VENDOR_EVE,
+                'vendorRef' => 'vendor-4874',
                 'productId' => 101,
                 'productName' => 'Eve Energy',
                 'hardwareVersion' => '2.0',
@@ -133,7 +133,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                 ],
             ],
             [
-                'vendorRef' => VendorFixtures::VENDOR_EVE,
+                'vendorRef' => 'vendor-4874',
                 'productId' => 102,
                 'productName' => 'Eve Door & Window',
                 'hardwareVersion' => '1.5',
@@ -148,9 +148,9 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                     ],
                 ],
             ],
-            // Philips devices
+            // Philips devices (specId: 4107)
             [
-                'vendorRef' => VendorFixtures::VENDOR_PHILIPS,
+                'vendorRef' => 'vendor-4107',
                 'productId' => 200,
                 'productName' => 'Hue White and Color Ambiance',
                 'hardwareVersion' => '1.0',
@@ -166,7 +166,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                 ],
             ],
             [
-                'vendorRef' => VendorFixtures::VENDOR_PHILIPS,
+                'vendorRef' => 'vendor-4107',
                 'productId' => 201,
                 'productName' => 'Hue Bridge',
                 'hardwareVersion' => '3.0',
@@ -181,9 +181,9 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                     ],
                 ],
             ],
-            // Nanoleaf devices
+            // Nanoleaf devices (specId: 4442)
             [
-                'vendorRef' => VendorFixtures::VENDOR_NANOLEAF,
+                'vendorRef' => 'vendor-4442',
                 'productId' => 300,
                 'productName' => 'Shapes Hexagons',
                 'hardwareVersion' => '1.0',
