@@ -59,11 +59,11 @@ class DeviceControllerTest extends WebTestCase
     public function testIndexPageSearchFindsVendorName(): void
     {
         $client = static::createClient();
-        $crawler = $client->request('GET', '/', ['q' => 'Philips']);
+        $crawler = $client->request('GET', '/', ['q' => 'Signify']);
 
         $this->assertResponseIsSuccessful();
 
-        // Should find Philips Hue devices
+        // Should find Signify (Philips Hue) devices
         $this->assertSelectorTextContains('.device-list', 'Hue');
     }
 

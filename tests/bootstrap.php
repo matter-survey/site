@@ -12,23 +12,10 @@ if ($_SERVER['APP_DEBUG']) {
     umask(0000);
 }
 
-// Initialize test database once before all tests
-// DAMA DoctrineTestBundle will wrap each test in a transaction
-$projectDir = dirname(__DIR__);
-$testDbPath = $projectDir . '/data/matter-survey-test.db';
-
-// Only initialize if database doesn't exist or is empty
-$shouldInitialize = !file_exists($testDbPath) || filesize($testDbPath) === 0;
-
-if ($shouldInitialize) {
-    // Ensure data directory exists
-    if (!is_dir($projectDir . '/data')) {
-        mkdir($projectDir . '/data', 0755, true);
-    }
-
-    // Run migrations
-    passthru('php ' . escapeshellarg($projectDir . '/bin/console') . ' doctrine:migrations:migrate --no-interaction --env=test 2>&1');
-
-    // Load fixtures
-    passthru('php ' . escapeshellarg($projectDir . '/bin/console') . ' doctrine:fixtures:load --no-interaction --env=test 2>&1');
-}
+// Database initialization is handled by CI workflow or manually before running tests.
+// DAMA DoctrineTestBundle wraps each test in a transaction for isolation.
+//
+// To set up the test database locally:
+//   php bin/console doctrine:database:create --env=test
+//   php bin/console doctrine:migrations:migrate --no-interaction --env=test
+//   php bin/console doctrine:fixtures:load --no-interaction --env=test --group=test

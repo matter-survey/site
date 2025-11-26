@@ -7,10 +7,11 @@ namespace App\DataFixtures;
 use App\Entity\Vendor;
 use App\Repository\DeviceRepository;
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
 
-class DeviceFixtures extends Fixture implements DependentFixtureInterface
+class DeviceFixtures extends Fixture implements DependentFixtureInterface, FixtureGroupInterface
 {
     public const DEVICE_APPLE_HOMEPOD = 'device-apple-homepod';
     public const DEVICE_APPLE_TV = 'device-apple-tv';
@@ -61,6 +62,11 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
         return [
             VendorFixtures::class,
         ];
+    }
+
+    public static function getGroups(): array
+    {
+        return ['test'];
     }
 
     private function getDeviceData(): array

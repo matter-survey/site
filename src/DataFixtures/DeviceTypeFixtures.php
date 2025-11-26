@@ -24,7 +24,7 @@ class DeviceTypeFixtures extends Fixture implements FixtureGroupInterface
 
     public static function getGroups(): array
     {
-        return ['device_types', 'matter'];
+        return ['device_types', 'matter', 'test'];
     }
 
     public function load(ObjectManager $manager): void
