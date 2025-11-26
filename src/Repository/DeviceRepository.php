@@ -38,9 +38,10 @@ class DeviceRepository
             INSERT INTO products (vendor_id, vendor_name, vendor_fk, product_id, product_name, last_seen, submission_count)
             VALUES (:vendor_id, :vendor_name, :vendor_fk, :product_id, :product_name, CURRENT_TIMESTAMP, 1)
             ON CONFLICT(vendor_id, product_id) DO UPDATE SET
-                vendor_name = COALESCE(excluded.vendor_name, products.vendor_name),
-                vendor_fk = COALESCE(excluded.vendor_fk, products.vendor_fk),
-                product_name = COALESCE(excluded.product_name, products.product_name),
+                -- DCL is normative: keep existing names, only use survey data as fallback
+                vendor_name = COALESCE(products.vendor_name, excluded.vendor_name),
+                vendor_fk = COALESCE(products.vendor_fk, excluded.vendor_fk),
+                product_name = COALESCE(products.product_name, excluded.product_name),
                 last_seen = CURRENT_TIMESTAMP,
                 submission_count = products.submission_count + 1
             RETURNING id
