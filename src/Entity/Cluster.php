@@ -37,6 +37,27 @@ class Cluster
     #[ORM\Column(name: 'is_global', type: Types::BOOLEAN)]
     private bool $isGlobal = false;
 
+    /**
+     * Cluster attributes from the Matter specification.
+     * Structure: [{ code: int, name: string, type: string, writable: bool, optional: bool }]
+     */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $attributes = null;
+
+    /**
+     * Cluster commands from the Matter specification.
+     * Structure: [{ code: int, name: string, direction: string, parameters: array }]
+     */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $commands = null;
+
+    /**
+     * Cluster features from the Matter specification.
+     * Structure: [{ bit: int, code: string, name: string, description: string }]
+     */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $features = null;
+
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE)]
     private \DateTimeInterface $createdAt;
 
@@ -124,6 +145,42 @@ class Cluster
     public function setIsGlobal(bool $isGlobal): static
     {
         $this->isGlobal = $isGlobal;
+
+        return $this;
+    }
+
+    public function getAttributes(): ?array
+    {
+        return $this->attributes;
+    }
+
+    public function setAttributes(?array $attributes): static
+    {
+        $this->attributes = $attributes;
+
+        return $this;
+    }
+
+    public function getCommands(): ?array
+    {
+        return $this->commands;
+    }
+
+    public function setCommands(?array $commands): static
+    {
+        $this->commands = $commands;
+
+        return $this;
+    }
+
+    public function getFeatures(): ?array
+    {
+        return $this->features;
+    }
+
+    public function setFeatures(?array $features): static
+    {
+        $this->features = $features;
 
         return $this;
     }

@@ -27,6 +27,11 @@ class ClusterRepository extends ServiceEntityRepository
         }
     }
 
+    public function flush(): void
+    {
+        $this->getEntityManager()->flush();
+    }
+
     /**
      * Find a cluster by its hex ID (e.g., "0x0006").
      * Case-insensitive match to handle both 0x003F and 0x003f.

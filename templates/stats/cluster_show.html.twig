@@ -268,6 +268,166 @@
         text-align: center;
         color: var(--gray-500);
     }
+
+    .spec-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+    }
+
+    .spec-table th {
+        text-align: left;
+        padding: 0.75rem 1rem;
+        background: var(--gray-50);
+        border-bottom: 1px solid var(--gray-200);
+        font-weight: 600;
+        color: var(--gray-700);
+    }
+
+    .spec-table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--gray-100);
+        vertical-align: top;
+    }
+
+    .spec-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .spec-table tr:hover td {
+        background: var(--gray-50);
+    }
+
+    .spec-table .code-cell {
+        font-family: monospace;
+        font-size: 0.8125rem;
+        color: var(--gray-600);
+    }
+
+    .spec-table .type-cell {
+        font-family: monospace;
+        font-size: 0.8125rem;
+        color: var(--primary);
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1rem;
+        padding: 1.25rem;
+    }
+
+    .feature-card {
+        padding: 0.75rem 1rem;
+        background: var(--gray-50);
+        border-radius: 0.375rem;
+        border-left: 3px solid var(--primary);
+    }
+
+    .feature-card .feature-header {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .feature-card .feature-name {
+        font-weight: 600;
+        color: var(--gray-900);
+    }
+
+    .feature-card .feature-code {
+        font-family: monospace;
+        font-size: 0.75rem;
+        color: var(--gray-500);
+    }
+
+    .feature-card .feature-bit {
+        font-family: monospace;
+        font-size: 0.75rem;
+        color: var(--gray-400);
+    }
+
+    .feature-card .feature-summary {
+        font-size: 0.8125rem;
+        color: var(--gray-600);
+    }
+
+    .badge-writable {
+        background: #fef3c7;
+        color: #92400e;
+        font-size: 0.6875rem;
+        padding: 0.125rem 0.375rem;
+    }
+
+    .badge-optional {
+        background: var(--gray-100);
+        color: var(--gray-600);
+        font-size: 0.6875rem;
+        padding: 0.125rem 0.375rem;
+    }
+
+    .badge-direction {
+        background: #dbeafe;
+        color: #1e40af;
+        font-size: 0.6875rem;
+        padding: 0.125rem 0.375rem;
+    }
+
+    .param-list {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        margin-top: 0.25rem;
+    }
+
+    .section-tabs {
+        display: flex;
+        border-bottom: 1px solid var(--gray-200);
+        background: var(--gray-50);
+    }
+
+    .section-tab {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--gray-600);
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+
+    .section-tab:hover {
+        color: var(--gray-900);
+        background: white;
+    }
+
+    .section-tab.active {
+        color: var(--primary);
+        border-bottom-color: var(--primary);
+        background: white;
+    }
+
+    .section-tab .count {
+        background: var(--gray-200);
+        color: var(--gray-600);
+        font-size: 0.75rem;
+        padding: 0.125rem 0.375rem;
+        border-radius: 9999px;
+        margin-left: 0.5rem;
+    }
+
+    .section-tab.active .count {
+        background: #dbeafe;
+        color: var(--primary);
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
 {% endblock %}
 
 {% macro deviceTypeIcon(icon) %}
@@ -328,6 +488,133 @@
         </div>
         {% endif %}
     </div>
+
+    {# Specification Data Section - Features, Attributes, Commands #}
+    {% set features = cluster.features ?? [] %}
+    {% set attributes = cluster.attributes ?? [] %}
+    {% set commands = cluster.commands ?? [] %}
+
+    {% if features|length > 0 or attributes|length > 0 or commands|length > 0 %}
+    <div class="section">
+        <div class="section-tabs">
+            {% if attributes|length > 0 %}
+                <div class="section-tab active" data-tab="attributes">
+                    Attributes <span class="count">{{ attributes|length }}</span>
+                </div>
+            {% endif %}
+            {% if commands|length > 0 %}
+                <div class="section-tab {{ attributes|length == 0 ? 'active' : '' }}" data-tab="commands">
+                    Commands <span class="count">{{ commands|length }}</span>
+                </div>
+            {% endif %}
+            {% if features|length > 0 %}
+                <div class="section-tab {{ attributes|length == 0 and commands|length == 0 ? 'active' : '' }}" data-tab="features">
+                    Features <span class="count">{{ features|length }}</span>
+                </div>
+            {% endif %}
+        </div>
+
+        {# Attributes Tab #}
+        {% if attributes|length > 0 %}
+        <div class="tab-content active" id="tab-attributes">
+            <table class="spec-table">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Code</th>
+                        <th>Name</th>
+                        <th style="width: 120px;">Type</th>
+                        <th style="width: 120px;">Flags</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attr in attributes %}
+                    <tr>
+                        <td class="code-cell">0x{{ '%04X'|format(attr.code) }}</td>
+                        <td>{{ attr.name }}</td>
+                        <td class="type-cell">{{ attr.type }}</td>
+                        <td>
+                            {% if attr.writable %}<span class="badge badge-writable">Writable</span>{% endif %}
+                            {% if attr.optional %}<span class="badge badge-optional">Optional</span>{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {# Commands Tab #}
+        {% if commands|length > 0 %}
+        <div class="tab-content {{ attributes|length == 0 ? 'active' : '' }}" id="tab-commands">
+            <table class="spec-table">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Code</th>
+                        <th>Name</th>
+                        <th style="width: 140px;">Direction</th>
+                        <th>Parameters</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cmd in commands %}
+                    <tr>
+                        <td class="code-cell">0x{{ '%02X'|format(cmd.code) }}</td>
+                        <td>
+                            {{ cmd.name }}
+                            {% if cmd.optional %}<span class="badge badge-optional">Optional</span>{% endif %}
+                        </td>
+                        <td><span class="badge badge-direction">{{ cmd.direction }}</span></td>
+                        <td>
+                            {% if cmd.parameters|length > 0 %}
+                                <div class="param-list">
+                                    {% for param in cmd.parameters %}
+                                        <code>{{ param.name }}</code>: {{ param.type }}{% if not loop.last %}, {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <span style="color: var(--gray-400);">None</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {# Features Tab #}
+        {% if features|length > 0 %}
+        <div class="tab-content {{ attributes|length == 0 and commands|length == 0 ? 'active' : '' }}" id="tab-features">
+            <div class="feature-grid">
+                {% for feature in features %}
+                <div class="feature-card">
+                    <div class="feature-header">
+                        <span class="feature-name">{{ feature.name }}</span>
+                        <span class="feature-code">({{ feature.code }})</span>
+                        <span class="feature-bit">bit {{ feature.bit }}</span>
+                    </div>
+                    {% if feature.summary %}
+                    <div class="feature-summary">{{ feature.summary }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+    document.querySelectorAll('.section-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabName = tab.dataset.tab;
+            document.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+        });
+    });
+    </script>
+    {% endif %}
 
     {% if deviceTypesRequiring|length > 0 %}
     <div class="section">

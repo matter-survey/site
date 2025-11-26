@@ -52,6 +52,11 @@ class ClusterFixtures extends Fixture implements FixtureGroupInterface
             $cluster->setCategory($data['category'] ?? null);
             $cluster->setIsGlobal($data['isGlobal'] ?? false);
 
+            // Load ZAP spec data (attributes, commands, features)
+            $cluster->setAttributes($data['attributes'] ?? null);
+            $cluster->setCommands($data['commands'] ?? null);
+            $cluster->setFeatures($data['features'] ?? null);
+
             $cluster->setUpdatedAt(new \DateTime());
 
             $manager->persist($cluster);
