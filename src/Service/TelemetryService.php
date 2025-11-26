@@ -12,6 +12,13 @@ use Psr\Log\LoggerInterface;
 
 class TelemetryService
 {
+    /**
+     * Bridged Node device type ID (0x0013).
+     * Endpoints with this device type represent devices bridged from other protocols
+     * (Z-Wave, Zigbee, etc.) and are user-specific, so we don't record them.
+     */
+    private const BRIDGED_NODE_DEVICE_TYPE_ID = 19;
+
     private Connection $db;
 
     public function __construct(
@@ -161,6 +168,11 @@ class TelemetryService
         $this->deviceRepo->upsertVersion($deviceId, $hardwareVersion, $softwareVersion);
 
         foreach ($device['endpoints'] ?? [] as $endpoint) {
+            // Skip bridged node endpoints - they represent user-specific bridged devices
+            if ($this->isBridgedNodeEndpoint($endpoint)) {
+                continue;
+            }
+
             $this->deviceRepo->upsertEndpoint(
                 $deviceId,
                 [
@@ -191,6 +203,26 @@ class TelemetryService
         $value = preg_replace('/[\x00-\x1F\x7F]/', '', $value);
 
         return $value ?: null;
+    }
+
+    /**
+     * Check if an endpoint is a Bridged Node.
+     * Device types can be either an array of IDs or an array of objects with 'id' field.
+     */
+    private function isBridgedNodeEndpoint(array $endpoint): bool
+    {
+        $deviceTypes = $endpoint['device_types'] ?? [];
+
+        foreach ($deviceTypes as $deviceType) {
+            // Handle both formats: plain ID or object with 'id' field
+            $typeId = is_array($deviceType) ? ($deviceType['id'] ?? null) : $deviceType;
+
+            if ((int) $typeId === self::BRIDGED_NODE_DEVICE_TYPE_ID) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

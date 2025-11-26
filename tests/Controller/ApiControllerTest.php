@@ -444,4 +444,89 @@ class ApiControllerTest extends WebTestCase
         $this->assertStringContainsString('1.0.0', $oldestVersionGroup->text());
         $this->assertStringNotContainsString('Changes from previous version', $oldestVersionGroup->text());
     }
+
+    /**
+     * Test that bridged node endpoints (device type 19) are filtered out.
+     * These represent devices bridged from other protocols (Z-Wave, Zigbee, etc.)
+     * and are user-specific, so we don't record them.
+     */
+    public function testSubmitFiltersBridgedNodeEndpoints(): void
+    {
+        $client = static::createClient();
+
+        // Submit a bridge device with root, aggregator, and bridged node endpoints
+        $client->request('POST', '/api/submit', [], [], [
+            'CONTENT_TYPE' => 'application/json',
+        ], json_encode([
+            'installation_id' => '550e8400-e29b-41d4-a716-446655440030',
+            'schema_version' => 2,
+            'devices' => [
+                [
+                    'vendor_id' => 0x5555,
+                    'vendor_name' => 'Bridge Test Vendor',
+                    'product_id' => 0x0020,
+                    'product_name' => 'Test Matter Bridge',
+                    'hardware_version' => '1.0',
+                    'software_version' => '1.0.0',
+                    'endpoints' => [
+                        // Endpoint 0: Root Node - should be recorded
+                        [
+                            'endpoint_id' => 0,
+                            'device_types' => [['id' => 22, 'revision' => 1]], // Root Node
+                            'server_clusters' => [29, 31, 40, 48, 49, 51, 60, 62, 63],
+                            'client_clusters' => [],
+                        ],
+                        // Endpoint 1: Aggregator - should be recorded
+                        [
+                            'endpoint_id' => 1,
+                            'device_types' => [['id' => 14, 'revision' => 1]], // Aggregator
+                            'server_clusters' => [29, 30, 37],
+                            'client_clusters' => [],
+                        ],
+                        // Endpoint 3: Bridged Node - should be FILTERED OUT
+                        [
+                            'endpoint_id' => 3,
+                            'device_types' => [['id' => 19, 'revision' => 1]], // Bridged Node
+                            'server_clusters' => [6, 29, 57],
+                            'client_clusters' => [],
+                        ],
+                        // Endpoint 4: Another Bridged Node - should be FILTERED OUT
+                        [
+                            'endpoint_id' => 4,
+                            'device_types' => [['id' => 19, 'revision' => 1]], // Bridged Node
+                            'server_clusters' => [258, 29, 57], // Window Covering
+                            'client_clusters' => [],
+                        ],
+                    ],
+                ],
+            ],
+        ]));
+
+        $this->assertResponseIsSuccessful();
+
+        // Verify device page shows only non-bridged endpoints
+        $crawler = $client->request('GET', '/');
+        $deviceLink = $crawler->filter('a:contains("Test Matter Bridge")');
+        $this->assertGreaterThan(0, $deviceLink->count(), 'Device link should exist');
+
+        $crawler = $client->click($deviceLink->link());
+        $this->assertResponseIsSuccessful();
+
+        $content = $client->getResponse()->getContent();
+
+        // Should show Root Node and Aggregator endpoints
+        $this->assertStringContainsString('Endpoint 0', $content);
+        $this->assertStringContainsString('Endpoint 1', $content);
+
+        // Should NOT show Bridged Node endpoints (3 and 4)
+        $this->assertStringNotContainsString('Endpoint 3', $content);
+        $this->assertStringNotContainsString('Endpoint 4', $content);
+
+        // Should show Root Node device type
+        $this->assertStringContainsString('Root Node', $content);
+
+        // Should NOT show "Bridged Node" as a device type (the endpoints were filtered)
+        // Note: The text "Bridged Node" might still appear in other contexts,
+        // so we count occurrences of "Endpoint 3" and "Endpoint 4" specifically
+    }
 }
