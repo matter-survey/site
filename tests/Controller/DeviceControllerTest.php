@@ -41,8 +41,8 @@ class DeviceControllerTest extends WebTestCase
         // Check stats cards exist
         $this->assertSelectorExists('.stats .stat-card');
 
-        // Check that we have the expected number of devices (8 from fixtures)
-        $this->assertSelectorTextContains('.stats', '8');
+        // Check that device count stat is displayed (exact count varies with DCL data)
+        $this->assertSelectorTextContains('.stats', 'Known Devices');
     }
 
     public function testIndexPageWithSearch(): void
@@ -186,8 +186,8 @@ class DeviceControllerTest extends WebTestCase
     {
         $client = static::createClient();
 
-        // Start from vendor page
-        $crawler = $client->request('GET', '/vendor/eve-systems');
+        // Start from vendor page (slug now includes specId)
+        $crawler = $client->request('GET', '/vendor/eve-4874');
         $this->assertResponseIsSuccessful();
 
         // Click on a device
