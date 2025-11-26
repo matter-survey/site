@@ -104,7 +104,7 @@ class ProductRepository extends ServiceEntityRepository
     }
 
     /**
-     * Get products by vendor entity.
+     * Get products by vendor entity (uses FK relationship).
      *
      * @return Product[]
      */
@@ -122,7 +122,24 @@ class ProductRepository extends ServiceEntityRepository
     }
 
     /**
-     * Count products by vendor.
+     * Get products by vendor specId (uses vendorId field from DCL).
+     *
+     * @return Product[]
+     */
+    public function findByVendorSpecId(int $specId, int $limit = 100, int $offset = 0): array
+    {
+        return $this->createQueryBuilder('p')
+            ->where('p.vendorId = :vendorId')
+            ->setParameter('vendorId', $specId)
+            ->orderBy('p.productName', 'ASC')
+            ->setMaxResults($limit)
+            ->setFirstResult($offset)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Count products by vendor entity (uses FK relationship).
      */
     public function countByVendor(Vendor $vendor): int
     {
@@ -130,6 +147,19 @@ class ProductRepository extends ServiceEntityRepository
             ->select('COUNT(p.id)')
             ->where('p.vendor = :vendor')
             ->setParameter('vendor', $vendor)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Count products by vendor specId.
+     */
+    public function countByVendorSpecId(int $specId): int
+    {
+        return (int) $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->where('p.vendorId = :vendorId')
+            ->setParameter('vendorId', $specId)
             ->getQuery()
             ->getSingleScalarResult();
     }
@@ -162,5 +192,26 @@ class ProductRepository extends ServiceEntityRepository
             ->select('COUNT(p.id)')
             ->getQuery()
             ->getSingleScalarResult();
+    }
+
+    /**
+     * Get product counts grouped by vendor ID (specId).
+     *
+     * @return array<int, int> Map of vendorId => productCount
+     */
+    public function getProductCountsByVendor(): array
+    {
+        $results = $this->createQueryBuilder('p')
+            ->select('p.vendorId, COUNT(p.id) as productCount')
+            ->groupBy('p.vendorId')
+            ->getQuery()
+            ->getResult();
+
+        $map = [];
+        foreach ($results as $row) {
+            $map[$row['vendorId']] = (int) $row['productCount'];
+        }
+
+        return $map;
     }
 }

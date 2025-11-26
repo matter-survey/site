@@ -3,7 +3,7 @@
 {% block title %}{{ vendor.name }} - Matter Survey{% endblock %}
 
 {% block og_title %}{{ vendor.name }} - Matter Device Manufacturer{% endblock %}
-{% block og_description %}{{ vendor.name }} is a Matter smart home device manufacturer with {{ totalDevices }} device{{ totalDevices != 1 ? 's' : '' }} in the Matter Survey database. Browse their Matter-compatible products and capabilities.{% endblock %}
+{% block og_description %}{{ vendor.name }} is a Matter smart home device manufacturer with {{ totalProducts }} certified product{{ totalProducts != 1 ? 's' : '' }} and {{ totalDevices }} device{{ totalDevices != 1 ? 's' : '' }} seen. Browse their Matter-compatible products and capabilities.{% endblock %}
 {% block og_type %}profile{% endblock %}
 
 {% block structured_data %}
@@ -12,7 +12,7 @@
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": {{ vendor.name|json_encode|raw }},
-    "description": {{ ("Matter smart home device manufacturer with " ~ totalDevices ~ " known device(s)")|json_encode|raw }},
+    "description": {{ ("Matter smart home device manufacturer with " ~ totalProducts ~ " certified product(s)")|json_encode|raw }},
     "url": "{{ url('vendor_show', {slug: vendor.slug}) }}",
     "additionalProperty": [
         {
@@ -22,7 +22,12 @@
         },
         {
             "@type": "PropertyValue",
-            "name": "Device Count",
+            "name": "Certified Products",
+            "value": "{{ totalProducts }}"
+        },
+        {
+            "@type": "PropertyValue",
+            "name": "Devices Seen",
             "value": "{{ totalDevices }}"
         }
     ]
@@ -143,6 +148,46 @@
         padding: 3rem;
         color: var(--gray-500);
     }
+
+    .section-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin: 1.5rem 0 1rem;
+        color: var(--gray-800);
+    }
+
+    .product-list {
+        background: white;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+        overflow: hidden;
+    }
+
+    .product-item {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--gray-200);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .product-item:last-child {
+        border-bottom: none;
+    }
+
+    .product-item:hover {
+        background: var(--gray-50);
+    }
+
+    .product-name {
+        font-weight: 500;
+    }
+
+    .product-id {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+        font-family: monospace;
+    }
 {% endblock %}
 
 {% block body %}
@@ -159,13 +204,39 @@
         <div class="meta">
             Vendor ID: {{ vendor.specId ?? 'N/A' }}
             &middot;
-            {{ totalDevices }} device{{ totalDevices != 1 ? 's' : '' }}
+            {{ totalProducts }} certified product{{ totalProducts != 1 ? 's' : '' }}
+            &middot;
+            {{ totalDevices }} device{{ totalDevices != 1 ? 's' : '' }} seen
         </div>
     </div>
 
+    {# Certified Products from DCL Registry #}
+    <h2 class="section-title">Certified Products ({{ totalProducts }})</h2>
+    {% if products is empty %}
+        <div class="empty-state">
+            <p>No certified products found in the DCL registry for this vendor.</p>
+        </div>
+    {% else %}
+        <div class="product-list">
+            {% for product in products %}
+                <div class="product-item">
+                    <span class="product-name">{{ product.productName ?? 'Unknown Product' }}</span>
+                    <span class="product-id">{{ product.vendorId }}-{{ product.productId }}</span>
+                </div>
+            {% endfor %}
+        </div>
+        {% if totalProducts > 100 %}
+            <p style="text-align: center; color: var(--gray-500); margin-top: 0.5rem; font-size: 0.875rem;">
+                Showing first 100 of {{ totalProducts }} products
+            </p>
+        {% endif %}
+    {% endif %}
+
+    {# Devices Seen from Telemetry #}
+    <h2 class="section-title">Devices Seen ({{ totalDevices }})</h2>
     {% if devices is empty %}
         <div class="empty-state">
-            <p>No devices from this vendor in the database.</p>
+            <p>No devices from this vendor have been submitted via telemetry yet.</p>
         </div>
     {% else %}
         <div class="device-list">

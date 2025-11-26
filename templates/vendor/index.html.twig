@@ -46,12 +46,23 @@
         color: var(--gray-500);
     }
 
+    .vendor-counts {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
     .vendor-count {
-        font-size: 0.875rem;
+        font-size: 0.75rem;
         color: var(--gray-600);
         background: var(--gray-100);
-        padding: 0.25rem 0.75rem;
-        border-radius: 1rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+
+    .vendor-count.products {
+        background: var(--primary-light, #e0f2fe);
+        color: var(--primary-dark, #0369a1);
     }
 
     .page-header {
@@ -99,9 +110,16 @@
                             Vendor ID: {{ vendor.specId ?? 'N/A' }}
                         </div>
                     </div>
-                    <span class="vendor-count">
-                        {{ vendor.deviceCount }} device{{ vendor.deviceCount != 1 ? 's' : '' }}
-                    </span>
+                    <div class="vendor-counts">
+                        <span class="vendor-count products">
+                            {{ productCounts[vendor.specId] ?? 0 }} product{{ (productCounts[vendor.specId] ?? 0) != 1 ? 's' : '' }}
+                        </span>
+                        {% if vendor.deviceCount > 0 %}
+                        <span class="vendor-count">
+                            {{ vendor.deviceCount }} seen
+                        </span>
+                        {% endif %}
+                    </div>
                 </div>
             {% endfor %}
         </div>

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Repository\DeviceRepository;
+use App\Repository\ProductRepository;
 use App\Repository\VendorRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,6 +17,7 @@ class VendorController extends AbstractController
     public function __construct(
         private VendorRepository $vendorRepo,
         private DeviceRepository $deviceRepo,
+        private ProductRepository $productRepo,
     ) {}
 
     #[Route('/vendors', name: 'vendor_index', methods: ['GET'])]
@@ -23,8 +25,12 @@ class VendorController extends AbstractController
     {
         $vendors = $this->vendorRepo->findAllOrderedByDeviceCount();
 
+        // Build a map of vendorId (specId) => product count for efficient lookup
+        $productCounts = $this->productRepo->getProductCountsByVendor();
+
         return $this->render('vendor/index.html.twig', [
             'vendors' => $vendors,
+            'productCounts' => $productCounts,
         ]);
     }
 
@@ -45,12 +51,18 @@ class VendorController extends AbstractController
         $totalDevices = $this->deviceRepo->getDeviceCountByVendor($vendor->getId());
         $totalPages = max(1, (int) ceil($totalDevices / $perPage));
 
+        // Get products from DCL registry for this vendor (by specId)
+        $products = $this->productRepo->findByVendorSpecId($vendor->getSpecId(), 100);
+        $totalProducts = $this->productRepo->countByVendorSpecId($vendor->getSpecId());
+
         return $this->render('vendor/show.html.twig', [
             'vendor' => $vendor,
             'devices' => $devices,
+            'products' => $products,
             'page' => $page,
             'totalPages' => $totalPages,
             'totalDevices' => $totalDevices,
+            'totalProducts' => $totalProducts,
         ]);
     }
 }
