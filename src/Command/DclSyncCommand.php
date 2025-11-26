@@ -142,6 +142,34 @@ class DclSyncCommand extends Command
             if (!empty($model['userManualUrl'])) {
                 $fixture['userManualUrl'] = $model['userManualUrl'];
             }
+            if (!empty($model['commissioningCustomFlowUrl'])) {
+                $fixture['commissioningCustomFlowUrl'] = $model['commissioningCustomFlowUrl'];
+            }
+            if (!empty($model['maintenanceUrl'])) {
+                $fixture['maintenanceUrl'] = $model['maintenanceUrl'];
+            }
+
+            // Commissioning and discovery fields (only include if set)
+            if (isset($model['discoveryCapabilitiesBitmask'])) {
+                $fixture['discoveryCapabilitiesBitmask'] = $model['discoveryCapabilitiesBitmask'];
+            }
+            if (isset($model['commissioningCustomFlow'])) {
+                $fixture['commissioningCustomFlow'] = $model['commissioningCustomFlow'];
+            }
+            if (isset($model['commissioningModeInitialStepsHint'])) {
+                $fixture['commissioningModeInitialStepsHint'] = $model['commissioningModeInitialStepsHint'];
+            }
+            if (!empty($model['commissioningModeInitialStepsInstruction'])) {
+                $fixture['commissioningModeInitialStepsInstruction'] = $model['commissioningModeInitialStepsInstruction'];
+            }
+
+            // Factory reset fields
+            if (isset($model['factoryResetStepsHint'])) {
+                $fixture['factoryResetStepsHint'] = $model['factoryResetStepsHint'];
+            }
+            if (!empty($model['factoryResetStepsInstruction'])) {
+                $fixture['factoryResetStepsInstruction'] = $model['factoryResetStepsInstruction'];
+            }
 
             $fixtures[] = $fixture;
         }

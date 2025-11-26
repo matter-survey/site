@@ -92,6 +92,30 @@ class ProductFixtures extends Fixture implements FixtureGroupInterface, Dependen
             $product->setProductUrl(trim($data['productUrl'] ?? '') ?: null);
             $product->setSupportUrl(trim($data['supportUrl'] ?? '') ?: null);
             $product->setUserManualUrl(trim($data['userManualUrl'] ?? '') ?: null);
+            $product->setCommissioningCustomFlowUrl(trim($data['commissioningCustomFlowUrl'] ?? '') ?: null);
+            $product->setMaintenanceUrl(trim($data['maintenanceUrl'] ?? '') ?: null);
+
+            // Set discovery and commissioning fields
+            if (isset($data['discoveryCapabilitiesBitmask'])) {
+                $product->setDiscoveryCapabilitiesBitmask((int) $data['discoveryCapabilitiesBitmask']);
+            }
+            if (isset($data['commissioningCustomFlow'])) {
+                $product->setCommissioningCustomFlow((int) $data['commissioningCustomFlow']);
+            }
+            if (isset($data['commissioningModeInitialStepsHint'])) {
+                $product->setCommissioningInitialStepsHint((int) $data['commissioningModeInitialStepsHint']);
+            }
+            $product->setCommissioningInitialStepsInstruction(
+                trim($data['commissioningModeInitialStepsInstruction'] ?? '') ?: null
+            );
+
+            // Set factory reset fields
+            if (isset($data['factoryResetStepsHint'])) {
+                $product->setFactoryResetStepsHint((int) $data['factoryResetStepsHint']);
+            }
+            $product->setFactoryResetStepsInstruction(
+                trim($data['factoryResetStepsInstruction'] ?? '') ?: null
+            );
 
             $manager->persist($product);
             $count++;

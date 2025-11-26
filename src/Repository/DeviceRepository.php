@@ -35,8 +35,8 @@ class DeviceRepository
         $isNew = ($existing === false);
 
         $result = $this->db->executeQuery('
-            INSERT INTO products (vendor_id, vendor_name, vendor_fk, product_id, product_name, last_seen, submission_count)
-            VALUES (:vendor_id, :vendor_name, :vendor_fk, :product_id, :product_name, CURRENT_TIMESTAMP, 1)
+            INSERT INTO products (vendor_id, vendor_name, vendor_fk, product_id, product_name, first_seen, last_seen, submission_count)
+            VALUES (:vendor_id, :vendor_name, :vendor_fk, :product_id, :product_name, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1)
             ON CONFLICT(vendor_id, product_id) DO UPDATE SET
                 -- DCL is normative: keep existing names, only use survey data as fallback
                 vendor_name = COALESCE(products.vendor_name, excluded.vendor_name),

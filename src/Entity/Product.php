@@ -61,6 +61,30 @@ class Product
     #[ORM\Column(name: 'user_manual_url', length: 512, nullable: true)]
     private ?string $userManualUrl = null;
 
+    #[ORM\Column(name: 'discovery_capabilities_bitmask', nullable: true)]
+    private ?int $discoveryCapabilitiesBitmask = null;
+
+    #[ORM\Column(name: 'commissioning_custom_flow', nullable: true)]
+    private ?int $commissioningCustomFlow = null;
+
+    #[ORM\Column(name: 'commissioning_custom_flow_url', length: 512, nullable: true)]
+    private ?string $commissioningCustomFlowUrl = null;
+
+    #[ORM\Column(name: 'commissioning_initial_steps_hint', nullable: true)]
+    private ?int $commissioningInitialStepsHint = null;
+
+    #[ORM\Column(name: 'commissioning_initial_steps_instruction', type: Types::TEXT, nullable: true)]
+    private ?string $commissioningInitialStepsInstruction = null;
+
+    #[ORM\Column(name: 'maintenance_url', length: 512, nullable: true)]
+    private ?string $maintenanceUrl = null;
+
+    #[ORM\Column(name: 'factory_reset_steps_hint', nullable: true)]
+    private ?int $factoryResetStepsHint = null;
+
+    #[ORM\Column(name: 'factory_reset_steps_instruction', type: Types::TEXT, nullable: true)]
+    private ?string $factoryResetStepsInstruction = null;
+
     public function __construct()
     {
         $this->firstSeen = new \DateTime();
@@ -232,6 +256,102 @@ class Product
     public function setUserManualUrl(?string $userManualUrl): static
     {
         $this->userManualUrl = $userManualUrl;
+
+        return $this;
+    }
+
+    public function getDiscoveryCapabilitiesBitmask(): ?int
+    {
+        return $this->discoveryCapabilitiesBitmask;
+    }
+
+    public function setDiscoveryCapabilitiesBitmask(?int $discoveryCapabilitiesBitmask): static
+    {
+        $this->discoveryCapabilitiesBitmask = $discoveryCapabilitiesBitmask;
+
+        return $this;
+    }
+
+    public function getCommissioningCustomFlow(): ?int
+    {
+        return $this->commissioningCustomFlow;
+    }
+
+    public function setCommissioningCustomFlow(?int $commissioningCustomFlow): static
+    {
+        $this->commissioningCustomFlow = $commissioningCustomFlow;
+
+        return $this;
+    }
+
+    public function getCommissioningCustomFlowUrl(): ?string
+    {
+        return $this->commissioningCustomFlowUrl;
+    }
+
+    public function setCommissioningCustomFlowUrl(?string $commissioningCustomFlowUrl): static
+    {
+        $this->commissioningCustomFlowUrl = $commissioningCustomFlowUrl;
+
+        return $this;
+    }
+
+    public function getCommissioningInitialStepsHint(): ?int
+    {
+        return $this->commissioningInitialStepsHint;
+    }
+
+    public function setCommissioningInitialStepsHint(?int $commissioningInitialStepsHint): static
+    {
+        $this->commissioningInitialStepsHint = $commissioningInitialStepsHint;
+
+        return $this;
+    }
+
+    public function getCommissioningInitialStepsInstruction(): ?string
+    {
+        return $this->commissioningInitialStepsInstruction;
+    }
+
+    public function setCommissioningInitialStepsInstruction(?string $commissioningInitialStepsInstruction): static
+    {
+        $this->commissioningInitialStepsInstruction = $commissioningInitialStepsInstruction;
+
+        return $this;
+    }
+
+    public function getMaintenanceUrl(): ?string
+    {
+        return $this->maintenanceUrl;
+    }
+
+    public function setMaintenanceUrl(?string $maintenanceUrl): static
+    {
+        $this->maintenanceUrl = $maintenanceUrl;
+
+        return $this;
+    }
+
+    public function getFactoryResetStepsHint(): ?int
+    {
+        return $this->factoryResetStepsHint;
+    }
+
+    public function setFactoryResetStepsHint(?int $factoryResetStepsHint): static
+    {
+        $this->factoryResetStepsHint = $factoryResetStepsHint;
+
+        return $this;
+    }
+
+    public function getFactoryResetStepsInstruction(): ?string
+    {
+        return $this->factoryResetStepsInstruction;
+    }
+
+    public function setFactoryResetStepsInstruction(?string $factoryResetStepsInstruction): static
+    {
+        $this->factoryResetStepsInstruction = $factoryResetStepsInstruction;
 
         return $this;
     }
