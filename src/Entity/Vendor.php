@@ -30,6 +30,12 @@ class Vendor
     #[ORM\Column(name: 'device_count')]
     private int $deviceCount = 0;
 
+    #[ORM\Column(name: 'company_legal_name', length: 512, nullable: true)]
+    private ?string $companyLegalName = null;
+
+    #[ORM\Column(name: 'vendor_landing_page_url', length: 512, nullable: true)]
+    private ?string $vendorLandingPageURL = null;
+
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE)]
     private \DateTimeInterface $createdAt;
 
@@ -122,6 +128,30 @@ class Vendor
     public function setUpdatedAt(\DateTimeInterface $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    public function getCompanyLegalName(): ?string
+    {
+        return $this->companyLegalName;
+    }
+
+    public function setCompanyLegalName(?string $companyLegalName): static
+    {
+        $this->companyLegalName = $companyLegalName;
+
+        return $this;
+    }
+
+    public function getVendorLandingPageURL(): ?string
+    {
+        return $this->vendorLandingPageURL;
+    }
+
+    public function setVendorLandingPageURL(?string $vendorLandingPageURL): static
+    {
+        $this->vendorLandingPageURL = $vendorLandingPageURL;
 
         return $this;
     }

@@ -6,57 +6,62 @@ namespace App\DataFixtures;
 
 use App\Entity\Vendor;
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Persistence\ObjectManager;
+use Symfony\Component\Yaml\Yaml;
 
-class VendorFixtures extends Fixture
+/**
+ * Load vendors from the DCL YAML file.
+ *
+ * Merge strategy: DCL is authoritative for metadata (name, slug, companyLegalName, vendorLandingPageURL).
+ * User-derived stats (deviceCount) are preserved.
+ */
+class VendorFixtures extends Fixture implements FixtureGroupInterface
 {
-    public const VENDOR_APPLE = 'vendor-apple';
-    public const VENDOR_EVE = 'vendor-eve';
-    public const VENDOR_PHILIPS = 'vendor-philips';
-    public const VENDOR_NANOLEAF = 'vendor-nanoleaf';
+    private string $dataPath;
+
+    public function __construct(?string $dataPath = null)
+    {
+        $this->dataPath = $dataPath ?? __DIR__ . '/../../fixtures/vendors.yaml';
+    }
+
+    public static function getGroups(): array
+    {
+        return ['vendors', 'dcl', 'matter'];
+    }
 
     public function load(ObjectManager $manager): void
     {
-        $vendors = [
-            [
-                'name' => 'Apple',
-                'slug' => 'apple',
-                'specId' => 4937,
-                'deviceCount' => 2,
-                'reference' => self::VENDOR_APPLE,
-            ],
-            [
-                'name' => 'Eve Systems',
-                'slug' => 'eve-systems',
-                'specId' => 4874,
-                'deviceCount' => 3,
-                'reference' => self::VENDOR_EVE,
-            ],
-            [
-                'name' => 'Philips Hue',
-                'slug' => 'philips-hue',
-                'specId' => 4107,
-                'deviceCount' => 2,
-                'reference' => self::VENDOR_PHILIPS,
-            ],
-            [
-                'name' => 'Nanoleaf',
-                'slug' => 'nanoleaf',
-                'specId' => 4123,
-                'deviceCount' => 1,
-                'reference' => self::VENDOR_NANOLEAF,
-            ],
-        ];
+        if (!file_exists($this->dataPath)) {
+            throw new \RuntimeException(\sprintf('Vendors YAML file not found at: %s', $this->dataPath));
+        }
+
+        $vendors = Yaml::parseFile($this->dataPath);
+        $repository = $manager->getRepository(Vendor::class);
 
         foreach ($vendors as $data) {
-            $vendor = new Vendor();
-            $vendor->setName($data['name']);
-            $vendor->setSlug($data['slug']);
-            $vendor->setSpecId($data['specId']);
-            $vendor->setDeviceCount($data['deviceCount']);
+            $specId = (int) $data['specId'];
+
+            // Find existing by specId (canonical key)
+            $vendor = $repository->findOneBy(['specId' => $specId]);
+            if ($vendor === null) {
+                $vendor = new Vendor();
+                $vendor->setSpecId($specId);
+            }
+
+            // DCL is authoritative for metadata - always overwrite
+            $vendor->setName($data['name'] ?? '');
+            $vendor->setSlug($data['slug']); // Slug now includes specId suffix, guaranteed unique
+            $vendor->setCompanyLegalName($data['companyLegalName'] ?? null);
+            $vendor->setVendorLandingPageURL($data['vendorLandingPageURL'] ?? null);
+            $vendor->setUpdatedAt(new \DateTime());
+
+            // Note: deviceCount is NOT reset - it's a user-derived stat that should be preserved
 
             $manager->persist($vendor);
-            $this->addReference($data['reference'], $vendor);
+
+            // Add reference for potential use in other fixtures
+            $this->addReference('vendor-' . $specId, $vendor);
         }
 
         $manager->flush();

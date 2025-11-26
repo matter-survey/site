@@ -1,0 +1,111 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\DataFixtures;
+
+use App\Entity\Product;
+use App\Entity\Vendor;
+use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
+use Doctrine\Common\DataFixtures\DependentFixtureInterface;
+use Doctrine\Persistence\ObjectManager;
+use Symfony\Component\Yaml\Yaml;
+
+/**
+ * Load products from the DCL YAML file.
+ *
+ * Uses batch processing to handle large datasets (~3500 products).
+ */
+class ProductFixtures extends Fixture implements FixtureGroupInterface, DependentFixtureInterface
+{
+    private const BATCH_SIZE = 100;
+
+    private string $dataPath;
+
+    public function __construct(?string $dataPath = null)
+    {
+        $this->dataPath = $dataPath ?? __DIR__ . '/../../fixtures/products.yaml';
+    }
+
+    public static function getGroups(): array
+    {
+        return ['products', 'dcl', 'matter'];
+    }
+
+    public function getDependencies(): array
+    {
+        return [VendorFixtures::class];
+    }
+
+    public function load(ObjectManager $manager): void
+    {
+        if (!file_exists($this->dataPath)) {
+            throw new \RuntimeException(\sprintf('Products YAML file not found at: %s', $this->dataPath));
+        }
+
+        $products = Yaml::parseFile($this->dataPath);
+        $productRepository = $manager->getRepository(Product::class);
+
+        // Pre-load vendor names into a map for efficient lookup (specId => vendorName)
+        $vendorNameMap = $this->buildVendorNameMap($manager);
+
+        $count = 0;
+        foreach ($products as $data) {
+            $vendorId = (int) $data['vendorId'];
+            $productId = (int) $data['productId'];
+
+            // Find existing by vendorId + productId or create new
+            $product = $productRepository->findOneBy([
+                'vendorId' => $vendorId,
+                'productId' => $productId,
+            ]);
+
+            if ($product === null) {
+                $product = new Product();
+                $product->setVendorId($vendorId);
+                $product->setProductId($productId);
+            }
+
+            // Use productLabel if available, fallback to productName
+            $productName = $data['productLabel'] ?? $data['productName'] ?? null;
+            $product->setProductName($productName);
+
+            // Set vendor name from our map (FK relationship is set separately to avoid detachment issues)
+            if (isset($vendorNameMap[$vendorId])) {
+                $product->setVendorName($vendorNameMap[$vendorId]);
+            }
+
+            $manager->persist($product);
+            $count++;
+
+            // Batch flush to manage memory
+            if ($count % self::BATCH_SIZE === 0) {
+                $manager->flush();
+                $manager->clear(Product::class);
+            }
+        }
+
+        // Final flush for remaining items
+        $manager->flush();
+    }
+
+    /**
+     * Build a map of specId => vendorName for efficient lookup.
+     *
+     * @return array<int, string>
+     */
+    private function buildVendorNameMap(ObjectManager $manager): array
+    {
+        $vendors = $manager->getRepository(Vendor::class)->findAll();
+        $map = [];
+
+        foreach ($vendors as $vendor) {
+            if ($vendor->getSpecId() !== null) {
+                $map[$vendor->getSpecId()] = $vendor->getName();
+            }
+        }
+
+        return $map;
+    }
+}
