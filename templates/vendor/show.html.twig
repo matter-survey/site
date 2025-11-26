@@ -69,6 +69,92 @@
         font-size: 0.875rem;
     }
 
+    .vendor-header .meta a {
+        color: var(--primary);
+        text-decoration: none;
+    }
+
+    .vendor-header .meta a:hover {
+        text-decoration: underline;
+    }
+
+    .vendor-header .legal-name {
+        color: var(--gray-500);
+        font-size: 0.875rem;
+        margin: 0.25rem 0 0.5rem;
+    }
+
+    .vendor-analytics {
+        background: white;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .vendor-analytics h2 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin: 0 0 1rem;
+    }
+
+    .analytics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .analytics-card {
+        background: var(--gray-50);
+        border-radius: 0.375rem;
+        padding: 1rem;
+    }
+
+    .analytics-card h3 {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--gray-600);
+        margin: 0 0 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .analytics-card .stat-row {
+        font-size: 0.875rem;
+        color: var(--gray-700);
+        padding: 0.25rem 0;
+    }
+
+    .analytics-card .percentage {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary);
+        line-height: 1;
+    }
+
+    .analytics-card p {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+        margin: 0.25rem 0 0;
+    }
+
+    .device-links {
+        display: inline-flex;
+        gap: 0.5rem;
+        margin-top: 0.25rem;
+    }
+
+    .device-links a {
+        font-size: 1rem;
+        text-decoration: none;
+        opacity: 0.7;
+        transition: opacity 0.15s;
+    }
+
+    .device-links a:hover {
+        opacity: 1;
+    }
+
     .device-list {
         background: white;
         border-radius: 0.5rem;
@@ -201,14 +287,58 @@
 
     <div class="vendor-header">
         <h1>{{ vendor.name }}</h1>
+        {% if vendor.companyLegalName and vendor.companyLegalName != vendor.name %}
+            <p class="legal-name">{{ vendor.companyLegalName }}</p>
+        {% endif %}
         <div class="meta">
             Vendor ID: {{ vendor.specId ?? 'N/A' }}
             &middot;
             {{ totalProducts }} certified product{{ totalProducts != 1 ? 's' : '' }}
             &middot;
             {{ totalDevices }} device{{ totalDevices != 1 ? 's' : '' }} seen
+            {% if vendor.vendorLandingPageURL %}
+                &middot;
+                <a href="{{ vendor.vendorLandingPageURL }}" target="_blank" rel="noopener">Website &rarr;</a>
+            {% endif %}
         </div>
     </div>
+
+    {# Analytics Section - only show if vendor has devices with endpoint data #}
+    {% if deviceTypeDistribution is not empty or clusterCapabilities is not empty %}
+    <div class="vendor-analytics">
+        <h2>Analytics</h2>
+        <div class="analytics-grid">
+            {# Device Types Distribution #}
+            {% if deviceTypeDistribution is not empty %}
+            <div class="analytics-card">
+                <h3>Device Types</h3>
+                {% for dt in deviceTypeDistribution|slice(0, 5) %}
+                    <div class="stat-row">{{ dt.name }}: {{ dt.count }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {# Binding Support #}
+            {% if bindingStats.total > 0 %}
+            <div class="analytics-card">
+                <h3>Binding Support</h3>
+                <div class="percentage">{{ bindingStats.percentage }}%</div>
+                <p>{{ bindingStats.withBinding }}/{{ bindingStats.total }} devices</p>
+            </div>
+            {% endif %}
+
+            {# Top Clusters #}
+            {% if clusterCapabilities is not empty %}
+            <div class="analytics-card">
+                <h3>Top Clusters</h3>
+                {% for c in clusterCapabilities|slice(0, 6) %}
+                    <div class="stat-row">{{ c.name }}: {{ c.count }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 
     {# Certified Products from DCL Registry #}
     <h2 class="section-title">Certified Products ({{ totalProducts }})</h2>
@@ -220,7 +350,16 @@
         <div class="product-list">
             {% for product in products %}
                 <div class="product-item">
-                    <span class="product-name">{{ product.productName ?? 'Unknown Product' }}</span>
+                    <div>
+                        <span class="product-name">{{ product.productName ?? 'Unknown Product' }}</span>
+                        {% if product.productUrl or product.supportUrl or product.userManualUrl %}
+                            <div class="device-links">
+                                {% if product.productUrl %}<a href="{{ product.productUrl }}" target="_blank" rel="noopener" title="Product Page">&#128722;</a>{% endif %}
+                                {% if product.supportUrl %}<a href="{{ product.supportUrl }}" target="_blank" rel="noopener" title="Support">&#128735;</a>{% endif %}
+                                {% if product.userManualUrl %}<a href="{{ product.userManualUrl }}" target="_blank" rel="noopener" title="Manual">&#128214;</a>{% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
                     <span class="product-id">{{ product.vendorId }}-{{ product.productId }}</span>
                 </div>
             {% endfor %}
@@ -253,6 +392,13 @@
                             &middot;
                             Seen {{ device.submission_count|number_format }} time{{ device.submission_count != 1 ? 's' : '' }}
                         </div>
+                        {% if device.product_url or device.support_url or device.user_manual_url %}
+                            <div class="device-links">
+                                {% if device.product_url %}<a href="{{ device.product_url }}" target="_blank" rel="noopener" title="Product Page">&#128722;</a>{% endif %}
+                                {% if device.support_url %}<a href="{{ device.support_url }}" target="_blank" rel="noopener" title="Support">&#128735;</a>{% endif %}
+                                {% if device.user_manual_url %}<a href="{{ device.user_manual_url }}" target="_blank" rel="noopener" title="Manual">&#128214;</a>{% endif %}
+                            </div>
+                        {% endif %}
                     </div>
                     <div class="device-badges">
                         {% if device.supports_binding %}

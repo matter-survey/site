@@ -46,6 +46,21 @@ class Product
     #[ORM\JoinColumn(name: 'vendor_fk', referencedColumnName: 'id', nullable: true)]
     private ?Vendor $vendor = null;
 
+    #[ORM\Column(name: 'device_type_id', nullable: true)]
+    private ?int $deviceTypeId = null;
+
+    #[ORM\Column(name: 'part_number', length: 255, nullable: true)]
+    private ?string $partNumber = null;
+
+    #[ORM\Column(name: 'product_url', length: 512, nullable: true)]
+    private ?string $productUrl = null;
+
+    #[ORM\Column(name: 'support_url', length: 512, nullable: true)]
+    private ?string $supportUrl = null;
+
+    #[ORM\Column(name: 'user_manual_url', length: 512, nullable: true)]
+    private ?string $userManualUrl = null;
+
     public function __construct()
     {
         $this->firstSeen = new \DateTime();
@@ -157,6 +172,66 @@ class Product
     public function setVendor(?Vendor $vendor): static
     {
         $this->vendor = $vendor;
+
+        return $this;
+    }
+
+    public function getDeviceTypeId(): ?int
+    {
+        return $this->deviceTypeId;
+    }
+
+    public function setDeviceTypeId(?int $deviceTypeId): static
+    {
+        $this->deviceTypeId = $deviceTypeId;
+
+        return $this;
+    }
+
+    public function getPartNumber(): ?string
+    {
+        return $this->partNumber;
+    }
+
+    public function setPartNumber(?string $partNumber): static
+    {
+        $this->partNumber = $partNumber;
+
+        return $this;
+    }
+
+    public function getProductUrl(): ?string
+    {
+        return $this->productUrl;
+    }
+
+    public function setProductUrl(?string $productUrl): static
+    {
+        $this->productUrl = $productUrl;
+
+        return $this;
+    }
+
+    public function getSupportUrl(): ?string
+    {
+        return $this->supportUrl;
+    }
+
+    public function setSupportUrl(?string $supportUrl): static
+    {
+        $this->supportUrl = $supportUrl;
+
+        return $this;
+    }
+
+    public function getUserManualUrl(): ?string
+    {
+        return $this->userManualUrl;
+    }
+
+    public function setUserManualUrl(?string $userManualUrl): static
+    {
+        $this->userManualUrl = $userManualUrl;
 
         return $this;
     }

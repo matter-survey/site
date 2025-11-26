@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Repository\DeviceRepository;
 use App\Repository\ProductRepository;
 use App\Repository\VendorRepository;
+use App\Service\MatterRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,6 +19,7 @@ class VendorController extends AbstractController
         private VendorRepository $vendorRepo,
         private DeviceRepository $deviceRepo,
         private ProductRepository $productRepo,
+        private MatterRegistry $matterRegistry,
     ) {}
 
     #[Route('/vendors', name: 'vendor_index', methods: ['GET'])]
@@ -55,6 +57,26 @@ class VendorController extends AbstractController
         $products = $this->productRepo->findByVendorSpecId($vendor->getSpecId(), 100);
         $totalProducts = $this->productRepo->countByVendorSpecId($vendor->getSpecId());
 
+        // Fetch analytics data
+        $deviceTypeDistribution = $this->deviceRepo->getDeviceTypeDistributionByVendor($vendor->getId());
+        $clusterCapabilities = $this->deviceRepo->getClusterCapabilitiesByVendor($vendor->getId());
+        $bindingStats = $this->deviceRepo->getBindingSupportByVendor($vendor->getId());
+
+        // Enrich device types with names from MatterRegistry
+        $enrichedDeviceTypes = array_map(fn($dt) => [
+            'id' => $dt['device_type_id'],
+            'name' => $this->matterRegistry->getDeviceTypeMetadata((int) $dt['device_type_id'])['name'] ?? 'Unknown',
+            'count' => $dt['product_count'],
+        ], $deviceTypeDistribution);
+
+        // Enrich clusters with names from MatterRegistry
+        $enrichedClusters = array_map(fn($c) => [
+            'id' => $c['cluster_id'],
+            'name' => $this->matterRegistry->getClusterName((int) $c['cluster_id']),
+            'type' => $c['type'],
+            'count' => $c['count'],
+        ], $clusterCapabilities);
+
         return $this->render('vendor/show.html.twig', [
             'vendor' => $vendor,
             'devices' => $devices,
@@ -63,6 +85,9 @@ class VendorController extends AbstractController
             'totalPages' => $totalPages,
             'totalDevices' => $totalDevices,
             'totalProducts' => $totalProducts,
+            'deviceTypeDistribution' => $enrichedDeviceTypes,
+            'clusterCapabilities' => $enrichedClusters,
+            'bindingStats' => $bindingStats,
         ]);
     }
 }

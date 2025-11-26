@@ -748,4 +748,70 @@ class DeviceRepository
             'cluster_id' => \Doctrine\DBAL\ParameterType::INTEGER,
         ])->fetchAllAssociative();
     }
+
+    /**
+     * Get device type distribution for a specific vendor.
+     * Returns device type IDs with product counts for analytics display.
+     */
+    public function getDeviceTypeDistributionByVendor(int $vendorFk): array
+    {
+        return $this->db->executeQuery('
+            SELECT
+                json_extract(json_each.value, "$.id") as device_type_id,
+                COUNT(DISTINCT pe.device_id) as product_count
+            FROM product_endpoints pe
+            JOIN products p ON pe.device_id = p.id, json_each(pe.device_types)
+            WHERE p.vendor_fk = :vendor_fk
+              AND json_extract(json_each.value, "$.id") IS NOT NULL
+            GROUP BY device_type_id
+            ORDER BY product_count DESC
+        ', ['vendor_fk' => $vendorFk])->fetchAllAssociative();
+    }
+
+    /**
+     * Get cluster capabilities for a specific vendor.
+     * Returns top clusters (both server and client) with product counts.
+     */
+    public function getClusterCapabilitiesByVendor(int $vendorFk): array
+    {
+        return $this->db->executeQuery('
+            SELECT json_each.value as cluster_id, "server" as type, COUNT(DISTINCT pe.device_id) as count
+            FROM product_endpoints pe
+            JOIN products p ON pe.device_id = p.id, json_each(pe.server_clusters)
+            WHERE p.vendor_fk = :vendor_fk
+            GROUP BY cluster_id
+            UNION ALL
+            SELECT json_each.value as cluster_id, "client" as type, COUNT(DISTINCT pe.device_id) as count
+            FROM product_endpoints pe
+            JOIN products p ON pe.device_id = p.id, json_each(pe.client_clusters)
+            WHERE p.vendor_fk = :vendor_fk
+            GROUP BY cluster_id
+            ORDER BY count DESC
+            LIMIT 20
+        ', ['vendor_fk' => $vendorFk])->fetchAllAssociative();
+    }
+
+    /**
+     * Get binding support statistics for a specific vendor.
+     * Returns total products, products with binding support, and percentage.
+     */
+    public function getBindingSupportByVendor(int $vendorFk): array
+    {
+        $result = $this->db->executeQuery('
+            SELECT
+                COUNT(DISTINCT p.id) as total,
+                COUNT(DISTINCT CASE WHEN ds.supports_binding = 1 THEN p.id END) as with_binding
+            FROM products p
+            LEFT JOIN device_summary ds ON p.id = ds.id
+            WHERE p.vendor_fk = :vendor_fk
+        ', ['vendor_fk' => $vendorFk])->fetchAssociative();
+
+        return [
+            'total' => (int) $result['total'],
+            'withBinding' => (int) $result['with_binding'],
+            'percentage' => $result['total'] > 0
+                ? round(($result['with_binding'] / $result['total']) * 100, 1)
+                : 0,
+        ];
+    }
 }

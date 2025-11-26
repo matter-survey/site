@@ -79,6 +79,20 @@ class ProductFixtures extends Fixture implements FixtureGroupInterface, Dependen
                 $product->setVendorName($vendorNameMap[$vendorId]);
             }
 
+            // Set additional DCL fields
+            if (isset($data['deviceTypeId'])) {
+                $product->setDeviceTypeId((int) $data['deviceTypeId']);
+            }
+
+            // Normalize '-' placeholder to null for part number
+            $partNumber = $data['partNumber'] ?? null;
+            $product->setPartNumber($partNumber === '-' ? null : $partNumber);
+
+            // Set URL fields (trim whitespace, convert empty strings to null)
+            $product->setProductUrl(trim($data['productUrl'] ?? '') ?: null);
+            $product->setSupportUrl(trim($data['supportUrl'] ?? '') ?: null);
+            $product->setUserManualUrl(trim($data['userManualUrl'] ?? '') ?: null);
+
             $manager->persist($product);
             $count++;
 
