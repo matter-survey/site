@@ -44,6 +44,13 @@
   category: utility
   isGlobal: true
 
+- id: 37
+  name: Actions
+  description: Provides information about logical groupings of endpoints and enables triggering actions on them. Used by bridges and gateways to organize and control bridged devices.
+  specVersion: "1.0"
+  category: utility
+  isGlobal: false
+
 - id: 40
   name: Basic Information
   description: Provides essential device information including vendor, product name, serial number, and software version.
