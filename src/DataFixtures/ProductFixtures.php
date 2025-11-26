@@ -67,8 +67,11 @@ class ProductFixtures extends Fixture implements FixtureGroupInterface, Dependen
                 $product->setProductId($productId);
             }
 
-            // Use productLabel if available, fallback to productName
-            $productName = $data['productLabel'] ?? $data['productName'] ?? null;
+            // Use productLabel if available and meaningful, fallback to productName
+            $productLabel = $data['productLabel'] ?? null;
+            $productName = (!empty($productLabel) && $productLabel !== '-')
+                ? $productLabel
+                : ($data['productName'] ?? null);
             $product->setProductName($productName);
 
             // Set vendor name from our map (FK relationship is set separately to avoid detachment issues)

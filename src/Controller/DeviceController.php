@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Repository\DeviceRepository;
+use App\Repository\ProductRepository;
 use App\Service\MatterRegistry;
 use App\Service\TelemetryService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -16,6 +17,7 @@ class DeviceController extends AbstractController
 {
     public function __construct(
         private DeviceRepository $deviceRepo,
+        private ProductRepository $productRepo,
         private TelemetryService $telemetryService,
         private MatterRegistry $matterRegistry,
     ) {}
@@ -56,6 +58,17 @@ class DeviceController extends AbstractController
 
         if (!$device) {
             throw $this->createNotFoundException('Device not found');
+        }
+
+        // If device has no product name, try to get it from DCL Product registry
+        if (empty($device['product_name']) || $device['product_name'] === '-') {
+            $product = $this->productRepo->findByVendorAndProductId(
+                (int) $device['vendor_id'],
+                (int) $device['product_id']
+            );
+            if ($product && $product->getProductName()) {
+                $device['product_name'] = $product->getProductName();
+            }
         }
 
         $endpoints = $this->deviceRepo->getDeviceEndpoints($id);
