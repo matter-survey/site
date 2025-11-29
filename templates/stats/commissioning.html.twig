@@ -5,6 +5,18 @@
 {% block og_title %}Matter Device Commissioning Guides{% endblock %}
 {% block og_description %}Setup instructions and commissioning guides for {{ stats.withInstructions }} Matter devices. Find factory reset steps, ICD wake-up instructions, and setup complexity ratings.{% endblock %}
 
+{# Macro for decoding hint bitmask values #}
+{% macro hintBadges(hint) %}
+    {% if hint is not null and hint > 0 %}
+        {% if hint b-and 1 %}<span class="hint-badge hint-power" title="Power cycle required during commissioning">Power Cycle</span>{% endif %}
+        {% if hint b-and 2 %}<span class="hint-badge hint-manual" title="Button press or physical interaction required">Manual Control</span>{% endif %}
+        {% if hint b-and 4 %}<span class="hint-badge hint-reset" title="Manual device reset may be required">Manual Reset</span>{% endif %}
+        {% if hint b-and 8 %}<span class="hint-badge hint-custom" title="Manufacturer's app or custom flow required">Custom App</span>{% endif %}
+    {% else %}
+        <span class="hint-badge hint-standard" title="Standard commissioning - no special steps">Standard</span>
+    {% endif %}
+{% endmacro %}
+
 {% block extra_styles %}
     .dashboard-nav {
         display: flex;
@@ -266,6 +278,75 @@
         background: var(--primary);
         color: white;
     }
+
+    /* Hint badges for bitmask values */
+    .hint-badge {
+        display: inline-block;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.6875rem;
+        font-weight: 500;
+        margin-right: 0.25rem;
+        cursor: help;
+    }
+
+    .hint-standard { background: #dcfce7; color: #166534; }
+    .hint-power { background: #fef3c7; color: #92400e; }
+    .hint-manual { background: #dbeafe; color: #1e40af; }
+    .hint-reset { background: #fee2e2; color: #991b1b; }
+    .hint-custom { background: #f3e8ff; color: #7c3aed; }
+
+    .hint-badges-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Improved horizontal scroll for complexity tabs */
+    .complexity-tabs {
+        display: flex;
+        gap: 0.5rem;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+        overflow-x: auto;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .complexity-tabs::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .complexity-tabs::-webkit-scrollbar-track {
+        background: var(--gray-100);
+        border-radius: 3px;
+    }
+
+    .complexity-tabs::-webkit-scrollbar-thumb {
+        background: var(--gray-300);
+        border-radius: 3px;
+    }
+
+    .complexity-tabs::-webkit-scrollbar-thumb:hover {
+        background: var(--gray-400);
+    }
+
+    .scroll-hint {
+        position: relative;
+    }
+
+    .scroll-hint::after {
+        content: '→';
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        background: linear-gradient(to right, transparent, white 50%);
+        padding: 0.5rem 1rem 0.5rem 2rem;
+        color: var(--gray-400);
+        pointer-events: none;
+    }
 {% endblock %}
 
 {% block body %}
@@ -308,7 +389,7 @@
         <div class="complexity-tabs">
             {% for hint, products in productsByComplexity %}
                 <button class="complexity-tab {{ loop.first ? 'active' : '' }}" data-complexity="{{ hint }}">
-                    {{ complexityLabels[hint] ?? ('Level ' ~ hint) }}
+                    {{ _self.hintBadges(hint) }}
                     <span class="count">{{ products|length }}</span>
                 </button>
             {% endfor %}
@@ -318,14 +399,12 @@
                 <div class="product-grid">
                     {% for product in products|slice(0, 50) %}
                         <div class="product-card complexity-{{ product.commissioningInitialStepsHint ?? 0 }}">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-                                <div>
-                                    <h3><a href="{{ path('device_show', {slug: product.slug}) }}">{{ product.productName ?? 'Unknown Product' }}</a></h3>
-                                    <div class="vendor">{{ product.vendorName ?? 'Unknown Vendor' }}</div>
-                                </div>
-                                <span class="badge-complexity badge-complexity-{{ product.commissioningInitialStepsHint ?? 0 }}">
-                                    {{ complexityLabels[product.commissioningInitialStepsHint ?? 0] ?? 'Standard' }}
-                                </span>
+                            <div style="margin-bottom: 0.5rem;">
+                                <h3><a href="{{ path('device_show', {slug: product.slug}) }}">{{ product.productName ?? 'Unknown Product' }}</a></h3>
+                                <div class="vendor">{{ product.vendorName ?? 'Unknown Vendor' }}</div>
+                            </div>
+                            <div class="hint-badges-row">
+                                {{ _self.hintBadges(product.commissioningInitialStepsHint ?? 0) }}
                             </div>
 
                             {% if product.commissioningInitialStepsInstruction %}

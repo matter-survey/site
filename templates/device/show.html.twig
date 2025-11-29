@@ -929,6 +929,36 @@
         border-radius: 0.25rem;
         font-size: 0.6875rem;
     }
+
+    /* Commissioning hint badges */
+    .hint-badge {
+        display: inline-block;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.6875rem;
+        font-weight: 500;
+        margin-right: 0.25rem;
+    }
+
+    .hint-standard { background: #dcfce7; color: #166534; }
+    .hint-power { background: #fef3c7; color: #92400e; }
+    .hint-manual { background: #dbeafe; color: #1e40af; }
+    .hint-reset { background: #fee2e2; color: #991b1b; }
+    .hint-custom { background: #f3e8ff; color: #7c3aed; }
+
+    .setup-complexity {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .setup-complexity-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--gray-500);
+    }
 {% endblock %}
 
 {% block body %}
@@ -1000,20 +1030,80 @@
         {% endif %}
     </div>
 
+    {# Macro for decoding hint bitmask values #}
+    {% macro hintBadges(hint) %}
+        {% if hint is not null and hint > 0 %}
+            {% if hint b-and 1 %}<span class="hint-badge hint-power">Power Cycle</span>{% endif %}
+            {% if hint b-and 2 %}<span class="hint-badge hint-manual">Manual Control</span>{% endif %}
+            {% if hint b-and 4 %}<span class="hint-badge hint-reset">Manual Reset</span>{% endif %}
+            {% if hint b-and 8 %}<span class="hint-badge hint-custom">Custom App</span>{% endif %}
+        {% else %}
+            <span class="hint-badge hint-standard">Standard</span>
+        {% endif %}
+    {% endmacro %}
+
     {# Commissioning & Setup Info from DCL #}
-    {% if product and (product.commissioningInitialStepsInstruction or product.factoryResetStepsInstruction) %}
+    {% set hasSetupInfo = product and (
+        product.commissioningInitialStepsInstruction or
+        product.commissioningSecondaryStepsInstruction or
+        product.factoryResetStepsInstruction or
+        product.icdUserActiveModeTriggerInstruction or
+        product.commissioningCustomFlowUrl or
+        product.commissioningFallbackUrl or
+        product.maintenanceUrl or
+        product.commissioningInitialStepsHint or
+        product.factoryResetStepsHint
+    ) %}
+    {% if hasSetupInfo %}
         <div class="section" style="background: var(--blue-50); border-color: var(--blue-200);">
-            <h3 style="color: var(--blue-700);">📱 Setup & Reset Info</h3>
+            <h3 style="color: var(--blue-700);">Setup & Reset Info</h3>
+            {% if product.commissioningInitialStepsHint is not null or product.factoryResetStepsHint is not null %}
+                <div class="setup-complexity">
+                    {% if product.commissioningInitialStepsHint is not null %}
+                        <span class="setup-complexity-label">Setup:</span>
+                        {{ _self.hintBadges(product.commissioningInitialStepsHint) }}
+                    {% endif %}
+                    {% if product.factoryResetStepsHint is not null %}
+                        <span class="setup-complexity-label" style="margin-left: 1rem;">Reset:</span>
+                        {{ _self.hintBadges(product.factoryResetStepsHint) }}
+                    {% endif %}
+                </div>
+            {% endif %}
             {% if product.commissioningInitialStepsInstruction %}
                 <div style="margin-bottom: 1rem;">
-                    <strong style="font-size: 0.875rem;">Commissioning:</strong>
+                    <strong style="font-size: 0.875rem;">Initial Setup:</strong>
                     <p style="font-size: 0.875rem; color: var(--gray-600); margin: 0.25rem 0 0;">{{ product.commissioningInitialStepsInstruction }}</p>
                 </div>
             {% endif %}
+            {% if product.commissioningSecondaryStepsInstruction %}
+                <div style="margin-bottom: 1rem;">
+                    <strong style="font-size: 0.875rem;">Additional Steps:</strong>
+                    <p style="font-size: 0.875rem; color: var(--gray-600); margin: 0.25rem 0 0;">{{ product.commissioningSecondaryStepsInstruction }}</p>
+                </div>
+            {% endif %}
+            {% if product.icdUserActiveModeTriggerInstruction %}
+                <div style="margin-bottom: 1rem;">
+                    <strong style="font-size: 0.875rem;">Wake Device (ICD):</strong>
+                    <p style="font-size: 0.875rem; color: var(--gray-600); margin: 0.25rem 0 0;">{{ product.icdUserActiveModeTriggerInstruction }}</p>
+                </div>
+            {% endif %}
             {% if product.factoryResetStepsInstruction %}
-                <div>
+                <div style="margin-bottom: 1rem;">
                     <strong style="font-size: 0.875rem;">Factory Reset:</strong>
                     <p style="font-size: 0.875rem; color: var(--gray-600); margin: 0.25rem 0 0;">{{ product.factoryResetStepsInstruction }}</p>
+                </div>
+            {% endif %}
+            {% if product.commissioningCustomFlowUrl or product.commissioningFallbackUrl or product.maintenanceUrl %}
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    {% if product.commissioningCustomFlowUrl %}
+                        <a href="{{ product.commissioningCustomFlowUrl }}" target="_blank" rel="noopener" class="product-link" style="font-size: 0.875rem;">Setup Guide</a>
+                    {% endif %}
+                    {% if product.commissioningFallbackUrl %}
+                        <a href="{{ product.commissioningFallbackUrl }}" target="_blank" rel="noopener" class="product-link" style="font-size: 0.875rem;">Troubleshooting</a>
+                    {% endif %}
+                    {% if product.maintenanceUrl %}
+                        <a href="{{ product.maintenanceUrl }}" target="_blank" rel="noopener" class="product-link" style="font-size: 0.875rem;">Maintenance</a>
+                    {% endif %}
                 </div>
             {% endif %}
         </div>
