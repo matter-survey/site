@@ -127,20 +127,8 @@ parameters:
 			path: src/Repository/DeviceRepository.php
 
 		-
-			message: '#^Offset ''id'' on array\{id\: int\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: src/Service/MatterRegistry.php
-
-		-
 			message: '#^Parameter \#1 \$array \(list\<mixed\>\) of array_values is already a list, call has no effect\.$#'
 			identifier: arrayValues.list
-			count: 1
-			path: src/Service/MatterRegistry.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between int and null will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
 			count: 1
 			path: src/Service/MatterRegistry.php
 

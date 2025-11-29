@@ -752,7 +752,7 @@ class MatterRegistry
             $serverClusters = $endpoint['server_clusters'] ?? [];
             /** @var int[] $clientClusters */
             $clientClusters = $endpoint['client_clusters'] ?? [];
-            /** @var array<int|array{id: int}> $deviceTypes */
+            /** @var array<int|array{id?: int}> $deviceTypes */
             $deviceTypes = $endpoint['device_types'] ?? [];
 
             foreach ($deviceTypes as $dt) {
