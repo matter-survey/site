@@ -59,6 +59,7 @@ class ProductRepository extends ServiceEntityRepository
 
             if (null !== $productName && $productName !== $product->getProductName()) {
                 $product->setProductName($productName);
+                $product->setSlug(Product::generateSlug($productName, $vendorId, $productId));
                 $updated = true;
             }
 
@@ -81,6 +82,7 @@ class ProductRepository extends ServiceEntityRepository
         $product->setVendorName($vendorName);
         $product->setProductName($productName);
         $product->setVendor($vendor);
+        $product->setSlug(Product::generateSlug($productName, $vendorId, $productId));
 
         $this->save($product);
 
