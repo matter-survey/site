@@ -345,6 +345,13 @@
             <div style="max-width: 280px; margin: 0 auto;">
                 {{ render_chart(categoryChart) }}
             </div>
+            <ul class="category-legend" style="list-style: none; padding: 0; margin-top: 1rem; font-size: 0.8rem; color: var(--gray-600);">
+                {% for category, count in categoryDistribution %}
+                    {% if category != 'System' %}
+                        <li style="display: inline-block; margin-right: 1rem;">{{ category }} ({{ count }})</li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
             {% if categoryDistribution.System is defined and categoryDistribution.System > 0 %}
                 <p class="system-note">System types ({{ categoryDistribution.System }}) excluded from chart</p>
             {% endif %}
