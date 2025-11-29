@@ -23,16 +23,59 @@ class VendorController extends AbstractController
     ) {}
 
     #[Route('/vendors', name: 'vendor_index', methods: ['GET'])]
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $sort = $request->query->getString('sort', 'devices');
+
         $vendors = $this->vendorRepo->findAllOrderedByDeviceCount();
 
         // Build a map of vendorId (specId) => product count for efficient lookup
         $productCounts = $this->productRepo->getProductCountsByVendor();
 
+        // Sort vendors based on request
+        if ($sort === 'products') {
+            usort($vendors, function ($a, $b) use ($productCounts) {
+                $aCount = $productCounts[$a->getSpecId()] ?? 0;
+                $bCount = $productCounts[$b->getSpecId()] ?? 0;
+                return $bCount <=> $aCount ?: strcmp($a->getName(), $b->getName());
+            });
+        } elseif ($sort === 'name') {
+            usort($vendors, fn ($a, $b) => strcmp($a->getName(), $b->getName()));
+        }
+        // 'devices' is already the default sort from findAllOrderedByDeviceCount()
+
+        // Get top vendors (for featured section)
+        $topVendors = $this->vendorRepo->findPopular(12);
+
+        // Get device types per vendor for badges
+        $deviceTypesByVendor = $this->deviceRepo->getTopDeviceTypesByVendor(4);
+
+        // Enrich device types with metadata (icons, names)
+        $deviceTypeMetadata = [];
+        foreach ($deviceTypesByVendor as $vendorFk => $deviceTypeIds) {
+            foreach ($deviceTypeIds as $dtId) {
+                if (!isset($deviceTypeMetadata[$dtId])) {
+                    $meta = $this->matterRegistry->getDeviceTypeMetadata($dtId);
+                    $deviceTypeMetadata[$dtId] = [
+                        'name' => $meta['name'] ?? "Device Type $dtId",
+                        'icon' => $meta['icon'] ?? 'device',
+                        'displayCategory' => $meta['displayCategory'] ?? 'Other',
+                    ];
+                }
+            }
+        }
+
+        // Get market insights
+        $insights = $this->deviceRepo->getVendorMarketInsights();
+
         return $this->render('vendor/index.html.twig', [
             'vendors' => $vendors,
             'productCounts' => $productCounts,
+            'topVendors' => $topVendors,
+            'deviceTypesByVendor' => $deviceTypesByVendor,
+            'deviceTypeMetadata' => $deviceTypeMetadata,
+            'insights' => $insights,
+            'sort' => $sort,
         ]);
     }
 

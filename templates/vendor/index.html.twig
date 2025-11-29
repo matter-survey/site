@@ -2,8 +2,235 @@
 
 {% block title %}Vendors - Matter Survey{% endblock %}
 
+{# Macro for device type icons using Unicode symbols #}
+{% macro deviceIcon(icon) %}
+    {%- set icons = {
+        'lightbulb': '💡',
+        'lock': '🔒',
+        'thermometer': '🌡️',
+        'fan': '🌀',
+        'plug': '🔌',
+        'tv': '📺',
+        'speaker': '🔊',
+        'door-open': '🚪',
+        'droplet': '💧',
+        'snowflake': '❄️',
+        'fire': '🔥',
+        'sun': '☀️',
+        'wind': '💨',
+        'bolt': '⚡',
+        'battery': '🔋',
+        'server': '🖥️',
+        'hub': '🎛️',
+        'bridge': '🌉',
+        'router': '📡',
+        'toggle-on': '🔘',
+        'sliders': '🎚️',
+        'palette': '🎨',
+        'blinds': '🪟',
+        'gauge': '📊',
+        'bell': '🔔',
+        'motion-sensor': '👁️',
+        'robot': '🤖',
+        'washing-machine': '🧺',
+        'box': '📦',
+        'faucet': '🚰',
+        'device': '📱'
+    } -%}
+    {{- icons[icon] ?? '📱' -}}
+{% endmacro %}
+
 {% block extra_styles %}
-    .vendor-list {
+    .page-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .page-header h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+        color: var(--gray-500);
+        font-size: 1rem;
+    }
+
+    /* Market Insights */
+    .insights-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .insight-card {
+        background: white;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+        text-align: center;
+    }
+
+    .insight-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .insight-label {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        text-transform: uppercase;
+    }
+
+    /* Search and Controls */
+    .controls-bar {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .search-box {
+        flex: 1;
+        min-width: 200px;
+        position: relative;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 0.625rem 1rem 0.625rem 2.5rem;
+        border: 1px solid var(--gray-300);
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        background: white;
+    }
+
+    .search-box input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .search-box::before {
+        content: '🔍';
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.875rem;
+        opacity: 0.5;
+    }
+
+    .sort-buttons {
+        display: flex;
+        gap: 0.25rem;
+        background: var(--gray-100);
+        padding: 0.25rem;
+        border-radius: 0.375rem;
+    }
+
+    .sort-btn {
+        padding: 0.5rem 0.75rem;
+        border: none;
+        background: transparent;
+        border-radius: 0.25rem;
+        font-size: 0.8125rem;
+        color: var(--gray-600);
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.15s;
+    }
+
+    .sort-btn:hover {
+        color: var(--gray-900);
+    }
+
+    .sort-btn.active {
+        background: white;
+        color: var(--gray-900);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Featured Vendors */
+    .featured-section {
+        margin-bottom: 2rem;
+    }
+
+    .section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: var(--gray-700);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .featured-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1rem;
+    }
+
+    .featured-card {
+        background: white;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+        text-decoration: none;
+        color: inherit;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .featured-card:hover {
+        border-color: var(--primary);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .featured-card-name {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+        color: var(--gray-900);
+    }
+
+    .featured-card-stats {
+        display: flex;
+        gap: 0.75rem;
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        margin-bottom: 0.5rem;
+    }
+
+    .featured-card-stat {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .featured-card-stat strong {
+        color: var(--gray-700);
+    }
+
+    .featured-card-types {
+        display: flex;
+        gap: 0.25rem;
+        flex-wrap: wrap;
+    }
+
+    .type-badge {
+        font-size: 0.875rem;
+        padding: 0.125rem 0.25rem;
+        background: var(--gray-100);
+        border-radius: 0.25rem;
+        cursor: help;
+    }
+
+    /* All Vendors List */
+    .vendors-section {
         background: white;
         border-radius: 0.5rem;
         border: 1px solid var(--gray-200);
@@ -11,11 +238,12 @@
     }
 
     .vendor-item {
-        padding: 1rem;
-        border-bottom: 1px solid var(--gray-200);
+        padding: 0.875rem 1rem;
+        border-bottom: 1px solid var(--gray-100);
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 1rem;
     }
 
     .vendor-item:last-child {
@@ -26,102 +254,251 @@
         background: var(--gray-50);
     }
 
-    .vendor-info h3 {
-        font-size: 1rem;
-        font-weight: 600;
-        margin-bottom: 0.25rem;
+    .vendor-item.hidden {
+        display: none;
     }
 
-    .vendor-info h3 a {
+    .vendor-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .vendor-name {
+        font-weight: 600;
+        font-size: 0.9375rem;
+        margin-bottom: 0.125rem;
+    }
+
+    .vendor-name a {
         color: var(--gray-900);
         text-decoration: none;
     }
 
-    .vendor-info h3 a:hover {
+    .vendor-name a:hover {
         color: var(--primary);
     }
 
     .vendor-meta {
-        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.75rem;
         color: var(--gray-500);
     }
 
-    .vendor-counts {
+    .vendor-types {
+        display: flex;
+        gap: 0.25rem;
+    }
+
+    .vendor-stats {
         display: flex;
         gap: 0.5rem;
-        flex-wrap: wrap;
+        flex-shrink: 0;
     }
 
-    .vendor-count {
-        font-size: 0.75rem;
-        color: var(--gray-600);
-        background: var(--gray-100);
+    .vendor-stat {
         padding: 0.25rem 0.5rem;
         border-radius: 0.25rem;
+        font-size: 0.75rem;
+        white-space: nowrap;
     }
 
-    .vendor-count.products {
-        background: var(--primary-light, #e0f2fe);
-        color: var(--primary-dark, #0369a1);
+    .vendor-stat-products {
+        background: var(--blue-100);
+        color: var(--blue-700);
     }
 
-    .page-header {
-        margin-bottom: 1.5rem;
+    .vendor-stat-seen {
+        background: var(--green-100);
+        color: var(--green-700);
     }
 
-    .page-header h1 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
-
-    .page-header p {
-        color: var(--gray-500);
-    }
-
-    .empty-state {
-        text-align: center;
+    .empty-search {
         padding: 3rem;
+        text-align: center;
         color: var(--gray-500);
+    }
+
+    .vendor-count-display {
+        padding: 0.75rem 1rem;
+        background: var(--gray-50);
+        border-bottom: 1px solid var(--gray-200);
+        font-size: 0.8125rem;
+        color: var(--gray-600);
+    }
+
+    @media (max-width: 640px) {
+        .controls-bar {
+            flex-direction: column;
+        }
+
+        .search-box {
+            width: 100%;
+        }
+
+        .vendor-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .vendor-stats {
+            margin-top: 0.5rem;
+        }
     }
 {% endblock %}
 
 {% block body %}
     <div class="page-header">
-        <h1>Vendors</h1>
-        <p>{{ vendors|length }} vendor{{ vendors|length != 1 ? 's' : '' }} with Matter devices</p>
+        <h1>Matter Vendors</h1>
+        <p class="page-subtitle">
+            Explore {{ insights.totalVendors }} vendors building Matter-compatible smart home devices
+        </p>
     </div>
 
-    {% if vendors is empty %}
-        <div class="empty-state">
-            <p>No vendors in the database yet.</p>
+    {# Market Insights #}
+    <div class="insights-grid">
+        <div class="insight-card">
+            <div class="insight-value">{{ insights.totalVendors }}</div>
+            <div class="insight-label">Total Vendors</div>
         </div>
-    {% else %}
-        <div class="vendor-list">
-            {% for vendor in vendors %}
-                <div class="vendor-item">
-                    <div class="vendor-info">
-                        <h3>
-                            <a href="{{ path('vendor_show', {slug: vendor.slug}) }}">
-                                {{ vendor.name }}
-                            </a>
-                        </h3>
-                        <div class="vendor-meta">
-                            Vendor ID: {{ vendor.specId ?? 'N/A' }}
+        <div class="insight-card">
+            <div class="insight-value">{{ insights.vendorsWithDevices }}</div>
+            <div class="insight-label">With Devices Seen</div>
+        </div>
+        <div class="insight-card">
+            <div class="insight-value">{{ insights.totalProducts|number_format }}</div>
+            <div class="insight-label">Total Products</div>
+        </div>
+        <div class="insight-card">
+            <div class="insight-value">{{ insights.top10ProductShare }}%</div>
+            <div class="insight-label">Top 10 Share</div>
+        </div>
+    </div>
+
+    {# Search and Sort Controls #}
+    <div class="controls-bar">
+        <div class="search-box">
+            <input type="text" id="vendor-search" placeholder="Search vendors..." autocomplete="off">
+        </div>
+        <div class="sort-buttons">
+            <a href="{{ path('vendor_index', {sort: 'devices'}) }}" class="sort-btn {{ sort == 'devices' ? 'active' : '' }}">By Popularity</a>
+            <a href="{{ path('vendor_index', {sort: 'products'}) }}" class="sort-btn {{ sort == 'products' ? 'active' : '' }}">By Products</a>
+            <a href="{{ path('vendor_index', {sort: 'name'}) }}" class="sort-btn {{ sort == 'name' ? 'active' : '' }}">A-Z</a>
+        </div>
+    </div>
+
+    {# Featured Vendors #}
+    {% if topVendors is not empty %}
+        <div class="featured-section">
+            <h2 class="section-title">⭐ Top Vendors by Devices Seen</h2>
+            <div class="featured-grid">
+                {% for vendor in topVendors %}
+                    <a href="{{ path('vendor_show', {slug: vendor.slug}) }}" class="featured-card">
+                        <div class="featured-card-name">{{ vendor.name }}</div>
+                        <div class="featured-card-stats">
+                            <span class="featured-card-stat">
+                                <strong>{{ productCounts[vendor.specId] ?? 0 }}</strong> registered
+                            </span>
+                            <span class="featured-card-stat">
+                                <strong>{{ vendor.deviceCount }}</strong> in homes
+                            </span>
                         </div>
+                        {% set vendorDeviceTypes = deviceTypesByVendor[vendor.id] ?? [] %}
+                        {% if vendorDeviceTypes is not empty %}
+                            <div class="featured-card-types">
+                                {% for dtId in vendorDeviceTypes %}
+                                    {% set dtMeta = deviceTypeMetadata[dtId] ?? {name: 'Unknown', icon: 'device'} %}
+                                    <span class="type-badge" title="{{ dtMeta.name }}">{{ _self.deviceIcon(dtMeta.icon) }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    {# All Vendors List #}
+    <div class="vendors-section">
+        <div class="vendor-count-display">
+            Showing <span id="visible-count">{{ vendors|length }}</span> of {{ vendors|length }} vendors
+        </div>
+
+        {% for vendor in vendors %}
+            <div class="vendor-item" data-name="{{ vendor.name|lower }}">
+                <div class="vendor-info">
+                    <div class="vendor-name">
+                        <a href="{{ path('vendor_show', {slug: vendor.slug}) }}">{{ vendor.name }}</a>
                     </div>
-                    <div class="vendor-counts">
-                        <span class="vendor-count products">
-                            {{ productCounts[vendor.specId] ?? 0 }} product{{ (productCounts[vendor.specId] ?? 0) != 1 ? 's' : '' }}
-                        </span>
-                        {% if vendor.deviceCount > 0 %}
-                        <span class="vendor-count">
-                            {{ vendor.deviceCount }} seen
-                        </span>
+                    <div class="vendor-meta">
+                        <span>ID: {{ vendor.specId ?? 'N/A' }}</span>
+                        {% set vendorDeviceTypes = deviceTypesByVendor[vendor.id] ?? [] %}
+                        {% if vendorDeviceTypes is not empty %}
+                            <span class="vendor-types">
+                                {% for dtId in vendorDeviceTypes %}
+                                    {% set dtMeta = deviceTypeMetadata[dtId] ?? {name: 'Unknown', icon: 'device'} %}
+                                    <span class="type-badge" title="{{ dtMeta.name }}">{{ _self.deviceIcon(dtMeta.icon) }}</span>
+                                {% endfor %}
+                            </span>
                         {% endif %}
                     </div>
                 </div>
-            {% endfor %}
+                <div class="vendor-stats">
+                    {% set prodCount = productCounts[vendor.specId] ?? 0 %}
+                    {% if prodCount > 0 %}
+                        <span class="vendor-stat vendor-stat-products">
+                            {{ prodCount }} registered
+                        </span>
+                    {% endif %}
+                    {% if vendor.deviceCount > 0 %}
+                        <span class="vendor-stat vendor-stat-seen">
+                            {{ vendor.deviceCount }} in homes
+                        </span>
+                    {% endif %}
+                    {% if prodCount == 0 and vendor.deviceCount == 0 %}
+                        <span class="vendor-stat" style="background: var(--gray-100); color: var(--gray-500);">
+                            No devices yet
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        {% else %}
+            <div class="empty-search">
+                <p>No vendors in the database yet.</p>
+            </div>
+        {% endfor %}
+
+        <div class="empty-search" id="no-results" style="display: none;">
+            <p>No vendors match your search.</p>
         </div>
-    {% endif %}
+    </div>
+
+    <script>
+        (function() {
+            const searchInput = document.getElementById('vendor-search');
+            const vendorItems = document.querySelectorAll('.vendor-item');
+            const visibleCount = document.getElementById('visible-count');
+            const noResults = document.getElementById('no-results');
+            const totalCount = vendorItems.length;
+
+            searchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase().trim();
+                let visible = 0;
+
+                vendorItems.forEach(function(item) {
+                    const name = item.dataset.name;
+                    if (query === '' || name.includes(query)) {
+                        item.classList.remove('hidden');
+                        visible++;
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+
+                visibleCount.textContent = visible;
+                noResults.style.display = visible === 0 && query !== '' ? 'block' : 'none';
+            });
+        })();
+    </script>
 {% endblock %}

@@ -27,13 +27,13 @@ class VendorControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Check that fixture vendors are displayed (names from DCL)
-        $this->assertSelectorTextContains('.vendor-list', 'Apple Home');
-        $this->assertSelectorTextContains('.vendor-list', 'Eve');
-        $this->assertSelectorTextContains('.vendor-list', 'Signify');
-        $this->assertSelectorTextContains('.vendor-list', 'Nanoleaf');
+        $this->assertSelectorTextContains('.vendors-section', 'Apple Home');
+        $this->assertSelectorTextContains('.vendors-section', 'Eve');
+        $this->assertSelectorTextContains('.vendors-section', 'Signify');
+        $this->assertSelectorTextContains('.vendors-section', 'Nanoleaf');
 
         // Verify vendor count is displayed (DCL contains many vendors)
-        $this->assertSelectorTextContains('.page-header p', 'vendors');
+        $this->assertSelectorTextContains('.page-subtitle', 'vendors');
     }
 
     public function testVendorShowPageWithFixtureData(): void
@@ -100,7 +100,7 @@ class VendorControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Click on a vendor link
-        $link = $crawler->filter('.vendor-info h3 a')->first()->link();
+        $link = $crawler->filter('.vendor-name a')->first()->link();
         $client->click($link);
 
         $this->assertResponseIsSuccessful();

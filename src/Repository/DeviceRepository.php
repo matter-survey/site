@@ -1238,4 +1238,92 @@ class DeviceRepository
             LIMIT :limit
         ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
     }
+
+    // ========================================
+    // Vendor Index Page Methods
+    // ========================================
+
+    /**
+     * Get top device types for each vendor (batch query for index page).
+     * Returns a map of vendor_fk => array of top device type IDs.
+     *
+     * @return array<int, array<int>> Map of vendor_fk => [deviceTypeId, ...]
+     */
+    public function getTopDeviceTypesByVendor(int $maxPerVendor = 5): array
+    {
+        // Get all device types per vendor with counts
+        $rows = $this->db->executeQuery('
+            SELECT
+                p.vendor_fk,
+                CAST(json_extract(json_each.value, "$.id") AS INTEGER) as device_type_id,
+                COUNT(DISTINCT pe.device_id) as product_count
+            FROM product_endpoints pe
+            JOIN products p ON pe.device_id = p.id, json_each(pe.device_types)
+            WHERE json_extract(json_each.value, "$.id") IS NOT NULL
+            GROUP BY p.vendor_fk, device_type_id
+            ORDER BY p.vendor_fk, product_count DESC
+        ')->fetchAllAssociative();
+
+        // Group by vendor and take top N per vendor
+        $result = [];
+        $vendorCounts = [];
+
+        foreach ($rows as $row) {
+            $vendorFk = (int) $row['vendor_fk'];
+            $deviceTypeId = (int) $row['device_type_id'];
+
+            if (!isset($vendorCounts[$vendorFk])) {
+                $vendorCounts[$vendorFk] = 0;
+            }
+
+            if ($vendorCounts[$vendorFk] < $maxPerVendor) {
+                $result[$vendorFk][] = $deviceTypeId;
+                $vendorCounts[$vendorFk]++;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get market insights for the vendor index page.
+     *
+     * @return array{totalVendors: int, totalProducts: int, vendorsWithDevices: int, top10ProductShare: float, avgProductsPerVendor: float}
+     */
+    public function getVendorMarketInsights(): array
+    {
+        // Get basic counts
+        $stats = $this->db->executeQuery('
+            SELECT
+                (SELECT COUNT(*) FROM vendors) as total_vendors,
+                (SELECT COUNT(*) FROM products) as total_products,
+                (SELECT COUNT(*) FROM vendors WHERE device_count > 0) as vendors_with_devices
+        ')->fetchAssociative();
+
+        // Get top 10 vendors' product count
+        $top10Products = $this->db->executeQuery('
+            SELECT COALESCE(SUM(device_count), 0) as top10_products
+            FROM (
+                SELECT device_count FROM vendors
+                ORDER BY device_count DESC
+                LIMIT 10
+            )
+        ')->fetchOne();
+
+        $totalProducts = (int) $stats['total_products'];
+        $totalVendors = (int) $stats['total_vendors'];
+        $vendorsWithDevices = (int) $stats['vendors_with_devices'];
+
+        return [
+            'totalVendors' => $totalVendors,
+            'totalProducts' => $totalProducts,
+            'vendorsWithDevices' => $vendorsWithDevices,
+            'top10ProductShare' => $totalProducts > 0
+                ? round(((int) $top10Products / $totalProducts) * 100, 1)
+                : 0,
+            'avgProductsPerVendor' => $vendorsWithDevices > 0
+                ? round($totalProducts / $vendorsWithDevices, 1)
+                : 0,
+        ];
+    }
 }
