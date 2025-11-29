@@ -39,6 +39,7 @@ class DclSyncCommand extends Command
             ->addOption('products-only', null, InputOption::VALUE_NONE, 'Only sync products')
             ->addOption('certifications-only', null, InputOption::VALUE_NONE, 'Only sync certification data')
             ->addOption('skip-certifications', null, InputOption::VALUE_NONE, 'Skip fetching certification data (faster)')
+            ->addOption('compliance-info', null, InputOption::VALUE_NONE, 'Fetch detailed compliance info (certification dates, certificate IDs) - SLOW')
             ->addOption('output-dir', 'o', InputOption::VALUE_REQUIRED, 'Output directory for YAML files', self::DEFAULT_OUTPUT_DIR);
     }
 
@@ -51,6 +52,7 @@ class DclSyncCommand extends Command
         $productsOnly = $input->getOption('products-only');
         $certificationsOnly = $input->getOption('certifications-only');
         $skipCertifications = $input->getOption('skip-certifications');
+        $fetchComplianceInfo = $input->getOption('compliance-info');
 
         if (!is_dir($outputDir)) {
             $io->error(\sprintf('Output directory does not exist: %s', $outputDir));
@@ -66,6 +68,12 @@ class DclSyncCommand extends Command
             $certifiedModels = $this->fetchCertifications($io);
         }
 
+        // Fetch detailed compliance info (certification dates, etc.) if requested
+        $complianceInfo = [];
+        if ($fetchComplianceInfo && \count($certifiedModels) > 0) {
+            $complianceInfo = $this->fetchComplianceInfo($io, $certifiedModels);
+        }
+
         // Sync vendors
         if (!$productsOnly && !$certificationsOnly) {
             $this->syncVendors($io, $outputDir);
@@ -73,7 +81,7 @@ class DclSyncCommand extends Command
 
         // Sync products (with certification data merged in)
         if (!$vendorsOnly && !$certificationsOnly) {
-            $this->syncProducts($io, $outputDir, $certifiedModels);
+            $this->syncProducts($io, $outputDir, $certifiedModels, $complianceInfo);
         }
 
         // Export certifications separately if requested
@@ -97,6 +105,51 @@ class DclSyncCommand extends Command
         $io->info(\sprintf('Fetched certification data for %d products', \count($certifiedModels)));
 
         return $certifiedModels;
+    }
+
+    /**
+     * Fetch detailed compliance info for all certified models.
+     * This is slow as it requires one API call per certified model.
+     *
+     * @param array<string, array{vid: int, pid: int, certifiedVersions: array<int>, certificationType: string}> $certifiedModels
+     *
+     * @return array<string, array{date: string, cDCertificateId: string, softwareVersionString: string}>
+     */
+    private function fetchComplianceInfo(SymfonyStyle $io, array $certifiedModels): array
+    {
+        $io->section('Fetching detailed compliance info from DCL API...');
+        $io->warning('This will make ~'.\count($certifiedModels).' API calls and may take several minutes.');
+
+        // Prepare batch request data
+        $batchData = [];
+        foreach ($certifiedModels as $key => $cert) {
+            if (\count($cert['certifiedVersions']) > 0) {
+                // Use the first (oldest) certified version
+                $batchData[] = [
+                    'vid' => $cert['vid'],
+                    'pid' => $cert['pid'],
+                    'softwareVersion' => $cert['certifiedVersions'][0],
+                    'certificationType' => $cert['certificationType'],
+                ];
+            }
+        }
+
+        $progressBar = $io->createProgressBar(\count($batchData));
+        $progressBar->setFormat(' %current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s%');
+
+        $complianceInfo = $this->dclApiService->fetchComplianceInfoBatch(
+            $batchData,
+            function ($processed, $total) use ($progressBar) {
+                $progressBar->setProgress($processed);
+            }
+        );
+
+        $progressBar->finish();
+        $io->newLine(2);
+
+        $io->info(\sprintf('Fetched compliance info for %d products', \count($complianceInfo)));
+
+        return $complianceInfo;
     }
 
     /**
@@ -184,8 +237,9 @@ class DclSyncCommand extends Command
 
     /**
      * @param array<string, array{vid: int, pid: int, certifiedVersions: array<int>, certificationType: string}> $certifiedModels
+     * @param array<string, array{date: string, cDCertificateId: string, softwareVersionString: string}>         $complianceInfo
      */
-    private function syncProducts(SymfonyStyle $io, string $outputDir, array $certifiedModels): void
+    private function syncProducts(SymfonyStyle $io, string $outputDir, array $certifiedModels, array $complianceInfo = []): void
     {
         $io->section('Fetching products from DCL API...');
 
@@ -277,6 +331,20 @@ class DclSyncCommand extends Command
                 $fixture['certifiedSoftwareVersions'] = $certifiedModels[$certKey]['certifiedVersions'];
             }
 
+            // Add compliance info (certification date, certificate ID) if available
+            if (isset($complianceInfo[$certKey])) {
+                $info = $complianceInfo[$certKey];
+                if (!empty($info['date'])) {
+                    $fixture['certificationDate'] = $info['date'];
+                }
+                if (!empty($info['cDCertificateId'])) {
+                    $fixture['certificateId'] = $info['cDCertificateId'];
+                }
+                if (!empty($info['softwareVersionString'])) {
+                    $fixture['softwareVersionString'] = $info['softwareVersionString'];
+                }
+            }
+
             $fixtures[] = $fixture;
         }
 
@@ -300,9 +368,16 @@ class DclSyncCommand extends Command
         $productsFile = $outputDir.'/products.yaml';
         file_put_contents($productsFile, $yamlContent);
 
-        // Count products with certification data
+        // Count products with certification data and compliance info
         $certifiedCount = \count(array_filter($fixtures, fn ($f) => isset($f['certifiedSoftwareVersions'])));
+        $withDatesCount = \count(array_filter($fixtures, fn ($f) => isset($f['certificationDate'])));
 
-        $io->success(\sprintf('Wrote %d products to %s (%d with certification data)', \count($fixtures), $productsFile, $certifiedCount));
+        $message = \sprintf('Wrote %d products to %s (%d with certification data', \count($fixtures), $productsFile, $certifiedCount);
+        if ($withDatesCount > 0) {
+            $message .= \sprintf(', %d with certification dates', $withDatesCount);
+        }
+        $message .= ')';
+
+        $io->success($message);
     }
 }

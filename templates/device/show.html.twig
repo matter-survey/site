@@ -1013,6 +1013,35 @@
             {% endif %}
         </div>
 
+        {# Certification info from DCL compliance-info #}
+        {% if product and (product.certificationDate or product.certificateId) %}
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--gray-200);">
+                <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--gray-500); display: block; margin-bottom: 0.5rem;">CSA Certification:</span>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+                    {% if product.certificationDate %}
+                        <span class="badge" style="background: #dcfce7; color: #166534;" title="Official CSA certification date">
+                            Certified {{ product.certificationDate|date('M j, Y') }}
+                        </span>
+                    {% endif %}
+                    {% if product.certificateId %}
+                        <a href="https://csa-iot.org/csa-iot_products/{{ product.certificateId }}"
+                           target="_blank"
+                           rel="noopener"
+                           class="badge"
+                           style="background: #dbeafe; color: #1e40af; text-decoration: none;"
+                           title="View certificate on CSA website">
+                            {{ product.certificateId }}
+                        </a>
+                    {% endif %}
+                    {% if product.softwareVersionString %}
+                        <span style="font-size: 0.8125rem; color: var(--gray-500);">
+                            v{{ product.softwareVersionString }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+
         {# Product links from DCL #}
         {% if product and (product.productUrl or product.supportUrl or product.userManualUrl) %}
             <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--gray-200);">

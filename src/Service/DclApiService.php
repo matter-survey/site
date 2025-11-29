@@ -213,6 +213,90 @@ class DclApiService
     }
 
     /**
+     * Fetch compliance info for a specific certified model.
+     *
+     * Returns detailed certification data including date, certificate ID, etc.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function fetchComplianceInfo(int $vid, int $pid, int $softwareVersion, string $certificationType = 'matter'): ?array
+    {
+        try {
+            $response = $this->httpClient->request(
+                'GET',
+                sprintf('%s/dcl/compliance/compliance-info/%d/%d/%d/%s', self::BASE_URL, $vid, $pid, $softwareVersion, $certificationType),
+                ['timeout' => 10]
+            );
+
+            $data = $response->toArray();
+
+            return $data['complianceInfo'] ?? null;
+        } catch (\Exception $e) {
+            $this->logger->debug('Failed to fetch compliance info', [
+                'vid' => $vid,
+                'pid' => $pid,
+                'softwareVersion' => $softwareVersion,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Fetch compliance info for multiple certified models.
+     *
+     * This is a batch operation that fetches compliance info for each model.
+     * Note: This makes one API call per model, so it can be slow for large datasets.
+     *
+     * @param array<array{vid: int, pid: int, softwareVersion?: int, certifiedVersions?: array<int>, certificationType?: string}> $models
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public function fetchComplianceInfoBatch(array $models, ?callable $progressCallback = null): array
+    {
+        $this->logger->info('Fetching compliance info for models', ['count' => \count($models)]);
+
+        $results = [];
+        $processed = 0;
+        $total = \count($models);
+
+        foreach ($models as $model) {
+            $vid = $model['vid'];
+            $pid = $model['pid'];
+            $softwareVersion = $model['softwareVersion'] ?? ($model['certifiedVersions'][0] ?? 0);
+            $certificationType = $model['certificationType'] ?? 'matter';
+
+            $info = $this->fetchComplianceInfo($vid, $pid, $softwareVersion, $certificationType);
+
+            if (null !== $info) {
+                $key = $vid.':'.$pid;
+                $infoDate = $info['date'] ?? '';
+                $existingDate = isset($results[$key]) ? ($results[$key]['date'] ?? '') : '';
+                // Only store the first (earliest) certification for each product
+                if (!isset($results[$key]) || $infoDate < $existingDate) {
+                    $results[$key] = $info;
+                }
+            }
+
+            ++$processed;
+
+            if (null !== $progressCallback) {
+                $progressCallback($processed, $total);
+            }
+
+            // Small delay to avoid overwhelming the API
+            if (0 === $processed % 50) {
+                usleep(100000); // 100ms pause every 50 requests
+            }
+        }
+
+        $this->logger->info('Finished fetching compliance info', ['fetched' => \count($results), 'total' => $total]);
+
+        return $results;
+    }
+
+    /**
      * Fetch PAA (Product Attestation Authority) root certificates.
      *
      * @return array<int, array{

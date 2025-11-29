@@ -126,6 +126,24 @@ class Product
     #[ORM\Column(name: 'connectivity_types', type: Types::JSON, nullable: true)]
     private ?array $connectivityTypes = null;
 
+    /**
+     * Official CSA certification date from DCL compliance-info.
+     */
+    #[ORM\Column(name: 'certification_date', type: Types::DATE_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $certificationDate = null;
+
+    /**
+     * Official CSA certificate ID (e.g., "CSA2444CMAT43775-24").
+     */
+    #[ORM\Column(name: 'certificate_id', length: 64, nullable: true)]
+    private ?string $certificateId = null;
+
+    /**
+     * Human-readable software version string from DCL (e.g., "2.0" vs numeric 3).
+     */
+    #[ORM\Column(name: 'software_version_string', length: 64, nullable: true)]
+    private ?string $softwareVersionString = null;
+
     public function __construct()
     {
         $this->firstSeen = new \DateTime();
@@ -540,6 +558,42 @@ class Product
     public function setSlug(?string $slug): static
     {
         $this->slug = $slug;
+
+        return $this;
+    }
+
+    public function getCertificationDate(): ?\DateTimeInterface
+    {
+        return $this->certificationDate;
+    }
+
+    public function setCertificationDate(?\DateTimeInterface $certificationDate): static
+    {
+        $this->certificationDate = $certificationDate;
+
+        return $this;
+    }
+
+    public function getCertificateId(): ?string
+    {
+        return $this->certificateId;
+    }
+
+    public function setCertificateId(?string $certificateId): static
+    {
+        $this->certificateId = $certificateId;
+
+        return $this;
+    }
+
+    public function getSoftwareVersionString(): ?string
+    {
+        return $this->softwareVersionString;
+    }
+
+    public function setSoftwareVersionString(?string $softwareVersionString): static
+    {
+        $this->softwareVersionString = $softwareVersionString;
 
         return $this;
     }

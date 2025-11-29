@@ -471,7 +471,7 @@
         {% if marketData.monthlyGrowth|length > 0 %}
         <div class="section full-width">
             <div class="section-header">
-                <h2>Monthly Product Growth</h2>
+                <h2>Monthly Product Certifications</h2>
             </div>
             <div class="section-content">
                 {% set maxGrowth = 1 %}
@@ -491,6 +491,20 @@
                     <span>{{ marketData.monthlyGrowth|first.month|default('') }}</span>
                     <span>{{ marketData.monthlyGrowth|last.month|default('') }}</span>
                 </div>
+                {% if marketData.certificationCounts %}
+                <p style="text-align: center; font-size: 0.75rem; color: var(--gray-500); margin-top: 1rem;">
+                    {% set certCount = marketData.certificationCounts.with_cert_date|default(0) %}
+                    {% set firstSeenCount = marketData.certificationCounts.with_first_seen_only|default(0) %}
+                    {% if certCount > 0 %}
+                        Based on {{ certCount|number_format }} official CSA certification dates
+                        {% if firstSeenCount > 0 %}
+                            + {{ firstSeenCount|number_format }} products using first-seen dates
+                        {% endif %}
+                    {% else %}
+                        Based on first-seen dates (certification dates pending sync)
+                    {% endif %}
+                </p>
+                {% endif %}
             </div>
         </div>
         {% endif %}

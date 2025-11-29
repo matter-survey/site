@@ -150,6 +150,22 @@ class ProductFixtures extends Fixture implements FixtureGroupInterface, Dependen
                 $product->setCertifiedSoftwareVersions($data['certifiedSoftwareVersions']);
             }
 
+            // Set certification info from compliance-info endpoint
+            if (!empty($data['certificationDate'])) {
+                try {
+                    $certDate = new \DateTime($data['certificationDate']);
+                    $product->setCertificationDate($certDate);
+                } catch (\Exception) {
+                    // Invalid date format, skip
+                }
+            }
+            if (!empty($data['certificateId'])) {
+                $product->setCertificateId($data['certificateId']);
+            }
+            if (!empty($data['softwareVersionString'])) {
+                $product->setSoftwareVersionString($data['softwareVersionString']);
+            }
+
             $manager->persist($product);
             ++$count;
 

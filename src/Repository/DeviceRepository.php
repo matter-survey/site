@@ -1453,15 +1453,23 @@ class DeviceRepository
             LIMIT 15
         ')->fetchAllAssociative();
 
-        // Monthly growth (based on first_seen dates)
+        // Monthly certification growth (prefer certification_date, fall back to first_seen)
         $monthlyGrowth = $this->db->executeQuery("
-            SELECT strftime('%Y-%m', first_seen) as month, COUNT(*) as new_products
+            SELECT strftime('%Y-%m', COALESCE(certification_date, first_seen)) as month, COUNT(*) as new_products
             FROM products
-            WHERE first_seen IS NOT NULL
+            WHERE COALESCE(certification_date, first_seen) IS NOT NULL
             GROUP BY month
             ORDER BY month DESC
-            LIMIT 12
+            LIMIT 24
         ")->fetchAllAssociative();
+
+        // Count products with actual certification dates vs first_seen
+        $certificationCounts = $this->db->executeQuery('
+            SELECT
+                SUM(CASE WHEN certification_date IS NOT NULL THEN 1 ELSE 0 END) as with_cert_date,
+                SUM(CASE WHEN certification_date IS NULL AND first_seen IS NOT NULL THEN 1 ELSE 0 END) as with_first_seen_only
+            FROM products
+        ')->fetchAssociative();
 
         // Discovery capabilities distribution
         $discoveryStats = $this->db->executeQuery('
@@ -1482,6 +1490,7 @@ class DeviceRepository
             'topVendors' => $topVendors,
             'monthlyGrowth' => array_reverse($monthlyGrowth),
             'discoveryStats' => $discoveryStats,
+            'certificationCounts' => $certificationCounts,
         ];
     }
 
