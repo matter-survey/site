@@ -1,0 +1,300 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}FAQ - Matter Survey{% endblock %}
+
+{% block og_title %}Frequently Asked Questions - Matter Survey{% endblock %}
+{% block og_description %}Common questions about Matter smart home devices, compatibility, and how to use Matter Survey.{% endblock %}
+
+{% block extra_styles %}
+    .faq-content {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .faq-content h1 {
+        font-size: 2rem;
+        margin-bottom: 1.5rem;
+        color: var(--gray-900);
+    }
+
+    .faq-section {
+        margin-bottom: 2rem;
+    }
+
+    .faq-section h2 {
+        font-size: 1.25rem;
+        color: var(--gray-500);
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .faq-item {
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+
+    .faq-question {
+        font-weight: 600;
+        padding: 1rem 1.25rem;
+        background: var(--gray-50);
+        color: var(--gray-900);
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .faq-question::after {
+        content: "+";
+        font-size: 1.25rem;
+        color: var(--gray-400);
+    }
+
+    .faq-item.open .faq-question::after {
+        content: "−";
+    }
+
+    .faq-answer {
+        padding: 1rem 1.25rem;
+        color: var(--gray-700);
+        line-height: 1.7;
+        display: none;
+    }
+
+    .faq-item.open .faq-answer {
+        display: block;
+    }
+
+    .faq-answer p {
+        margin-bottom: 0.75rem;
+    }
+
+    .faq-answer p:last-child {
+        margin-bottom: 0;
+    }
+
+    .faq-answer code {
+        background: var(--gray-100);
+        padding: 0.125rem 0.375rem;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+    }
+
+    .faq-answer ul {
+        margin: 0.5rem 0;
+        padding-left: 1.5rem;
+    }
+
+    .faq-answer li {
+        margin-bottom: 0.375rem;
+    }
+
+    .related-links {
+        background: var(--gray-50);
+        border: 1px solid var(--gray-200);
+        border-radius: 0.5rem;
+        padding: 1.25rem;
+        margin-top: 2rem;
+    }
+
+    .related-links h3 {
+        margin-bottom: 0.75rem;
+        font-size: 1rem;
+    }
+
+    .related-links a {
+        color: var(--primary);
+        margin-right: 1.5rem;
+    }
+{% endblock %}
+
+{% block body %}
+<div class="faq-content">
+    <h1>Frequently Asked Questions</h1>
+
+    <div class="faq-section">
+        <h2>Matter Basics</h2>
+
+        <div class="faq-item open">
+            <div class="faq-question">What is Matter?</div>
+            <div class="faq-answer">
+                <p>
+                    Matter is a smart home connectivity standard that allows devices from different
+                    manufacturers to work together. Think of it as a common language that your smart
+                    bulb, thermostat, and door lock can all speak.
+                </p>
+                <p>
+                    It's backed by Apple, Google, Amazon, Samsung, and over 200 other companies. If a
+                    device has the Matter logo, it should work with any Matter-compatible smart home system.
+                </p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">Is my device Matter compatible?</div>
+            <div class="faq-answer">
+                <p>
+                    Look for the Matter logo on the packaging or product page. You can also search for
+                    your device on this site &mdash; if we have data on it, it's Matter-compatible.
+                </p>
+                <p>
+                    Note that some older devices may receive Matter support through firmware updates.
+                    Check with your device manufacturer.
+                </p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">What's the difference between Thread, WiFi, and Ethernet?</div>
+            <div class="faq-answer">
+                <p>These are the ways a Matter device connects to your network:</p>
+                <ul>
+                    <li><strong>WiFi</strong> &mdash; Connects to your regular WiFi network. Common for plugs, bulbs, and larger devices. No extra hub needed.</li>
+                    <li><strong>Thread</strong> &mdash; A low-power mesh network designed for smart home devices. Requires a Thread border router (built into many modern hubs like Apple TV 4K, HomePod Mini, or Google Nest Hub). Great for battery-powered devices.</li>
+                    <li><strong>Ethernet</strong> &mdash; Wired connection. Rare, but offers the most reliable connection. Usually found in hubs and bridges.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="faq-section">
+        <h2>Understanding Device Data</h2>
+
+        <div class="faq-item">
+            <div class="faq-question">What are "clusters"?</div>
+            <div class="faq-answer">
+                <p>
+                    Clusters are groups of related features that a device supports. Think of them as
+                    capability categories:
+                </p>
+                <ul>
+                    <li><strong>On/Off cluster</strong> &mdash; The device can be turned on and off</li>
+                    <li><strong>Level Control cluster</strong> &mdash; The device supports dimming or variable levels</li>
+                    <li><strong>Color Control cluster</strong> &mdash; The device can change colors</li>
+                    <li><strong>Temperature Measurement cluster</strong> &mdash; The device can report temperature</li>
+                </ul>
+                <p>
+                    <a href="{{ path('page_glossary') }}">See the full glossary</a> for more cluster explanations.
+                </p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">What's the difference between "server" and "client" clusters?</div>
+            <div class="faq-answer">
+                <p>
+                    <strong>Server clusters</strong> are capabilities the device <em>provides</em>. A light bulb
+                    has an On/Off server cluster because it can be turned on and off.
+                </p>
+                <p>
+                    <strong>Client clusters</strong> are capabilities the device <em>uses</em> from other devices.
+                    A smart switch might have an On/Off client cluster because it wants to control other
+                    devices' on/off state.
+                </p>
+                <p>
+                    Most devices you interact with (bulbs, sensors, plugs) primarily have server clusters.
+                    Controllers and switches tend to have client clusters.
+                </p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">What does "binding support" mean?</div>
+            <div class="faq-answer">
+                <p>
+                    Binding allows two devices to communicate directly with each other, without going
+                    through your smart home hub.
+                </p>
+                <p>
+                    <strong>Example:</strong> If you bind a smart switch to a smart bulb, pressing the switch
+                    turns on the bulb instantly &mdash; even if your WiFi is down or your hub is offline.
+                </p>
+                <p>
+                    Not all devices support binding. Devices with the "Binding" badge on this site have
+                    this capability.
+                </p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">Why does a device show "Missing Required" clusters?</div>
+            <div class="faq-answer">
+                <p>
+                    The Matter specification defines which clusters are mandatory for each device type.
+                    If a device is missing required clusters, it means:
+                </p>
+                <ul>
+                    <li>The device may not be fully compliant with the spec</li>
+                    <li>The device might be using an older Matter version</li>
+                    <li>Some features may not work as expected with certain controllers</li>
+                </ul>
+                <p>
+                    This doesn't necessarily mean the device is broken &mdash; it often still works fine,
+                    just without certain standardized features.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="faq-section">
+        <h2>About This Site</h2>
+
+        <div class="faq-item">
+            <div class="faq-question">Where does this data come from?</div>
+            <div class="faq-answer">
+                <p>
+                    The data is crowdsourced from users of the
+                    <a href="https://github.com/cedricziel/ha-matter-binding-helper">Matter Binding Helper</a>
+                    Home Assistant add-on. When users opt in, their device information is anonymously
+                    submitted to our database.
+                </p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">Is my personal data collected?</div>
+            <div class="faq-answer">
+                <p>
+                    <strong>No.</strong> We only collect technical device information (vendor ID, product ID,
+                    supported features). We do not collect your name, location, network details, or any
+                    personally identifiable information.
+                </p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">Why isn't my device listed?</div>
+            <div class="faq-answer">
+                <p>
+                    We can only show devices that have been submitted by our contributors. If your device
+                    isn't listed, it either:
+                </p>
+                <ul>
+                    <li>Hasn't been submitted by anyone yet</li>
+                    <li>Is very new to the market</li>
+                    <li>Isn't Matter-compatible</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="related-links">
+        <h3>Learn More</h3>
+        <a href="{{ path('page_about') }}">About Matter Survey</a>
+        <a href="{{ path('page_glossary') }}">Glossary of Terms</a>
+        <a href="{{ path('device_index') }}">Browse Devices</a>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.faq-question').forEach(function(question) {
+    question.addEventListener('click', function() {
+        this.parentElement.classList.toggle('open');
+    });
+});
+</script>
+{% endblock %}

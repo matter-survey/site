@@ -66,6 +66,9 @@ class SitemapController extends AbstractController
             $this->createUrl('stats_binding', [], 0.6, 'weekly'),
             $this->createUrl('stats_versions', [], 0.6, 'weekly'),
             $this->createUrl('stats_pairings', [], 0.6, 'weekly'),
+            $this->createUrl('page_about', [], 0.5, 'monthly'),
+            $this->createUrl('page_faq', [], 0.5, 'monthly'),
+            $this->createUrl('page_glossary', [], 0.5, 'monthly'),
         ];
 
         return $this->createXmlResponse($this->renderSitemapXml($urls), 86400);

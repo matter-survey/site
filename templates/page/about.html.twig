@@ -1,0 +1,195 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}About - Matter Survey{% endblock %}
+
+{% block og_title %}About Matter Survey{% endblock %}
+{% block og_description %}Learn what Matter is and how Matter Survey helps you understand smart home device compatibility.{% endblock %}
+
+{% block extra_styles %}
+    .about-content {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .about-content h1 {
+        font-size: 2rem;
+        margin-bottom: 1.5rem;
+        color: var(--gray-900);
+    }
+
+    .about-content h2 {
+        font-size: 1.5rem;
+        margin-top: 2.5rem;
+        margin-bottom: 1rem;
+        color: var(--gray-900);
+    }
+
+    .about-content p {
+        margin-bottom: 1rem;
+        color: var(--gray-700);
+        line-height: 1.8;
+    }
+
+    .about-content ul {
+        margin-bottom: 1.5rem;
+        padding-left: 1.5rem;
+    }
+
+    .about-content li {
+        margin-bottom: 0.5rem;
+        color: var(--gray-700);
+    }
+
+    .highlight-box {
+        background: var(--blue-100);
+        border-left: 4px solid var(--primary);
+        padding: 1rem 1.25rem;
+        margin: 1.5rem 0;
+        border-radius: 0 0.5rem 0.5rem 0;
+    }
+
+    .highlight-box p {
+        margin: 0;
+        color: var(--blue-700);
+    }
+
+    .brand-logos {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+        margin: 1rem 0;
+        font-size: 0.9rem;
+        color: var(--gray-500);
+    }
+
+    .brand-logos span {
+        background: var(--gray-100);
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.25rem;
+    }
+
+    .cta-section {
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-top: 2rem;
+        text-align: center;
+    }
+
+    .cta-section h3 {
+        margin-bottom: 0.75rem;
+    }
+
+    .cta-section a {
+        display: inline-block;
+        background: var(--primary);
+        color: white;
+        padding: 0.5rem 1.25rem;
+        border-radius: 0.375rem;
+        text-decoration: none;
+        margin: 0.5rem 0.25rem;
+    }
+
+    .cta-section a:hover {
+        background: var(--primary-dark);
+    }
+
+    .cta-section a.secondary {
+        background: white;
+        color: var(--primary);
+        border: 1px solid var(--primary);
+    }
+{% endblock %}
+
+{% block body %}
+<div class="about-content">
+    <h1>About Matter Survey</h1>
+
+    <p>
+        <strong>Matter Survey</strong> is a community-driven database that catalogs the real-world capabilities
+        of Matter-compatible smart home devices. We collect anonymous data from users' actual devices to help
+        you understand what works with what.
+    </p>
+
+    <h2>What is Matter?</h2>
+
+    <p>
+        <strong>Matter</strong> is a new smart home standard that lets devices from different brands work together.
+        Before Matter, if you bought a Philips light bulb, it might only work with the Philips app. A Samsung
+        sensor might only work with SmartThings. Getting everything to talk to each other was a nightmare.
+    </p>
+
+    <p>
+        Matter fixes this. It's a common language that devices can speak, backed by major tech companies:
+    </p>
+
+    <div class="brand-logos">
+        <span>Apple</span>
+        <span>Google</span>
+        <span>Amazon</span>
+        <span>Samsung</span>
+        <span>IKEA</span>
+        <span>and 200+ others</span>
+    </div>
+
+    <div class="highlight-box">
+        <p>
+            <strong>In plain English:</strong> If a device has the Matter logo, it should work with your
+            Apple Home, Google Home, Amazon Alexa, or any other Matter-compatible system.
+        </p>
+    </div>
+
+    <h2>Why does this site exist?</h2>
+
+    <p>
+        Matter promises compatibility, but the reality is more nuanced:
+    </p>
+
+    <ul>
+        <li><strong>Different devices have different features.</strong> A basic bulb just turns on/off. A fancy one supports colors, brightness, and scenes.</li>
+        <li><strong>Not all features are exposed.</strong> Some devices have capabilities they don't advertise over Matter.</li>
+        <li><strong>Binding support varies.</strong> "Binding" lets devices talk directly to each other (like a switch controlling a bulb without going through a hub). Not all devices support this.</li>
+        <li><strong>Firmware updates change things.</strong> A device might gain or lose features over time.</li>
+    </ul>
+
+    <p>
+        Matter Survey collects real data from real devices to show you exactly what each device can do &mdash;
+        not just what the marketing says.
+    </p>
+
+    <h2>What data do we collect?</h2>
+
+    <p>
+        We collect only technical device information:
+    </p>
+
+    <ul>
+        <li>Device identifiers (vendor ID, product ID)</li>
+        <li>Supported features (clusters, device types)</li>
+        <li>Firmware versions</li>
+        <li>Connection type (Thread, WiFi, Ethernet)</li>
+    </ul>
+
+    <p>
+        <strong>We do NOT collect:</strong> your name, location, network info, usage patterns, or anything
+        that could identify you personally. Your privacy is respected.
+    </p>
+
+    <h2>How is data collected?</h2>
+
+    <p>
+        Data is contributed by users of the
+        <a href="https://github.com/cedricziel/ha-matter-binding-helper">Matter Binding Helper</a>
+        Home Assistant add-on. When users opt in, their device capabilities are anonymously submitted
+        to this database.
+    </p>
+
+    <div class="cta-section">
+        <h3>Ready to explore?</h3>
+        <a href="{{ path('device_index') }}">Browse Devices</a>
+        <a href="{{ path('page_faq') }}" class="secondary">Read the FAQ</a>
+    </div>
+</div>
+{% endblock %}

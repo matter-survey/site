@@ -1,0 +1,334 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Glossary - Matter Survey{% endblock %}
+
+{% block og_title %}Matter Glossary - Smart Home Terms Explained{% endblock %}
+{% block og_description %}Plain-English explanations of Matter, Thread, clusters, binding, and other smart home terms.{% endblock %}
+
+{% block extra_styles %}
+    .glossary-content {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .glossary-content h1 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        color: var(--gray-900);
+    }
+
+    .glossary-intro {
+        color: var(--gray-500);
+        margin-bottom: 2rem;
+    }
+
+    .glossary-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        padding: 1rem;
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: 0.5rem;
+    }
+
+    .glossary-nav a {
+        padding: 0.25rem 0.75rem;
+        background: var(--gray-100);
+        border-radius: 0.25rem;
+        text-decoration: none;
+        color: var(--gray-700);
+        font-weight: 500;
+    }
+
+    .glossary-nav a:hover {
+        background: var(--primary);
+        color: white;
+    }
+
+    .glossary-section {
+        margin-bottom: 2.5rem;
+    }
+
+    .glossary-section h2 {
+        font-size: 1.5rem;
+        color: var(--primary);
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--primary);
+    }
+
+    .glossary-term {
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: 0.5rem;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .glossary-term h3 {
+        color: var(--gray-900);
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .glossary-term h3 code {
+        background: var(--gray-100);
+        padding: 0.125rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.8rem;
+        margin-left: 0.5rem;
+        font-weight: normal;
+    }
+
+    .glossary-term p {
+        color: var(--gray-600);
+        line-height: 1.7;
+        margin-bottom: 0.5rem;
+    }
+
+    .glossary-term p:last-child {
+        margin-bottom: 0;
+    }
+
+    .glossary-term .example {
+        background: var(--gray-50);
+        padding: 0.75rem;
+        border-radius: 0.375rem;
+        margin-top: 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    .glossary-term .example strong {
+        color: var(--gray-700);
+    }
+
+    .back-to-top {
+        text-align: center;
+        margin: 2rem 0;
+    }
+
+    .back-to-top a {
+        color: var(--gray-500);
+        text-decoration: none;
+    }
+{% endblock %}
+
+{% block body %}
+<div class="glossary-content">
+    <h1>Glossary</h1>
+    <p class="glossary-intro">Plain-English explanations of Matter and smart home terms.</p>
+
+    <nav class="glossary-nav">
+        <a href="#connectivity">Connectivity</a>
+        <a href="#clusters">Clusters</a>
+        <a href="#device-concepts">Device Concepts</a>
+        <a href="#matter-spec">Matter Spec</a>
+    </nav>
+
+    <section class="glossary-section" id="connectivity">
+        <h2>Connectivity</h2>
+
+        <div class="glossary-term" id="thread">
+            <h3>Thread</h3>
+            <p>
+                A low-power wireless mesh network designed for smart home devices. Thread devices
+                create a mesh where each device can relay messages to others, improving range
+                and reliability.
+            </p>
+            <p>
+                Thread is especially good for battery-powered devices like sensors and locks.
+                Requires a Thread Border Router (built into Apple TV 4K, HomePod Mini, some Google/Amazon devices).
+            </p>
+            <div class="example">
+                <strong>Example:</strong> Eve Door Sensor uses Thread and can run for months on a single battery.
+            </div>
+        </div>
+
+        <div class="glossary-term" id="wifi">
+            <h3>WiFi</h3>
+            <p>
+                Standard wireless connection using your home WiFi network. No additional hub required.
+                Most common for plugs, bulbs, and devices that are always powered.
+            </p>
+            <div class="example">
+                <strong>Example:</strong> A Meross Smart Plug connects directly to your WiFi router.
+            </div>
+        </div>
+
+        <div class="glossary-term" id="ethernet">
+            <h3>Ethernet</h3>
+            <p>
+                Wired network connection. Offers the most reliable connection but requires running
+                cables. Typically found in hubs, bridges, and some high-end devices.
+            </p>
+        </div>
+
+        <div class="glossary-term" id="border-router">
+            <h3>Border Router</h3>
+            <p>
+                A device that connects a Thread network to your IP network (WiFi/Ethernet).
+                Required for Thread devices to communicate with the internet and your phone.
+            </p>
+            <div class="example">
+                <strong>Built-in border routers:</strong> Apple TV 4K, HomePod Mini, Google Nest Hub (2nd gen), Amazon Echo (4th gen)
+            </div>
+        </div>
+    </section>
+
+    <section class="glossary-section" id="clusters">
+        <h2>Clusters</h2>
+
+        <div class="glossary-term" id="cluster">
+            <h3>Cluster</h3>
+            <p>
+                A group of related features that a device can have. Each cluster defines specific
+                attributes (data the device reports) and commands (actions you can trigger).
+            </p>
+            <div class="example">
+                <strong>Example:</strong> The "On/Off" cluster includes an attribute for current state (on or off)
+                and commands to turn on, turn off, or toggle.
+            </div>
+        </div>
+
+        <div class="glossary-term" id="server-cluster">
+            <h3>Server Cluster</h3>
+            <p>
+                A capability that a device <strong>provides</strong>. When a device has a server cluster,
+                it means other devices (or your app) can read data from it or send commands to it.
+            </p>
+            <div class="example">
+                <strong>Example:</strong> A light bulb has "On/Off" as a server cluster &mdash; it can be turned on/off by others.
+            </div>
+        </div>
+
+        <div class="glossary-term" id="client-cluster">
+            <h3>Client Cluster</h3>
+            <p>
+                A capability that a device <strong>uses</strong> from other devices. When a device has
+                a client cluster, it can control that feature on other devices.
+            </p>
+            <div class="example">
+                <strong>Example:</strong> A wall switch has "On/Off" as a client cluster &mdash; it can turn other devices on/off.
+            </div>
+        </div>
+
+        <div class="glossary-term" id="common-clusters">
+            <h3>Common Clusters</h3>
+            <p>Here are some clusters you'll see frequently:</p>
+            <p>
+                <strong>On/Off</strong> <code>0x0006</code> &mdash; Turn device on or off<br>
+                <strong>Level Control</strong> <code>0x0008</code> &mdash; Dimming, volume, or other levels<br>
+                <strong>Color Control</strong> <code>0x0300</code> &mdash; Color temperature and RGB colors<br>
+                <strong>Temperature Measurement</strong> <code>0x0402</code> &mdash; Reports temperature readings<br>
+                <strong>Occupancy Sensing</strong> <code>0x0406</code> &mdash; Motion/presence detection<br>
+                <strong>Door Lock</strong> <code>0x0101</code> &mdash; Lock and unlock commands<br>
+                <strong>Thermostat</strong> <code>0x0201</code> &mdash; HVAC control
+            </p>
+        </div>
+    </section>
+
+    <section class="glossary-section" id="device-concepts">
+        <h2>Device Concepts</h2>
+
+        <div class="glossary-term" id="binding">
+            <h3>Binding</h3>
+            <p>
+                A direct connection between two devices that allows them to communicate without
+                going through a hub. Bindings work even when your internet or hub is offline.
+            </p>
+            <div class="example">
+                <strong>Example:</strong> Bind a smart switch to a smart bulb. Press the switch, and the bulb
+                responds instantly &mdash; no cloud, no hub, no delay.
+            </div>
+        </div>
+
+        <div class="glossary-term" id="endpoint">
+            <h3>Endpoint</h3>
+            <p>
+                A logical sub-device within a physical device. A single Matter device can have
+                multiple endpoints, each representing different functionality.
+            </p>
+            <div class="example">
+                <strong>Example:</strong> A power strip with 4 outlets might have 4 endpoints (one per outlet)
+                plus a 5th endpoint for overall device control.
+            </div>
+        </div>
+
+        <div class="glossary-term" id="device-type">
+            <h3>Device Type</h3>
+            <p>
+                A predefined template that specifies what clusters a device should support.
+                Device types ensure consistency &mdash; all "Dimmable Lights" support the same basic features.
+            </p>
+            <div class="example">
+                <strong>Examples:</strong> On/Off Light, Dimmable Light, Color Temperature Light,
+                Door Lock, Thermostat, Contact Sensor
+            </div>
+        </div>
+
+        <div class="glossary-term" id="vendor-id">
+            <h3>Vendor ID</h3>
+            <p>
+                A unique number assigned to each manufacturer by the Connectivity Standards Alliance (CSA).
+                Used to identify who made a device.
+            </p>
+            <div class="example">
+                <strong>Examples:</strong> Eve = 4874, Aqara = 4447, Philips = 4107
+            </div>
+        </div>
+
+        <div class="glossary-term" id="product-id">
+            <h3>Product ID</h3>
+            <p>
+                A number assigned by the vendor to identify a specific product model. Combined with
+                Vendor ID, it uniquely identifies any Matter device.
+            </p>
+        </div>
+    </section>
+
+    <section class="glossary-section" id="matter-spec">
+        <h2>Matter Specification</h2>
+
+        <div class="glossary-term" id="matter-version">
+            <h3>Matter Version / Spec Version</h3>
+            <p>
+                The version of the Matter specification a device was built against. Newer versions
+                add features and device types. Current versions include 1.0, 1.1, 1.2, 1.3, and 1.4.
+            </p>
+            <div class="example">
+                <strong>Example:</strong> Matter 1.3 added support for water leak sensors and electric vehicle chargers.
+            </div>
+        </div>
+
+        <div class="glossary-term" id="mandatory-cluster">
+            <h3>Mandatory Cluster</h3>
+            <p>
+                A cluster that the Matter specification requires for a specific device type.
+                If a device is missing mandatory clusters, it's not fully spec-compliant.
+            </p>
+        </div>
+
+        <div class="glossary-term" id="optional-cluster">
+            <h3>Optional Cluster</h3>
+            <p>
+                A cluster that a device <em>may</em> support but isn't required to. Optional clusters
+                provide extra functionality beyond the basics.
+            </p>
+        </div>
+
+        <div class="glossary-term" id="dcl">
+            <h3>DCL (Distributed Compliance Ledger)</h3>
+            <p>
+                A public database maintained by the CSA that lists all certified Matter devices.
+                We use DCL data to match vendor/product IDs to product names.
+            </p>
+        </div>
+    </section>
+
+    <div class="back-to-top">
+        <a href="#top">&uarr; Back to top</a>
+    </div>
+</div>
+{% endblock %}
