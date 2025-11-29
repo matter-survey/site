@@ -503,6 +503,69 @@ class MatterRegistry
     // ========================================================================
 
     /**
+     * Cluster equivalents: legacy cluster ID => replacement cluster ID.
+     * Devices implementing the legacy version should be considered compliant.
+     */
+    private const CLUSTER_EQUIVALENTS = [
+        5 => 98,   // Scenes (1.0) → Scenes Management (1.4)
+    ];
+
+    /**
+     * Check if a required cluster is satisfied by the actual clusters.
+     * Considers legacy/replacement equivalents.
+     *
+     * @param int   $requiredClusterId The cluster ID required by the spec
+     * @param int[] $actualClusters    The clusters the device actually implements
+     */
+    private function isClusterSatisfied(int $requiredClusterId, array $actualClusters): bool
+    {
+        // Direct match
+        if (\in_array($requiredClusterId, $actualClusters, true)) {
+            return true;
+        }
+
+        // Check for legacy/replacement equivalents
+        foreach (self::CLUSTER_EQUIVALENTS as $legacy => $replacement) {
+            if ($requiredClusterId === $replacement && \in_array($legacy, $actualClusters, true)) {
+                return true; // Has legacy version, counts as compliant
+            }
+            if ($requiredClusterId === $legacy && \in_array($replacement, $actualClusters, true)) {
+                return true; // Has new version, counts as compliant
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get spec version note for a cluster if it was introduced after 1.0.
+     */
+    public function getClusterSpecNote(int $clusterId): ?string
+    {
+        $metadata = $this->getClusterMetadata($clusterId);
+        if ($metadata === null) {
+            return null;
+        }
+
+        $specVersion = $metadata['specVersion'] ?? '1.0';
+
+        // Check if this is a replacement cluster
+        foreach (self::CLUSTER_EQUIVALENTS as $legacy => $replacement) {
+            if ($clusterId === $replacement) {
+                $legacyMeta = $this->getClusterMetadata($legacy);
+                $legacyName = $legacyMeta['name'] ?? "Cluster $legacy";
+                return "Added in Matter $specVersion (replaces $legacyName)";
+            }
+        }
+
+        if ($specVersion !== '1.0') {
+            return "Added in Matter $specVersion";
+        }
+
+        return null;
+    }
+
+    /**
      * Analyze a device's cluster implementation against the spec requirements.
      *
      * @param int   $deviceTypeId      The device type ID
@@ -520,6 +583,7 @@ class MatterRegistry
      *     extraServer: array,
      *     extraClient: array,
      *     compliance: array{mandatory: bool, score: float, mandatoryScore: float, optionalScore: float, totalMandatory: int, implementedMandatory: int, totalOptional: int, implementedOptional: int},
+     *     specVersion: string,
      * }
      */
     public function analyzeClusterGaps(
@@ -550,8 +614,11 @@ class MatterRegistry
                     'totalOptional' => 0,
                     'implementedOptional' => 0,
                 ],
+                'specVersion' => '1.0',
             ];
         }
+
+        $specVersion = $deviceType['specVersion'] ?? '1.0';
 
         $mandatoryServer = $deviceType['mandatoryServerClusters'] ?? [];
         $mandatoryClient = $deviceType['mandatoryClientClusters'] ?? [];
@@ -564,9 +631,15 @@ class MatterRegistry
         $optionalServerIds = array_column($optionalServer, 'id');
         $optionalClientIds = array_column($optionalClient, 'id');
 
-        // Find missing mandatory clusters
-        $missingMandatoryServerIds = array_diff($mandatoryServerIds, $actualServerClusters);
-        $missingMandatoryClientIds = array_diff($mandatoryClientIds, $actualClientClusters);
+        // Find missing mandatory clusters (considering equivalents like Scenes → Scenes Management)
+        $missingMandatoryServerIds = array_filter(
+            $mandatoryServerIds,
+            fn(int $id) => !$this->isClusterSatisfied($id, $actualServerClusters)
+        );
+        $missingMandatoryClientIds = array_filter(
+            $mandatoryClientIds,
+            fn(int $id) => !$this->isClusterSatisfied($id, $actualClientClusters)
+        );
 
         // Find missing optional clusters
         $missingOptionalServerIds = array_diff($optionalServerIds, $actualServerClusters);
@@ -629,6 +702,7 @@ class MatterRegistry
                 'totalOptional' => $totalOptional,
                 'implementedOptional' => $implementedOptional,
             ],
+            'specVersion' => $specVersion,
         ];
     }
 

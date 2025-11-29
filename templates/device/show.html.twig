@@ -1067,15 +1067,23 @@
             <h3>Spec Compliance & Feature Analysis</h3>
             <p class="gap-analysis-subtitle">
                 Comparing this device's clusters against Matter specification requirements. Shows what's implemented, what's missing, and bonus features.
+                <em>Note: Legacy clusters (e.g., Scenes) count as compliant when replaced by newer equivalents (Scenes Management).</em>
             </p>
 
             {% for deviceTypeId, analysis in clusterGapAnalysis %}
                 {% if analysis.deviceType %}
                     <div class="device-type-analysis">
                         <div class="device-type-analysis-header">
-                            <a href="{{ path('stats_device_type_show', {type: deviceTypeId}) }}" class="device-type-analysis-name">
-                                {{ analysis.deviceType.name }}
-                            </a>
+                            <span>
+                                <a href="{{ path('stats_device_type_show', {type: deviceTypeId}) }}" class="device-type-analysis-name">
+                                    {{ analysis.deviceType.name }}
+                                </a>
+                                {% if analysis.specVersion is defined %}
+                                    <span class="spec-badge" style="background: var(--gray-200); color: var(--gray-600); margin-left: 0.5rem;" title="Matter specification version for this device type">
+                                        Matter {{ analysis.specVersion }}
+                                    </span>
+                                {% endif %}
+                            </span>
                             {% if analysis.compliance.mandatory %}
                                 <span class="compliance-badge compliance-badge-success">Compliant</span>
                             {% else %}
@@ -1104,17 +1112,21 @@
                                     </div>
                                     <div class="gap-cluster-list">
                                         {% for cluster in analysis.missingMandatoryServer %}
+                                            {% set specNote = matterRegistry.getClusterSpecNote(cluster.id) %}
                                             <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.id)}) }}"
                                                class="gap-cluster-tag gap-cluster-missing-mandatory"
-                                               title="Missing mandatory server cluster">
+                                               title="Missing mandatory server cluster{{ specNote ? '. ' ~ specNote : '' }}">
                                                 {{ cluster.name }}
+                                                {% if specNote %}<span style="font-size: 0.6rem; opacity: 0.8;">*</span>{% endif %}
                                             </a>
                                         {% endfor %}
                                         {% for cluster in analysis.missingMandatoryClient %}
+                                            {% set specNote = matterRegistry.getClusterSpecNote(cluster.id) %}
                                             <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.id)}) }}"
                                                class="gap-cluster-tag gap-cluster-missing-mandatory"
-                                               title="Missing mandatory client cluster">
+                                               title="Missing mandatory client cluster{{ specNote ? '. ' ~ specNote : '' }}">
                                                 {{ cluster.name }} (client)
+                                                {% if specNote %}<span style="font-size: 0.6rem; opacity: 0.8;">*</span>{% endif %}
                                             </a>
                                         {% endfor %}
                                     </div>
@@ -1124,22 +1136,25 @@
                             {# Missing Optional - Could Have #}
                             {% if analysis.missingOptionalServer is not empty or analysis.missingOptionalClient is not empty %}
                                 <div class="gap-cluster-group">
-                                    <div class="gap-cluster-group-title">
-                                        Available But Not Implemented
+                                    <div class="gap-cluster-group-title" title="These clusters are optional per the Matter spec. The manufacturer chose not to implement them, which is allowed.">
+                                        Optional Not Implemented
                                         <span class="count">{{ analysis.missingOptionalServer|length + analysis.missingOptionalClient|length }}</span>
                                     </div>
+                                    <p style="font-size: 0.6875rem; color: var(--gray-500); margin: 0 0 0.5rem; line-height: 1.3;">
+                                        Per the Matter spec, these clusters are optional. The device is compliant without them.
+                                    </p>
                                     <div class="gap-cluster-list">
                                         {% for cluster in analysis.missingOptionalServer %}
                                             <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.id)}) }}"
                                                class="gap-cluster-tag gap-cluster-missing-optional"
-                                               title="Optional server cluster not implemented">
+                                               title="Optional server cluster – not required for compliance">
                                                 {{ cluster.name }}
                                             </a>
                                         {% endfor %}
                                         {% for cluster in analysis.missingOptionalClient %}
                                             <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.id)}) }}"
                                                class="gap-cluster-tag gap-cluster-missing-optional"
-                                               title="Optional client cluster not implemented">
+                                               title="Optional client cluster – not required for compliance">
                                                 {{ cluster.name }} (client)
                                             </a>
                                         {% endfor %}
