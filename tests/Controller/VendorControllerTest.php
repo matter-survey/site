@@ -85,10 +85,10 @@ class VendorControllerTest extends WebTestCase
         $deviceLinks = $crawler->filter('.device-info h3 a');
         $this->assertGreaterThan(0, $deviceLinks->count());
 
-        // Each device link should point to /device/{id}
+        // Each device link should point to /device/{slug}
         $deviceLinks->each(function ($node) {
             $href = $node->attr('href');
-            $this->assertMatchesRegularExpression('/^\/device\/\d+$/', $href);
+            $this->assertMatchesRegularExpression('/^\/device\/[a-z0-9-]+$/', $href);
         });
     }
 

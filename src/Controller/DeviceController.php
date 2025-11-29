@@ -120,14 +120,43 @@ class DeviceController extends AbstractController
             || !empty($filters['search']);
     }
 
-    #[Route('/device/{id}', name: 'device_show', requirements: ['id' => '\d+'], methods: ['GET'])]
-    public function show(int $id): Response
+    /**
+     * Redirect old ID-based URLs to new slug-based URLs.
+     */
+    #[Route('/device/{id}', name: 'device_show_legacy', requirements: ['id' => '\d+'], methods: ['GET'])]
+    public function showLegacy(int $id): Response
     {
         $device = $this->deviceRepo->getDevice($id);
 
         if (!$device) {
             throw $this->createNotFoundException('Device not found');
         }
+
+        // Redirect to slug-based URL
+        if (!empty($device['slug'])) {
+            return $this->redirectToRoute('device_show', ['slug' => $device['slug']], Response::HTTP_MOVED_PERMANENTLY);
+        }
+
+        // Fallback: generate slug and redirect
+        $slug = \App\Entity\Product::generateSlug(
+            $device['product_name'] ?? null,
+            (int) $device['vendor_id'],
+            (int) $device['product_id']
+        );
+
+        return $this->redirectToRoute('device_show', ['slug' => $slug], Response::HTTP_MOVED_PERMANENTLY);
+    }
+
+    #[Route('/device/{slug}', name: 'device_show', requirements: ['slug' => '[a-z0-9-]+'], methods: ['GET'])]
+    public function show(string $slug): Response
+    {
+        $device = $this->deviceRepo->getDeviceBySlug($slug);
+
+        if (!$device) {
+            throw $this->createNotFoundException('Device not found');
+        }
+
+        $id = (int) $device['id'];
 
         // If device has no product name, try to get it from DCL Product registry
         if (empty($device['product_name']) || $device['product_name'] === '-') {

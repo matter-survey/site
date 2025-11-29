@@ -79,11 +79,6 @@
         background: white;
         border-radius: 0.5rem;
         border: 1px solid var(--gray-200);
-        position: sticky;
-        top: 1rem;
-        max-height: calc(100vh - 2rem);
-        display: flex;
-        flex-direction: column;
     }
 
     .filter-header {
@@ -92,7 +87,6 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        flex-shrink: 0;
     }
 
     .filter-header h3 {
@@ -109,12 +103,6 @@
 
     .filter-clear:hover {
         text-decoration: underline;
-    }
-
-    .filter-form {
-        overflow-y: auto;
-        flex: 1;
-        min-height: 0;
     }
 
     .filter-section {
@@ -457,7 +445,7 @@
                 {% endif %}
             </div>
 
-            <form method="get" action="{{ path('device_index') }}" id="filter-form" class="filter-form">
+            <form method="get" action="{{ path('device_index') }}" id="filter-form">
                 {# Search within filters #}
                 <div class="filter-section">
                     <h4>Search</h4>
@@ -607,7 +595,7 @@
                         <div class="device-item">
                             <div class="device-info">
                                 <h3>
-                                    <a href="{{ path('device_show', {id: device.id}) }}">
+                                    <a href="{{ path('device_show', {slug: device.slug}) }}">
                                         {{ device.product_name ?? 'Unknown Product' }}
                                     </a>
                                 </h3>

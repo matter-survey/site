@@ -228,7 +228,7 @@
                     {% for product in productsWithMultipleVersions %}
                         <tr>
                             <td>
-                                <a href="{{ path('device_show', {id: product.id}) }}">
+                                <a href="{{ path('device_show', {slug: product.slug}) }}">
                                     {{ product.product_name ?? 'Unknown Product' }}
                                 </a>
                             </td>

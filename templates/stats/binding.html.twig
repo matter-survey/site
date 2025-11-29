@@ -268,7 +268,7 @@
                 {% for device in bindingDevices %}
                     <tr>
                         <td>
-                            <a href="{{ path('device_show', {id: device.id}) }}">
+                            <a href="{{ path('device_show', {slug: device.slug}) }}">
                                 {{ device.product_name ?? 'Unknown Product' }}
                             </a>
                         </td>

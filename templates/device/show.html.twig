@@ -564,7 +564,7 @@
                         </h4>
                         <div class="compatible-devices">
                             {% for compatDevice in data.devices %}
-                                <a href="{{ path('device_show', {id: compatDevice.id}) }}" class="compatible-device">
+                                <a href="{{ path('device_show', {slug: compatDevice.slug}) }}" class="compatible-device">
                                     {{ compatDevice.product_name ?? 'Unknown' }}
                                     <span style="opacity: 0.6; font-size: 0.75rem;">({{ compatDevice.vendor_name ?? 'Unknown' }})</span>
                                 </a>
@@ -592,7 +592,7 @@
                         </h4>
                         <div class="compatible-devices">
                             {% for compatDevice in data.devices %}
-                                <a href="{{ path('device_show', {id: compatDevice.id}) }}" class="compatible-device">
+                                <a href="{{ path('device_show', {slug: compatDevice.slug}) }}" class="compatible-device">
                                     {{ compatDevice.product_name ?? 'Unknown' }}
                                     <span style="opacity: 0.6; font-size: 0.75rem;">({{ compatDevice.vendor_name ?? 'Unknown' }})</span>
                                 </a>

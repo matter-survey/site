@@ -594,7 +594,7 @@
         <div class="device-grid">
             {% for device in devices %}
                 <div class="device-card">
-                    <a href="{{ path('device_show', {id: device.id}) }}">
+                    <a href="{{ path('device_show', {slug: device.slug}) }}">
                         <h3>{{ device.product_name ?? 'Unknown Product' }}</h3>
                         <div class="vendor">{{ device.vendor_name ?? 'Unknown Vendor' }}</div>
                         <div class="device-meta">

@@ -655,7 +655,7 @@
         {% if devices|length > 0 %}
             <div class="device-grid">
                 {% for device in devices %}
-                    <a href="{{ path('device_show', {id: device.id}) }}" class="device-card">
+                    <a href="{{ path('device_show', {slug: device.slug}) }}" class="device-card">
                         <div class="name">{{ device.product_name ?? 'Unknown Device' }}</div>
                         <div class="vendor">{{ device.vendor_name ?? 'Unknown Vendor' }}</div>
                     </a>

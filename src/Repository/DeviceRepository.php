@@ -45,14 +45,22 @@ class DeviceRepository
         }
         $connectivityTypesJson = !empty($connectivityTypes) ? json_encode($connectivityTypes) : null;
 
+        // Generate slug for new products
+        $slug = \App\Entity\Product::generateSlug(
+            $deviceData['product_name'] ?? null,
+            (int) $deviceData['vendor_id'],
+            (int) $deviceData['product_id']
+        );
+
         $result = $this->db->executeQuery('
-            INSERT INTO products (vendor_id, vendor_name, vendor_fk, product_id, product_name, connectivity_types, first_seen, last_seen, submission_count)
-            VALUES (:vendor_id, :vendor_name, :vendor_fk, :product_id, :product_name, :connectivity_types, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1)
+            INSERT INTO products (vendor_id, vendor_name, vendor_fk, product_id, product_name, slug, connectivity_types, first_seen, last_seen, submission_count)
+            VALUES (:vendor_id, :vendor_name, :vendor_fk, :product_id, :product_name, :slug, :connectivity_types, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1)
             ON CONFLICT(vendor_id, product_id) DO UPDATE SET
                 -- DCL is normative: keep existing names, only use survey data as fallback
                 vendor_name = COALESCE(products.vendor_name, excluded.vendor_name),
                 vendor_fk = COALESCE(products.vendor_fk, excluded.vendor_fk),
                 product_name = COALESCE(products.product_name, excluded.product_name),
+                slug = COALESCE(products.slug, excluded.slug),
                 connectivity_types = excluded.connectivity_types,
                 last_seen = CURRENT_TIMESTAMP,
                 submission_count = products.submission_count + 1
@@ -63,6 +71,7 @@ class DeviceRepository
             'vendor_fk' => $deviceData['vendor_fk'] ?? null,
             'product_id' => $deviceData['product_id'],
             'product_name' => $deviceData['product_name'],
+            'slug' => $slug,
             'connectivity_types' => $connectivityTypesJson,
         ]);
 
@@ -321,6 +330,16 @@ class DeviceRepository
         $result = $this->db->executeQuery(
             'SELECT * FROM device_summary WHERE id = :id',
             ['id' => $id]
+        )->fetchAssociative();
+
+        return $result ?: null;
+    }
+
+    public function getDeviceBySlug(string $slug): ?array
+    {
+        $result = $this->db->executeQuery(
+            'SELECT * FROM device_summary WHERE slug = :slug',
+            ['slug' => $slug]
         )->fetchAssociative();
 
         return $result ?: null;

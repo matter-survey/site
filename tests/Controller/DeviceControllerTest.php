@@ -135,9 +135,51 @@ class DeviceControllerTest extends WebTestCase
     public function testDeviceShowNotFound(): void
     {
         $client = static::createClient();
-        $client->request('GET', '/device/999999');
+        $client->request('GET', '/device/non-existent-device-slug');
 
         $this->assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testDeviceShowLegacyIdRedirectsToSlug(): void
+    {
+        $client = static::createClient();
+
+        // First get a device ID from the database
+        $crawler = $client->request('GET', '/');
+        $this->assertResponseIsSuccessful();
+
+        // Get the first device's slug-based link
+        $deviceLink = $crawler->filter('.device-info h3 a')->first();
+        $slugHref = $deviceLink->attr('href');
+
+        // Extract device ID by going to the page and checking what we find
+        // Since we're using slugs now, we need to test the redirect from ID to slug
+        // Get an ID from fixtures - Eve Motion has vendor_id=4874, product_id=100
+        // The slug would be eve-motion-4874-100
+
+        // Request with ID should redirect to slug
+        $client->request('GET', '/device/1');
+
+        // Should redirect (301) to slug URL
+        $this->assertResponseRedirects();
+        $this->assertResponseStatusCodeSame(Response::HTTP_MOVED_PERMANENTLY);
+    }
+
+    public function testDeviceShowSlugBasedUrlWorks(): void
+    {
+        $client = static::createClient();
+
+        // Navigate from index using slug-based link
+        $crawler = $client->request('GET', '/');
+        $deviceLink = $crawler->filter('.device-info h3 a')->first();
+        $href = $deviceLink->attr('href');
+
+        // Verify it's a slug-based URL (contains letters, not just /device/123)
+        $this->assertMatchesRegularExpression('#/device/[a-z0-9-]+$#', $href);
+
+        // Navigate to the slug URL
+        $client->request('GET', $href);
+        $this->assertResponseIsSuccessful();
     }
 
     public function testDeviceShowInvalidId(): void

@@ -283,7 +283,7 @@
             </h2>
             {% for device in recentDevices %}
                 <div class="recent-device">
-                    <a href="{{ path('device_show', {id: device.id}) }}">
+                    <a href="{{ path('device_show', {slug: device.slug}) }}">
                         {{ device.product_name ?? 'Unknown Product' }}
                     </a>
                     <div class="meta">

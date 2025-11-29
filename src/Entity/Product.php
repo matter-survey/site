@@ -14,12 +14,16 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Index(columns: ['vendor_id'], name: 'idx_products_vendor')]
 #[ORM\Index(columns: ['product_id'], name: 'idx_products_product')]
 #[ORM\Index(columns: ['vendor_fk'], name: 'idx_products_vendor_fk')]
+#[ORM\Index(columns: ['slug'], name: 'idx_products_slug')]
 class Product
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
+
+    #[ORM\Column(length: 255, unique: true, nullable: true)]
+    private ?string $slug = null;
 
     #[ORM\Column(name: 'vendor_id')]
     private int $vendorId;
@@ -395,5 +399,41 @@ class Product
         $this->connectivityTypes = $merged ?: null;
 
         return $this;
+    }
+
+    public function getSlug(): ?string
+    {
+        return $this->slug;
+    }
+
+    public function setSlug(?string $slug): static
+    {
+        $this->slug = $slug;
+
+        return $this;
+    }
+
+    /**
+     * Generate a URL-friendly slug from the product name and IDs.
+     * Format: product-name-vendorid-productid (e.g., "eve-motion-4874-17")
+     */
+    public static function generateSlug(?string $productName, int $vendorId, int $productId): string
+    {
+        $slug = '';
+
+        if (!empty($productName)) {
+            $slug = strtolower($productName);
+            $slug = preg_replace('/[^a-z0-9\s-]/', '', $slug);
+            $slug = preg_replace('/[\s_]+/', '-', $slug);
+            $slug = preg_replace('/-+/', '-', $slug);
+            $slug = trim($slug, '-');
+        }
+
+        // Always append vendor_id and product_id for uniqueness
+        if ($slug !== '') {
+            return $slug . '-' . $vendorId . '-' . $productId;
+        }
+
+        return 'product-' . $vendorId . '-' . $productId;
     }
 }
