@@ -559,8 +559,8 @@ class DeviceControllerTest extends WebTestCase
         // Check device type filter section exists
         $this->assertSelectorTextContains('.filter-sidebar', 'Device Type');
 
-        // Check device type radio buttons exist
-        $deviceTypeInputs = $crawler->filter('input[name="device_type"]');
+        // Check device type checkboxes exist
+        $deviceTypeInputs = $crawler->filter('input[name="device_types[]"]');
         $this->assertGreaterThan(0, $deviceTypeInputs->count(), 'Should have device type filter options');
     }
 
@@ -569,23 +569,38 @@ class DeviceControllerTest extends WebTestCase
         $client = static::createClient();
 
         // Extended Color Light is device type 269 (0x010D)
-        $crawler = $client->request('GET', '/', ['device_type' => '269']);
+        $crawler = $client->request('GET', '/', ['device_types' => ['269']]);
 
         $this->assertResponseIsSuccessful();
 
         // Should show active filter for device type
         $this->assertSelectorExists('.active-filters');
-        $this->assertSelectorTextContains('.active-filter', 'Type:');
+        $this->assertSelectorExists('.active-filter');
+    }
+
+    public function testIndexPageFilterByMultipleDeviceTypes(): void
+    {
+        $client = static::createClient();
+
+        // Filter by multiple device types
+        $crawler = $client->request('GET', '/', ['device_types' => ['269', '266']]);
+
+        $this->assertResponseIsSuccessful();
+
+        // Should show active filters
+        $this->assertSelectorExists('.active-filters');
+        $activeFilters = $crawler->filter('.active-filter');
+        $this->assertGreaterThanOrEqual(2, $activeFilters->count(), 'Should show multiple device type filters');
     }
 
     public function testIndexPageHandlesEmptyFilterParameters(): void
     {
         $client = static::createClient();
 
-        // Test URL pattern that was causing 400: ?q=&device_type=770&vendor=
+        // Test URL pattern with device_types array and empty vendor
         $client->request('GET', '/', [
             'q' => '',
-            'device_type' => '770',
+            'device_types' => ['770'],
             'vendor' => '',
         ]);
 
@@ -599,7 +614,7 @@ class DeviceControllerTest extends WebTestCase
         // All empty parameters
         $client->request('GET', '/', [
             'q' => '',
-            'device_type' => '',
+            'device_types' => [],
             'vendor' => '',
             'binding' => '',
         ]);

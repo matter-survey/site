@@ -96,13 +96,13 @@ class DeviceController extends AbstractController
             }
         }
 
-        // Device type filter (check for non-empty before getInt to avoid error on empty string)
-        $deviceTypeParam = $request->query->get('device_type', '');
-        if ($deviceTypeParam !== '' && is_numeric($deviceTypeParam)) {
-            $deviceType = (int) $deviceTypeParam;
-            if ($deviceType > 0) {
-                $filters['device_type'] = $deviceType;
-            }
+        // Device type filter (array of IDs)
+        $deviceTypes = $request->query->all('device_types');
+        if (!empty($deviceTypes)) {
+            $filters['device_types'] = array_filter(
+                array_map('intval', $deviceTypes),
+                fn ($v) => $v > 0
+            );
         }
 
         return $filters;
@@ -116,7 +116,7 @@ class DeviceController extends AbstractController
         return !empty($filters['connectivity'])
             || isset($filters['binding'])
             || !empty($filters['vendor'])
-            || !empty($filters['device_type'])
+            || !empty($filters['device_types'])
             || !empty($filters['search']);
     }
 

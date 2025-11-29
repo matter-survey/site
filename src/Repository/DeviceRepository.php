@@ -216,18 +216,23 @@ class DeviceRepository
             $types['vendor'] = \Doctrine\DBAL\ParameterType::INTEGER;
         }
 
-        // Device type filter
-        if (!empty($filters['device_type'])) {
+        // Device types filter (array of IDs)
+        if (!empty($filters['device_types'])) {
+            $deviceTypeConditions = [];
+            foreach ($filters['device_types'] as $i => $typeId) {
+                $paramName = 'device_type_' . $i;
+                $deviceTypeConditions[] = "json_extract(value, \"$.id\") = :{$paramName}";
+                $params[$paramName] = $typeId;
+                $types[$paramName] = \Doctrine\DBAL\ParameterType::INTEGER;
+            }
             $sql .= ' AND id IN (
                 SELECT DISTINCT pe.device_id
                 FROM product_endpoints pe
                 WHERE EXISTS (
                     SELECT 1 FROM json_each(pe.device_types)
-                    WHERE json_extract(value, "$.id") = :device_type
+                    WHERE ' . implode(' OR ', $deviceTypeConditions) . '
                 )
             )';
-            $params['device_type'] = $filters['device_type'];
-            $types['device_type'] = \Doctrine\DBAL\ParameterType::INTEGER;
         }
 
         // Search filter
