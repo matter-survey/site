@@ -144,7 +144,7 @@ class ClusterRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('c')
             ->where('c.name LIKE :query')
-            ->setParameter('query', '%' . $query . '%')
+            ->setParameter('query', '%'.$query.'%')
             ->orderBy('c.name', 'ASC')
             ->setMaxResults($limit)
             ->getQuery()

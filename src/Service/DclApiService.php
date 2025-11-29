@@ -40,7 +40,7 @@ class DclApiService
         $offset = 0;
 
         do {
-            $response = $this->httpClient->request('GET', self::BASE_URL . '/dcl/vendorinfo/vendors', [
+            $response = $this->httpClient->request('GET', self::BASE_URL.'/dcl/vendorinfo/vendors', [
                 'query' => [
                     'pagination.limit' => self::PAGE_SIZE,
                     'pagination.offset' => $offset,
@@ -113,7 +113,7 @@ class DclApiService
         $offset = 0;
 
         do {
-            $response = $this->httpClient->request('GET', self::BASE_URL . '/dcl/model/models', [
+            $response = $this->httpClient->request('GET', self::BASE_URL.'/dcl/model/models', [
                 'query' => [
                     'pagination.limit' => self::PAGE_SIZE,
                     'pagination.offset' => $offset,
@@ -163,7 +163,7 @@ class DclApiService
         $offset = 0;
 
         do {
-            $response = $this->httpClient->request('GET', self::BASE_URL . '/dcl/compliance/certified-models', [
+            $response = $this->httpClient->request('GET', self::BASE_URL.'/dcl/compliance/certified-models', [
                 'query' => [
                     'pagination.limit' => self::PAGE_SIZE,
                     'pagination.offset' => $offset,
@@ -176,7 +176,7 @@ class DclApiService
             $total = (int) ($data['pagination']['total'] ?? 0);
 
             foreach ($certifiedModelInfos as $cert) {
-                $key = $cert['vid'] . ':' . $cert['pid'];
+                $key = $cert['vid'].':'.$cert['pid'];
 
                 if (!isset($certifiedModels[$key])) {
                     $certifiedModels[$key] = [
@@ -224,7 +224,7 @@ class DclApiService
     {
         $this->logger->info('Fetching PAA root certificates from DCL API');
 
-        $response = $this->httpClient->request('GET', self::BASE_URL . '/dcl/pki/root-certificates');
+        $response = $this->httpClient->request('GET', self::BASE_URL.'/dcl/pki/root-certificates');
         $data = $response->toArray();
 
         $certs = $data['approvedRootCertificates']['certs'] ?? [];

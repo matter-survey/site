@@ -24,7 +24,8 @@ class ApiController extends AbstractController
         private RateLimiterFactoryInterface $apiSubmitLimiter,
         private LoggerInterface $logger,
         private ValidatorInterface $validator,
-    ) {}
+    ) {
+    }
 
     #[Route('/', name: 'api_docs_redirect', methods: ['GET'])]
     public function docsRedirect(): Response
@@ -40,6 +41,7 @@ class ApiController extends AbstractController
         $limiter = $this->apiSubmitLimiter->create($clientIp);
         if (!$limiter->consume()->isAccepted()) {
             $this->logger->warning('API rate limit exceeded', ['ip' => $clientIp]);
+
             return $this->json(
                 ['status' => 'error', 'error' => 'Rate limit exceeded. Please try again later.'],
                 Response::HTTP_TOO_MANY_REQUESTS
@@ -56,13 +58,14 @@ class ApiController extends AbstractController
         }
 
         $payload = json_decode($content, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
+        if (JSON_ERROR_NONE !== json_last_error()) {
             $this->logger->warning('Invalid JSON in API request', [
                 'ip' => $clientIp,
                 'error' => json_last_error_msg(),
             ]);
+
             return $this->json(
-                ['status' => 'error', 'error' => 'Invalid JSON: ' . json_last_error_msg()],
+                ['status' => 'error', 'error' => 'Invalid JSON: '.json_last_error_msg()],
                 Response::HTTP_BAD_REQUEST
             );
         }
@@ -80,6 +83,7 @@ class ApiController extends AbstractController
                 'ip' => $clientIp,
                 'errors' => $errorMessages,
             ]);
+
             return $this->json(
                 ['status' => 'error', 'error' => $errorMessages[0]],
                 Response::HTTP_BAD_REQUEST
@@ -119,6 +123,7 @@ class ApiController extends AbstractController
                 $device->hardware_version = $deviceData['hardware_version'] ?? null;
                 $device->software_version = $deviceData['software_version'] ?? null;
                 $device->endpoints = $deviceData['endpoints'] ?? null;
+
                 return $device;
             }, $payload['devices']);
         }

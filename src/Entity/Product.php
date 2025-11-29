@@ -223,7 +223,7 @@ class Product
 
     public function incrementSubmissionCount(): static
     {
-        $this->submissionCount++;
+        ++$this->submissionCount;
         $this->lastSeen = new \DateTime();
 
         return $this;
@@ -546,7 +546,7 @@ class Product
 
     /**
      * Generate a URL-friendly slug from the product name and IDs.
-     * Format: product-name-vendorid-productid (e.g., "eve-motion-4874-17")
+     * Format: product-name-vendorid-productid (e.g., "eve-motion-4874-17").
      */
     public static function generateSlug(?string $productName, int $vendorId, int $productId): string
     {
@@ -561,10 +561,10 @@ class Product
         }
 
         // Always append vendor_id and product_id for uniqueness
-        if ($slug !== '') {
-            return $slug . '-' . $vendorId . '-' . $productId;
+        if ('' !== $slug) {
+            return $slug.'-'.$vendorId.'-'.$productId;
         }
 
-        return 'product-' . $vendorId . '-' . $productId;
+        return 'product-'.$vendorId.'-'.$productId;
     }
 }

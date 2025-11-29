@@ -19,7 +19,7 @@ class ClusterFixtures extends Fixture implements FixtureGroupInterface
 
     public function __construct(?string $dataPath = null)
     {
-        $this->dataPath = $dataPath ?? __DIR__ . '/../../fixtures/clusters.yaml';
+        $this->dataPath = $dataPath ?? __DIR__.'/../../fixtures/clusters.yaml';
     }
 
     public static function getGroups(): array
@@ -41,7 +41,7 @@ class ClusterFixtures extends Fixture implements FixtureGroupInterface
 
             // Find existing or create new
             $cluster = $repository->find($id);
-            if ($cluster === null) {
+            if (null === $cluster) {
                 $cluster = new Cluster($id);
             }
 
@@ -62,7 +62,7 @@ class ClusterFixtures extends Fixture implements FixtureGroupInterface
             $manager->persist($cluster);
 
             // Add reference for potential use in other fixtures
-            $this->addReference('cluster-' . $id, $cluster);
+            $this->addReference('cluster-'.$id, $cluster);
         }
 
         $manager->flush();

@@ -32,7 +32,7 @@ class DeviceRepository
             ]
         )->fetchAssociative();
 
-        $isNew = ($existing === false);
+        $isNew = (false === $existing);
 
         // Merge connectivity types if we have new data
         $connectivityTypes = $deviceData['connectivity_types'] ?? [];
@@ -195,11 +195,11 @@ class DeviceRepository
         if (!empty($filters['connectivity'])) {
             $connectivityConditions = [];
             foreach ($filters['connectivity'] as $i => $type) {
-                $paramName = 'conn_' . $i;
+                $paramName = 'conn_'.$i;
                 $connectivityConditions[] = "connectivity_types LIKE :{$paramName}";
-                $params[$paramName] = '%"' . $type . '"%';
+                $params[$paramName] = '%"'.$type.'"%';
             }
-            $sql .= ' AND (' . implode(' OR ', $connectivityConditions) . ')';
+            $sql .= ' AND ('.implode(' OR ', $connectivityConditions).')';
         }
 
         // Binding filter
@@ -220,7 +220,7 @@ class DeviceRepository
         if (!empty($filters['device_types'])) {
             $deviceTypeConditions = [];
             foreach ($filters['device_types'] as $i => $typeId) {
-                $paramName = 'device_type_' . $i;
+                $paramName = 'device_type_'.$i;
                 $deviceTypeConditions[] = "json_extract(value, \"$.id\") = :{$paramName}";
                 $params[$paramName] = $typeId;
                 $types[$paramName] = \Doctrine\DBAL\ParameterType::INTEGER;
@@ -230,7 +230,7 @@ class DeviceRepository
                 FROM product_endpoints pe
                 WHERE EXISTS (
                     SELECT 1 FROM json_each(pe.device_types)
-                    WHERE ' . implode(' OR ', $deviceTypeConditions) . '
+                    WHERE '.implode(' OR ', $deviceTypeConditions).'
                 )
             )';
         }
@@ -239,7 +239,7 @@ class DeviceRepository
         if (!empty($filters['search'])) {
             $sql .= ' AND (vendor_name LIKE :search OR product_name LIKE :search
                       OR CAST(vendor_id AS TEXT) LIKE :search OR CAST(product_id AS TEXT) LIKE :search)';
-            $params['search'] = '%' . $filters['search'] . '%';
+            $params['search'] = '%'.$filters['search'].'%';
         }
 
         return $sql;
@@ -577,6 +577,7 @@ class DeviceRepository
         }
 
         arsort($categoryStats);
+
         return $categoryStats;
     }
 
@@ -599,6 +600,7 @@ class DeviceRepository
         }
 
         uksort($versionStats, 'version_compare');
+
         return $versionStats;
     }
 
@@ -689,9 +691,9 @@ class DeviceRepository
             if (!isset($categoryStats[$displayCategory])) {
                 $categoryStats[$displayCategory] = ['total' => 0, 'with_binding' => 0];
             }
-            $categoryStats[$displayCategory]['total']++;
+            ++$categoryStats[$displayCategory]['total'];
             if ($row['has_binding']) {
-                $categoryStats[$displayCategory]['with_binding']++;
+                ++$categoryStats[$displayCategory]['with_binding'];
             }
         }
 
@@ -702,7 +704,8 @@ class DeviceRepository
                 : 0;
         }
 
-        uasort($categoryStats, fn($a, $b) => $b['percentage'] <=> $a['percentage']);
+        uasort($categoryStats, fn ($a, $b) => $b['percentage'] <=> $a['percentage']);
+
         return $categoryStats;
     }
 
@@ -758,9 +761,10 @@ class DeviceRepository
      * Get devices that have a specific cluster as a SERVER.
      * This finds devices that "provide" a capability (can be controlled/read from).
      *
-     * @param int $clusterId The cluster ID to search for
+     * @param int      $clusterId       The cluster ID to search for
      * @param int|null $excludeDeviceId Device ID to exclude from results (typically the current device)
-     * @param int $limit Maximum number of results
+     * @param int      $limit           Maximum number of results
+     *
      * @return array List of devices with basic info
      */
     public function getDevicesWithServerCluster(int $clusterId, ?int $excludeDeviceId = null, int $limit = 10): array
@@ -779,7 +783,7 @@ class DeviceRepository
         $params = ['cluster_id' => $clusterId, 'limit' => $limit];
         $types = ['cluster_id' => \Doctrine\DBAL\ParameterType::INTEGER, 'limit' => \Doctrine\DBAL\ParameterType::INTEGER];
 
-        if ($excludeDeviceId !== null) {
+        if (null !== $excludeDeviceId) {
             $sql .= ' AND ds.id != :exclude_id';
             $params['exclude_id'] = $excludeDeviceId;
             $types['exclude_id'] = \Doctrine\DBAL\ParameterType::INTEGER;
@@ -809,7 +813,7 @@ class DeviceRepository
         $params = ['cluster_id' => $clusterId];
         $types = ['cluster_id' => \Doctrine\DBAL\ParameterType::INTEGER];
 
-        if ($excludeDeviceId !== null) {
+        if (null !== $excludeDeviceId) {
             $sql .= ' AND ds.id != :exclude_id';
             $params['exclude_id'] = $excludeDeviceId;
             $types['exclude_id'] = \Doctrine\DBAL\ParameterType::INTEGER;
@@ -822,9 +826,10 @@ class DeviceRepository
      * Get devices that have a specific cluster as a CLIENT.
      * This finds devices that "consume" a capability (can control/read from this device).
      *
-     * @param int $clusterId The cluster ID to search for
+     * @param int      $clusterId       The cluster ID to search for
      * @param int|null $excludeDeviceId Device ID to exclude from results (typically the current device)
-     * @param int $limit Maximum number of results
+     * @param int      $limit           Maximum number of results
+     *
      * @return array List of devices with basic info
      */
     public function getDevicesWithClientCluster(int $clusterId, ?int $excludeDeviceId = null, int $limit = 10): array
@@ -843,7 +848,7 @@ class DeviceRepository
         $params = ['cluster_id' => $clusterId, 'limit' => $limit];
         $types = ['cluster_id' => \Doctrine\DBAL\ParameterType::INTEGER, 'limit' => \Doctrine\DBAL\ParameterType::INTEGER];
 
-        if ($excludeDeviceId !== null) {
+        if (null !== $excludeDeviceId) {
             $sql .= ' AND ds.id != :exclude_id';
             $params['exclude_id'] = $excludeDeviceId;
             $types['exclude_id'] = \Doctrine\DBAL\ParameterType::INTEGER;
@@ -873,7 +878,7 @@ class DeviceRepository
         $params = ['cluster_id' => $clusterId];
         $types = ['cluster_id' => \Doctrine\DBAL\ParameterType::INTEGER];
 
-        if ($excludeDeviceId !== null) {
+        if (null !== $excludeDeviceId) {
             $sql .= ' AND ds.id != :exclude_id';
             $params['exclude_id'] = $excludeDeviceId;
             $types['exclude_id'] = \Doctrine\DBAL\ParameterType::INTEGER;
@@ -1050,9 +1055,9 @@ class DeviceRepository
      * Get products frequently paired with a given product.
      * Returns products that appear together in the same installation.
      *
-     * @param int $productId The product to find pairings for
+     * @param int $productId              The product to find pairings for
      * @param int $minSharedInstallations Minimum number of shared installations (default 2)
-     * @param int $limit Maximum results
+     * @param int $limit                  Maximum results
      *
      * @return array<array{id: int, slug: string, vendor_name: string, product_name: string, shared_installations: int, pairing_strength: float}>
      */
@@ -1060,7 +1065,7 @@ class DeviceRepository
     {
         // Get the total installations for the source product (for calculating pairing strength)
         $sourceInstallations = $this->getProductInstallationCount($productId);
-        if ($sourceInstallations === 0) {
+        if (0 === $sourceInstallations) {
             return [];
         }
 
@@ -1278,7 +1283,7 @@ class DeviceRepository
 
             if ($vendorCounts[$vendorFk] < $maxPerVendor) {
                 $result[$vendorFk][] = $deviceTypeId;
-                $vendorCounts[$vendorFk]++;
+                ++$vendorCounts[$vendorFk];
             }
         }
 
@@ -1431,22 +1436,22 @@ class DeviceRepository
         ")->fetchAllAssociative();
 
         // Binding support stats
-        $bindingStats = $this->db->executeQuery("
+        $bindingStats = $this->db->executeQuery('
             SELECT
                 SUM(CASE WHEN supports_binding = 1 THEN 1 ELSE 0 END) as with_binding,
                 SUM(CASE WHEN supports_binding = 0 OR supports_binding IS NULL THEN 1 ELSE 0 END) as without_binding
             FROM device_summary
-        ")->fetchAssociative();
+        ')->fetchAssociative();
 
         // Top vendors by market share
-        $topVendors = $this->db->executeQuery("
+        $topVendors = $this->db->executeQuery('
             SELECT v.name, v.device_count,
                    ROUND(v.device_count * 100.0 / (SELECT SUM(device_count) FROM vendors WHERE device_count > 0), 1) as market_share
             FROM vendors v
             WHERE v.device_count > 0
             ORDER BY v.device_count DESC
             LIMIT 15
-        ")->fetchAllAssociative();
+        ')->fetchAllAssociative();
 
         // Monthly growth (based on first_seen dates)
         $monthlyGrowth = $this->db->executeQuery("
@@ -1459,7 +1464,7 @@ class DeviceRepository
         ")->fetchAllAssociative();
 
         // Discovery capabilities distribution
-        $discoveryStats = $this->db->executeQuery("
+        $discoveryStats = $this->db->executeQuery('
             SELECT
                 SUM(CASE WHEN discovery_capabilities_bitmask & 1 THEN 1 ELSE 0 END) as softap,
                 SUM(CASE WHEN discovery_capabilities_bitmask & 2 THEN 1 ELSE 0 END) as ble,
@@ -1467,7 +1472,7 @@ class DeviceRepository
                 COUNT(*) as total
             FROM products
             WHERE discovery_capabilities_bitmask IS NOT NULL
-        ")->fetchAssociative();
+        ')->fetchAssociative();
 
         return [
             'categoryDistribution' => $categoryDistribution,
@@ -1488,7 +1493,7 @@ class DeviceRepository
     public function getVersionTimeline(): array
     {
         // Products with multiple versions (actively updated)
-        $activelyUpdated = $this->db->executeQuery("
+        $activelyUpdated = $this->db->executeQuery('
             SELECT
                 ds.product_name,
                 ds.vendor_name,
@@ -1502,10 +1507,10 @@ class DeviceRepository
             HAVING version_count > 1
             ORDER BY version_count DESC
             LIMIT 30
-        ")->fetchAllAssociative();
+        ')->fetchAllAssociative();
 
         // Version distribution stats
-        $versionStats = $this->db->executeQuery("
+        $versionStats = $this->db->executeQuery('
             SELECT
                 version_count,
                 COUNT(*) as product_count
@@ -1517,7 +1522,7 @@ class DeviceRepository
             )
             GROUP BY version_count
             ORDER BY version_count
-        ")->fetchAllAssociative();
+        ')->fetchAllAssociative();
 
         // Recent version updates (last 30 days)
         $recentUpdates = $this->db->executeQuery("
@@ -1537,7 +1542,7 @@ class DeviceRepository
         ")->fetchAllAssociative();
 
         // Average versions per product by vendor
-        $vendorUpdateFrequency = $this->db->executeQuery("
+        $vendorUpdateFrequency = $this->db->executeQuery('
             SELECT
                 v.name as vendor_name,
                 v.slug as vendor_slug,
@@ -1554,7 +1559,7 @@ class DeviceRepository
             HAVING product_count >= 3
             ORDER BY avg_versions DESC
             LIMIT 20
-        ")->fetchAllAssociative();
+        ')->fetchAllAssociative();
 
         return [
             'activelyUpdated' => $activelyUpdated,

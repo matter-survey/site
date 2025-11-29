@@ -35,7 +35,7 @@ class ClusterFixturesTest extends KernelTestCase
         $this->assertNotEmpty($attributes);
 
         // Verify OnOff attribute exists
-        $onOffAttr = array_filter($attributes, fn ($a) => $a['name'] === 'OnOff');
+        $onOffAttr = array_filter($attributes, fn ($a) => 'OnOff' === $a['name']);
         $this->assertNotEmpty($onOffAttr, 'OnOff attribute should exist');
     }
 
@@ -49,11 +49,11 @@ class ClusterFixturesTest extends KernelTestCase
         $this->assertNotEmpty($commands);
 
         // Verify Off command exists
-        $offCmd = array_filter($commands, fn ($c) => $c['name'] === 'Off');
+        $offCmd = array_filter($commands, fn ($c) => 'Off' === $c['name']);
         $this->assertNotEmpty($offCmd, 'Off command should exist');
 
         // Verify On command exists
-        $onCmd = array_filter($commands, fn ($c) => $c['name'] === 'On');
+        $onCmd = array_filter($commands, fn ($c) => 'On' === $c['name']);
         $this->assertNotEmpty($onCmd, 'On command should exist');
     }
 
@@ -67,7 +67,7 @@ class ClusterFixturesTest extends KernelTestCase
         $this->assertNotEmpty($features);
 
         // Verify Lighting feature exists
-        $lightingFeature = array_filter($features, fn ($f) => $f['code'] === 'LT');
+        $lightingFeature = array_filter($features, fn ($f) => 'LT' === $f['code']);
         $this->assertNotEmpty($lightingFeature, 'Lighting (LT) feature should exist');
     }
 
@@ -160,8 +160,8 @@ class ClusterFixturesTest extends KernelTestCase
         $features = $cluster->getFeatures();
 
         // Values should be either null or arrays
-        $this->assertTrue($attributes === null || \is_array($attributes));
-        $this->assertTrue($commands === null || \is_array($commands));
-        $this->assertTrue($features === null || \is_array($features));
+        $this->assertTrue(null === $attributes || \is_array($attributes));
+        $this->assertTrue(null === $commands || \is_array($commands));
+        $this->assertTrue(null === $features || \is_array($features));
     }
 }

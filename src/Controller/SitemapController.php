@@ -23,7 +23,8 @@ class SitemapController extends AbstractController
         private VendorRepository $vendorRepo,
         private ClusterRepository $clusterRepo,
         private DeviceTypeRepository $deviceTypeRepo,
-    ) {}
+    ) {
+    }
 
     /**
      * Sitemap index - lists all individual sitemaps.
@@ -38,15 +39,15 @@ class SitemapController extends AbstractController
             ['route' => 'sitemap_specs', 'changefreq' => 'monthly'],
         ];
 
-        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
-        $xml .= '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n";
+        $xml .= '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'."\n";
 
         foreach ($sitemaps as $sitemap) {
             $loc = $this->generateUrl($sitemap['route'], [], UrlGeneratorInterface::ABSOLUTE_URL);
-            $xml .= '  <sitemap>' . "\n";
-            $xml .= '    <loc>' . htmlspecialchars($loc, ENT_XML1, 'UTF-8') . '</loc>' . "\n";
-            $xml .= '    <lastmod>' . date('Y-m-d') . '</lastmod>' . "\n";
-            $xml .= '  </sitemap>' . "\n";
+            $xml .= '  <sitemap>'."\n";
+            $xml .= '    <loc>'.htmlspecialchars($loc, ENT_XML1, 'UTF-8').'</loc>'."\n";
+            $xml .= '    <lastmod>'.date('Y-m-d').'</lastmod>'."\n";
+            $xml .= '  </sitemap>'."\n";
         }
 
         $xml .= '</sitemapindex>';
@@ -175,6 +176,7 @@ class SitemapController extends AbstractController
      * Create a localized URL entry for the sitemap with alternates.
      *
      * @param array<string, mixed> $params
+     *
      * @return array{loc: string, priority: float, changefreq: string, lastmod: string|null, alternates: array<string, string>}
      */
     private function createLocalizedUrl(
@@ -182,7 +184,7 @@ class SitemapController extends AbstractController
         array $params,
         float $priority,
         string $changefreq,
-        ?string $lastmod = null
+        ?string $lastmod = null,
     ): array {
         $alternates = [];
         foreach (self::LOCALES as $locale) {
@@ -226,36 +228,36 @@ class SitemapController extends AbstractController
      */
     private function renderSitemapXml(array $urls): string
     {
-        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
-        $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">' . "\n";
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n";
+        $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">'."\n";
 
         foreach ($urls as $url) {
-            $xml .= '  <url>' . "\n";
-            $xml .= '    <loc>' . htmlspecialchars($url['loc'], ENT_XML1, 'UTF-8') . '</loc>' . "\n";
+            $xml .= '  <url>'."\n";
+            $xml .= '    <loc>'.htmlspecialchars($url['loc'], ENT_XML1, 'UTF-8').'</loc>'."\n";
 
             // Add hreflang alternates if available
             if (isset($url['alternates']) && \count($url['alternates']) > 0) {
                 foreach ($url['alternates'] as $locale => $href) {
-                    $xml .= '    <xhtml:link rel="alternate" hreflang="' . $locale . '" href="' . htmlspecialchars($href, ENT_XML1, 'UTF-8') . '" />' . "\n";
+                    $xml .= '    <xhtml:link rel="alternate" hreflang="'.$locale.'" href="'.htmlspecialchars($href, ENT_XML1, 'UTF-8').'" />'."\n";
                 }
                 // Add x-default pointing to English
                 if (isset($url['alternates']['en'])) {
-                    $xml .= '    <xhtml:link rel="alternate" hreflang="x-default" href="' . htmlspecialchars($url['alternates']['en'], ENT_XML1, 'UTF-8') . '" />' . "\n";
+                    $xml .= '    <xhtml:link rel="alternate" hreflang="x-default" href="'.htmlspecialchars($url['alternates']['en'], ENT_XML1, 'UTF-8').'" />'."\n";
                 }
             }
 
-            if ($url['lastmod'] !== null) {
+            if (null !== $url['lastmod']) {
                 $date = $url['lastmod'];
-                if (\strlen($date) === 10) {
-                    $xml .= '    <lastmod>' . $date . '</lastmod>' . "\n";
-                } elseif (strtotime($date) !== false) {
-                    $xml .= '    <lastmod>' . date('Y-m-d', strtotime($date)) . '</lastmod>' . "\n";
+                if (10 === \strlen($date)) {
+                    $xml .= '    <lastmod>'.$date.'</lastmod>'."\n";
+                } elseif (false !== strtotime($date)) {
+                    $xml .= '    <lastmod>'.date('Y-m-d', strtotime($date)).'</lastmod>'."\n";
                 }
             }
 
-            $xml .= '    <changefreq>' . $url['changefreq'] . '</changefreq>' . "\n";
-            $xml .= '    <priority>' . number_format($url['priority'], 1) . '</priority>' . "\n";
-            $xml .= '  </url>' . "\n";
+            $xml .= '    <changefreq>'.$url['changefreq'].'</changefreq>'."\n";
+            $xml .= '    <priority>'.number_format($url['priority'], 1).'</priority>'."\n";
+            $xml .= '  </url>'."\n";
         }
 
         $xml .= '</urlset>';

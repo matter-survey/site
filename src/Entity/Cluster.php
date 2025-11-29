@@ -39,21 +39,21 @@ class Cluster
 
     /**
      * Cluster attributes from the Matter specification.
-     * Structure: [{ code: int, name: string, type: string, writable: bool, optional: bool }]
+     * Structure: [{ code: int, name: string, type: string, writable: bool, optional: bool }].
      */
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $attributes = null;
 
     /**
      * Cluster commands from the Matter specification.
-     * Structure: [{ code: int, name: string, direction: string, parameters: array }]
+     * Structure: [{ code: int, name: string, direction: string, parameters: array }].
      */
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $commands = null;
 
     /**
      * Cluster features from the Matter specification.
-     * Structure: [{ bit: int, code: string, name: string, description: string }]
+     * Structure: [{ bit: int, code: string, name: string, description: string }].
      */
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $features = null;

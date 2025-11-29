@@ -18,7 +18,7 @@ class JsonDecodeExtension extends AbstractExtension
 
     public function jsonDecode(?string $json): ?array
     {
-        if ($json === null || $json === '') {
+        if (null === $json || '' === $json) {
             return null;
         }
 

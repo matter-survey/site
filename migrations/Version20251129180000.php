@@ -38,7 +38,7 @@ final class Version20251129180000 extends AbstractMigration
         $this->addSql('CREATE INDEX idx_installation_products_product ON installation_products(product_id)');
 
         // Create a view for product co-occurrence counts (how often two products appear together)
-        $this->addSql("
+        $this->addSql('
             CREATE VIEW product_cooccurrence AS
             SELECT
                 ip1.product_id as product_a,
@@ -49,7 +49,7 @@ final class Version20251129180000 extends AbstractMigration
             WHERE ip1.product_id < ip2.product_id
             GROUP BY ip1.product_id, ip2.product_id
             HAVING shared_installations >= 2
-        ");
+        ');
     }
 
     public function down(Schema $schema): void

@@ -20,7 +20,8 @@ class DeviceController extends AbstractController
         private ProductRepository $productRepo,
         private TelemetryService $telemetryService,
         private MatterRegistry $matterRegistry,
-    ) {}
+    ) {
+    }
 
     #[Route('/', name: 'device_index', methods: ['GET'])]
     public function index(Request $request): Response
@@ -69,7 +70,7 @@ class DeviceController extends AbstractController
 
         // Search query
         $search = trim($request->query->getString('q', ''));
-        if ($search !== '') {
+        if ('' !== $search) {
             $filters['search'] = $search;
         }
 
@@ -81,15 +82,15 @@ class DeviceController extends AbstractController
 
         // Binding filter
         $binding = $request->query->get('binding');
-        if ($binding === '1') {
+        if ('1' === $binding) {
             $filters['binding'] = true;
-        } elseif ($binding === '0') {
+        } elseif ('0' === $binding) {
             $filters['binding'] = false;
         }
 
         // Vendor filter (check for non-empty before getInt to avoid error on empty string)
         $vendorParam = $request->query->get('vendor', '');
-        if ($vendorParam !== '' && is_numeric($vendorParam)) {
+        if ('' !== $vendorParam && is_numeric($vendorParam)) {
             $vendor = (int) $vendorParam;
             if ($vendor > 0) {
                 $filters['vendor'] = $vendor;
@@ -165,7 +166,7 @@ class DeviceController extends AbstractController
         );
 
         // If device has no product name, try to get it from DCL Product registry
-        if (empty($device['product_name']) || $device['product_name'] === '-') {
+        if (empty($device['product_name']) || '-' === $device['product_name']) {
             if ($product && $product->getProductName()) {
                 $device['product_name'] = $product->getProductName();
             }

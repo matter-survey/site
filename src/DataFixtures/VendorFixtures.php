@@ -22,7 +22,7 @@ class VendorFixtures extends Fixture implements FixtureGroupInterface
 
     public function __construct(?string $dataPath = null)
     {
-        $this->dataPath = $dataPath ?? __DIR__ . '/../../fixtures/vendors.yaml';
+        $this->dataPath = $dataPath ?? __DIR__.'/../../fixtures/vendors.yaml';
     }
 
     public static function getGroups(): array
@@ -44,7 +44,7 @@ class VendorFixtures extends Fixture implements FixtureGroupInterface
 
             // Find existing by specId (canonical key)
             $vendor = $repository->findOneBy(['specId' => $specId]);
-            if ($vendor === null) {
+            if (null === $vendor) {
                 $vendor = new Vendor();
                 $vendor->setSpecId($specId);
             }
@@ -61,7 +61,7 @@ class VendorFixtures extends Fixture implements FixtureGroupInterface
             $manager->persist($vendor);
 
             // Add reference for potential use in other fixtures
-            $this->addReference('vendor-' . $specId, $vendor);
+            $this->addReference('vendor-'.$specId, $vendor);
         }
 
         $manager->flush();

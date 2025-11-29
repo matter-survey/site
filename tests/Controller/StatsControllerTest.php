@@ -87,10 +87,10 @@ class StatsControllerTest extends WebTestCase
 
         // Should contain at least one of our fixture devices
         $recentText = $recentSection->text();
-        $hasFixtureDevice = str_contains($recentText, 'HomePod') ||
-            str_contains($recentText, 'Eve') ||
-            str_contains($recentText, 'Hue') ||
-            str_contains($recentText, 'Nanoleaf');
+        $hasFixtureDevice = str_contains($recentText, 'HomePod')
+            || str_contains($recentText, 'Eve')
+            || str_contains($recentText, 'Hue')
+            || str_contains($recentText, 'Nanoleaf');
         $this->assertTrue($hasFixtureDevice, 'Recent devices section should contain fixture devices');
     }
 

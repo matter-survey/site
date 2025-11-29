@@ -42,7 +42,7 @@ class ProductRepositoryTest extends KernelTestCase
     public function testFindByVendorSpecId(): void
     {
         // Create test products for a vendor
-        for ($i = 1; $i <= 3; $i++) {
+        for ($i = 1; $i <= 3; ++$i) {
             $product = new Product();
             $product->setVendorId(8888);
             $product->setProductId($i);
@@ -70,7 +70,7 @@ class ProductRepositoryTest extends KernelTestCase
     public function testCountByVendorSpecId(): void
     {
         // Create test products
-        for ($i = 1; $i <= 5; $i++) {
+        for ($i = 1; $i <= 5; ++$i) {
             $product = new Product();
             $product->setVendorId(6666);
             $product->setProductId($i);
@@ -97,7 +97,7 @@ class ProductRepositoryTest extends KernelTestCase
         ];
 
         foreach ($vendorProducts as $vendorId => $count) {
-            for ($i = 1; $i <= $count; $i++) {
+            for ($i = 1; $i <= $count; ++$i) {
                 $product = new Product();
                 $product->setVendorId($vendorId);
                 $product->setProductId($i);

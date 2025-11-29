@@ -25,7 +25,7 @@ class ProductFixtures extends Fixture implements FixtureGroupInterface, Dependen
 
     public function __construct(?string $dataPath = null)
     {
-        $this->dataPath = $dataPath ?? __DIR__ . '/../../fixtures/products.yaml';
+        $this->dataPath = $dataPath ?? __DIR__.'/../../fixtures/products.yaml';
     }
 
     public static function getGroups(): array
@@ -62,7 +62,7 @@ class ProductFixtures extends Fixture implements FixtureGroupInterface, Dependen
                 'productId' => $productId,
             ]);
 
-            if ($product === null) {
+            if (null === $product) {
                 $product = new Product();
                 $product->setVendorId($vendorId);
                 $product->setProductId($productId);
@@ -70,7 +70,7 @@ class ProductFixtures extends Fixture implements FixtureGroupInterface, Dependen
 
             // Use productLabel if available and meaningful, fallback to productName
             $productLabel = $data['productLabel'] ?? null;
-            $productName = (!empty($productLabel) && $productLabel !== '-')
+            $productName = (!empty($productLabel) && '-' !== $productLabel)
                 ? $productLabel
                 : ($data['productName'] ?? null);
             $product->setProductName($productName);
@@ -82,7 +82,7 @@ class ProductFixtures extends Fixture implements FixtureGroupInterface, Dependen
 
             // Set vendor relationship - find vendor by specId
             $vendor = $vendorRepository->findOneBy(['specId' => $vendorId]);
-            if ($vendor !== null) {
+            if (null !== $vendor) {
                 $product->setVendor($vendor);
             }
 
@@ -93,7 +93,7 @@ class ProductFixtures extends Fixture implements FixtureGroupInterface, Dependen
 
             // Normalize '-' placeholder to null for part number
             $partNumber = $data['partNumber'] ?? null;
-            $product->setPartNumber($partNumber === '-' ? null : $partNumber);
+            $product->setPartNumber('-' === $partNumber ? null : $partNumber);
 
             // Set URL fields (trim whitespace, convert empty strings to null)
             $product->setProductUrl(trim($data['productUrl'] ?? '') ?: null);
@@ -151,10 +151,10 @@ class ProductFixtures extends Fixture implements FixtureGroupInterface, Dependen
             }
 
             $manager->persist($product);
-            $count++;
+            ++$count;
 
             // Batch flush to manage memory
-            if ($count % self::BATCH_SIZE === 0) {
+            if (0 === $count % self::BATCH_SIZE) {
                 $manager->flush();
                 $manager->clear(Product::class);
             }
@@ -175,12 +175,11 @@ class ProductFixtures extends Fixture implements FixtureGroupInterface, Dependen
         $map = [];
 
         foreach ($vendors as $vendor) {
-            if ($vendor->getSpecId() !== null) {
+            if (null !== $vendor->getSpecId()) {
                 $map[$vendor->getSpecId()] = $vendor->getName();
             }
         }
 
         return $map;
     }
-
 }

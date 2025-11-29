@@ -24,7 +24,8 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface, Fixtu
 
     public function __construct(
         private DeviceRepository $deviceRepository,
-    ) {}
+    ) {
+    }
 
     public function load(ObjectManager $manager): void
     {
@@ -53,7 +54,6 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface, Fixtu
             foreach ($data['endpoints'] ?? [] as $endpoint) {
                 $this->deviceRepository->upsertEndpoint($deviceId, $endpoint, $hardwareVersion, $softwareVersion);
             }
-
         }
     }
 

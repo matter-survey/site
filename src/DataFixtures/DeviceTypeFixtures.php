@@ -19,7 +19,7 @@ class DeviceTypeFixtures extends Fixture implements FixtureGroupInterface
 
     public function __construct(?string $dataPath = null)
     {
-        $this->dataPath = $dataPath ?? __DIR__ . '/../../fixtures/device_types.yaml';
+        $this->dataPath = $dataPath ?? __DIR__.'/../../fixtures/device_types.yaml';
     }
 
     public static function getGroups(): array
@@ -41,7 +41,7 @@ class DeviceTypeFixtures extends Fixture implements FixtureGroupInterface
 
             // Find existing or create new
             $deviceType = $repository->find($id);
-            if ($deviceType === null) {
+            if (null === $deviceType) {
                 $deviceType = new DeviceType($id);
             }
 
@@ -67,7 +67,7 @@ class DeviceTypeFixtures extends Fixture implements FixtureGroupInterface
             $manager->persist($deviceType);
 
             // Add reference for potential use in other fixtures
-            $this->addReference('device-type-' . $id, $deviceType);
+            $this->addReference('device-type-'.$id, $deviceType);
         }
 
         $manager->flush();

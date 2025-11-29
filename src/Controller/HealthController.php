@@ -13,7 +13,8 @@ class HealthController extends AbstractController
 {
     public function __construct(
         private DatabaseService $databaseService,
-    ) {}
+    ) {
+    }
 
     #[Route('/health', name: 'health_check', methods: ['GET'])]
     public function check(): JsonResponse
@@ -35,6 +36,6 @@ class HealthController extends AbstractController
             'status' => $status,
             'checks' => $checks,
             'timestamp' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
-        ], $status === 'healthy' ? 200 : 503);
+        ], 'healthy' === $status ? 200 : 503);
     }
 }

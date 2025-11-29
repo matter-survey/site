@@ -103,7 +103,7 @@ class Vendor
 
     public function incrementDeviceCount(): static
     {
-        $this->deviceCount++;
+        ++$this->deviceCount;
 
         return $this;
     }
@@ -161,8 +161,8 @@ class Vendor
      */
     public static function generateSlug(string $name, ?int $specId = null): string
     {
-        if (empty($name) && $specId !== null) {
-            return 'vendor-' . $specId;
+        if (empty($name) && null !== $specId) {
+            return 'vendor-'.$specId;
         }
 
         $slug = strtolower($name);
@@ -171,6 +171,6 @@ class Vendor
         $slug = preg_replace('/-+/', '-', $slug);
         $slug = trim($slug, '-');
 
-        return $slug ?: 'vendor-' . ($specId ?? 'unknown');
+        return $slug ?: 'vendor-'.($specId ?? 'unknown');
     }
 }

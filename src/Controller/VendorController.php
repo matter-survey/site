@@ -20,7 +20,8 @@ class VendorController extends AbstractController
         private DeviceRepository $deviceRepo,
         private ProductRepository $productRepo,
         private MatterRegistry $matterRegistry,
-    ) {}
+    ) {
+    }
 
     #[Route('/vendors', name: 'vendor_index', methods: ['GET'])]
     public function index(Request $request): Response
@@ -33,13 +34,14 @@ class VendorController extends AbstractController
         $productCounts = $this->productRepo->getProductCountsByVendor();
 
         // Sort vendors based on request
-        if ($sort === 'products') {
+        if ('products' === $sort) {
             usort($vendors, function ($a, $b) use ($productCounts) {
                 $aCount = $productCounts[$a->getSpecId()] ?? 0;
                 $bCount = $productCounts[$b->getSpecId()] ?? 0;
+
                 return $bCount <=> $aCount ?: strcmp($a->getName(), $b->getName());
             });
-        } elseif ($sort === 'name') {
+        } elseif ('name' === $sort) {
             usort($vendors, fn ($a, $b) => strcmp($a->getName(), $b->getName()));
         }
         // 'devices' is already the default sort from findAllOrderedByDeviceCount()
@@ -106,14 +108,14 @@ class VendorController extends AbstractController
         $bindingStats = $this->deviceRepo->getBindingSupportByVendor($vendor->getId());
 
         // Enrich device types with names from MatterRegistry
-        $enrichedDeviceTypes = array_map(fn($dt) => [
+        $enrichedDeviceTypes = array_map(fn ($dt) => [
             'id' => $dt['device_type_id'],
             'name' => $this->matterRegistry->getDeviceTypeMetadata((int) $dt['device_type_id'])['name'] ?? 'Unknown',
             'count' => $dt['product_count'],
         ], $deviceTypeDistribution);
 
         // Enrich clusters with names from MatterRegistry
-        $enrichedClusters = array_map(fn($c) => [
+        $enrichedClusters = array_map(fn ($c) => [
             'id' => $c['cluster_id'],
             'name' => $this->matterRegistry->getClusterName((int) $c['cluster_id']),
             'type' => $c['type'],

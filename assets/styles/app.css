@@ -1,0 +1,5 @@
+/* Symfony UX styles */
+.turbo-progress-bar {
+    height: 3px;
+    background-color: var(--primary);
+}

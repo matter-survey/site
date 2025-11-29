@@ -15,7 +15,8 @@ class DatabaseService
 {
     public function __construct(
         private Connection $connection,
-    ) {}
+    ) {
+    }
 
     public function getConnection(): Connection
     {

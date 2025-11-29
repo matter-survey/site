@@ -62,9 +62,9 @@ class TelemetryService
             $processedCount = 0;
             foreach ($devices as $device) {
                 $productId = $this->processDevice($device);
-                if ($productId !== null) {
+                if (null !== $productId) {
                     $this->recordInstallationProduct($installationId, $productId);
-                    $processedCount++;
+                    ++$processedCount;
                 }
             }
 
@@ -90,7 +90,8 @@ class TelemetryService
                 'error' => $e->getMessage(),
                 'exception' => $e,
             ]);
-            return ['success' => false, 'error' => 'Database error: ' . $e->getMessage()];
+
+            return ['success' => false, 'error' => 'Database error: '.$e->getMessage()];
         }
     }
 
@@ -150,12 +151,12 @@ class TelemetryService
         $vendorFk = null;
 
         // Find or create vendor if we have a vendor_id
-        if ($vendorId !== null) {
+        if (null !== $vendorId) {
             $vendor = $this->vendorRepo->findOrCreateBySpecId((int) $vendorId, $vendorName);
             $vendorFk = $vendor->getId();
 
             // If this is a new vendor, we need to flush to get the ID
-            if ($vendorFk === null) {
+            if (null === $vendorFk) {
                 $this->em->flush();
                 $vendorFk = $vendor->getId();
             }
@@ -175,7 +176,7 @@ class TelemetryService
         ], $isNewDevice);
 
         // Update vendor device count if this is a new device
-        if ($isNewDevice && $vendorFk !== null) {
+        if ($isNewDevice && null !== $vendorFk) {
             $vendor = $this->vendorRepo->find($vendorFk);
             if ($vendor) {
                 $vendor->incrementDeviceCount();
@@ -252,7 +253,7 @@ class TelemetryService
 
     private function sanitizeString(?string $value): ?string
     {
-        if ($value === null) {
+        if (null === $value) {
             return null;
         }
 
@@ -278,7 +279,7 @@ class TelemetryService
             // Handle both formats: plain ID or object with 'id' field
             $typeId = \is_array($deviceType) ? ($deviceType['id'] ?? null) : $deviceType;
 
-            if ((int) $typeId === self::BRIDGED_NODE_DEVICE_TYPE_ID) {
+            if (self::BRIDGED_NODE_DEVICE_TYPE_ID === (int) $typeId) {
                 return true;
             }
         }

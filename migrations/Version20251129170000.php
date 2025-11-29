@@ -57,7 +57,7 @@ final class Version20251129170000 extends AbstractMigration
         $this->addSql('DROP VIEW IF EXISTS device_summary');
         $this->addSql('DROP VIEW IF EXISTS product_summary');
 
-        $this->addSql("
+        $this->addSql('
             CREATE VIEW product_summary AS
             SELECT
                 p.id,
@@ -85,7 +85,7 @@ final class Version20251129170000 extends AbstractMigration
             LEFT JOIN vendors v ON p.vendor_fk = v.id
             LEFT JOIN product_endpoints pe ON p.id = pe.device_id
             GROUP BY p.id
-        ");
+        ');
 
         // Recreate device_summary view (alias for product_summary)
         $this->addSql('CREATE VIEW device_summary AS SELECT * FROM product_summary');
@@ -97,7 +97,7 @@ final class Version20251129170000 extends AbstractMigration
         $this->addSql('DROP VIEW IF EXISTS device_summary');
         $this->addSql('DROP VIEW IF EXISTS product_summary');
 
-        $this->addSql("
+        $this->addSql('
             CREATE VIEW product_summary AS
             SELECT
                 p.id,
@@ -124,7 +124,7 @@ final class Version20251129170000 extends AbstractMigration
             LEFT JOIN vendors v ON p.vendor_fk = v.id
             LEFT JOIN product_endpoints pe ON p.id = pe.device_id
             GROUP BY p.id
-        ");
+        ');
 
         $this->addSql('CREATE VIEW device_summary AS SELECT * FROM product_summary');
 

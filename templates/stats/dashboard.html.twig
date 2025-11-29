@@ -342,31 +342,11 @@
                 Device Categories
                 <a href="{{ path('stats_device_types') }}">View all &rarr;</a>
             </h2>
-            {# Separate System from other categories #}
-            {% set nonSystemCategories = categoryDistribution|filter((v, k) => k != 'System') %}
-            {% set systemCount = categoryDistribution.System ?? 0 %}
-            {% set maxCategory = nonSystemCategories|first %}
-            {% for category, count in nonSystemCategories %}
-                <div class="chart-bar category-{{ category|lower|replace({' ': '-'}) }}">
-                    <span class="label">{{ category }}</span>
-                    <div class="bar-container">
-                        <div class="bar" style="width: {{ maxCategory > 0 ? (count / maxCategory * 100) : 0 }}%"></div>
-                    </div>
-                    <span class="count">{{ count }}</span>
-                </div>
-            {% else %}
-                <p style="color: var(--gray-500); font-size: 0.875rem;">No data available yet.</p>
-            {% endfor %}
-            {% if systemCount > 0 %}
-                {% set systemBarWidth = maxCategory > 0 ? (systemCount / maxCategory * 100) : 0 %}
-                <div class="chart-bar category-system system-category">
-                    <span class="label">System</span>
-                    <div class="bar-container">
-                        <div class="bar" style="width: {{ systemBarWidth > 100 ? 100 : systemBarWidth }}%"></div>
-                    </div>
-                    <span class="count">{{ systemCount }}</span>
-                </div>
-                <p class="system-note">System types (Root Node, OTA, etc.) appear on all devices</p>
+            <div style="max-width: 280px; margin: 0 auto;">
+                {{ render_chart(categoryChart) }}
+            </div>
+            {% if categoryDistribution.System is defined and categoryDistribution.System > 0 %}
+                <p class="system-note">System types ({{ categoryDistribution.System }}) excluded from chart</p>
             {% endif %}
         </div>
 
@@ -375,40 +355,14 @@
                 Top Vendors
                 <a href="{{ path('vendor_index') }}">View all &rarr;</a>
             </h2>
-            {% set maxVendor = topVendors|first %}
-            {% for vendor in topVendors %}
-                <div class="chart-bar">
-                    <span class="label">
-                        <a href="{{ path('vendor_show', {slug: vendor.slug}) }}" style="color: inherit; text-decoration: none;">
-                            {{ vendor.name|length > 15 ? vendor.name|slice(0, 15) ~ '...' : vendor.name }}
-                        </a>
-                    </span>
-                    <div class="bar-container">
-                        <div class="bar" style="width: {{ maxVendor.device_count > 0 ? (vendor.device_count / maxVendor.device_count * 100) : 0 }}%"></div>
-                    </div>
-                    <span class="count">{{ vendor.device_count }}</span>
-                </div>
-            {% else %}
-                <p style="color: var(--gray-500); font-size: 0.875rem;">No vendors yet.</p>
-            {% endfor %}
+            <div style="height: 300px;">
+                {{ render_chart(vendorChart) }}
+            </div>
         </div>
 
         <div class="dashboard-card">
             <h2>Matter Spec Versions</h2>
-            {% set maxVersion = specVersionDistribution|first %}
-            {% for version, count in specVersionDistribution %}
-                <div class="chart-bar">
-                    <span class="label">
-                        <span class="spec-version-badge spec-{{ version|replace({'.': '-'}) }}">{{ version }}</span>
-                    </span>
-                    <div class="bar-container">
-                        <div class="bar" style="width: {{ maxVersion > 0 ? (count / maxVersion * 100) : 0 }}%"></div>
-                    </div>
-                    <span class="count">{{ count }}</span>
-                </div>
-            {% else %}
-                <p style="color: var(--gray-500); font-size: 0.875rem;">No data available yet.</p>
-            {% endfor %}
+            {{ render_chart(specChart) }}
             <p style="font-size: 0.75rem; color: var(--gray-400); margin-top: 0.5rem;">
                 Based on device types seen in the survey
             </p>

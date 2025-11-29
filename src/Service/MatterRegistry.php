@@ -19,12 +19,14 @@ class MatterRegistry
 {
     /**
      * Device type data loaded from database.
+     *
      * @var array<int, array>|null
      */
     private ?array $deviceTypes = null;
 
     /**
      * Cluster data loaded from database.
+     *
      * @var array<int, array>|null
      */
     private ?array $clusters = null;
@@ -32,7 +34,8 @@ class MatterRegistry
     public function __construct(
         private ?DeviceTypeRepository $deviceTypeRepository = null,
         private ?ClusterRepository $clusterRepository = null,
-    ) {}
+    ) {
+    }
 
     // ========================================================================
     // CLUSTER METHODS
@@ -60,6 +63,7 @@ class MatterRegistry
     public function getClusterMetadata(int $id): ?array
     {
         $clusters = $this->loadClusters();
+
         return $clusters[$id] ?? null;
     }
 
@@ -69,6 +73,7 @@ class MatterRegistry
     public function getClusterDescription(int $id): ?string
     {
         $cluster = $this->getClusterMetadata($id);
+
         return $cluster['description'] ?? null;
     }
 
@@ -78,6 +83,7 @@ class MatterRegistry
     public function getClusterCategory(int $id): ?string
     {
         $cluster = $this->getClusterMetadata($id);
+
         return $cluster['category'] ?? null;
     }
 
@@ -87,6 +93,7 @@ class MatterRegistry
     public function isGlobalCluster(int $id): bool
     {
         $cluster = $this->getClusterMetadata($id);
+
         return $cluster['isGlobal'] ?? false;
     }
 
@@ -96,6 +103,7 @@ class MatterRegistry
     public function getClusterHexId(int $id): string
     {
         $cluster = $this->getClusterMetadata($id);
+
         return $cluster['hexId'] ?? \sprintf('0x%04X', $id);
     }
 
@@ -107,7 +115,8 @@ class MatterRegistry
     public function getAllClusterNames(): array
     {
         $clusters = $this->loadClusters();
-        return array_map(fn(array $c) => $c['name'], $clusters);
+
+        return array_map(fn (array $c) => $c['name'], $clusters);
     }
 
     /**
@@ -117,13 +126,13 @@ class MatterRegistry
      */
     private function loadClusters(): array
     {
-        if ($this->clusters !== null) {
+        if (null !== $this->clusters) {
             return $this->clusters;
         }
 
         $this->clusters = [];
 
-        if ($this->clusterRepository === null) {
+        if (null === $this->clusterRepository) {
             return $this->clusters;
         }
 
@@ -180,6 +189,7 @@ class MatterRegistry
     public function getDeviceTypeMetadata(int $id): ?array
     {
         $deviceTypes = $this->loadDeviceTypes();
+
         return $deviceTypes[$id] ?? null;
     }
 
@@ -189,6 +199,7 @@ class MatterRegistry
     public function getDeviceTypeSpecVersion(int $id): ?string
     {
         $deviceType = $this->getDeviceTypeMetadata($id);
+
         return $deviceType['specVersion'] ?? null;
     }
 
@@ -198,6 +209,7 @@ class MatterRegistry
     public function getDeviceTypeIcon(int $id): ?string
     {
         $deviceType = $this->getDeviceTypeMetadata($id);
+
         return $deviceType['icon'] ?? null;
     }
 
@@ -207,6 +219,7 @@ class MatterRegistry
     public function getDeviceTypeDescription(int $id): ?string
     {
         $deviceType = $this->getDeviceTypeMetadata($id);
+
         return $deviceType['description'] ?? null;
     }
 
@@ -216,6 +229,7 @@ class MatterRegistry
     public function getDeviceTypeCategory(int $id): ?string
     {
         $deviceType = $this->getDeviceTypeMetadata($id);
+
         return $deviceType['category'] ?? null;
     }
 
@@ -225,6 +239,7 @@ class MatterRegistry
     public function getDeviceTypeDisplayCategory(int $id): ?string
     {
         $deviceType = $this->getDeviceTypeMetadata($id);
+
         return $deviceType['displayCategory'] ?? null;
     }
 
@@ -236,9 +251,10 @@ class MatterRegistry
     public function getDeviceTypesByCategory(string $category): array
     {
         $deviceTypes = $this->loadDeviceTypes();
+
         return array_filter(
             $deviceTypes,
-            fn(array $meta) => ($meta['category'] ?? '') === $category
+            fn (array $meta) => ($meta['category'] ?? '') === $category
         );
     }
 
@@ -250,9 +266,10 @@ class MatterRegistry
     public function getDeviceTypesByDisplayCategory(string $displayCategory): array
     {
         $deviceTypes = $this->loadDeviceTypes();
+
         return array_filter(
             $deviceTypes,
-            fn(array $meta) => ($meta['displayCategory'] ?? '') === $displayCategory
+            fn (array $meta) => ($meta['displayCategory'] ?? '') === $displayCategory
         );
     }
 
@@ -264,9 +281,10 @@ class MatterRegistry
     public function getDeviceTypesBySpecVersion(string $specVersion): array
     {
         $deviceTypes = $this->loadDeviceTypes();
+
         return array_filter(
             $deviceTypes,
-            fn(array $meta) => ($meta['specVersion'] ?? '') === $specVersion
+            fn (array $meta) => ($meta['specVersion'] ?? '') === $specVersion
         );
     }
 
@@ -281,6 +299,7 @@ class MatterRegistry
         $categories = array_unique(
             array_filter(array_column($deviceTypes, 'category'))
         );
+
         return array_values($categories);
     }
 
@@ -295,6 +314,7 @@ class MatterRegistry
         $categories = array_unique(
             array_filter(array_column($deviceTypes, 'displayCategory'))
         );
+
         return array_values($categories);
     }
 
@@ -322,7 +342,8 @@ class MatterRegistry
     public function getAllDeviceTypeNames(): array
     {
         $deviceTypes = $this->loadDeviceTypes();
-        return array_map(fn(array $meta) => $meta['name'], $deviceTypes);
+
+        return array_map(fn (array $meta) => $meta['name'], $deviceTypes);
     }
 
     /**
@@ -342,13 +363,13 @@ class MatterRegistry
      */
     private function loadDeviceTypes(): array
     {
-        if ($this->deviceTypes !== null) {
+        if (null !== $this->deviceTypes) {
             return $this->deviceTypes;
         }
 
         $this->deviceTypes = [];
 
-        if ($this->deviceTypeRepository === null) {
+        if (null === $this->deviceTypeRepository) {
             return $this->deviceTypes;
         }
 
@@ -418,6 +439,7 @@ class MatterRegistry
     public function getMandatoryServerClusters(int $deviceTypeId): array
     {
         $deviceType = $this->getDeviceTypeMetadata($deviceTypeId);
+
         return $deviceType['mandatoryServerClusters'] ?? [];
     }
 
@@ -429,6 +451,7 @@ class MatterRegistry
     public function getOptionalServerClusters(int $deviceTypeId): array
     {
         $deviceType = $this->getDeviceTypeMetadata($deviceTypeId);
+
         return $deviceType['optionalServerClusters'] ?? [];
     }
 
@@ -440,6 +463,7 @@ class MatterRegistry
     public function getMandatoryClientClusters(int $deviceTypeId): array
     {
         $deviceType = $this->getDeviceTypeMetadata($deviceTypeId);
+
         return $deviceType['mandatoryClientClusters'] ?? [];
     }
 
@@ -451,6 +475,7 @@ class MatterRegistry
     public function getOptionalClientClusters(int $deviceTypeId): array
     {
         $deviceType = $this->getDeviceTypeMetadata($deviceTypeId);
+
         return $deviceType['optionalClientClusters'] ?? [];
     }
 
@@ -460,6 +485,7 @@ class MatterRegistry
     public function getDeviceTypeSuperset(int $id): ?string
     {
         $deviceType = $this->getDeviceTypeMetadata($id);
+
         return $deviceType['superset'] ?? null;
     }
 
@@ -469,6 +495,7 @@ class MatterRegistry
     public function getDeviceTypeClass(int $id): ?string
     {
         $deviceType = $this->getDeviceTypeMetadata($id);
+
         return $deviceType['class'] ?? null;
     }
 
@@ -478,6 +505,7 @@ class MatterRegistry
     public function getDeviceTypeScope(int $id): ?string
     {
         $deviceType = $this->getDeviceTypeMetadata($id);
+
         return $deviceType['scope'] ?? null;
     }
 
@@ -487,6 +515,7 @@ class MatterRegistry
     public function getDeviceTypeHexId(int $id): string
     {
         $deviceType = $this->getDeviceTypeMetadata($id);
+
         return $deviceType['hexId'] ?? sprintf('0x%04X', $id);
     }
 
@@ -495,7 +524,7 @@ class MatterRegistry
      */
     public function hasExtendedData(int $id): bool
     {
-        return $this->getDeviceTypeMetadata($id) !== null;
+        return null !== $this->getDeviceTypeMetadata($id);
     }
 
     // ========================================================================
@@ -543,7 +572,7 @@ class MatterRegistry
     public function getClusterSpecNote(int $clusterId): ?string
     {
         $metadata = $this->getClusterMetadata($clusterId);
-        if ($metadata === null) {
+        if (null === $metadata) {
             return null;
         }
 
@@ -554,11 +583,12 @@ class MatterRegistry
             if ($clusterId === $replacement) {
                 $legacyMeta = $this->getClusterMetadata($legacy);
                 $legacyName = $legacyMeta['name'] ?? "Cluster $legacy";
+
                 return "Added in Matter $specVersion (replaces $legacyName)";
             }
         }
 
-        if ($specVersion !== '1.0') {
+        if ('1.0' !== $specVersion) {
             return "Added in Matter $specVersion";
         }
 
@@ -568,7 +598,7 @@ class MatterRegistry
     /**
      * Analyze a device's cluster implementation against the spec requirements.
      *
-     * @param int   $deviceTypeId      The device type ID
+     * @param int   $deviceTypeId         The device type ID
      * @param int[] $actualServerClusters Server clusters the device actually implements
      * @param int[] $actualClientClusters Client clusters the device actually implements
      *
@@ -589,11 +619,11 @@ class MatterRegistry
     public function analyzeClusterGaps(
         int $deviceTypeId,
         array $actualServerClusters,
-        array $actualClientClusters
+        array $actualClientClusters,
     ): array {
         $deviceType = $this->getDeviceTypeMetadata($deviceTypeId);
 
-        if ($deviceType === null) {
+        if (null === $deviceType) {
             return [
                 'deviceType' => null,
                 'missingMandatoryServer' => [],
@@ -634,11 +664,11 @@ class MatterRegistry
         // Find missing mandatory clusters (considering equivalents like Scenes → Scenes Management)
         $missingMandatoryServerIds = array_filter(
             $mandatoryServerIds,
-            fn(int $id) => !$this->isClusterSatisfied($id, $actualServerClusters)
+            fn (int $id) => !$this->isClusterSatisfied($id, $actualServerClusters)
         );
         $missingMandatoryClientIds = array_filter(
             $mandatoryClientIds,
-            fn(int $id) => !$this->isClusterSatisfied($id, $actualClientClusters)
+            fn (int $id) => !$this->isClusterSatisfied($id, $actualClientClusters)
         );
 
         // Find missing optional clusters
@@ -656,21 +686,21 @@ class MatterRegistry
         $extraClientIds = array_diff($actualClientClusters, $allSpecClientIds);
 
         // Build result arrays with names
-        $missingMandatoryServer = array_filter($mandatoryServer, fn($c) => \in_array($c['id'], $missingMandatoryServerIds, true));
-        $missingMandatoryClient = array_filter($mandatoryClient, fn($c) => \in_array($c['id'], $missingMandatoryClientIds, true));
-        $missingOptionalServer = array_filter($optionalServer, fn($c) => \in_array($c['id'], $missingOptionalServerIds, true));
-        $missingOptionalClient = array_filter($optionalClient, fn($c) => \in_array($c['id'], $missingOptionalClientIds, true));
-        $implementedOptionalServer = array_filter($optionalServer, fn($c) => \in_array($c['id'], $implementedOptionalServerIds, true));
-        $implementedOptionalClient = array_filter($optionalClient, fn($c) => \in_array($c['id'], $implementedOptionalClientIds, true));
+        $missingMandatoryServer = array_filter($mandatoryServer, fn ($c) => \in_array($c['id'], $missingMandatoryServerIds, true));
+        $missingMandatoryClient = array_filter($mandatoryClient, fn ($c) => \in_array($c['id'], $missingMandatoryClientIds, true));
+        $missingOptionalServer = array_filter($optionalServer, fn ($c) => \in_array($c['id'], $missingOptionalServerIds, true));
+        $missingOptionalClient = array_filter($optionalClient, fn ($c) => \in_array($c['id'], $missingOptionalClientIds, true));
+        $implementedOptionalServer = array_filter($optionalServer, fn ($c) => \in_array($c['id'], $implementedOptionalServerIds, true));
+        $implementedOptionalClient = array_filter($optionalClient, fn ($c) => \in_array($c['id'], $implementedOptionalClientIds, true));
 
         // Build extra clusters with names
-        $extraServer = array_map(fn($id) => ['id' => $id, 'name' => $this->getClusterName($id)], array_values($extraServerIds));
-        $extraClient = array_map(fn($id) => ['id' => $id, 'name' => $this->getClusterName($id)], array_values($extraClientIds));
+        $extraServer = array_map(fn ($id) => ['id' => $id, 'name' => $this->getClusterName($id)], array_values($extraServerIds));
+        $extraClient = array_map(fn ($id) => ['id' => $id, 'name' => $this->getClusterName($id)], array_values($extraClientIds));
 
         // Calculate compliance
         $totalMandatory = \count($mandatoryServerIds) + \count($mandatoryClientIds);
         $missingMandatory = \count($missingMandatoryServerIds) + \count($missingMandatoryClientIds);
-        $mandatoryCompliant = $missingMandatory === 0;
+        $mandatoryCompliant = 0 === $missingMandatory;
 
         // Score: mandatory compliance + optional implementation bonus
         $totalOptional = \count($optionalServerIds) + \count($optionalClientIds);
@@ -727,7 +757,7 @@ class MatterRegistry
 
             foreach ($deviceTypes as $dt) {
                 $deviceTypeId = \is_array($dt) ? ($dt['id'] ?? null) : $dt;
-                if ($deviceTypeId === null) {
+                if (null === $deviceTypeId) {
                     continue;
                 }
 

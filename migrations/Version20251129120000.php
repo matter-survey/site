@@ -40,21 +40,21 @@ final class Version20251129120000 extends AbstractMigration
                     SELECT CASE
                         WHEN EXISTS (
                             SELECT 1 FROM product_endpoints pe, json_each(pe.server_clusters) jc
-                            WHERE pe.device_id = products.id AND jc.value = ' . self::THREAD_CLUSTER . '
+                            WHERE pe.device_id = products.id AND jc.value = '.self::THREAD_CLUSTER.'
                         ) THEN "thread"
                     END as connectivity_type
                     UNION ALL
                     SELECT CASE
                         WHEN EXISTS (
                             SELECT 1 FROM product_endpoints pe, json_each(pe.server_clusters) jc
-                            WHERE pe.device_id = products.id AND jc.value = ' . self::WIFI_CLUSTER . '
+                            WHERE pe.device_id = products.id AND jc.value = '.self::WIFI_CLUSTER.'
                         ) THEN "wifi"
                     END
                     UNION ALL
                     SELECT CASE
                         WHEN EXISTS (
                             SELECT 1 FROM product_endpoints pe, json_each(pe.server_clusters) jc
-                            WHERE pe.device_id = products.id AND jc.value = ' . self::ETHERNET_CLUSTER . '
+                            WHERE pe.device_id = products.id AND jc.value = '.self::ETHERNET_CLUSTER.'
                         ) THEN "ethernet"
                     END
                 ) WHERE connectivity_type IS NOT NULL
@@ -62,7 +62,7 @@ final class Version20251129120000 extends AbstractMigration
             WHERE EXISTS (
                 SELECT 1 FROM product_endpoints pe, json_each(pe.server_clusters) jc
                 WHERE pe.device_id = products.id
-                  AND jc.value IN (' . self::THREAD_CLUSTER . ', ' . self::WIFI_CLUSTER . ', ' . self::ETHERNET_CLUSTER . ')
+                  AND jc.value IN ('.self::THREAD_CLUSTER.', '.self::WIFI_CLUSTER.', '.self::ETHERNET_CLUSTER.')
             )
         ');
 

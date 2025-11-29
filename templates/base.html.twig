@@ -269,5 +269,7 @@
             {{ 'footer.privacy_note'|trans({}, 'navigation') }}
         </p>
     </footer>
+
+    {% block importmap %}{{ importmap('app') }}{% endblock %}
 </body>
 </html>

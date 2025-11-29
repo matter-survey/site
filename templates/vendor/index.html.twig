@@ -376,10 +376,18 @@
         </div>
     </div>
 
+    {# Vendor browser with Stimulus search filter #}
+    <div data-controller="search-filter" data-search-filter-attribute-value="name">
+
     {# Search and Sort Controls #}
     <div class="controls-bar">
         <div class="search-box">
-            <input type="text" id="vendor-search" placeholder="Search vendors..." autocomplete="off">
+            <input type="text"
+                   id="vendor-search"
+                   placeholder="Search vendors..."
+                   autocomplete="off"
+                   data-search-filter-target="input"
+                   data-action="input->search-filter#filter">
         </div>
         <div class="sort-buttons">
             <a href="{{ path('vendor_index', {sort: 'devices'}) }}" class="sort-btn {{ sort == 'devices' ? 'active' : '' }}">By Popularity</a>
@@ -422,11 +430,11 @@
     {# All Vendors List #}
     <div class="vendors-section">
         <div class="vendor-count-display">
-            Showing <span id="visible-count">{{ vendors|length }}</span> of {{ vendors|length }} vendors
+            Showing <span data-search-filter-target="count">{{ vendors|length }}</span> of {{ vendors|length }} vendors
         </div>
 
         {% for vendor in vendors %}
-            <div class="vendor-item" data-name="{{ vendor.name|lower }}">
+            <div class="vendor-item" data-search-filter-target="item" data-name="{{ vendor.name|lower }}">
                 <div class="vendor-info">
                     <div class="vendor-name">
                         <a href="{{ path('vendor_show', {slug: vendor.slug}) }}">{{ vendor.name }}</a>
@@ -469,36 +477,10 @@
             </div>
         {% endfor %}
 
-        <div class="empty-search" id="no-results" style="display: none;">
+        <div class="empty-search" data-search-filter-target="empty" style="display: none;">
             <p>No vendors match your search.</p>
         </div>
     </div>
 
-    <script>
-        (function() {
-            const searchInput = document.getElementById('vendor-search');
-            const vendorItems = document.querySelectorAll('.vendor-item');
-            const visibleCount = document.getElementById('visible-count');
-            const noResults = document.getElementById('no-results');
-            const totalCount = vendorItems.length;
-
-            searchInput.addEventListener('input', function() {
-                const query = this.value.toLowerCase().trim();
-                let visible = 0;
-
-                vendorItems.forEach(function(item) {
-                    const name = item.dataset.name;
-                    if (query === '' || name.includes(query)) {
-                        item.classList.remove('hidden');
-                        visible++;
-                    } else {
-                        item.classList.add('hidden');
-                    }
-                });
-
-                visibleCount.textContent = visible;
-                noResults.style.display = visible === 0 && query !== '' ? 'block' : 'none';
-            });
-        })();
-    </script>
+    </div>{# Close search-filter controller wrapper #}
 {% endblock %}

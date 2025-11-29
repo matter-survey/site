@@ -28,8 +28,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 class ZapSyncCommand extends Command
 {
     private const ZCL_BASE_URL = 'https://raw.githubusercontent.com/project-chip/connectedhomeip/master/src/app/zap-templates/zcl';
-    private const ZCL_JSON_URL = self::ZCL_BASE_URL . '/zcl.json';
-    private const ZCL_XML_BASE = self::ZCL_BASE_URL . '/data-model/chip/';
+    private const ZCL_JSON_URL = self::ZCL_BASE_URL.'/zcl.json';
+    private const ZCL_XML_BASE = self::ZCL_BASE_URL.'/data-model/chip/';
     private const DEFAULT_OUTPUT_FILE = 'fixtures/clusters.yaml';
 
     public function __construct(
@@ -52,7 +52,7 @@ class ZapSyncCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $dryRun = $input->getOption('dry-run');
         $singleClusterId = $input->getOption('cluster');
-        $outputFile = $this->projectDir . '/' . $input->getOption('output');
+        $outputFile = $this->projectDir.'/'.$input->getOption('output');
 
         $io->title('Matter ZAP Cluster Data Sync');
 
@@ -100,21 +100,21 @@ class ZapSyncCommand extends Command
             }
 
             $clusterData = $this->fetchAndParseClusterXml($file);
-            if ($clusterData === null) {
-                $skippedCount++;
+            if (null === $clusterData) {
+                ++$skippedCount;
                 $io->progressAdvance();
                 continue;
             }
 
             // Filter by single cluster if specified
-            if ($singleClusterId !== null && $clusterData['id'] !== (int) $singleClusterId) {
+            if (null !== $singleClusterId && $clusterData['id'] !== (int) $singleClusterId) {
                 $io->progressAdvance();
                 continue;
             }
 
             // Check if cluster exists in our fixtures
             if (!isset($clusterMap[$clusterData['id']])) {
-                $skippedCount++;
+                ++$skippedCount;
                 $io->progressAdvance();
                 continue;
             }
@@ -132,7 +132,7 @@ class ZapSyncCommand extends Command
                 $existingClusters[$index]['features'] = $clusterData['features'];
             }
 
-            $updatedCount++;
+            ++$updatedCount;
             $io->progressAdvance();
         }
 
@@ -145,7 +145,7 @@ class ZapSyncCommand extends Command
             $yamlContent = "# Matter Cluster Definitions\n";
             $yamlContent .= "# Based on Matter 1.4 Specification\n";
             $yamlContent .= "# Attributes, commands, and features synced from connectedhomeip ZAP XML files\n";
-            $yamlContent .= "# Last ZAP sync: " . date('Y-m-d H:i:s') . "\n\n";
+            $yamlContent .= '# Last ZAP sync: '.date('Y-m-d H:i:s')."\n\n";
             $yamlContent .= Yaml::dump($existingClusters, 6, 2, Yaml::DUMP_MULTI_LINE_LITERAL_BLOCK);
 
             file_put_contents($outputFile, $yamlContent);
@@ -173,7 +173,7 @@ class ZapSyncCommand extends Command
 
             return $data['xmlFile'] ?? [];
         } catch (\Exception $e) {
-            $io->error('Failed to fetch zcl.json: ' . $e->getMessage());
+            $io->error('Failed to fetch zcl.json: '.$e->getMessage());
 
             return [];
         }
@@ -184,12 +184,12 @@ class ZapSyncCommand extends Command
      */
     private function fetchAndParseClusterXml(string $filename): ?array
     {
-        $url = self::ZCL_XML_BASE . $filename;
+        $url = self::ZCL_XML_BASE.$filename;
 
         try {
             $response = $this->httpClient->request('GET', $url);
             $xml = simplexml_load_string($response->getContent());
-            if ($xml === false) {
+            if (false === $xml) {
                 return null;
             }
 
@@ -205,7 +205,7 @@ class ZapSyncCommand extends Command
                 }
             }
 
-            if ($clusterNode === null) {
+            if (null === $clusterNode) {
                 return null;
             }
 
@@ -313,7 +313,7 @@ class ZapSyncCommand extends Command
 
             // Determine direction from source attribute or default to client→server
             $source = (string) ($cmd['source'] ?? 'client');
-            $direction = $source === 'client' ? 'client→server' : 'server→client';
+            $direction = 'client' === $source ? 'client→server' : 'server→client';
 
             // Parse command parameters
             $parameters = [];

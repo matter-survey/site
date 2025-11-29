@@ -7,11 +7,12 @@ namespace App\Controller;
 use App\Repository\ClusterRepository;
 use App\Repository\DeviceRepository;
 use App\Repository\ProductRepository;
+use App\Service\ChartFactory;
 use App\Service\MatterRegistry;
 use App\Service\TelemetryService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -23,7 +24,9 @@ class StatsController extends AbstractController
         private MatterRegistry $matterRegistry,
         private ClusterRepository $clusterRepo,
         private ProductRepository $productRepo,
-    ) {}
+        private ChartFactory $chartFactory,
+    ) {
+    }
 
     #[Route('/dashboard', name: 'stats_dashboard', methods: ['GET'])]
     public function dashboard(): Response
@@ -42,6 +45,10 @@ class StatsController extends AbstractController
             'specVersionDistribution' => $specVersionDistribution,
             'recentDevices' => $recentDevices,
             'categoryHighlights' => $categoryHighlights,
+            // Charts
+            'categoryChart' => $this->chartFactory->createCategoryChart($categoryDistribution),
+            'vendorChart' => $this->chartFactory->createVendorChart($topVendors),
+            'specChart' => $this->chartFactory->createSpecVersionChart($specVersionDistribution),
         ]);
     }
 
@@ -75,7 +82,7 @@ class StatsController extends AbstractController
                 ];
             }
 
-            if ($type === 'server') {
+            if ('server' === $type) {
                 $clusterMap[$clusterId]['serverCount'] = $count;
             } else {
                 $clusterMap[$clusterId]['clientCount'] = $count;
@@ -114,7 +121,7 @@ class StatsController extends AbstractController
         $topCategory = !empty($categories) ? array_key_first($categories) : 'N/A';
 
         // Clusters only seen as client (interesting edge cases)
-        $clientOnlyClusters = array_filter($clusters, fn ($c) => $c['serverCount'] === 0 && $c['clientCount'] > 0);
+        $clientOnlyClusters = array_filter($clusters, fn ($c) => 0 === $c['serverCount'] && $c['clientCount'] > 0);
 
         $insights = [
             'totalClusters' => $totalClusters,
@@ -223,7 +230,7 @@ class StatsController extends AbstractController
     {
         $metadata = $this->matterRegistry->getDeviceTypeMetadata($type);
 
-        if ($metadata === null) {
+        if (null === $metadata) {
             throw new NotFoundHttpException(sprintf('Device type %d not found', $type));
         }
 
@@ -284,7 +291,7 @@ class StatsController extends AbstractController
     {
         $cluster = $this->clusterRepo->findByHexId($hexId);
 
-        if ($cluster === null) {
+        if (null === $cluster) {
             throw new NotFoundHttpException(\sprintf('Cluster %s not found', $hexId));
         }
 

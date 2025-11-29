@@ -44,25 +44,25 @@ class ProductRepository extends ServiceEntityRepository
         int $productId,
         ?string $vendorName = null,
         ?string $productName = null,
-        ?Vendor $vendor = null
+        ?Vendor $vendor = null,
     ): Product {
         $product = $this->findByVendorAndProductId($vendorId, $productId);
 
-        if ($product !== null) {
+        if (null !== $product) {
             // Update names if provided and different
             $updated = false;
 
-            if ($vendorName !== null && $vendorName !== $product->getVendorName()) {
+            if (null !== $vendorName && $vendorName !== $product->getVendorName()) {
                 $product->setVendorName($vendorName);
                 $updated = true;
             }
 
-            if ($productName !== null && $productName !== $product->getProductName()) {
+            if (null !== $productName && $productName !== $product->getProductName()) {
                 $product->setProductName($productName);
                 $updated = true;
             }
 
-            if ($vendor !== null && $vendor !== $product->getVendor()) {
+            if (null !== $vendor && $vendor !== $product->getVendor()) {
                 $product->setVendor($vendor);
                 $updated = true;
             }

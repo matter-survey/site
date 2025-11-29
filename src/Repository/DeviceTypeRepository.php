@@ -223,7 +223,7 @@ class DeviceTypeRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('dt')
             ->where('dt.name LIKE :query')
-            ->setParameter('query', '%' . $query . '%')
+            ->setParameter('query', '%'.$query.'%')
             ->orderBy('dt.name', 'ASC')
             ->setMaxResults($limit)
             ->getQuery()
