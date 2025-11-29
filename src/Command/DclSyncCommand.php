@@ -38,8 +38,8 @@ class DclSyncCommand extends Command
             ->addOption('vendors-only', null, InputOption::VALUE_NONE, 'Only sync vendors')
             ->addOption('products-only', null, InputOption::VALUE_NONE, 'Only sync products')
             ->addOption('certifications-only', null, InputOption::VALUE_NONE, 'Only sync certification data')
-            ->addOption('skip-certifications', null, InputOption::VALUE_NONE, 'Skip fetching certification data (faster)')
-            ->addOption('compliance-info', null, InputOption::VALUE_NONE, 'Fetch detailed compliance info (certification dates, certificate IDs) - SLOW')
+            ->addOption('skip-certifications', null, InputOption::VALUE_NONE, 'Skip fetching certification list (faster)')
+            ->addOption('skip-compliance-info', null, InputOption::VALUE_NONE, 'Skip fetching detailed compliance info - certification dates, certificate IDs (faster but incomplete)')
             ->addOption('output-dir', 'o', InputOption::VALUE_REQUIRED, 'Output directory for YAML files', self::DEFAULT_OUTPUT_DIR);
     }
 
@@ -52,7 +52,7 @@ class DclSyncCommand extends Command
         $productsOnly = $input->getOption('products-only');
         $certificationsOnly = $input->getOption('certifications-only');
         $skipCertifications = $input->getOption('skip-certifications');
-        $fetchComplianceInfo = $input->getOption('compliance-info');
+        $skipComplianceInfo = $input->getOption('skip-compliance-info');
 
         if (!is_dir($outputDir)) {
             $io->error(\sprintf('Output directory does not exist: %s', $outputDir));
@@ -68,9 +68,9 @@ class DclSyncCommand extends Command
             $certifiedModels = $this->fetchCertifications($io);
         }
 
-        // Fetch detailed compliance info (certification dates, etc.) if requested
+        // Fetch detailed compliance info (certification dates, etc.) unless skipped
         $complianceInfo = [];
-        if ($fetchComplianceInfo && \count($certifiedModels) > 0) {
+        if (!$skipComplianceInfo && \count($certifiedModels) > 0) {
             $complianceInfo = $this->fetchComplianceInfo($io, $certifiedModels);
         }
 
