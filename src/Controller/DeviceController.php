@@ -9,6 +9,7 @@ use App\Repository\ProductRepository;
 use App\Service\MatterRegistry;
 use App\Service\TelemetryService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -119,6 +120,29 @@ class DeviceController extends AbstractController
             || !empty($filters['vendor'])
             || !empty($filters['device_types'])
             || !empty($filters['search']);
+    }
+
+    /**
+     * Search API endpoint for autocomplete.
+     */
+    #[Route('/api/search', name: 'api_search', methods: ['GET'])]
+    public function searchAutocomplete(Request $request): JsonResponse
+    {
+        $query = trim($request->query->getString('q', ''));
+
+        if (\strlen($query) < 2) {
+            return $this->json(['results' => []]);
+        }
+
+        $devices = $this->deviceRepo->searchDevices($query, 8);
+
+        return $this->json([
+            'results' => array_map(fn (array $d) => [
+                'name' => $d['product_name'],
+                'vendor' => $d['vendor_name'],
+                'url' => $this->generateUrl('device_show', ['slug' => $d['slug']]),
+            ], $devices),
+        ]);
     }
 
     /**

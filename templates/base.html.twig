@@ -123,6 +123,7 @@
         .header-search {
             display: flex;
             align-items: center;
+            position: relative;
         }
 
         .header-search input {
@@ -152,6 +153,58 @@
 
         .header-search button:hover {
             background: var(--primary-dark);
+        }
+
+        /* Autocomplete dropdown */
+        .autocomplete-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            margin-top: 0.25rem;
+        }
+
+        .autocomplete-item {
+            display: block;
+            padding: 0.5rem 0.75rem;
+            text-decoration: none;
+            color: var(--gray-900);
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item:hover,
+        .autocomplete-item.selected {
+            background: var(--gray-50);
+        }
+
+        .autocomplete-name {
+            display: block;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .autocomplete-vendor {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .autocomplete-empty {
+            padding: 0.75rem;
+            text-align: center;
+            color: var(--gray-500);
+            font-size: 0.875rem;
         }
 
         .nav-divider {
@@ -229,9 +282,18 @@
                     {% block header_subtitle %}<p>{{ 'site.tagline'|trans({}, 'navigation') }}</p>{% endblock %}
                 </div>
                 <nav>
-                    <form class="header-search" action="{{ path('device_index') }}" method="get">
-                        <input type="text" name="q" placeholder="{{ 'search.placeholder'|trans({}, 'navigation') }}" value="{{ app.request.query.get('q', '') }}" aria-label="{{ 'search.label'|trans({}, 'navigation') }}">
+                    <form class="header-search" action="{{ path('device_index') }}" method="get"
+                          data-controller="autocomplete"
+                          data-autocomplete-url-value="{{ path('api_search') }}">
+                        <input type="text" name="q"
+                               placeholder="{{ 'search.placeholder'|trans({}, 'navigation') }}"
+                               value="{{ app.request.query.get('q', '') }}"
+                               aria-label="{{ 'search.label'|trans({}, 'navigation') }}"
+                               autocomplete="off"
+                               data-autocomplete-target="input"
+                               data-action="input->autocomplete#search focus->autocomplete#search">
                         <button type="submit" aria-label="{{ 'search.button_label'|trans({}, 'navigation') }}">&#128269;</button>
+                        <div class="autocomplete-results" data-autocomplete-target="results" style="display: none;"></div>
                     </form>
                     <span class="nav-divider"></span>
                     <a href="{{ path('device_index') }}">{{ 'nav.devices'|trans({}, 'navigation') }}</a>
