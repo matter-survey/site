@@ -47,8 +47,9 @@ class ProductFixtures extends Fixture implements FixtureGroupInterface, Dependen
         $products = Yaml::parseFile($this->dataPath);
         $productRepository = $manager->getRepository(Product::class);
 
-        // Pre-load vendor names into a map for efficient lookup (specId => vendorName)
+        // Pre-load vendor data into maps for efficient lookup
         $vendorNameMap = $this->buildVendorNameMap($manager);
+        $vendorRepository = $manager->getRepository(Vendor::class);
 
         $count = 0;
         foreach ($products as $data) {
@@ -74,9 +75,15 @@ class ProductFixtures extends Fixture implements FixtureGroupInterface, Dependen
                 : ($data['productName'] ?? null);
             $product->setProductName($productName);
 
-            // Set vendor name from our map (FK relationship is set separately to avoid detachment issues)
+            // Set vendor name from our map
             if (isset($vendorNameMap[$vendorId])) {
                 $product->setVendorName($vendorNameMap[$vendorId]);
+            }
+
+            // Set vendor relationship - find vendor by specId
+            $vendor = $vendorRepository->findOneBy(['specId' => $vendorId]);
+            if ($vendor !== null) {
+                $product->setVendor($vendor);
             }
 
             // Set additional DCL fields
@@ -175,4 +182,5 @@ class ProductFixtures extends Fixture implements FixtureGroupInterface, Dependen
 
         return $map;
     }
+
 }
