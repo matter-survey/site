@@ -368,6 +368,12 @@
         <a href="{{ path('vendor_index') }}">Vendors</a>
     </div>
 
+    <div class="info-box" style="background: var(--blue-100); border-radius: 0.5rem; padding: 1rem 1.25rem; margin-bottom: 2rem; font-size: 0.875rem; color: var(--blue-700);">
+        <strong>What are device types?</strong>
+        Device types are categories defined by the Matter specification. Each type (like "Dimmable Light" or "Door Lock") specifies which features a device must support. This page shows which device types we've seen in the wild vs. what the spec defines.
+        <a href="{{ path('page_glossary') }}#device-type" style="color: inherit; text-decoration: underline;">Learn more</a>
+    </div>
+
     {% set totalDeviceTypes = 0 %}
     {% for category, types in groupedDeviceTypes %}
         {% set totalDeviceTypes = totalDeviceTypes + types|length %}

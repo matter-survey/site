@@ -293,6 +293,12 @@
         <a href="{{ path('vendor_index') }}">Vendors</a>
     </div>
 
+    <div class="info-box" style="background: var(--blue-100); border-radius: 0.5rem; padding: 1rem 1.25rem; margin-bottom: 2rem; font-size: 0.875rem; color: var(--blue-700);">
+        <strong>What is this?</strong>
+        This dashboard shows real-world adoption data from Matter smart home devices. The data comes from anonymous contributions by Home Assistant users running the Matter Binding Helper add-on.
+        <a href="{{ path('page_about') }}" style="color: inherit; text-decoration: underline;">Learn more</a>
+    </div>
+
     <div class="stats-grid">
         <div class="stat-card" title="Unique product models (vendor + product ID combinations) seen in submissions">
             <div class="value">{{ stats.total_devices|number_format }}</div>

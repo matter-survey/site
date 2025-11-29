@@ -626,7 +626,7 @@
                                         {% endfor %}
                                     {% endif %}
                                 {% endif %}
-                                <span class="badge badge-endpoints">{{ device.endpoint_count }} ep</span>
+                                <span class="badge badge-endpoints" title="Number of logical sub-devices (endpoints) this device exposes">{{ device.endpoint_count }} endpoint{{ device.endpoint_count != 1 ? 's' : '' }}</span>
                             </div>
                         </div>
                     {% endfor %}
