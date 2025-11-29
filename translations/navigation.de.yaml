@@ -1,0 +1,33 @@
+# Navigation and layout strings - German
+
+# Site branding
+site:
+    name: "Matter Survey"
+    tagline: "Community-basierte Datenbank für Matter-Gerätefunktionen"
+
+# Header navigation
+nav:
+    devices: "Geräte"
+    vendors: "Hersteller"
+    stats: "Statistiken"
+    about: "Über uns"
+    faq: "FAQ"
+    glossary: "Glossar"
+
+# Search
+search:
+    placeholder: "Geräte suchen..."
+    label: "Geräte suchen"
+    button_label: "Suchen"
+
+# Footer
+footer:
+    data_contributed: "Daten bereitgestellt von"
+    addon_name: "Matter Binding Helper"
+    users: "Nutzern"
+    privacy_note: "Datenschutzorientiert: Es werden keine persönlichen Daten erfasst."
+
+# Language switcher
+language:
+    switch_to_german: "Deutsch"
+    switch_to_english: "English"

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ app.request.locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,6 +25,15 @@
 
     {# JSON-LD Structured Data #}
     {% block structured_data %}{% endblock %}
+
+    {# Hreflang tags for SEO #}
+    {% set current_route = app.request.attributes.get('_route') %}
+    {% set route_params = app.request.attributes.get('_route_params', {}) %}
+    {% if current_route %}
+    <link rel="alternate" hreflang="en" href="{{ url(current_route, route_params|merge({'_locale': 'en'})) }}" />
+    <link rel="alternate" hreflang="de" href="{{ url(current_route, route_params|merge({'_locale': 'de'})) }}" />
+    <link rel="alternate" hreflang="x-default" href="{{ url(current_route, route_params|merge({'_locale': 'en'})) }}" />
+    {% endif %}
 
     <style>
         :root {
@@ -196,6 +205,18 @@
             color: var(--primary);
         }
 
+        .lang-switch {
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            background: var(--gray-100);
+            border-radius: 0.25rem;
+        }
+
+        .lang-switch:hover {
+            background: var(--primary);
+            color: white !important;
+        }
+
         {% block extra_styles %}{% endblock %}
     </style>
 </head>
@@ -204,21 +225,29 @@
         <div class="container">
             <div class="header-content">
                 <div>
-                    <h1><a href="{{ path('device_index') }}">Matter Survey</a></h1>
-                    {% block header_subtitle %}<p>Community-driven database of Matter device capabilities</p>{% endblock %}
+                    <h1><a href="{{ path('device_index') }}">{{ 'site.name'|trans({}, 'navigation') }}</a></h1>
+                    {% block header_subtitle %}<p>{{ 'site.tagline'|trans({}, 'navigation') }}</p>{% endblock %}
                 </div>
                 <nav>
                     <form class="header-search" action="{{ path('device_index') }}" method="get">
-                        <input type="text" name="q" placeholder="Search devices..." value="{{ app.request.query.get('q', '') }}" aria-label="Search devices">
-                        <button type="submit" aria-label="Search">&#128269;</button>
+                        <input type="text" name="q" placeholder="{{ 'search.placeholder'|trans({}, 'navigation') }}" value="{{ app.request.query.get('q', '') }}" aria-label="{{ 'search.label'|trans({}, 'navigation') }}">
+                        <button type="submit" aria-label="{{ 'search.button_label'|trans({}, 'navigation') }}">&#128269;</button>
                     </form>
                     <span class="nav-divider"></span>
-                    <a href="{{ path('device_index') }}">Devices</a>
-                    <a href="{{ path('vendor_index') }}">Vendors</a>
-                    <a href="{{ path('stats_dashboard') }}">Stats</a>
+                    <a href="{{ path('device_index') }}">{{ 'nav.devices'|trans({}, 'navigation') }}</a>
+                    <a href="{{ path('vendor_index') }}">{{ 'nav.vendors'|trans({}, 'navigation') }}</a>
+                    <a href="{{ path('stats_dashboard') }}">{{ 'nav.stats'|trans({}, 'navigation') }}</a>
                     <span class="nav-divider"></span>
-                    <a href="{{ path('page_about') }}">About</a>
-                    <a href="{{ path('page_faq') }}">FAQ</a>
+                    <a href="{{ path('page_about') }}">{{ 'nav.about'|trans({}, 'navigation') }}</a>
+                    <a href="{{ path('page_faq') }}">{{ 'nav.faq'|trans({}, 'navigation') }}</a>
+                    <span class="nav-divider"></span>
+                    {% set current_route = app.request.attributes.get('_route') %}
+                    {% set route_params = app.request.attributes.get('_route_params', {}) %}
+                    {% if app.request.locale == 'en' %}
+                        <a href="{{ path(current_route, route_params|merge({'_locale': 'de'})) }}" class="lang-switch">DE</a>
+                    {% else %}
+                        <a href="{{ path(current_route, route_params|merge({'_locale': 'en'})) }}" class="lang-switch">EN</a>
+                    {% endif %}
                 </nav>
             </div>
         </div>
@@ -230,14 +259,14 @@
 
     <footer>
         <p>
-            <a href="{{ path('page_about') }}">About</a> &middot;
-            <a href="{{ path('page_faq') }}">FAQ</a> &middot;
-            <a href="{{ path('page_glossary') }}">Glossary</a>
+            <a href="{{ path('page_about') }}">{{ 'nav.about'|trans({}, 'navigation') }}</a> &middot;
+            <a href="{{ path('page_faq') }}">{{ 'nav.faq'|trans({}, 'navigation') }}</a> &middot;
+            <a href="{{ path('page_glossary') }}">{{ 'nav.glossary'|trans({}, 'navigation') }}</a>
         </p>
         <p>
-            Data contributed by <a href="https://github.com/cedricziel/ha-matter-binding-helper">Matter Binding Helper</a> users.
+            {{ 'footer.data_contributed'|trans({}, 'navigation') }} <a href="https://github.com/cedricziel/ha-matter-binding-helper">{{ 'footer.addon_name'|trans({}, 'navigation') }}</a> {{ 'footer.users'|trans({}, 'navigation') }}.
             <br>
-            Privacy-focused: No personal data is collected.
+            {{ 'footer.privacy_note'|trans({}, 'navigation') }}
         </p>
     </footer>
 </body>

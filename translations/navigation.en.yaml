@@ -1,0 +1,33 @@
+# Navigation and layout strings
+
+# Site branding
+site:
+    name: "Matter Survey"
+    tagline: "Community-driven database of Matter device capabilities"
+
+# Header navigation
+nav:
+    devices: "Devices"
+    vendors: "Vendors"
+    stats: "Stats"
+    about: "About"
+    faq: "FAQ"
+    glossary: "Glossary"
+
+# Search
+search:
+    placeholder: "Search devices..."
+    label: "Search devices"
+    button_label: "Search"
+
+# Footer
+footer:
+    data_contributed: "Data contributed by"
+    addon_name: "Matter Binding Helper"
+    users: "users"
+    privacy_note: "Privacy-focused: No personal data is collected."
+
+# Language switcher
+language:
+    switch_to_german: "Deutsch"
+    switch_to_english: "English"

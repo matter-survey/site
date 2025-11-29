@@ -1,5 +1,41 @@
-controllers:
-    resource:
-        path: ../src/Controller/
-        namespace: App\Controller
+# Non-localized routes (API, health, sitemap)
+api_controllers:
+    resource: ../src/Controller/ApiController.php
     type: attribute
+
+health_controllers:
+    resource: ../src/Controller/HealthController.php
+    type: attribute
+
+sitemap_controllers:
+    resource: ../src/Controller/SitemapController.php
+    type: attribute
+
+# User-facing routes with locale prefix
+device_controllers:
+    resource: ../src/Controller/DeviceController.php
+    type: attribute
+    prefix:
+        en: ''
+        de: '/de'
+
+vendor_controllers:
+    resource: ../src/Controller/VendorController.php
+    type: attribute
+    prefix:
+        en: ''
+        de: '/de'
+
+stats_controllers:
+    resource: ../src/Controller/StatsController.php
+    type: attribute
+    prefix:
+        en: ''
+        de: '/de'
+
+page_controllers:
+    resource: ../src/Controller/PageController.php
+    type: attribute
+    prefix:
+        en: ''
+        de: '/de'

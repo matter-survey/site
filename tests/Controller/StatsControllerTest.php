@@ -542,17 +542,17 @@ class StatsControllerTest extends WebTestCase
         $this->assertSelectorTextContains('.dashboard-nav a.active', 'Versions');
     }
 
-    public function testHeaderNavigationShowsDashboardLink(): void
+    public function testHeaderNavigationShowsStatsLink(): void
     {
         $client = static::createClient();
         $crawler = $client->request('GET', '/');
 
         $this->assertResponseIsSuccessful();
 
-        $dashboardLink = $crawler->filter('header nav a:contains("Dashboard")');
-        $this->assertCount(1, $dashboardLink);
+        $statsLink = $crawler->filter('header nav a:contains("Stats")');
+        $this->assertCount(1, $statsLink);
 
-        $client->click($dashboardLink->link());
+        $client->click($statsLink->link());
         $this->assertResponseIsSuccessful();
     }
 

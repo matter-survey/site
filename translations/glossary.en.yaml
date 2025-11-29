@@ -1,0 +1,119 @@
+# Glossary page translations
+
+title: "Glossary"
+meta_title: "Matter Glossary - Smart Home Terms Explained"
+meta_description: "Plain-English explanations of Matter, Thread, clusters, binding, and other smart home terms."
+intro: "Plain-English explanations of Matter and smart home terms."
+
+# Navigation
+nav:
+    connectivity: "Connectivity"
+    clusters: "Clusters"
+    device_concepts: "Device Concepts"
+    matter_spec: "Matter Spec"
+
+# Connectivity section
+connectivity:
+    title: "Connectivity"
+
+    thread:
+        name: "Thread"
+        description_1: "A low-power wireless mesh network designed for smart home devices. Thread devices create a mesh where each device can relay messages to others, improving range and reliability."
+        description_2: "Thread is especially good for battery-powered devices like sensors and locks. Requires a Thread Border Router (built into Apple TV 4K, HomePod Mini, some Google/Amazon devices)."
+        example: "Eve Door Sensor uses Thread and can run for months on a single battery."
+
+    wifi:
+        name: "WiFi"
+        description: "Standard wireless connection using your home WiFi network. No additional hub required. Most common for plugs, bulbs, and devices that are always powered."
+        example: "A Meross Smart Plug connects directly to your WiFi router."
+
+    ethernet:
+        name: "Ethernet"
+        description: "Wired network connection. Offers the most reliable connection but requires running cables. Typically found in hubs, bridges, and some high-end devices."
+
+    border_router:
+        name: "Border Router"
+        description: "A device that connects a Thread network to your IP network (WiFi/Ethernet). Required for Thread devices to communicate with the internet and your phone."
+        example: "Apple TV 4K, HomePod Mini, Google Nest Hub (2nd gen), Amazon Echo (4th gen)"
+
+# Clusters section
+clusters:
+    title: "Clusters"
+
+    cluster:
+        name: "Cluster"
+        description: 'A group of related features that a device can have. Each cluster defines specific attributes (data the device reports) and commands (actions you can trigger).'
+        example: 'The "On/Off" cluster includes an attribute for current state (on or off) and commands to turn on, turn off, or toggle.'
+
+    server_cluster:
+        name: "Server Cluster"
+        description: "A capability that a device provides. When a device has a server cluster, it means other devices (or your app) can read data from it or send commands to it."
+        example: 'A light bulb has "On/Off" as a server cluster — it can be turned on/off by others.'
+
+    client_cluster:
+        name: "Client Cluster"
+        description: "A capability that a device uses from other devices. When a device has a client cluster, it can control that feature on other devices."
+        example: 'A wall switch has "On/Off" as a client cluster — it can turn other devices on/off.'
+
+    common_clusters:
+        name: "Common Clusters"
+        description: "Here are some clusters you'll see frequently:"
+        onoff: "Turn device on or off"
+        level_control: "Dimming, volume, or other levels"
+        color_control: "Color temperature and RGB colors"
+        temperature_measurement: "Reports temperature readings"
+        occupancy_sensing: "Motion/presence detection"
+        door_lock: "Lock and unlock commands"
+        thermostat: "HVAC control"
+
+# Device Concepts section
+device_concepts:
+    title: "Device Concepts"
+
+    binding:
+        name: "Binding"
+        description: "A direct connection between two devices that allows them to communicate without going through a hub. Bindings work even when your internet or hub is offline."
+        example: "Bind a smart switch to a smart bulb. Press the switch, and the bulb responds instantly — no cloud, no hub, no delay."
+
+    endpoint:
+        name: "Endpoint"
+        description: "A logical sub-device within a physical device. A single Matter device can have multiple endpoints, each representing different functionality."
+        example: "A power strip with 4 outlets might have 4 endpoints (one per outlet) plus a 5th endpoint for overall device control."
+
+    device_type:
+        name: "Device Type"
+        description: 'A predefined template that specifies what clusters a device should support. Device types ensure consistency — all "Dimmable Lights" support the same basic features.'
+        examples: "On/Off Light, Dimmable Light, Color Temperature Light, Door Lock, Thermostat, Contact Sensor"
+
+    vendor_id:
+        name: "Vendor ID"
+        description: "A unique number assigned to each manufacturer by the Connectivity Standards Alliance (CSA). Used to identify who made a device."
+        examples: "Eve = 4874, Aqara = 4447, Philips = 4107"
+
+    product_id:
+        name: "Product ID"
+        description: "A number assigned by the vendor to identify a specific product model. Combined with Vendor ID, it uniquely identifies any Matter device."
+
+# Matter Spec section
+matter_spec:
+    title: "Matter Specification"
+
+    matter_version:
+        name: "Matter Version / Spec Version"
+        description: "The version of the Matter specification a device was built against. Newer versions add features and device types. Current versions include 1.0, 1.1, 1.2, 1.3, and 1.4."
+        example: "Matter 1.3 added support for water leak sensors and electric vehicle chargers."
+
+    mandatory_cluster:
+        name: "Mandatory Cluster"
+        description: "A cluster that the Matter specification requires for a specific device type. If a device is missing mandatory clusters, it's not fully spec-compliant."
+
+    optional_cluster:
+        name: "Optional Cluster"
+        description: "A cluster that a device may support but isn't required to. Optional clusters provide extra functionality beyond the basics."
+
+    dcl:
+        name: "DCL (Distributed Compliance Ledger)"
+        description: "A public database maintained by the CSA that lists all certified Matter devices. We use DCL data to match vendor/product IDs to product names."
+
+# Back to top
+back_to_top: "Back to top"
