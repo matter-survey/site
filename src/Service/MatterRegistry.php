@@ -172,7 +172,7 @@ class MatterRegistry
     /**
      * Get full metadata for a device type.
      *
-     * @return array{name: string, specVersion: ?string, category: ?string, displayCategory: ?string, icon: ?string, description: ?string}|null
+     * @return array{name: string, specVersion: ?string, category: ?string, displayCategory: ?string, icon: ?string, description: ?string, id?: int, hexId?: string, class?: string, scope?: string, superset?: string, mandatoryServerClusters?: array, optionalServerClusters?: array, mandatoryClientClusters?: array, optionalClientClusters?: array}|null
      */
     public function getDeviceTypeMetadata(int $id): ?array
     {
@@ -493,5 +493,182 @@ class MatterRegistry
     public function hasExtendedData(int $id): bool
     {
         return $this->getDeviceTypeMetadata($id) !== null;
+    }
+
+    // ========================================================================
+    // CLUSTER GAP ANALYSIS
+    // ========================================================================
+
+    /**
+     * Analyze a device's cluster implementation against the spec requirements.
+     *
+     * @param int   $deviceTypeId      The device type ID
+     * @param int[] $actualServerClusters Server clusters the device actually implements
+     * @param int[] $actualClientClusters Client clusters the device actually implements
+     *
+     * @return array{
+     *     deviceType: array|null,
+     *     missingMandatoryServer: array,
+     *     missingMandatoryClient: array,
+     *     missingOptionalServer: array,
+     *     missingOptionalClient: array,
+     *     implementedOptionalServer: array,
+     *     implementedOptionalClient: array,
+     *     extraServer: array,
+     *     extraClient: array,
+     *     compliance: array{mandatory: bool, score: float, mandatoryScore: float, optionalScore: float, totalMandatory: int, implementedMandatory: int, totalOptional: int, implementedOptional: int},
+     * }
+     */
+    public function analyzeClusterGaps(
+        int $deviceTypeId,
+        array $actualServerClusters,
+        array $actualClientClusters
+    ): array {
+        $deviceType = $this->getDeviceTypeMetadata($deviceTypeId);
+
+        if ($deviceType === null) {
+            return [
+                'deviceType' => null,
+                'missingMandatoryServer' => [],
+                'missingMandatoryClient' => [],
+                'missingOptionalServer' => [],
+                'missingOptionalClient' => [],
+                'implementedOptionalServer' => [],
+                'implementedOptionalClient' => [],
+                'extraServer' => [],
+                'extraClient' => [],
+                'compliance' => [
+                    'mandatory' => true,
+                    'score' => 100.0,
+                    'mandatoryScore' => 100.0,
+                    'optionalScore' => 0.0,
+                    'totalMandatory' => 0,
+                    'implementedMandatory' => 0,
+                    'totalOptional' => 0,
+                    'implementedOptional' => 0,
+                ],
+            ];
+        }
+
+        $mandatoryServer = $deviceType['mandatoryServerClusters'] ?? [];
+        $mandatoryClient = $deviceType['mandatoryClientClusters'] ?? [];
+        $optionalServer = $deviceType['optionalServerClusters'] ?? [];
+        $optionalClient = $deviceType['optionalClientClusters'] ?? [];
+
+        // Extract IDs for comparison
+        $mandatoryServerIds = array_column($mandatoryServer, 'id');
+        $mandatoryClientIds = array_column($mandatoryClient, 'id');
+        $optionalServerIds = array_column($optionalServer, 'id');
+        $optionalClientIds = array_column($optionalClient, 'id');
+
+        // Find missing mandatory clusters
+        $missingMandatoryServerIds = array_diff($mandatoryServerIds, $actualServerClusters);
+        $missingMandatoryClientIds = array_diff($mandatoryClientIds, $actualClientClusters);
+
+        // Find missing optional clusters
+        $missingOptionalServerIds = array_diff($optionalServerIds, $actualServerClusters);
+        $missingOptionalClientIds = array_diff($optionalClientIds, $actualClientClusters);
+
+        // Find implemented optional clusters
+        $implementedOptionalServerIds = array_intersect($optionalServerIds, $actualServerClusters);
+        $implementedOptionalClientIds = array_intersect($optionalClientIds, $actualClientClusters);
+
+        // Find extra clusters (not in spec for this device type)
+        $allSpecServerIds = array_merge($mandatoryServerIds, $optionalServerIds);
+        $allSpecClientIds = array_merge($mandatoryClientIds, $optionalClientIds);
+        $extraServerIds = array_diff($actualServerClusters, $allSpecServerIds);
+        $extraClientIds = array_diff($actualClientClusters, $allSpecClientIds);
+
+        // Build result arrays with names
+        $missingMandatoryServer = array_filter($mandatoryServer, fn($c) => \in_array($c['id'], $missingMandatoryServerIds, true));
+        $missingMandatoryClient = array_filter($mandatoryClient, fn($c) => \in_array($c['id'], $missingMandatoryClientIds, true));
+        $missingOptionalServer = array_filter($optionalServer, fn($c) => \in_array($c['id'], $missingOptionalServerIds, true));
+        $missingOptionalClient = array_filter($optionalClient, fn($c) => \in_array($c['id'], $missingOptionalClientIds, true));
+        $implementedOptionalServer = array_filter($optionalServer, fn($c) => \in_array($c['id'], $implementedOptionalServerIds, true));
+        $implementedOptionalClient = array_filter($optionalClient, fn($c) => \in_array($c['id'], $implementedOptionalClientIds, true));
+
+        // Build extra clusters with names
+        $extraServer = array_map(fn($id) => ['id' => $id, 'name' => $this->getClusterName($id)], array_values($extraServerIds));
+        $extraClient = array_map(fn($id) => ['id' => $id, 'name' => $this->getClusterName($id)], array_values($extraClientIds));
+
+        // Calculate compliance
+        $totalMandatory = \count($mandatoryServerIds) + \count($mandatoryClientIds);
+        $missingMandatory = \count($missingMandatoryServerIds) + \count($missingMandatoryClientIds);
+        $mandatoryCompliant = $missingMandatory === 0;
+
+        // Score: mandatory compliance + optional implementation bonus
+        $totalOptional = \count($optionalServerIds) + \count($optionalClientIds);
+        $implementedOptional = \count($implementedOptionalServerIds) + \count($implementedOptionalClientIds);
+
+        $mandatoryScore = $totalMandatory > 0 ? (($totalMandatory - $missingMandatory) / $totalMandatory) * 100 : 100;
+        $optionalScore = $totalOptional > 0 ? ($implementedOptional / $totalOptional) * 100 : 0;
+
+        // Weighted score: 70% mandatory, 30% optional
+        $overallScore = ($mandatoryScore * 0.7) + ($optionalScore * 0.3);
+
+        return [
+            'deviceType' => $deviceType,
+            'missingMandatoryServer' => array_values($missingMandatoryServer),
+            'missingMandatoryClient' => array_values($missingMandatoryClient),
+            'missingOptionalServer' => array_values($missingOptionalServer),
+            'missingOptionalClient' => array_values($missingOptionalClient),
+            'implementedOptionalServer' => array_values($implementedOptionalServer),
+            'implementedOptionalClient' => array_values($implementedOptionalClient),
+            'extraServer' => $extraServer,
+            'extraClient' => $extraClient,
+            'compliance' => [
+                'mandatory' => $mandatoryCompliant,
+                'score' => round($overallScore, 1),
+                'mandatoryScore' => round($mandatoryScore, 1),
+                'optionalScore' => round($optionalScore, 1),
+                'totalMandatory' => $totalMandatory,
+                'implementedMandatory' => $totalMandatory - $missingMandatory,
+                'totalOptional' => $totalOptional,
+                'implementedOptional' => $implementedOptional,
+            ],
+        ];
+    }
+
+    /**
+     * Analyze cluster gaps for a device across all its device types/endpoints.
+     *
+     * @param array<array<string, mixed>> $endpoints Endpoint data from database
+     *
+     * @return array<int, array> Analysis results keyed by device type ID
+     */
+    public function analyzeDeviceClusterGaps(array $endpoints): array
+    {
+        $analyses = [];
+
+        foreach ($endpoints as $endpoint) {
+            /** @var int[] $serverClusters */
+            $serverClusters = $endpoint['server_clusters'] ?? [];
+            /** @var int[] $clientClusters */
+            $clientClusters = $endpoint['client_clusters'] ?? [];
+            /** @var array<int|array{id: int}> $deviceTypes */
+            $deviceTypes = $endpoint['device_types'] ?? [];
+
+            foreach ($deviceTypes as $dt) {
+                $deviceTypeId = \is_array($dt) ? ($dt['id'] ?? null) : $dt;
+                if ($deviceTypeId === null) {
+                    continue;
+                }
+
+                // Skip system device types (Root Node, etc.) - they're not interesting for gap analysis
+                if ($deviceTypeId < 256) {
+                    continue;
+                }
+
+                if (!isset($analyses[$deviceTypeId])) {
+                    $analyses[$deviceTypeId] = $this->analyzeClusterGaps(
+                        (int) $deviceTypeId,
+                        $serverClusters,
+                        $clientClusters
+                    );
+                }
+            }
+        }
+
+        return $analyses;
     }
 }

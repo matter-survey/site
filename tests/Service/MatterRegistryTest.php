@@ -230,4 +230,174 @@ class MatterRegistryTest extends KernelTestCase
         $this->assertTrue($this->registry->hasExtendedData(256));
         $this->assertFalse($this->registry->hasExtendedData(99999));
     }
+
+    // ========================================================================
+    // Cluster Gap Analysis Tests
+    // ========================================================================
+
+    public function testAnalyzeClusterGapsWithFullCompliance(): void
+    {
+        // On/Off Light (256) requires: Identify (3), Groups (4), Scenes Management (98), On/Off (6)
+        $actualServerClusters = [3, 4, 6, 98, 29]; // All mandatory + Descriptor
+        $actualClientClusters = [];
+
+        $analysis = $this->registry->analyzeClusterGaps(256, $actualServerClusters, $actualClientClusters);
+
+        $this->assertIsArray($analysis);
+        $this->assertNotNull($analysis['deviceType']);
+        $this->assertEquals('On/Off Light', $analysis['deviceType']['name']);
+        $this->assertTrue($analysis['compliance']['mandatory']);
+        $this->assertEmpty($analysis['missingMandatoryServer']);
+        $this->assertEmpty($analysis['missingMandatoryClient']);
+    }
+
+    public function testAnalyzeClusterGapsWithMissingMandatory(): void
+    {
+        // On/Off Light without the On/Off cluster
+        $actualServerClusters = [3, 4, 98, 29]; // Missing On/Off (6)
+        $actualClientClusters = [];
+
+        $analysis = $this->registry->analyzeClusterGaps(256, $actualServerClusters, $actualClientClusters);
+
+        $this->assertFalse($analysis['compliance']['mandatory']);
+        $this->assertNotEmpty($analysis['missingMandatoryServer']);
+
+        $missingIds = array_column($analysis['missingMandatoryServer'], 'id');
+        $this->assertContains(6, $missingIds); // On/Off should be missing
+    }
+
+    public function testAnalyzeClusterGapsWithOptionalClusters(): void
+    {
+        // On/Off Light with optional Level Control implemented
+        $actualServerClusters = [3, 4, 6, 98, 29, 8]; // Mandatory + Level Control (8) optional
+        $actualClientClusters = [];
+
+        $analysis = $this->registry->analyzeClusterGaps(256, $actualServerClusters, $actualClientClusters);
+
+        $this->assertTrue($analysis['compliance']['mandatory']);
+
+        // Check if Level Control is in implemented optional
+        $implementedOptionalIds = array_column($analysis['implementedOptionalServer'], 'id');
+        $this->assertContains(8, $implementedOptionalIds);
+
+        // Optional score should be > 0 since we implemented an optional cluster
+        $this->assertGreaterThan(0, $analysis['compliance']['implementedOptional']);
+    }
+
+    public function testAnalyzeClusterGapsWithExtraClusters(): void
+    {
+        // On/Off Light with an extra cluster not in spec
+        $actualServerClusters = [3, 4, 6, 98, 29, 513]; // Mandatory + Thermostat (513) which is not for lights
+        $actualClientClusters = [];
+
+        $analysis = $this->registry->analyzeClusterGaps(256, $actualServerClusters, $actualClientClusters);
+
+        $this->assertNotEmpty($analysis['extraServer']);
+
+        $extraIds = array_column($analysis['extraServer'], 'id');
+        $this->assertContains(513, $extraIds); // Thermostat should be extra
+    }
+
+    public function testAnalyzeClusterGapsWithUnknownDeviceType(): void
+    {
+        $analysis = $this->registry->analyzeClusterGaps(99999, [6, 8], []);
+
+        $this->assertNull($analysis['deviceType']);
+        $this->assertEmpty($analysis['missingMandatoryServer']);
+        $this->assertEmpty($analysis['missingOptionalServer']);
+        $this->assertTrue($analysis['compliance']['mandatory']);
+        $this->assertEquals(100.0, $analysis['compliance']['score']);
+    }
+
+    public function testAnalyzeClusterGapsScoreCalculation(): void
+    {
+        // Test score is calculated correctly
+        // On/Off Light: 4 mandatory clusters, several optional
+        $actualServerClusters = [3, 4, 6, 98]; // All mandatory
+        $actualClientClusters = [];
+
+        $analysis = $this->registry->analyzeClusterGaps(256, $actualServerClusters, $actualClientClusters);
+
+        // Mandatory score should be 100% (all implemented)
+        $this->assertEquals(100.0, $analysis['compliance']['mandatoryScore']);
+
+        // Overall score = 70% mandatory + 30% optional
+        // With 100% mandatory and 0% optional: 70 + 0 = 70
+        $this->assertEquals(70.0, $analysis['compliance']['score']);
+    }
+
+    public function testAnalyzeClusterGapsIncludesClientClusters(): void
+    {
+        // Test that client clusters are analyzed properly
+        // Create a scenario with client clusters by checking door lock
+        $mandatoryServer = $this->registry->getMandatoryServerClusters(769);
+        $optionalClient = $this->registry->getOptionalClientClusters(769);
+
+        // Provide server clusters and some client clusters
+        $serverClusterIds = array_column($mandatoryServer, 'id');
+        $clientClusterIds = !empty($optionalClient) ? [array_column($optionalClient, 'id')[0]] : [];
+
+        $analysis = $this->registry->analyzeClusterGaps(769, $serverClusterIds, $clientClusterIds);
+
+        // Should have analysis result with proper structure
+        $this->assertIsArray($analysis);
+        $this->assertArrayHasKey('missingMandatoryClient', $analysis);
+        $this->assertArrayHasKey('missingOptionalClient', $analysis);
+        $this->assertArrayHasKey('implementedOptionalClient', $analysis);
+    }
+
+    public function testAnalyzeDeviceClusterGapsWithMultipleEndpoints(): void
+    {
+        $endpoints = [
+            [
+                'device_types' => [256], // On/Off Light
+                'server_clusters' => [3, 4, 6, 98, 29],
+                'client_clusters' => [],
+            ],
+            [
+                'device_types' => [769], // Door Lock
+                'server_clusters' => [3, 4, 29, 257, 101], // Typical door lock clusters
+                'client_clusters' => [],
+            ],
+        ];
+
+        $analyses = $this->registry->analyzeDeviceClusterGaps($endpoints);
+
+        $this->assertIsArray($analyses);
+        $this->assertArrayHasKey(256, $analyses);
+        $this->assertArrayHasKey(769, $analyses);
+    }
+
+    public function testAnalyzeDeviceClusterGapsSkipsSystemDeviceTypes(): void
+    {
+        $endpoints = [
+            [
+                'device_types' => [22, 256], // Root Node (22) + On/Off Light (256)
+                'server_clusters' => [3, 4, 6, 98, 29],
+                'client_clusters' => [],
+            ],
+        ];
+
+        $analyses = $this->registry->analyzeDeviceClusterGaps($endpoints);
+
+        // Should not include Root Node (22) since it's < 256
+        $this->assertArrayNotHasKey(22, $analyses);
+        $this->assertArrayHasKey(256, $analyses);
+    }
+
+    public function testAnalyzeDeviceClusterGapsHandlesObjectDeviceTypes(): void
+    {
+        // Test with device types as objects (as they come from JSON)
+        $endpoints = [
+            [
+                'device_types' => [['id' => 256]], // Object format
+                'server_clusters' => [3, 4, 6, 98, 29],
+                'client_clusters' => [],
+            ],
+        ];
+
+        $analyses = $this->registry->analyzeDeviceClusterGaps($endpoints);
+
+        $this->assertArrayHasKey(256, $analyses);
+    }
 }

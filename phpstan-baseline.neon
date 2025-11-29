@@ -157,49 +157,7 @@ parameters:
 			path: src/Repository/DeviceRepository.php
 
 		-
-			message: '#^Offset ''class'' on array\{name\: string, specVersion\: string\|null, category\: string\|null, displayCategory\: string\|null, icon\: string\|null, description\: string\|null\}\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: src/Service/MatterRegistry.php
-
-		-
-			message: '#^Offset ''hexId'' on array\{name\: string, specVersion\: string\|null, category\: string\|null, displayCategory\: string\|null, icon\: string\|null, description\: string\|null\}\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: src/Service/MatterRegistry.php
-
-		-
-			message: '#^Offset ''mandatoryClientClus…'' on array\{name\: string, specVersion\: string\|null, category\: string\|null, displayCategory\: string\|null, icon\: string\|null, description\: string\|null\}\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: src/Service/MatterRegistry.php
-
-		-
-			message: '#^Offset ''mandatoryServerClus…'' on array\{name\: string, specVersion\: string\|null, category\: string\|null, displayCategory\: string\|null, icon\: string\|null, description\: string\|null\}\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: src/Service/MatterRegistry.php
-
-		-
-			message: '#^Offset ''optionalClientClust…'' on array\{name\: string, specVersion\: string\|null, category\: string\|null, displayCategory\: string\|null, icon\: string\|null, description\: string\|null\}\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: src/Service/MatterRegistry.php
-
-		-
-			message: '#^Offset ''optionalServerClust…'' on array\{name\: string, specVersion\: string\|null, category\: string\|null, displayCategory\: string\|null, icon\: string\|null, description\: string\|null\}\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: src/Service/MatterRegistry.php
-
-		-
-			message: '#^Offset ''scope'' on array\{name\: string, specVersion\: string\|null, category\: string\|null, displayCategory\: string\|null, icon\: string\|null, description\: string\|null\}\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: src/Service/MatterRegistry.php
-
-		-
-			message: '#^Offset ''superset'' on array\{name\: string, specVersion\: string\|null, category\: string\|null, displayCategory\: string\|null, icon\: string\|null, description\: string\|null\}\|null on left side of \?\? does not exist\.$#'
+			message: '#^Offset ''id'' on array\{id\: int\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
 			path: src/Service/MatterRegistry.php
@@ -207,6 +165,12 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$array \(list\<mixed\>\) of array_values is already a list, call has no effect\.$#'
 			identifier: arrayValues.list
+			count: 1
+			path: src/Service/MatterRegistry.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between int and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
 			count: 1
 			path: src/Service/MatterRegistry.php
 

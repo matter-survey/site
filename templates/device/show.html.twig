@@ -606,6 +606,191 @@
         color: var(--blue-700);
         margin-left: 0.5rem;
     }
+
+    .gap-analysis-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+        margin-bottom: 1.5rem;
+    }
+
+    .gap-analysis-section h3 {
+        font-size: 1.125rem;
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .gap-analysis-subtitle {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+        margin-bottom: 1rem;
+    }
+
+    .device-type-analysis {
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: var(--gray-50);
+        border-radius: 0.5rem;
+    }
+
+    .device-type-analysis:last-child {
+        margin-bottom: 0;
+    }
+
+    .device-type-analysis-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .device-type-analysis-name {
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--gray-900);
+    }
+
+    .compliance-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .compliance-badge-success {
+        background: var(--green-100);
+        color: var(--green-700);
+    }
+
+    .compliance-badge-warning {
+        background: var(--yellow-100);
+        color: var(--yellow-700);
+    }
+
+    .compliance-badge-error {
+        background: var(--red-100);
+        color: var(--red-700);
+    }
+
+    .compliance-score {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .compliance-score-bar {
+        flex: 1;
+        height: 8px;
+        background: var(--gray-200);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .compliance-score-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s;
+    }
+
+    .compliance-score-fill-high {
+        background: var(--green-500);
+    }
+
+    .compliance-score-fill-medium {
+        background: var(--yellow-500);
+    }
+
+    .compliance-score-fill-low {
+        background: var(--red-500);
+    }
+
+    .compliance-score-value {
+        font-weight: 600;
+        font-size: 0.875rem;
+        min-width: 3rem;
+        text-align: right;
+    }
+
+    .gap-clusters-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+
+    .gap-cluster-group {
+        padding: 0.75rem;
+        background: white;
+        border-radius: 0.375rem;
+        border: 1px solid var(--gray-200);
+    }
+
+    .gap-cluster-group-title {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: var(--gray-500);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+
+    .gap-cluster-group-title .count {
+        background: var(--gray-200);
+        padding: 0.125rem 0.375rem;
+        border-radius: 9999px;
+        font-size: 0.625rem;
+    }
+
+    .gap-cluster-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+    }
+
+    .gap-cluster-tag {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        text-decoration: none;
+    }
+
+    .gap-cluster-missing-mandatory {
+        background: var(--red-100);
+        color: var(--red-700);
+        border: 1px solid var(--red-200);
+    }
+
+    .gap-cluster-missing-optional {
+        background: var(--gray-100);
+        color: var(--gray-600);
+        border: 1px dashed var(--gray-300);
+    }
+
+    .gap-cluster-implemented {
+        background: var(--green-100);
+        color: var(--green-700);
+        border: 1px solid var(--green-200);
+    }
+
+    .gap-cluster-extra {
+        background: var(--blue-100);
+        color: var(--blue-700);
+        border: 1px solid var(--blue-200);
+    }
+
+    .gap-empty {
+        font-size: 0.8125rem;
+        color: var(--gray-400);
+        font-style: italic;
+    }
 {% endblock %}
 
 {% block body %}
@@ -710,6 +895,158 @@
                     </div>
                 {% endfor %}
             {% endif %}
+        </div>
+    {% endif %}
+
+    {% if clusterGapAnalysis is not empty %}
+        <div class="gap-analysis-section">
+            <h3>Spec Compliance & Feature Analysis</h3>
+            <p class="gap-analysis-subtitle">
+                Comparing this device's clusters against Matter specification requirements. Shows what's implemented, what's missing, and bonus features.
+            </p>
+
+            {% for deviceTypeId, analysis in clusterGapAnalysis %}
+                {% if analysis.deviceType %}
+                    <div class="device-type-analysis">
+                        <div class="device-type-analysis-header">
+                            <a href="{{ path('stats_device_type_show', {type: deviceTypeId}) }}" class="device-type-analysis-name">
+                                {{ analysis.deviceType.name }}
+                            </a>
+                            {% if analysis.compliance.mandatory %}
+                                <span class="compliance-badge compliance-badge-success">Compliant</span>
+                            {% else %}
+                                <span class="compliance-badge compliance-badge-error">Missing Required</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="compliance-score">
+                            <span style="font-size: 0.75rem; color: var(--gray-500);">Feature Score:</span>
+                            <div class="compliance-score-bar">
+                                <div class="compliance-score-fill {% if analysis.compliance.score >= 80 %}compliance-score-fill-high{% elseif analysis.compliance.score >= 50 %}compliance-score-fill-medium{% else %}compliance-score-fill-low{% endif %}"
+                                     style="width: {{ analysis.compliance.score }}%;"></div>
+                            </div>
+                            <span class="compliance-score-value">{{ analysis.compliance.score }}%</span>
+                        </div>
+
+                        <div class="gap-clusters-grid">
+                            {# Missing Mandatory - Critical #}
+                            {% if analysis.missingMandatoryServer is not empty or analysis.missingMandatoryClient is not empty %}
+                                <div class="gap-cluster-group">
+                                    <div class="gap-cluster-group-title">
+                                        Missing Required
+                                        <span class="count" style="background: var(--red-200); color: var(--red-700);">
+                                            {{ analysis.missingMandatoryServer|length + analysis.missingMandatoryClient|length }}
+                                        </span>
+                                    </div>
+                                    <div class="gap-cluster-list">
+                                        {% for cluster in analysis.missingMandatoryServer %}
+                                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.id)}) }}"
+                                               class="gap-cluster-tag gap-cluster-missing-mandatory"
+                                               title="Missing mandatory server cluster">
+                                                {{ cluster.name }}
+                                            </a>
+                                        {% endfor %}
+                                        {% for cluster in analysis.missingMandatoryClient %}
+                                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.id)}) }}"
+                                               class="gap-cluster-tag gap-cluster-missing-mandatory"
+                                               title="Missing mandatory client cluster">
+                                                {{ cluster.name }} (client)
+                                            </a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {# Missing Optional - Could Have #}
+                            {% if analysis.missingOptionalServer is not empty or analysis.missingOptionalClient is not empty %}
+                                <div class="gap-cluster-group">
+                                    <div class="gap-cluster-group-title">
+                                        Available But Not Implemented
+                                        <span class="count">{{ analysis.missingOptionalServer|length + analysis.missingOptionalClient|length }}</span>
+                                    </div>
+                                    <div class="gap-cluster-list">
+                                        {% for cluster in analysis.missingOptionalServer %}
+                                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.id)}) }}"
+                                               class="gap-cluster-tag gap-cluster-missing-optional"
+                                               title="Optional server cluster not implemented">
+                                                {{ cluster.name }}
+                                            </a>
+                                        {% endfor %}
+                                        {% for cluster in analysis.missingOptionalClient %}
+                                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.id)}) }}"
+                                               class="gap-cluster-tag gap-cluster-missing-optional"
+                                               title="Optional client cluster not implemented">
+                                                {{ cluster.name }} (client)
+                                            </a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {# Implemented Optional - Bonus Features #}
+                            {% if analysis.implementedOptionalServer is not empty or analysis.implementedOptionalClient is not empty %}
+                                <div class="gap-cluster-group">
+                                    <div class="gap-cluster-group-title">
+                                        Bonus Features Implemented
+                                        <span class="count" style="background: var(--green-200); color: var(--green-700);">
+                                            {{ analysis.implementedOptionalServer|length + analysis.implementedOptionalClient|length }}
+                                        </span>
+                                    </div>
+                                    <div class="gap-cluster-list">
+                                        {% for cluster in analysis.implementedOptionalServer %}
+                                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.id)}) }}"
+                                               class="gap-cluster-tag gap-cluster-implemented"
+                                               title="Optional server cluster implemented">
+                                                {{ cluster.name }}
+                                            </a>
+                                        {% endfor %}
+                                        {% for cluster in analysis.implementedOptionalClient %}
+                                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.id)}) }}"
+                                               class="gap-cluster-tag gap-cluster-implemented"
+                                               title="Optional client cluster implemented">
+                                                {{ cluster.name }} (client)
+                                            </a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {# Extra Clusters - Beyond Spec #}
+                            {% if analysis.extraServer is not empty or analysis.extraClient is not empty %}
+                                <div class="gap-cluster-group">
+                                    <div class="gap-cluster-group-title">
+                                        Extra (Beyond Spec)
+                                        <span class="count" style="background: var(--blue-200); color: var(--blue-700);">
+                                            {{ analysis.extraServer|length + analysis.extraClient|length }}
+                                        </span>
+                                    </div>
+                                    <div class="gap-cluster-list">
+                                        {% for cluster in analysis.extraServer %}
+                                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.id)}) }}"
+                                               class="gap-cluster-tag gap-cluster-extra"
+                                               title="Server cluster not in device type spec">
+                                                {{ cluster.name }}
+                                            </a>
+                                        {% endfor %}
+                                        {% for cluster in analysis.extraClient %}
+                                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.id)}) }}"
+                                               class="gap-cluster-tag gap-cluster-extra"
+                                               title="Client cluster not in device type spec">
+                                                {{ cluster.name }} (client)
+                                            </a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div style="margin-top: 0.75rem; font-size: 0.75rem; color: var(--gray-500);">
+                            {{ analysis.compliance.implementedMandatory }}/{{ analysis.compliance.totalMandatory }} required |
+                            {{ analysis.compliance.implementedOptional }}/{{ analysis.compliance.totalOptional }} optional
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
         </div>
     {% endif %}
 

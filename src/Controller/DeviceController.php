@@ -182,6 +182,9 @@ class DeviceController extends AbstractController
         $frequentlyPairedWith = $this->deviceRepo->getFrequentlyPairedProducts($id, 2, 8);
         $installationCount = $this->deviceRepo->getProductInstallationCount($id);
 
+        // Analyze cluster gaps (what's missing vs spec)
+        $clusterGapAnalysis = $this->matterRegistry->analyzeDeviceClusterGaps($endpoints);
+
         return $this->render('device/show.html.twig', [
             'device' => $device,
             'endpoints' => $endpoints,
@@ -190,6 +193,7 @@ class DeviceController extends AbstractController
             'canProvideToDevices' => $canProvideToDevices,
             'frequentlyPairedWith' => $frequentlyPairedWith,
             'installationCount' => $installationCount,
+            'clusterGapAnalysis' => $clusterGapAnalysis,
             'matterRegistry' => $this->matterRegistry,
         ]);
     }
