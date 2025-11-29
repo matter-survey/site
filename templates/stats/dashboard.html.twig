@@ -361,10 +361,11 @@
                 <p style="color: var(--gray-500); font-size: 0.875rem;">No data available yet.</p>
             {% endfor %}
             {% if systemCount > 0 %}
+                {% set systemBarWidth = maxCategory > 0 ? (systemCount / maxCategory * 100) : 0 %}
                 <div class="chart-bar category-system system-category">
                     <span class="label">System</span>
                     <div class="bar-container">
-                        <div class="bar" style="width: {{ maxCategory > 0 ? (systemCount / maxCategory * 100)|min(100) : 0 }}%"></div>
+                        <div class="bar" style="width: {{ systemBarWidth > 100 ? 100 : systemBarWidth }}%"></div>
                     </div>
                     <span class="count">{{ systemCount }}</span>
                 </div>

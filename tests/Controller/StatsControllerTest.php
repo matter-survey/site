@@ -37,7 +37,7 @@ class StatsControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Verify device count stat is displayed (exact count varies with DCL data)
-        $this->assertSelectorTextContains('.stats-grid', 'Known Devices');
+        $this->assertSelectorTextContains('.stats-grid', 'Known Products');
     }
 
     public function testDashboardShowsCorrectVendorCount(): void
@@ -137,7 +137,7 @@ class StatsControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Descriptor cluster (29) appears in all devices
-        $this->assertSelectorTextContains('.cluster-table', 'Descriptor');
+        $this->assertSelectorTextContains('.cluster-grid', 'Descriptor');
     }
 
     public function testClustersPageShowsOnOffCluster(): void
@@ -148,7 +148,7 @@ class StatsControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // On/Off cluster (6) appears in multiple devices
-        $this->assertSelectorTextContains('.cluster-table', 'On/Off');
+        $this->assertSelectorTextContains('.cluster-grid', 'On/Off');
     }
 
     public function testClustersPageShowsBindingCluster(): void
@@ -159,7 +159,7 @@ class StatsControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Binding cluster (30) appears in 4 devices
-        $this->assertSelectorTextContains('.cluster-table', 'Binding');
+        $this->assertSelectorTextContains('.cluster-grid', 'Binding');
     }
 
     public function testClustersPageShowsColorControlCluster(): void
@@ -170,7 +170,7 @@ class StatsControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Color Control cluster (768) appears in Philips bulb and Nanoleaf
-        $this->assertSelectorTextContains('.cluster-table', 'Color Control');
+        $this->assertSelectorTextContains('.cluster-grid', 'Color Control');
     }
 
     public function testClustersPageShowsClusterCoOccurrence(): void
@@ -196,9 +196,9 @@ class StatsControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
 
-        // Count unique clusters in fixtures: 6, 8, 29, 30, 31, 40, 69, 768, 1030, 1283, 1794 = 11 unique clusters
-        $statsRow = $crawler->filter('.stats-row');
-        $this->assertStringContainsString('Unique Clusters', $statsRow->text());
+        // Insights grid should show unique cluster count
+        $insightsGrid = $crawler->filter('.insights-grid');
+        $this->assertStringContainsString('Unique Clusters', $insightsGrid->text());
     }
 
     // === Device Types Page Tests ===
@@ -632,7 +632,7 @@ class StatsControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Click on a cluster name link
-        $clusterLink = $crawler->filter('.cluster-table .cluster-name')->first();
+        $clusterLink = $crawler->filter('.cluster-card-title a')->first();
         if ($clusterLink->count() > 0) {
             $client->click($clusterLink->link());
             $this->assertResponseIsSuccessful();

@@ -1,8 +1,26 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Matter Survey - Cluster Analytics{% endblock %}
+{% block title %}Cluster Analytics - Matter Survey{% endblock %}
 
-{% block header_subtitle %}<p>Which Matter clusters are implemented across devices</p>{% endblock %}
+{% block header_subtitle %}<p>Explore Matter protocol clusters and their adoption across devices</p>{% endblock %}
+
+{# Category icons #}
+{% macro categoryIcon(category) %}
+    {%- set icons = {
+        'utility': '🔧',
+        'measurement': '📊',
+        'appliance': '🏠',
+        'media': '🎵',
+        'general': '⚙️',
+        'energy': '⚡',
+        'hvac': '🌡️',
+        'closures': '🚪',
+        'lighting': '💡',
+        'security': '🔒',
+        'safety': '🛡️'
+    } -%}
+    {{- icons[category] ?? '📦' -}}
+{% endmacro %}
 
 {% block extra_styles %}
     .dashboard-nav {
@@ -32,31 +50,214 @@
         border-color: var(--primary);
     }
 
-    .stats-row {
-        display: flex;
+    /* Insights Grid */
+    .insights-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 1rem;
         margin-bottom: 2rem;
-        flex-wrap: wrap;
     }
 
-    .stat-card {
+    .insight-card {
         background: white;
-        padding: 1rem 1.5rem;
+        padding: 1rem 1.25rem;
         border-radius: 0.5rem;
         border: 1px solid var(--gray-200);
+        text-align: center;
     }
 
-    .stat-card .value {
+    .insight-card .value {
         font-size: 1.5rem;
         font-weight: 700;
         color: var(--primary);
     }
 
-    .stat-card .label {
+    .insight-card .label {
         font-size: 0.75rem;
+        color: var(--gray-500);
+        text-transform: uppercase;
+    }
+
+    /* Controls */
+    .controls-bar {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .search-box {
+        flex: 1;
+        min-width: 200px;
+        max-width: 300px;
+        position: relative;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 0.5rem 1rem 0.5rem 2.25rem;
+        border: 1px solid var(--gray-300);
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        background: white;
+    }
+
+    .search-box input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .search-box::before {
+        content: '🔍';
+        position: absolute;
+        left: 0.625rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.75rem;
+        opacity: 0.5;
+    }
+
+    .category-filters {
+        display: flex;
+        gap: 0.25rem;
+        flex-wrap: wrap;
+    }
+
+    .category-btn {
+        padding: 0.375rem 0.625rem;
+        border: 1px solid var(--gray-200);
+        background: white;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        color: var(--gray-600);
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.15s;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .category-btn:hover {
+        background: var(--gray-50);
+        border-color: var(--gray-300);
+    }
+
+    .category-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    .category-btn .count {
+        opacity: 0.7;
+        font-size: 0.6875rem;
+    }
+
+    /* Cluster Grid */
+    .cluster-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .cluster-card {
+        background: white;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+        padding: 1rem;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .cluster-card:hover {
+        border-color: var(--primary);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .cluster-card.hidden {
+        display: none;
+    }
+
+    .cluster-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.5rem;
+    }
+
+    .cluster-card-title {
+        font-weight: 600;
+        font-size: 0.9375rem;
+    }
+
+    .cluster-card-title a {
+        color: var(--gray-900);
+        text-decoration: none;
+    }
+
+    .cluster-card-title a:hover {
+        color: var(--primary);
+    }
+
+    .cluster-card-id {
+        font-size: 0.6875rem;
+        color: var(--gray-400);
+        font-family: monospace;
+    }
+
+    .cluster-card-category {
+        font-size: 0.6875rem;
+        padding: 0.125rem 0.5rem;
+        background: var(--gray-100);
+        color: var(--gray-600);
+        border-radius: 9999px;
+        white-space: nowrap;
+    }
+
+    .cluster-card-description {
+        font-size: 0.8125rem;
+        color: var(--gray-600);
+        margin-bottom: 0.75rem;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .cluster-card-stats {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .cluster-stat {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+    }
+
+    .cluster-stat-value {
+        font-weight: 600;
+        color: var(--gray-900);
+    }
+
+    .cluster-stat-label {
         color: var(--gray-500);
     }
 
+    .cluster-stat.server .cluster-stat-value {
+        color: var(--green-600);
+    }
+
+    .cluster-stat.client .cluster-stat-value {
+        color: var(--blue-600);
+    }
+
+    /* Section styles */
     .section {
         background: white;
         border-radius: 0.5rem;
@@ -73,6 +274,9 @@
         font-size: 1rem;
         font-weight: 600;
         margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 
     .section-header p {
@@ -81,68 +285,12 @@
         margin: 0.25rem 0 0;
     }
 
-    .cluster-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .cluster-table th,
-    .cluster-table td {
-        padding: 0.75rem 1.25rem;
-        text-align: left;
-        border-bottom: 1px solid var(--gray-100);
-    }
-
-    .cluster-table th {
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: var(--gray-500);
-        text-transform: uppercase;
-    }
-
-    .cluster-table tr:last-child td {
-        border-bottom: none;
-    }
-
-    .cluster-table tr:hover td {
-        background: var(--gray-50);
-    }
-
-    .cluster-name {
-        font-weight: 500;
-        color: var(--primary);
-        text-decoration: none;
-    }
-
-    .cluster-name:hover {
-        text-decoration: underline;
-    }
-
-    .cluster-id {
-        font-size: 0.75rem;
-        color: var(--gray-400);
-        font-family: monospace;
-    }
-
-    .progress-bar {
-        width: 150px;
-        height: 8px;
-        background: var(--gray-100);
-        border-radius: 4px;
-        overflow: hidden;
-    }
-
-    .progress-bar .fill {
-        height: 100%;
-        background: var(--primary);
-        border-radius: 4px;
-    }
-
+    /* Co-occurrence Grid */
     .co-occurrence-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 1rem;
-        padding: 1.25rem;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 0.75rem;
+        padding: 1rem;
     }
 
     .co-occurrence-item {
@@ -152,58 +300,109 @@
         padding: 0.75rem;
         background: var(--gray-50);
         border-radius: 0.375rem;
+        border: 1px solid var(--gray-100);
     }
 
-    .co-occurrence-item .clusters {
+    .co-occurrence-item:hover {
+        background: var(--gray-100);
+    }
+
+    .co-occurrence-clusters {
         flex: 1;
+        min-width: 0;
     }
 
-    .co-occurrence-item .cluster-pair {
-        font-size: 0.875rem;
+    .co-occurrence-pair {
+        font-size: 0.8125rem;
         font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        flex-wrap: wrap;
     }
 
-    .co-occurrence-item .cluster-ids {
-        font-size: 0.7rem;
+    .co-occurrence-pair a {
+        color: var(--gray-800);
+        text-decoration: none;
+    }
+
+    .co-occurrence-pair a:hover {
+        color: var(--primary);
+    }
+
+    .co-occurrence-plus {
         color: var(--gray-400);
-        font-family: monospace;
+        font-size: 0.75rem;
     }
 
-    .co-occurrence-item .count {
-        font-size: 0.875rem;
+    .co-occurrence-categories {
+        font-size: 0.6875rem;
+        color: var(--gray-400);
+        margin-top: 0.125rem;
+    }
+
+    .co-occurrence-count {
+        font-size: 0.8125rem;
         font-weight: 600;
         color: var(--primary);
         white-space: nowrap;
+        background: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        border: 1px solid var(--gray-200);
     }
 
+    /* Results count */
+    .results-count {
+        font-size: 0.8125rem;
+        color: var(--gray-500);
+        margin-bottom: 1rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--gray-500);
+    }
+
+    /* Required badge */
     .badge-required {
         display: inline-block;
-        padding: 0.125rem 0.375rem;
+        padding: 0.0625rem 0.375rem;
         background: var(--green-100);
         color: var(--green-700);
         border-radius: 9999px;
-        font-size: 0.625rem;
+        font-size: 0.5625rem;
         font-weight: 500;
-        margin-left: 0.5rem;
+        margin-left: 0.375rem;
+        vertical-align: middle;
     }
 
-    .badge-type {
+    .badge-spec {
         display: inline-block;
-        padding: 0.125rem 0.375rem;
-        border-radius: 9999px;
-        font-size: 0.625rem;
-        font-weight: 500;
-        margin-left: 0.5rem;
-    }
-
-    .badge-server {
+        padding: 0.0625rem 0.375rem;
         background: var(--gray-100);
-        color: var(--gray-600);
+        color: var(--gray-500);
+        border-radius: 9999px;
+        font-size: 0.5625rem;
+        font-weight: 500;
+        margin-left: 0.375rem;
+        vertical-align: middle;
     }
 
-    .badge-client {
-        background: #dbeafe;
-        color: #1e40af;
+    @media (max-width: 640px) {
+        .controls-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .search-box {
+            max-width: none;
+        }
+
+        .cluster-grid {
+            grid-template-columns: 1fr;
+        }
     }
 {% endblock %}
 
@@ -219,84 +418,174 @@
         <a href="{{ path('vendor_index') }}">Vendors</a>
     </div>
 
-    <div class="stats-row">
-        <div class="stat-card">
-            <div class="value">{{ clusterStats|length }}</div>
+    {# Insights #}
+    <div class="insights-grid">
+        <div class="insight-card">
+            <div class="value">{{ insights.totalClusters }}</div>
             <div class="label">Unique Clusters</div>
         </div>
-        <div class="stat-card">
+        <div class="insight-card">
             <div class="value">{{ stats.total_devices|number_format }}</div>
             <div class="label">Total Devices</div>
         </div>
+        <div class="insight-card">
+            <div class="value">{{ insights.avgClustersPerDevice }}</div>
+            <div class="label">Avg Clusters/Device</div>
+        </div>
+        <div class="insight-card">
+            <div class="value">{{ insights.topCategory }}</div>
+            <div class="label">Top Category</div>
+        </div>
     </div>
 
-    <div class="section">
-        <div class="section-header">
-            <h2>Cluster Popularity</h2>
-            <p>How many devices implement each cluster (server vs client)</p>
+    {# Controls #}
+    <div class="controls-bar">
+        <div class="search-box">
+            <input type="text" id="cluster-search" placeholder="Search clusters..." autocomplete="off">
         </div>
-        <table class="cluster-table">
-            <thead>
-                <tr>
-                    <th>Cluster</th>
-                    <th>Type</th>
-                    <th>Devices</th>
-                    <th>Coverage</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% set maxCluster = clusterStats|first %}
-                {% for cluster in clusterStats %}
-                    <tr>
-                        <td>
-                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.cluster_id)}) }}" class="cluster-name">{{ cluster.name }}</a>
-                            <span class="cluster-id">0x{{ '%04X'|format(cluster.cluster_id) }}</span>
-                            {% if cluster.cluster_id in [29, 31, 40, 48, 49, 62, 63] %}
+        <div class="category-filters">
+            <a href="{{ path('stats_clusters') }}" class="category-btn {{ filterCategory == '' ? 'active' : '' }}">
+                All <span class="count">({{ clusters|length }})</span>
+            </a>
+            {% for catKey, cat in categories %}
+                <a href="{{ path('stats_clusters', {category: catKey}) }}"
+                   class="category-btn {{ filterCategory == catKey ? 'active' : '' }}"
+                   data-category="{{ catKey }}">
+                    {{ _self.categoryIcon(catKey) }}
+                    {{ catKey|capitalize }}
+                    <span class="count">({{ cat.clusters|length }})</span>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    {# Results count #}
+    <div class="results-count">
+        Showing <span id="visible-count">{{ clusters|length }}</span> of {{ clusters|length }} clusters
+    </div>
+
+    {# Cluster Grid #}
+    <div class="cluster-grid" id="cluster-grid">
+        {% for cluster in clusters %}
+            <div class="cluster-card"
+                 data-name="{{ cluster.name|lower }}"
+                 data-category="{{ cluster.category }}"
+                 {% if filterCategory and cluster.category != filterCategory %}style="display: none;"{% endif %}>
+                <div class="cluster-card-header">
+                    <div>
+                        <div class="cluster-card-title">
+                            <a href="{{ path('stats_cluster_show', {hexId: cluster.hexId}) }}">{{ cluster.name }}</a>
+                            {% if cluster.id in [29, 31, 40, 48, 49, 62, 63] %}
                                 <span class="badge-required">Required</span>
                             {% endif %}
-                        </td>
-                        <td>
-                            <span class="badge-type badge-{{ cluster.cluster_type }}">{{ cluster.cluster_type|capitalize }}</span>
-                        </td>
-                        <td>{{ cluster.product_count }}</td>
-                        <td>
-                            <div class="progress-bar">
-                                <div class="fill" style="width: {{ maxCluster.product_count > 0 ? (cluster.product_count / maxCluster.product_count * 100) : 0 }}%"></div>
-                            </div>
-                        </td>
-                    </tr>
-                {% else %}
-                    <tr>
-                        <td colspan="4" style="text-align: center; color: var(--gray-500);">No cluster data available yet.</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                            {% if cluster.specVersion != '1.0' %}
+                                <span class="badge-spec">{{ cluster.specVersion }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="cluster-card-id">{{ cluster.hexId }}</div>
+                    </div>
+                    <span class="cluster-card-category">
+                        {{ _self.categoryIcon(cluster.category) }} {{ cluster.category|capitalize }}
+                    </span>
+                </div>
+
+                {% if cluster.description %}
+                    <div class="cluster-card-description" title="{{ cluster.description }}">
+                        {{ cluster.description }}
+                    </div>
+                {% endif %}
+
+                <div class="cluster-card-stats">
+                    <div class="cluster-stat server">
+                        <span class="cluster-stat-value">{{ cluster.serverCount }}</span>
+                        <span class="cluster-stat-label">server</span>
+                    </div>
+                    <div class="cluster-stat client">
+                        <span class="cluster-stat-value">{{ cluster.clientCount }}</span>
+                        <span class="cluster-stat-label">client</span>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="empty-state" style="grid-column: 1 / -1;">
+                <p>No cluster data available yet.</p>
+            </div>
+        {% endfor %}
     </div>
 
+    {# No results message #}
+    <div class="empty-state" id="no-results" style="display: none;">
+        <p>No clusters match your search.</p>
+    </div>
+
+    {# Co-occurrence Section #}
     <div class="section">
         <div class="section-header">
-            <h2>Cluster Co-occurrence</h2>
+            <h2>🔗 Cluster Co-occurrence</h2>
             <p>Which clusters commonly appear together on the same device</p>
         </div>
         <div class="co-occurrence-grid">
             {% for pair in clusterCoOccurrence %}
                 <div class="co-occurrence-item">
-                    <div class="clusters">
-                        <div class="cluster-pair">
-                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(pair.cluster_a)}) }}" style="color: inherit; text-decoration: none;">{{ matterRegistry.getClusterName(pair.cluster_a) }}</a>
-                            +
-                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(pair.cluster_b)}) }}" style="color: inherit; text-decoration: none;">{{ matterRegistry.getClusterName(pair.cluster_b) }}</a>
+                    <div class="co-occurrence-clusters">
+                        <div class="co-occurrence-pair">
+                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(pair.cluster_a)}) }}">{{ pair.name_a }}</a>
+                            <span class="co-occurrence-plus">+</span>
+                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(pair.cluster_b)}) }}">{{ pair.name_b }}</a>
                         </div>
-                        <div class="cluster-ids">
-                            0x{{ '%04X'|format(pair.cluster_a) }} + 0x{{ '%04X'|format(pair.cluster_b) }}
+                        <div class="co-occurrence-categories">
+                            {{ pair.category_a|capitalize }} + {{ pair.category_b|capitalize }}
                         </div>
                     </div>
-                    <div class="count">{{ pair.co_occurrence_count }} devices</div>
+                    <div class="co-occurrence-count">{{ pair.count }}</div>
                 </div>
             {% else %}
-                <p style="color: var(--gray-500); grid-column: 1 / -1; text-align: center;">No co-occurrence data available yet.</p>
+                <p class="empty-state" style="grid-column: 1 / -1;">No co-occurrence data available yet.</p>
             {% endfor %}
         </div>
     </div>
+
+    <script>
+        (function() {
+            const searchInput = document.getElementById('cluster-search');
+            const clusterCards = document.querySelectorAll('.cluster-card');
+            const visibleCount = document.getElementById('visible-count');
+            const noResults = document.getElementById('no-results');
+            const urlParams = new URLSearchParams(window.location.search);
+            const activeCategory = urlParams.get('category') || '';
+
+            function filterClusters() {
+                const query = searchInput.value.toLowerCase().trim();
+                let visible = 0;
+
+                clusterCards.forEach(function(card) {
+                    const name = card.dataset.name;
+                    const category = card.dataset.category;
+
+                    const matchesSearch = query === '' || name.includes(query);
+                    const matchesCategory = activeCategory === '' || category === activeCategory;
+
+                    if (matchesSearch && matchesCategory) {
+                        card.style.display = '';
+                        card.classList.remove('hidden');
+                        visible++;
+                    } else {
+                        card.style.display = 'none';
+                        card.classList.add('hidden');
+                    }
+                });
+
+                visibleCount.textContent = visible;
+                noResults.style.display = visible === 0 ? 'block' : 'none';
+                document.getElementById('cluster-grid').style.display = visible === 0 ? 'none' : '';
+            }
+
+            searchInput.addEventListener('input', filterClusters);
+
+            // Initial filter if category is set
+            if (activeCategory) {
+                filterClusters();
+            }
+        })();
+    </script>
 {% endblock %}
