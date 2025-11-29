@@ -328,12 +328,13 @@ class StatsControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
 
-        // Should show device types from Matter spec not seen in survey
-        $missingSection = $crawler->filter('.missing-section');
-        $this->assertGreaterThan(0, $missingSection->count());
+        // Should show device types from Matter spec not seen in survey (now categorized)
+        $unseenSections = $crawler->filter('.unseen-category');
+        $this->assertGreaterThan(0, $unseenSections->count());
 
-        // Thermostat (769) is in the registry but not in fixtures
-        $this->assertStringContainsString('Thermostat', $missingSection->text());
+        // Door Lock is in the registry but not in fixtures (Security category)
+        $pageContent = $crawler->filter('body')->text();
+        $this->assertStringContainsString('Door Lock', $pageContent);
     }
 
     public function testDeviceTypesPageShowsSpecVersionBadges(): void

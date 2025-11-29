@@ -220,6 +220,95 @@
         margin-top: 0.25rem;
     }
 
+    .filter-bar {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .filter-label {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+
+    .filter-btn {
+        padding: 0.375rem 0.75rem;
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: 0.375rem;
+        font-size: 0.8125rem;
+        cursor: pointer;
+        transition: all 0.15s;
+        text-decoration: none;
+        color: var(--gray-600);
+    }
+
+    .filter-btn:hover {
+        background: var(--gray-50);
+        border-color: var(--gray-300);
+    }
+
+    .filter-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    .unseen-category {
+        opacity: 0.75;
+    }
+
+    .unseen-category .category-header {
+        background: var(--gray-50);
+    }
+
+    .unseen-category .device-type-card {
+        border: 1px dashed var(--gray-300);
+        background: white;
+    }
+
+    .unseen-category .device-type-count {
+        color: var(--gray-400);
+        font-size: 0.875rem;
+    }
+
+    .section-divider {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin: 2rem 0;
+        color: var(--gray-400);
+        font-size: 0.875rem;
+    }
+
+    .section-divider::before,
+    .section-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--gray-200);
+    }
+
+    .progress-bar-container {
+        background: var(--gray-200);
+        border-radius: 9999px;
+        height: 8px;
+        overflow: hidden;
+        flex: 1;
+        max-width: 200px;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: var(--primary);
+        border-radius: 9999px;
+        transition: width 0.3s;
+    }
+
     .icon-lightbulb::before { content: '💡'; }
     .icon-thermometer::before { content: '🌡️'; }
     .icon-lock::before { content: '🔒'; }
@@ -283,6 +372,8 @@
     {% for category, types in groupedDeviceTypes %}
         {% set totalDeviceTypes = totalDeviceTypes + types|length %}
     {% endfor %}
+    {% set totalSpecTypes = totalDeviceTypes + missingDeviceTypes|length %}
+    {% set coveragePercent = totalSpecTypes > 0 ? ((totalDeviceTypes / totalSpecTypes) * 100)|round : 0 %}
 
     <div class="stats-row">
         <div class="stat-card">
@@ -297,11 +388,29 @@
             <div class="value">{{ stats.total_devices|number_format }}</div>
             <div class="label">Total Devices</div>
         </div>
+        <div class="stat-card" style="display: flex; align-items: center; gap: 1rem;">
+            <div>
+                <div class="value">{{ coveragePercent }}%</div>
+                <div class="label">Spec Coverage</div>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" style="width: {{ coveragePercent }}%;"></div>
+            </div>
+        </div>
+    </div>
+
+    {# Spec Version Filter #}
+    <div class="filter-bar">
+        <span class="filter-label">Filter by Spec:</span>
+        <button class="filter-btn active" data-filter="all">All</button>
+        {% for version in specVersions %}
+            <button class="filter-btn" data-filter="{{ version }}">{{ version }}</button>
+        {% endfor %}
     </div>
 
     {% for category in displayCategories %}
         {% if groupedDeviceTypes[category]|length > 0 %}
-            <div class="category-section category-{{ category|lower|replace({' ': '-'}) }}">
+            <div class="category-section category-{{ category|lower|replace({' ': '-'}) }}" data-category="{{ category }}">
                 <div class="category-header">
                     <span class="category-dot"></span>
                     <h2>{{ category }}</h2>
@@ -309,7 +418,7 @@
                 </div>
                 <div class="device-type-grid">
                     {% for dt in groupedDeviceTypes[category] %}
-                        <a href="{{ path('stats_device_type_show', {type: dt.id}) }}" class="device-type-card">
+                        <a href="{{ path('stats_device_type_show', {type: dt.id}) }}" class="device-type-card" data-spec="{{ dt.specVersion }}">
                             <div class="device-type-icon icon-{{ dt.icon }}"></div>
                             <div class="device-type-info">
                                 <div class="device-type-name">
@@ -329,22 +438,62 @@
     {% endfor %}
 
     {% if missingDeviceTypes|length > 0 %}
-        <div class="missing-section">
-            <div class="missing-header">
-                <h2>Not Yet Seen in Survey</h2>
-                <p>Device types defined in the Matter specification but not yet reported by contributors</p>
-            </div>
-            <div class="missing-grid">
-                {% for dt in missingDeviceTypes %}
-                    <a href="{{ path('stats_device_type_show', {type: dt.id}) }}" class="missing-item">
-                        <div class="name">
-                            {{ dt.name }}
-                            <span class="spec-badge spec-{{ dt.specVersion|replace({'.': '-'}) }}">{{ dt.specVersion }}</span>
-                        </div>
-                        <div class="meta">{{ dt.displayCategory }} &middot; ID: {{ dt.id }}</div>
-                    </a>
-                {% endfor %}
-            </div>
-        </div>
+        <div class="section-divider">Not Yet Seen in Survey</div>
+        <p style="text-align: center; font-size: 0.875rem; color: var(--gray-500); margin-bottom: 1.5rem;">
+            Device types defined in the Matter specification but not yet reported by contributors
+        </p>
+
+        {% for category in displayCategories %}
+            {% if groupedMissingDeviceTypes[category]|length > 0 %}
+                <div class="category-section category-{{ category|lower|replace({' ': '-'}) }} unseen-category" data-category="{{ category }}">
+                    <div class="category-header">
+                        <span class="category-dot"></span>
+                        <h2>{{ category }}</h2>
+                        <span style="font-size: 0.75rem; color: var(--gray-500);">{{ groupedMissingDeviceTypes[category]|length }} types not yet seen</span>
+                    </div>
+                    <div class="device-type-grid">
+                        {% for dt in groupedMissingDeviceTypes[category] %}
+                            <a href="{{ path('stats_device_type_show', {type: dt.id}) }}" class="device-type-card" data-spec="{{ dt.specVersion }}">
+                                <div class="device-type-icon icon-{{ dt.icon }}"></div>
+                                <div class="device-type-info">
+                                    <div class="device-type-name">
+                                        {{ dt.name }}
+                                        {% if dt.specVersion %}
+                                            <span class="spec-badge spec-{{ dt.specVersion|replace({'.': '-'}) }}">{{ dt.specVersion }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="device-type-meta">ID: {{ dt.id }}</div>
+                                </div>
+                                <div class="device-type-count">—</div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
     {% endif %}
+
+    <script>
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const filter = btn.dataset.filter;
+
+                document.querySelectorAll('.device-type-card').forEach(card => {
+                    if (filter === 'all' || card.dataset.spec === filter) {
+                        card.style.display = '';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                // Hide empty categories
+                document.querySelectorAll('.category-section').forEach(section => {
+                    const visibleCards = section.querySelectorAll('.device-type-card:not([style*="display: none"])');
+                    section.style.display = visibleCards.length > 0 ? '' : 'none';
+                });
+            });
+        });
+    </script>
 {% endblock %}

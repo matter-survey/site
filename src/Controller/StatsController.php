@@ -88,12 +88,17 @@ class StatsController extends AbstractController
             ];
         }
 
-        // Find device types in registry but not in survey
+        // Find device types in registry but not in survey, grouped by category
         $seenIds = array_column($deviceTypeStats, 'device_type_id');
         $missingDeviceTypes = [];
+        $groupedMissingDeviceTypes = [];
+        foreach ($displayCategories as $category) {
+            $groupedMissingDeviceTypes[$category] = [];
+        }
+
         foreach ($allDeviceTypes as $id => $meta) {
             if (!in_array($id, $seenIds, false)) {
-                $missingDeviceTypes[] = [
+                $deviceType = [
                     'id' => $id,
                     'name' => $meta['name'],
                     'specVersion' => $meta['specVersion'],
@@ -101,14 +106,22 @@ class StatsController extends AbstractController
                     'icon' => $meta['icon'],
                     'description' => $meta['description'],
                 ];
+                $missingDeviceTypes[] = $deviceType;
+                $displayCategory = $meta['displayCategory'] ?? 'System';
+                $groupedMissingDeviceTypes[$displayCategory][] = $deviceType;
             }
         }
+
+        // Collect all spec versions for filtering
+        $allSpecVersions = $this->matterRegistry->getAllSpecVersions();
 
         return $this->render('stats/device_types.html.twig', [
             'stats' => $stats,
             'groupedDeviceTypes' => $groupedDeviceTypes,
             'missingDeviceTypes' => $missingDeviceTypes,
+            'groupedMissingDeviceTypes' => $groupedMissingDeviceTypes,
             'displayCategories' => $displayCategories,
+            'specVersions' => $allSpecVersions,
         ]);
     }
 
