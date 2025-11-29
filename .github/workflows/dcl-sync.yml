@@ -30,9 +30,10 @@ jobs:
         run: php bin/console app:dcl:sync
 
       - name: Create Pull Request
+        id: cpr
         uses: peter-evans/create-pull-request@v7
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           commit-message: 'chore: update DCL vendor and product data'
           title: 'chore: DCL data refresh'
           body: |
@@ -45,3 +46,9 @@ jobs:
           branch: dcl-update
           delete-branch: true
           labels: automated,dcl-sync
+
+      - name: Enable auto-merge
+        if: steps.cpr.outputs.pull-request-operation == 'created'
+        run: gh pr merge --squash --auto "${{ steps.cpr.outputs.pull-request-number }}"
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
