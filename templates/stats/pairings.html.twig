@@ -294,16 +294,7 @@
 {% endblock %}
 
 {% block body %}
-    <div class="dashboard-nav">
-        <a href="{{ path('stats_dashboard') }}">Overview</a>
-        <a href="{{ path('stats_clusters') }}">Clusters</a>
-        <a href="{{ path('stats_device_types') }}">Device Types</a>
-        <a href="{{ path('stats_binding') }}">Binding</a>
-        <a href="{{ path('stats_versions') }}">Versions</a>
-        <a href="{{ path('stats_pairings') }}" class="active">Pairings</a>
-        <a href="{{ path('device_index') }}">Browse Devices</a>
-        <a href="{{ path('vendor_index') }}">Vendors</a>
-    </div>
+    {{ include('stats/_nav.html.twig', { active: 'stats_pairings' }) }}
 
     <div class="info-box">
         <strong>About Device Pairings</strong>

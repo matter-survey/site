@@ -1,8 +1,9 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Matter Survey - Version Landscape{% endblock %}
+{% block title %}Firmware & Versions - Matter Survey{% endblock %}
 
-{% block header_subtitle %}<p>Firmware and hardware version tracking across Matter devices</p>{% endblock %}
+{% block og_title %}Matter Device Firmware Timeline{% endblock %}
+{% block og_description %}Track firmware updates and version history for Matter devices. See which devices get frequent updates, recent firmware releases, and vendor update patterns.{% endblock %}
 
 {% block extra_styles %}
     .dashboard-nav {
@@ -32,18 +33,37 @@
         border-color: var(--primary);
     }
 
-    .stats-row {
-        display: flex;
+    .page-header {
+        background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .page-header h1 {
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-header p {
+        opacity: 0.9;
+        margin: 0;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 1rem;
-        margin-bottom: 2rem;
-        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
     }
 
     .stat-card {
         background: white;
-        padding: 1rem 1.5rem;
+        padding: 1rem;
         border-radius: 0.5rem;
         border: 1px solid var(--gray-200);
+        text-align: center;
     }
 
     .stat-card .value {
@@ -55,224 +75,471 @@
     .stat-card .label {
         font-size: 0.75rem;
         color: var(--gray-500);
+        margin-top: 0.25rem;
     }
 
-    .info-box {
-        background: var(--blue-100);
-        border-radius: 0.5rem;
-        padding: 1rem 1.25rem;
-        margin-bottom: 2rem;
-        font-size: 0.875rem;
-        color: var(--blue-700);
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 1024px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
     }
 
     .section {
         background: white;
         border-radius: 0.5rem;
         border: 1px solid var(--gray-200);
-        margin-bottom: 2rem;
     }
 
     .section-header {
-        padding: 1rem 1.25rem;
+        padding: 1rem 1.5rem;
         border-bottom: 1px solid var(--gray-200);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .section-header h2 {
         font-size: 1rem;
-        font-weight: 600;
         margin: 0;
+        color: var(--gray-700);
     }
 
-    .section-header p {
+    .section-header .badge {
+        background: var(--gray-100);
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
         font-size: 0.75rem;
-        color: var(--gray-500);
-        margin: 0.25rem 0 0;
+        color: var(--gray-600);
     }
 
-    .version-table {
+    .section-content {
+        padding: 1.5rem;
+    }
+
+    .full-width {
+        grid-column: 1 / -1;
+    }
+
+    .product-table {
         width: 100%;
         border-collapse: collapse;
     }
 
-    .version-table th,
-    .version-table td {
-        padding: 0.75rem 1.25rem;
+    .product-table th {
         text-align: left;
-        border-bottom: 1px solid var(--gray-100);
-    }
-
-    .version-table th {
+        padding: 0.75rem;
+        background: var(--gray-50);
         font-size: 0.75rem;
         font-weight: 600;
         color: var(--gray-500);
         text-transform: uppercase;
+        border-bottom: 1px solid var(--gray-200);
     }
 
-    .version-table tr:last-child td {
-        border-bottom: none;
+    .product-table td {
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--gray-100);
+        font-size: 0.875rem;
     }
 
-    .version-table tr:hover td {
+    .product-table tr:hover td {
         background: var(--gray-50);
     }
 
-    .version-table a {
+    .product-link {
         color: var(--gray-900);
         text-decoration: none;
         font-weight: 500;
     }
 
-    .version-table a:hover {
+    .product-link:hover {
         color: var(--primary);
+    }
+
+    .vendor-name {
+        color: var(--gray-500);
+        font-size: 0.8125rem;
+    }
+
+    .version-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        background: var(--gray-100);
+        border-radius: 0.25rem;
+        font-family: monospace;
+        font-size: 0.8125rem;
     }
 
     .version-count {
         display: inline-flex;
         align-items: center;
         gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        background: #dbeafe;
+        color: #1d4ed8;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
     }
 
-    .version-count .number {
+    .version-count.high {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .date-badge {
+        color: var(--gray-500);
+        font-size: 0.8125rem;
+    }
+
+    .distribution-chart {
+        display: flex;
+        align-items: flex-end;
+        gap: 2px;
+        height: 80px;
+        padding: 0 0.5rem;
+    }
+
+    .distribution-bar {
+        flex: 1;
+        background: var(--primary);
+        border-radius: 2px 2px 0 0;
+        min-width: 30px;
+        position: relative;
+        cursor: help;
+    }
+
+    .distribution-bar:hover::before {
+        content: attr(data-label);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--gray-900);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.6875rem;
+        white-space: nowrap;
+        z-index: 10;
+    }
+
+    .distribution-labels {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0.5rem 0;
+        font-size: 0.6875rem;
+        color: var(--gray-400);
+    }
+
+    .vendor-update-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .vendor-update-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .vendor-update-item:last-child {
+        border-bottom: none;
+    }
+
+    .vendor-update-name {
+        font-weight: 500;
+        color: var(--gray-900);
+    }
+
+    .vendor-update-name a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .vendor-update-name a:hover {
+        color: var(--primary);
+    }
+
+    .vendor-update-meta {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .vendor-update-stat {
+        text-align: right;
+    }
+
+    .vendor-update-stat .value {
         font-weight: 600;
         color: var(--primary);
     }
 
-    .version-list {
-        font-size: 0.75rem;
-        color: var(--gray-500);
-        margin-top: 0.25rem;
-        max-width: 300px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+    .vendor-update-stat .label {
+        font-size: 0.6875rem;
+        color: var(--gray-400);
     }
 
-    .badge {
-        display: inline-block;
-        padding: 0.125rem 0.5rem;
-        border-radius: 9999px;
+    .recent-update {
+        display: flex;
+        gap: 1rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .recent-update:last-child {
+        border-bottom: none;
+    }
+
+    .recent-update-date {
+        min-width: 80px;
         font-size: 0.75rem;
+        color: var(--gray-400);
+    }
+
+    .recent-update-info {
+        flex: 1;
+    }
+
+    .recent-update-product {
         font-weight: 500;
+        color: var(--gray-900);
     }
 
-    .badge-update {
-        background: #fef3c7;
-        color: #b45309;
+    .recent-update-product a {
+        color: inherit;
+        text-decoration: none;
     }
 
-    .badge-multi-hw {
-        background: #fce7f3;
-        color: #be185d;
+    .recent-update-product a:hover {
+        color: var(--primary);
+    }
+
+    .recent-update-version {
+        font-family: monospace;
+        font-size: 0.8125rem;
+        color: var(--gray-500);
     }
 
     .empty-state {
-        padding: 3rem;
+        padding: 2rem;
         text-align: center;
         color: var(--gray-500);
     }
 {% endblock %}
 
 {% block body %}
-    <div class="dashboard-nav">
-        <a href="{{ path('stats_dashboard') }}">Overview</a>
-        <a href="{{ path('stats_clusters') }}">Clusters</a>
-        <a href="{{ path('stats_device_types') }}">Device Types</a>
-        <a href="{{ path('stats_binding') }}">Binding</a>
-        <a href="{{ path('stats_versions') }}" class="active">Versions</a>
-        <a href="{{ path('stats_pairings') }}">Pairings</a>
-        <a href="{{ path('device_index') }}">Browse Devices</a>
-        <a href="{{ path('vendor_index') }}">Vendors</a>
+    {{ include('stats/_nav.html.twig', { active: 'stats_versions' }) }}
+
+    <div class="page-header">
+        <h1>Firmware & Version Timeline</h1>
+        <p>Track firmware updates and version history across Matter devices</p>
     </div>
 
-    <div class="info-box">
-        <strong>Why track versions?</strong>
-        Firmware updates can add or change device features. Devices with multiple software versions likely receive over-the-air (OTA) updates.
-        Multiple hardware versions may indicate product revisions or regional variants.
-    </div>
-
-    <div class="stats-row">
+    <div class="stats-grid">
         <div class="stat-card">
-            <div class="value">{{ versionStats.products_with_versions|number_format }}</div>
+            <div class="value">{{ versionStats.products_with_multiple_versions|default(versionStats.products_with_versions|default(0))|number_format }}</div>
             <div class="label">Products with Version Info</div>
         </div>
         <div class="stat-card">
-            <div class="value">{{ versionStats.unique_software_versions|number_format }}</div>
+            <div class="value">{{ versionStats.unique_software_versions|default(versionStats.max_versions|default(0))|number_format }}</div>
             <div class="label">Unique Software Versions</div>
         </div>
         <div class="stat-card">
-            <div class="value">{{ versionStats.unique_hardware_versions|number_format }}</div>
+            <div class="value">{{ versionStats.unique_hardware_versions|default(0)|number_format }}</div>
             <div class="label">Unique Hardware Versions</div>
         </div>
         <div class="stat-card">
-            <div class="value">{{ productsWithMultipleVersions|length }}</div>
-            <div class="label">Products with Updates</div>
+            <div class="value">{{ versionData.recentUpdates|default([])|length }}</div>
+            <div class="label">Recent Updates (30d)</div>
         </div>
     </div>
 
-    <div class="section">
-        <div class="section-header">
-            <h2>Products with Multiple Versions</h2>
-            <p>Devices that have been seen with different software or hardware versions (indicating OTA activity or product revisions)</p>
-        </div>
-        {% if productsWithMultipleVersions|length > 0 %}
-            <table class="version-table">
-                <thead>
-                    <tr>
-                        <th>Product</th>
-                        <th>Vendor</th>
-                        <th>SW Versions</th>
-                        <th>HW Versions</th>
-                        <th>Software Version List</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for product in productsWithMultipleVersions %}
-                        <tr>
-                            <td>
-                                <a href="{{ path('device_show', {slug: product.slug}) }}">
-                                    {{ product.product_name ?? 'Unknown Product' }}
-                                </a>
-                            </td>
-                            <td>
-                                {% if product.vendor_slug %}
-                                    <a href="{{ path('vendor_show', {slug: product.vendor_slug}) }}" style="font-weight: normal;">
-                                        {{ product.vendor_name ?? 'Unknown' }}
-                                    </a>
-                                {% else %}
-                                    {{ product.vendor_name ?? 'Unknown' }}
-                                {% endif %}
-                            </td>
-                            <td>
-                                <span class="version-count">
-                                    <span class="number">{{ product.software_version_count }}</span>
-                                    {% if product.software_version_count > 1 %}
-                                        <span class="badge badge-update">OTA</span>
-                                    {% endif %}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="version-count">
-                                    <span class="number">{{ product.hardware_version_count }}</span>
-                                    {% if product.hardware_version_count > 1 %}
-                                        <span class="badge badge-multi-hw">Revisions</span>
-                                    {% endif %}
-                                </span>
-                            </td>
-                            <td>
-                                <div class="version-list" title="{{ product.software_versions }}">
-                                    {{ product.software_versions|default('N/A') }}
-                                </div>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <div class="empty-state">
-                <p>No products with multiple versions found yet.</p>
-                <p style="font-size: 0.875rem;">As more data is collected, products with OTA updates will appear here.</p>
+    <div class="dashboard-grid">
+        {# Version Distribution #}
+        {% if versionData.versionStats|default([])|length > 0 %}
+        <div class="section">
+            <div class="section-header">
+                <h2>Version Distribution</h2>
             </div>
+            <div class="section-content">
+                {% set maxCount = 1 %}
+                {% for stat in versionData.versionStats %}
+                    {% if stat.product_count > maxCount %}
+                        {% set maxCount = stat.product_count %}
+                    {% endif %}
+                {% endfor %}
+                <div class="distribution-chart">
+                    {% for stat in versionData.versionStats %}
+                        <div class="distribution-bar"
+                             style="height: {{ (stat.product_count / maxCount * 100)|round }}%;"
+                             data-label="{{ stat.version_count }} version{{ stat.version_count > 1 ? 's' : '' }}: {{ stat.product_count }} products"></div>
+                    {% endfor %}
+                </div>
+                <div class="distribution-labels">
+                    <span>1 version</span>
+                    <span>{{ versionData.versionStats|last.version_count|default('5+') }} versions</span>
+                </div>
+                <p style="text-align: center; font-size: 0.75rem; color: var(--gray-500); margin-top: 1rem;">
+                    Products with more versions typically receive regular firmware updates
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
+        {# Vendor Update Frequency #}
+        {% if versionData.vendorUpdateFrequency|default([])|length > 0 %}
+        <div class="section">
+            <div class="section-header">
+                <h2>Most Active Vendors</h2>
+                <span class="badge">By avg versions</span>
+            </div>
+            <div class="section-content">
+                <ul class="vendor-update-list">
+                    {% for vendor in versionData.vendorUpdateFrequency|slice(0, 10) %}
+                        <li class="vendor-update-item">
+                            <span class="vendor-update-name">
+                                {% if vendor.vendor_slug %}
+                                    <a href="{{ path('vendor_show', {slug: vendor.vendor_slug}) }}">{{ vendor.vendor_name }}</a>
+                                {% else %}
+                                    {{ vendor.vendor_name }}
+                                {% endif %}
+                            </span>
+                            <div class="vendor-update-meta">
+                                <div class="vendor-update-stat">
+                                    <div class="value">{{ vendor.avg_versions }}</div>
+                                    <div class="label">avg versions</div>
+                                </div>
+                                <div class="vendor-update-stat">
+                                    <div class="value">{{ vendor.product_count }}</div>
+                                    <div class="label">products</div>
+                                </div>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+        {# Recent Updates #}
+        {% if versionData.recentUpdates|default([])|length > 0 %}
+        <div class="section">
+            <div class="section-header">
+                <h2>Recent Version Updates</h2>
+                <span class="badge">Last 30 days</span>
+            </div>
+            <div class="section-content" style="max-height: 400px; overflow-y: auto;">
+                {% for update in versionData.recentUpdates|slice(0, 20) %}
+                    <div class="recent-update">
+                        <div class="recent-update-date">{{ update.first_seen|date('M j') }}</div>
+                        <div class="recent-update-info">
+                            <div class="recent-update-product">
+                                {% if update.slug %}
+                                    <a href="{{ path('device_show', {slug: update.slug}) }}">{{ update.product_name ?? 'Unknown' }}</a>
+                                {% else %}
+                                    {{ update.product_name ?? 'Unknown' }}
+                                {% endif %}
+                            </div>
+                            <div class="recent-update-version">
+                                SW: {{ update.software_version ?? 'N/A' }}
+                                {% if update.hardware_version %} | HW: {{ update.hardware_version }}{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {# Products with Frequent Updates #}
+        <div class="section">
+            <div class="section-header">
+                <h2>Frequently Updated Devices</h2>
+                <span class="badge">Beta testers welcome</span>
+            </div>
+            <div class="section-content" style="max-height: 400px; overflow-y: auto;">
+                {% set activeProducts = versionData.activelyUpdated|default(productsWithMultipleVersions|default([])) %}
+                {% if activeProducts|length > 0 %}
+                    {% for product in activeProducts|slice(0, 15) %}
+                        <div class="recent-update">
+                            <div style="min-width: 50px;">
+                                <span class="version-count {{ (product.version_count|default(product.software_version_count|default(0))) >= 5 ? 'high' : '' }}">
+                                    {{ product.version_count|default(product.software_version_count|default(0)) }}
+                                </span>
+                            </div>
+                            <div class="recent-update-info">
+                                <div class="recent-update-product">
+                                    {% if product.slug %}
+                                        <a href="{{ path('device_show', {slug: product.slug}) }}">{{ product.product_name ?? 'Unknown' }}</a>
+                                    {% else %}
+                                        {{ product.product_name ?? 'Unknown' }}
+                                    {% endif %}
+                                </div>
+                                <div class="vendor-name">{{ product.vendor_name ?? 'Unknown Vendor' }}</div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">No multi-version products found yet.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Full Table #}
+        {% set activeProducts = versionData.activelyUpdated|default(productsWithMultipleVersions|default([])) %}
+        {% if activeProducts|length > 0 %}
+        <div class="section full-width">
+            <div class="section-header">
+                <h2>All Multi-Version Products</h2>
+                <span class="badge">{{ activeProducts|length }} products</span>
+            </div>
+            <div class="section-content" style="overflow-x: auto;">
+                <table class="product-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Vendor</th>
+                            <th>Versions</th>
+                            <th>First Seen</th>
+                            <th>Latest</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in activeProducts %}
+                            <tr>
+                                <td>
+                                    {% if product.slug %}
+                                        <a href="{{ path('device_show', {slug: product.slug}) }}" class="product-link">{{ product.product_name ?? 'Unknown' }}</a>
+                                    {% else %}
+                                        {{ product.product_name ?? 'Unknown' }}
+                                    {% endif %}
+                                </td>
+                                <td class="vendor-name">{{ product.vendor_name ?? 'Unknown' }}</td>
+                                <td>
+                                    <span class="version-count {{ (product.version_count|default(product.software_version_count|default(0))) >= 5 ? 'high' : '' }}">
+                                        {{ product.version_count|default(product.software_version_count|default(0)) }}
+                                    </span>
+                                </td>
+                                <td class="date-badge">{{ product.first_version_date|default(product.first_seen)|default('N/A')|date('Y-m-d') }}</td>
+                                <td class="date-badge">{{ product.latest_version_date|default(product.last_seen)|default('N/A')|date('Y-m-d') }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
         {% endif %}
     </div>
 {% endblock %}

@@ -1,0 +1,497 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Market Analysis - Matter Survey{% endblock %}
+
+{% block og_title %}Matter Market Analysis{% endblock %}
+{% block og_description %}Comprehensive market analysis of the Matter smart home ecosystem. Vendor market share, device categories, connectivity trends, and adoption metrics.{% endblock %}
+
+{% block extra_styles %}
+    .dashboard-nav {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .dashboard-nav a {
+        padding: 0.5rem 1rem;
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: 0.375rem;
+        text-decoration: none;
+        color: var(--gray-700);
+        font-size: 0.875rem;
+    }
+
+    .dashboard-nav a:hover {
+        background: var(--gray-100);
+    }
+
+    .dashboard-nav a.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .page-header h1 {
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-header p {
+        opacity: 0.9;
+        margin: 0;
+    }
+
+    .insights-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .insight-card {
+        background: white;
+        padding: 1.25rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+    }
+
+    .insight-card .value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .insight-card .label {
+        font-size: 0.8125rem;
+        color: var(--gray-500);
+        margin-top: 0.25rem;
+    }
+
+    .insight-card .sublabel {
+        font-size: 0.6875rem;
+        color: var(--gray-400);
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 1024px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .section {
+        background: white;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+    }
+
+    .section-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .section-header h2 {
+        font-size: 1rem;
+        margin: 0;
+        color: var(--gray-700);
+    }
+
+    .section-content {
+        padding: 1.5rem;
+    }
+
+    .bar-chart {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .bar-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .bar-label {
+        min-width: 120px;
+        font-size: 0.875rem;
+        color: var(--gray-700);
+    }
+
+    .bar-container {
+        flex: 1;
+        height: 24px;
+        background: var(--gray-100);
+        border-radius: 0.25rem;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .bar-fill {
+        height: 100%;
+        border-radius: 0.25rem;
+        transition: width 0.5s ease-out;
+    }
+
+    .bar-value {
+        min-width: 60px;
+        text-align: right;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--gray-600);
+    }
+
+    .bar-fill-primary { background: var(--primary); }
+    .bar-fill-green { background: #22c55e; }
+    .bar-fill-blue { background: #3b82f6; }
+    .bar-fill-yellow { background: #f59e0b; }
+    .bar-fill-purple { background: #8b5cf6; }
+    .bar-fill-pink { background: #ec4899; }
+    .bar-fill-orange { background: #f97316; }
+    .bar-fill-teal { background: #14b8a6; }
+
+    .vendor-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .vendor-list li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .vendor-list li:last-child {
+        border-bottom: none;
+    }
+
+    .vendor-name {
+        font-weight: 500;
+        color: var(--gray-900);
+    }
+
+    .vendor-meta {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.8125rem;
+        color: var(--gray-500);
+    }
+
+    .vendor-share {
+        font-weight: 600;
+        color: var(--primary);
+    }
+
+    .growth-chart {
+        display: flex;
+        align-items: flex-end;
+        gap: 4px;
+        height: 100px;
+        padding-top: 1rem;
+    }
+
+    .growth-bar {
+        flex: 1;
+        background: var(--primary);
+        border-radius: 2px 2px 0 0;
+        min-width: 20px;
+        position: relative;
+    }
+
+    .growth-bar:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--gray-900);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.6875rem;
+        white-space: nowrap;
+        z-index: 10;
+    }
+
+    .growth-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0.5rem;
+        font-size: 0.6875rem;
+        color: var(--gray-400);
+    }
+
+    .stat-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .stat-row:last-child {
+        border-bottom: none;
+    }
+
+    .stat-label {
+        color: var(--gray-600);
+    }
+
+    .stat-value {
+        font-weight: 600;
+        color: var(--gray-900);
+    }
+
+    .discovery-badges {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        padding: 1rem 0;
+    }
+
+    .discovery-badge {
+        text-align: center;
+        padding: 1rem;
+        background: var(--gray-50);
+        border-radius: 0.5rem;
+        min-width: 100px;
+    }
+
+    .discovery-badge .value {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .discovery-badge .label {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+    }
+
+    .badge-ble .value { color: #1d4ed8; }
+    .badge-softap .value { color: #92400e; }
+    .badge-network .value { color: #065f46; }
+
+    .full-width {
+        grid-column: 1 / -1;
+    }
+{% endblock %}
+
+{% block body %}
+    {{ include('stats/_nav.html.twig', { active: 'stats_market' }) }}
+
+    <div class="page-header">
+        <h1>Market Analysis</h1>
+        <p>Comprehensive overview of the Matter smart home ecosystem</p>
+    </div>
+
+    <div class="insights-grid">
+        <div class="insight-card">
+            <div class="value">{{ vendorInsights.totalVendors|number_format }}</div>
+            <div class="label">Total Vendors</div>
+        </div>
+        <div class="insight-card">
+            <div class="value">{{ vendorInsights.totalProducts|number_format }}</div>
+            <div class="label">Total Products</div>
+        </div>
+        <div class="insight-card">
+            <div class="value">{{ vendorInsights.vendorsWithDevices|number_format }}</div>
+            <div class="label">Active Vendors</div>
+            <div class="sublabel">With devices in survey</div>
+        </div>
+        <div class="insight-card">
+            <div class="value">{{ vendorInsights.top10ProductShare }}%</div>
+            <div class="label">Top 10 Share</div>
+            <div class="sublabel">Market concentration</div>
+        </div>
+        <div class="insight-card">
+            <div class="value">{{ vendorInsights.avgProductsPerVendor }}</div>
+            <div class="label">Avg Products/Vendor</div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        {# Category Distribution #}
+        <div class="section">
+            <div class="section-header">
+                <h2>Device Categories</h2>
+            </div>
+            <div class="section-content">
+                {% set maxCategoryCount = marketData.categoryDistribution|first|default(1) %}
+                <div class="bar-chart">
+                    {% set colors = ['primary', 'green', 'blue', 'yellow', 'purple', 'pink', 'orange', 'teal'] %}
+                    {% for categoryName, count in marketData.categoryDistribution|slice(0, 8) %}
+                        <div class="bar-item">
+                            <span class="bar-label">{{ categoryName }}</span>
+                            <div class="bar-container">
+                                <div class="bar-fill bar-fill-{{ colors[loop.index0 % 8] }}" style="width: {{ (count / maxCategoryCount * 100)|round }}%;"></div>
+                            </div>
+                            <span class="bar-value">{{ count|number_format }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        {# Top Vendors #}
+        <div class="section">
+            <div class="section-header">
+                <h2>Top Vendors by Market Share</h2>
+            </div>
+            <div class="section-content">
+                <ul class="vendor-list">
+                    {% for vendor in marketData.topVendors|slice(0, 10) %}
+                        <li>
+                            <span class="vendor-name">{{ vendor.name }}</span>
+                            <span class="vendor-meta">
+                                <span>{{ vendor.device_count|number_format }} devices</span>
+                                <span class="vendor-share">{{ vendor.market_share }}%</span>
+                            </span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        {# Spec Version Distribution #}
+        <div class="section">
+            <div class="section-header">
+                <h2>Matter Spec Versions</h2>
+            </div>
+            <div class="section-content">
+                {% set maxSpecCount = marketData.specVersions|first|default(1) %}
+                <div class="bar-chart">
+                    {% for specVersion, count in marketData.specVersions %}
+                        <div class="bar-item">
+                            <span class="bar-label">{{ specVersion }}</span>
+                            <div class="bar-container">
+                                <div class="bar-fill bar-fill-blue" style="width: {{ (count / maxSpecCount * 100)|round }}%;"></div>
+                            </div>
+                            <span class="bar-value">{{ count|number_format }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        {# Connectivity Types #}
+        <div class="section">
+            <div class="section-header">
+                <h2>Connectivity Types</h2>
+            </div>
+            <div class="section-content">
+                {% set maxConnCount = marketData.connectivity|first.count|default(1) %}
+                <div class="bar-chart">
+                    {% for conn in marketData.connectivity %}
+                        <div class="bar-item">
+                            <span class="bar-label">{{ conn.conn_type }}</span>
+                            <div class="bar-container">
+                                <div class="bar-fill bar-fill-green" style="width: {{ (conn.count / maxConnCount * 100)|round }}%;"></div>
+                            </div>
+                            <span class="bar-value">{{ conn.count|number_format }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        {# Discovery Capabilities #}
+        {% if marketData.discoveryStats %}
+        <div class="section">
+            <div class="section-header">
+                <h2>Discovery Capabilities</h2>
+            </div>
+            <div class="section-content">
+                <div class="discovery-badges">
+                    <div class="discovery-badge badge-ble">
+                        <div class="value">{{ marketData.discoveryStats.ble|default(0)|number_format }}</div>
+                        <div class="label">BLE</div>
+                    </div>
+                    <div class="discovery-badge badge-softap">
+                        <div class="value">{{ marketData.discoveryStats.softap|default(0)|number_format }}</div>
+                        <div class="label">SoftAP</div>
+                    </div>
+                    <div class="discovery-badge badge-network">
+                        <div class="value">{{ marketData.discoveryStats.on_network|default(0)|number_format }}</div>
+                        <div class="label">On Network</div>
+                    </div>
+                </div>
+                <p style="text-align: center; font-size: 0.75rem; color: var(--gray-500); margin-top: 0.5rem;">
+                    Out of {{ marketData.discoveryStats.total|default(0)|number_format }} products with discovery data
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
+        {# Binding Support #}
+        {% if marketData.bindingStats %}
+        <div class="section">
+            <div class="section-header">
+                <h2>Binding Support</h2>
+            </div>
+            <div class="section-content">
+                <div class="stat-row">
+                    <span class="stat-label">With Binding</span>
+                    <span class="stat-value">{{ marketData.bindingStats.with_binding|default(0)|number_format }}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Without Binding</span>
+                    <span class="stat-value">{{ marketData.bindingStats.without_binding|default(0)|number_format }}</span>
+                </div>
+                {% set total = (marketData.bindingStats.with_binding|default(0)) + (marketData.bindingStats.without_binding|default(0)) %}
+                {% if total > 0 %}
+                <div class="stat-row">
+                    <span class="stat-label">Binding Adoption</span>
+                    <span class="stat-value">{{ ((marketData.bindingStats.with_binding|default(0) / total) * 100)|round(1) }}%</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {# Monthly Growth #}
+        {% if marketData.monthlyGrowth|length > 0 %}
+        <div class="section full-width">
+            <div class="section-header">
+                <h2>Monthly Product Growth</h2>
+            </div>
+            <div class="section-content">
+                {% set maxGrowth = 1 %}
+                {% for month in marketData.monthlyGrowth %}
+                    {% if month.new_products > maxGrowth %}
+                        {% set maxGrowth = month.new_products %}
+                    {% endif %}
+                {% endfor %}
+                <div class="growth-chart">
+                    {% for month in marketData.monthlyGrowth %}
+                        <div class="growth-bar"
+                             style="height: {{ (month.new_products / maxGrowth * 100)|round }}%;"
+                             data-tooltip="{{ month.month }}: {{ month.new_products }} products"></div>
+                    {% endfor %}
+                </div>
+                <div class="growth-labels">
+                    <span>{{ marketData.monthlyGrowth|first.month|default('') }}</span>
+                    <span>{{ marketData.monthlyGrowth|last.month|default('') }}</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+{% endblock %}

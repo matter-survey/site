@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Repository\ClusterRepository;
 use App\Repository\DeviceRepository;
+use App\Repository\ProductRepository;
 use App\Service\MatterRegistry;
 use App\Service\TelemetryService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -21,6 +22,7 @@ class StatsController extends AbstractController
         private TelemetryService $telemetryService,
         private MatterRegistry $matterRegistry,
         private ClusterRepository $clusterRepo,
+        private ProductRepository $productRepo,
     ) {}
 
     #[Route('/dashboard', name: 'stats_dashboard', methods: ['GET'])]
@@ -277,20 +279,6 @@ class StatsController extends AbstractController
         ]);
     }
 
-    #[Route('/versions', name: 'stats_versions', methods: ['GET'])]
-    public function versions(): Response
-    {
-        $stats = $this->telemetryService->getStats();
-        $productsWithMultipleVersions = $this->deviceRepo->getProductsWithMultipleVersions(30);
-        $versionStats = $this->deviceRepo->getVersionStats();
-
-        return $this->render('stats/versions.html.twig', [
-            'stats' => $stats,
-            'productsWithMultipleVersions' => $productsWithMultipleVersions,
-            'versionStats' => $versionStats,
-        ]);
-    }
-
     #[Route('/cluster/{hexId}', name: 'stats_cluster_show', methods: ['GET'], requirements: ['hexId' => '0x[0-9A-Fa-f]+'])]
     public function clusterShow(string $hexId, Request $request): Response
     {
@@ -338,6 +326,59 @@ class StatsController extends AbstractController
             'topPairings' => $topPairings,
             'mostConnectedProducts' => $mostConnectedProducts,
             'vendorPairings' => $vendorPairings,
+        ]);
+    }
+
+    #[Route('/commissioning', name: 'stats_commissioning', methods: ['GET'])]
+    public function commissioning(): Response
+    {
+        $stats = $this->productRepo->getCommissioningStats();
+        $productsWithInstructions = $this->productRepo->findWithCommissioningData(200);
+        $productsByComplexity = $this->productRepo->findGroupedByComplexity();
+        $icdProducts = $this->productRepo->findWithIcdData(50);
+
+        // Complexity hint labels (from Matter spec)
+        $complexityLabels = [
+            0 => 'Standard',
+            1 => 'Custom Instructions',
+            2 => 'App Required',
+            3 => 'Complex Setup',
+        ];
+
+        return $this->render('stats/commissioning.html.twig', [
+            'stats' => $stats,
+            'productsWithInstructions' => $productsWithInstructions,
+            'productsByComplexity' => $productsByComplexity,
+            'icdProducts' => $icdProducts,
+            'complexityLabels' => $complexityLabels,
+        ]);
+    }
+
+    #[Route('/market', name: 'stats_market', methods: ['GET'])]
+    public function market(): Response
+    {
+        $stats = $this->telemetryService->getStats();
+        $marketData = $this->deviceRepo->getMarketAnalysis($this->matterRegistry);
+        $vendorInsights = $this->deviceRepo->getVendorMarketInsights();
+
+        return $this->render('stats/market.html.twig', [
+            'stats' => $stats,
+            'marketData' => $marketData,
+            'vendorInsights' => $vendorInsights,
+        ]);
+    }
+
+    #[Route('/versions', name: 'stats_versions', methods: ['GET'])]
+    public function versions(): Response
+    {
+        $stats = $this->telemetryService->getStats();
+        $versionData = $this->deviceRepo->getVersionTimeline();
+        $versionStats = $this->deviceRepo->getVersionStats();
+
+        return $this->render('stats/versions.html.twig', [
+            'stats' => $stats,
+            'versionData' => $versionData,
+            'versionStats' => $versionStats,
         ]);
     }
 }

@@ -357,16 +357,7 @@
 {% endblock %}
 
 {% block body %}
-    <div class="dashboard-nav">
-        <a href="{{ path('stats_dashboard') }}">Overview</a>
-        <a href="{{ path('stats_clusters') }}">Clusters</a>
-        <a href="{{ path('stats_device_types') }}" class="active">Device Types</a>
-        <a href="{{ path('stats_binding') }}">Binding</a>
-        <a href="{{ path('stats_versions') }}">Versions</a>
-        <a href="{{ path('stats_pairings') }}">Pairings</a>
-        <a href="{{ path('device_index') }}">Browse Devices</a>
-        <a href="{{ path('vendor_index') }}">Vendors</a>
-    </div>
+    {{ include('stats/_nav.html.twig', { active: 'stats_device_types' }) }}
 
     <div class="info-box" style="background: var(--blue-100); border-radius: 0.5rem; padding: 1rem 1.25rem; margin-bottom: 2rem; font-size: 0.875rem; color: var(--blue-700);">
         <strong>What are device types?</strong>

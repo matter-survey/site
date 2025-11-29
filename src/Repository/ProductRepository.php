@@ -214,4 +214,126 @@ class ProductRepository extends ServiceEntityRepository
 
         return $map;
     }
+
+    /**
+     * Get products with commissioning instructions.
+     *
+     * @return Product[]
+     */
+    public function findWithCommissioningData(int $limit = 100, int $offset = 0): array
+    {
+        return $this->createQueryBuilder('p')
+            ->where('p.commissioningInitialStepsInstruction IS NOT NULL')
+            ->orWhere('p.factoryResetStepsInstruction IS NOT NULL')
+            ->orWhere('p.commissioningCustomFlowUrl IS NOT NULL')
+            ->orderBy('p.productName', 'ASC')
+            ->setMaxResults($limit)
+            ->setFirstResult($offset)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Count products with commissioning instructions.
+     */
+    public function countWithCommissioningData(): int
+    {
+        return (int) $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->where('p.commissioningInitialStepsInstruction IS NOT NULL')
+            ->orWhere('p.factoryResetStepsInstruction IS NOT NULL')
+            ->orWhere('p.commissioningCustomFlowUrl IS NOT NULL')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Get commissioning statistics.
+     *
+     * @return array{total: int, withInstructions: int, withFactoryReset: int, withCustomFlow: int, withIcd: int, byComplexity: array<int, int>}
+     */
+    public function getCommissioningStats(): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $total = (int) $conn->fetchOne('SELECT COUNT(*) FROM products');
+
+        $withInstructions = (int) $conn->fetchOne(
+            'SELECT COUNT(*) FROM products WHERE commissioning_initial_steps_instruction IS NOT NULL'
+        );
+
+        $withFactoryReset = (int) $conn->fetchOne(
+            'SELECT COUNT(*) FROM products WHERE factory_reset_steps_instruction IS NOT NULL'
+        );
+
+        $withCustomFlow = (int) $conn->fetchOne(
+            'SELECT COUNT(*) FROM products WHERE commissioning_custom_flow IS NOT NULL AND commissioning_custom_flow > 0'
+        );
+
+        $withIcd = (int) $conn->fetchOne(
+            'SELECT COUNT(*) FROM products WHERE icd_user_active_mode_trigger_instruction IS NOT NULL'
+        );
+
+        // Group by complexity hint (0-3 typical range)
+        $complexityResults = $conn->fetchAllAssociative(
+            'SELECT commissioning_initial_steps_hint as hint, COUNT(*) as count
+             FROM products
+             WHERE commissioning_initial_steps_hint IS NOT NULL
+             GROUP BY commissioning_initial_steps_hint
+             ORDER BY hint'
+        );
+
+        $byComplexity = [];
+        foreach ($complexityResults as $row) {
+            $byComplexity[(int) $row['hint']] = (int) $row['count'];
+        }
+
+        return [
+            'total' => $total,
+            'withInstructions' => $withInstructions,
+            'withFactoryReset' => $withFactoryReset,
+            'withCustomFlow' => $withCustomFlow,
+            'withIcd' => $withIcd,
+            'byComplexity' => $byComplexity,
+        ];
+    }
+
+    /**
+     * Get products grouped by commissioning complexity.
+     *
+     * @return array<int, Product[]>
+     */
+    public function findGroupedByComplexity(): array
+    {
+        $products = $this->createQueryBuilder('p')
+            ->where('p.commissioningInitialStepsHint IS NOT NULL')
+            ->orWhere('p.commissioningInitialStepsInstruction IS NOT NULL')
+            ->orderBy('p.commissioningInitialStepsHint', 'ASC')
+            ->addOrderBy('p.productName', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        $grouped = [];
+        foreach ($products as $product) {
+            $hint = $product->getCommissioningInitialStepsHint() ?? 0;
+            $grouped[$hint][] = $product;
+        }
+
+        return $grouped;
+    }
+
+    /**
+     * Get products with ICD (Intermittently Connected Device) data.
+     *
+     * @return Product[]
+     */
+    public function findWithIcdData(int $limit = 100): array
+    {
+        return $this->createQueryBuilder('p')
+            ->where('p.icdUserActiveModeTriggerInstruction IS NOT NULL')
+            ->orderBy('p.productName', 'ASC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
 }

@@ -456,8 +456,8 @@ class StatsControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Should show products with version info
-        $statsRow = $crawler->filter('.stats-row');
-        $this->assertStringContainsString('Products with Version Info', $statsRow->text());
+        $statsGrid = $crawler->filter('.stats-grid');
+        $this->assertStringContainsString('Products with Version Info', $statsGrid->text());
     }
 
     public function testVersionsPageShowsUniqueSoftwareVersions(): void
@@ -468,8 +468,8 @@ class StatsControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Each fixture device has a unique software version
-        $statsRow = $crawler->filter('.stats-row');
-        $this->assertStringContainsString('Unique Software Versions', $statsRow->text());
+        $statsGrid = $crawler->filter('.stats-grid');
+        $this->assertStringContainsString('Unique Software Versions', $statsGrid->text());
     }
 
     public function testVersionsPageShowsUniqueHardwareVersions(): void
@@ -480,8 +480,8 @@ class StatsControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Fixture devices have various hardware versions
-        $statsRow = $crawler->filter('.stats-row');
-        $this->assertStringContainsString('Unique Hardware Versions', $statsRow->text());
+        $statsGrid = $crawler->filter('.stats-grid');
+        $this->assertStringContainsString('Unique Hardware Versions', $statsGrid->text());
     }
 
     // === Navigation Tests ===
@@ -646,5 +646,163 @@ class StatsControllerTest extends WebTestCase
         $client->request('GET', '/cluster/0xFFFF');
 
         $this->assertResponseStatusCodeSame(404);
+    }
+
+    // === Market Page Tests ===
+
+    public function testMarketPageLoads(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/market');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorExists('html');
+    }
+
+    public function testMarketPageShowsTotalVendors(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/market');
+
+        $this->assertResponseIsSuccessful();
+
+        // Should show total vendors insight
+        $insightsGrid = $crawler->filter('.insights-grid');
+        $this->assertStringContainsString('Total Vendors', $insightsGrid->text());
+    }
+
+    public function testMarketPageShowsTotalProducts(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/market');
+
+        $this->assertResponseIsSuccessful();
+
+        // Should show total products insight
+        $insightsGrid = $crawler->filter('.insights-grid');
+        $this->assertStringContainsString('Total Products', $insightsGrid->text());
+    }
+
+    public function testMarketPageShowsCategoryDistribution(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/market');
+
+        $this->assertResponseIsSuccessful();
+
+        // Should show device categories section
+        $this->assertSelectorTextContains('.section-header h2', 'Device Categories');
+    }
+
+    public function testMarketPageShowsTopVendors(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/market');
+
+        $this->assertResponseIsSuccessful();
+
+        // Should show top vendors by market share section
+        $headers = $crawler->filter('.section-header h2');
+        $found = false;
+        foreach ($headers as $header) {
+            if (str_contains($header->textContent, 'Top Vendors')) {
+                $found = true;
+                break;
+            }
+        }
+        $this->assertTrue($found, 'Top Vendors section should exist');
+    }
+
+    public function testMarketPageHasActiveNavigation(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/market');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('.dashboard-nav a.active', 'Market');
+    }
+
+    // === Commissioning Page Tests ===
+
+    public function testCommissioningPageLoads(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/commissioning');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorExists('html');
+    }
+
+    public function testCommissioningPageShowsTotalProducts(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/commissioning');
+
+        $this->assertResponseIsSuccessful();
+
+        // Should show total products stat
+        $statsGrid = $crawler->filter('.stats-grid');
+        $this->assertStringContainsString('Total Products', $statsGrid->text());
+    }
+
+    public function testCommissioningPageShowsSetupInstructionsStat(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/commissioning');
+
+        $this->assertResponseIsSuccessful();
+
+        // Should show setup instructions stat
+        $statsGrid = $crawler->filter('.stats-grid');
+        $this->assertStringContainsString('With Setup Instructions', $statsGrid->text());
+    }
+
+    public function testCommissioningPageShowsFactoryResetStat(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/commissioning');
+
+        $this->assertResponseIsSuccessful();
+
+        // Should show factory reset stat
+        $statsGrid = $crawler->filter('.stats-grid');
+        $this->assertStringContainsString('With Factory Reset', $statsGrid->text());
+    }
+
+    public function testCommissioningPageHasActiveNavigation(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/commissioning');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('.dashboard-nav a.active', 'Commissioning');
+    }
+
+    public function testNavigationFromDashboardToMarket(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/versions');
+
+        $this->assertResponseIsSuccessful();
+
+        $marketLink = $crawler->filter('.dashboard-nav a:contains("Market")');
+        $client->click($marketLink->link());
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('.dashboard-nav a.active', 'Market');
+    }
+
+    public function testNavigationFromDashboardToCommissioning(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/versions');
+
+        $this->assertResponseIsSuccessful();
+
+        $commissioningLink = $crawler->filter('.dashboard-nav a:contains("Commissioning")');
+        $client->click($commissioningLink->link());
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('.dashboard-nav a.active', 'Commissioning');
     }
 }

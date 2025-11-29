@@ -1,0 +1,17 @@
+{# Stats section navigation - pass `active` param to highlight current page #}
+{% set nav_items = [
+    { route: 'stats_dashboard', label: 'Overview' },
+    { route: 'stats_clusters', label: 'Clusters' },
+    { route: 'stats_device_types', label: 'Device Types' },
+    { route: 'stats_binding', label: 'Binding' },
+    { route: 'stats_versions', label: 'Versions' },
+    { route: 'stats_pairings', label: 'Pairings' },
+    { route: 'stats_market', label: 'Market' },
+    { route: 'stats_commissioning', label: 'Commissioning' },
+] %}
+
+<div class="dashboard-nav">
+    {% for item in nav_items %}
+        <a href="{{ path(item.route) }}"{% if active == item.route %} class="active"{% endif %}>{{ item.label }}</a>
+    {% endfor %}
+</div>

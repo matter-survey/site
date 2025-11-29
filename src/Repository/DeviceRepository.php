@@ -1400,4 +1400,167 @@ class DeviceRepository
                 : 0,
         ];
     }
+
+    /**
+     * Get comprehensive market analysis data.
+     *
+     * @return array<string, mixed>
+     */
+    public function getMarketAnalysis(\App\Service\MatterRegistry $registry): array
+    {
+        // Category distribution
+        $categoryDistribution = $this->getCategoryDistribution($registry);
+
+        // Spec version distribution
+        $specVersions = $this->getSpecVersionDistribution($registry);
+
+        // Connectivity type distribution
+        $connectivity = $this->db->executeQuery("
+            SELECT
+                CASE
+                    WHEN connectivity_types LIKE '%thread%' THEN 'Thread'
+                    WHEN connectivity_types LIKE '%wifi%' THEN 'WiFi'
+                    WHEN connectivity_types LIKE '%ethernet%' THEN 'Ethernet'
+                    ELSE 'Unknown'
+                END as conn_type,
+                COUNT(*) as count
+            FROM products
+            WHERE connectivity_types IS NOT NULL
+            GROUP BY conn_type
+            ORDER BY count DESC
+        ")->fetchAllAssociative();
+
+        // Binding support stats
+        $bindingStats = $this->db->executeQuery("
+            SELECT
+                SUM(CASE WHEN supports_binding = 1 THEN 1 ELSE 0 END) as with_binding,
+                SUM(CASE WHEN supports_binding = 0 OR supports_binding IS NULL THEN 1 ELSE 0 END) as without_binding
+            FROM device_summary
+        ")->fetchAssociative();
+
+        // Top vendors by market share
+        $topVendors = $this->db->executeQuery("
+            SELECT v.name, v.device_count,
+                   ROUND(v.device_count * 100.0 / (SELECT SUM(device_count) FROM vendors WHERE device_count > 0), 1) as market_share
+            FROM vendors v
+            WHERE v.device_count > 0
+            ORDER BY v.device_count DESC
+            LIMIT 15
+        ")->fetchAllAssociative();
+
+        // Monthly growth (based on first_seen dates)
+        $monthlyGrowth = $this->db->executeQuery("
+            SELECT strftime('%Y-%m', first_seen) as month, COUNT(*) as new_products
+            FROM products
+            WHERE first_seen IS NOT NULL
+            GROUP BY month
+            ORDER BY month DESC
+            LIMIT 12
+        ")->fetchAllAssociative();
+
+        // Discovery capabilities distribution
+        $discoveryStats = $this->db->executeQuery("
+            SELECT
+                SUM(CASE WHEN discovery_capabilities_bitmask & 1 THEN 1 ELSE 0 END) as softap,
+                SUM(CASE WHEN discovery_capabilities_bitmask & 2 THEN 1 ELSE 0 END) as ble,
+                SUM(CASE WHEN discovery_capabilities_bitmask & 4 THEN 1 ELSE 0 END) as on_network,
+                COUNT(*) as total
+            FROM products
+            WHERE discovery_capabilities_bitmask IS NOT NULL
+        ")->fetchAssociative();
+
+        return [
+            'categoryDistribution' => $categoryDistribution,
+            'specVersions' => $specVersions,
+            'connectivity' => $connectivity,
+            'bindingStats' => $bindingStats,
+            'topVendors' => $topVendors,
+            'monthlyGrowth' => array_reverse($monthlyGrowth),
+            'discoveryStats' => $discoveryStats,
+        ];
+    }
+
+    /**
+     * Get version/firmware timeline data.
+     *
+     * @return array<string, mixed>
+     */
+    public function getVersionTimeline(): array
+    {
+        // Products with multiple versions (actively updated)
+        $activelyUpdated = $this->db->executeQuery("
+            SELECT
+                ds.product_name,
+                ds.vendor_name,
+                ds.slug,
+                COUNT(DISTINCT pv.software_version) as version_count,
+                MIN(pv.first_seen) as first_version_date,
+                MAX(pv.last_seen) as latest_version_date
+            FROM device_summary ds
+            JOIN product_versions pv ON ds.id = pv.device_id
+            GROUP BY ds.id
+            HAVING version_count > 1
+            ORDER BY version_count DESC
+            LIMIT 30
+        ")->fetchAllAssociative();
+
+        // Version distribution stats
+        $versionStats = $this->db->executeQuery("
+            SELECT
+                version_count,
+                COUNT(*) as product_count
+            FROM (
+                SELECT ds.id, COUNT(DISTINCT pv.software_version) as version_count
+                FROM device_summary ds
+                JOIN product_versions pv ON ds.id = pv.device_id
+                GROUP BY ds.id
+            )
+            GROUP BY version_count
+            ORDER BY version_count
+        ")->fetchAllAssociative();
+
+        // Recent version updates (last 30 days)
+        $recentUpdates = $this->db->executeQuery("
+            SELECT
+                ds.product_name,
+                ds.vendor_name,
+                ds.slug,
+                pv.software_version,
+                pv.hardware_version,
+                pv.first_seen,
+                pv.count as submission_count
+            FROM product_versions pv
+            JOIN device_summary ds ON ds.id = pv.device_id
+            WHERE pv.first_seen >= date('now', '-30 days')
+            ORDER BY pv.first_seen DESC
+            LIMIT 50
+        ")->fetchAllAssociative();
+
+        // Average versions per product by vendor
+        $vendorUpdateFrequency = $this->db->executeQuery("
+            SELECT
+                v.name as vendor_name,
+                v.slug as vendor_slug,
+                ROUND(AVG(version_counts.version_count), 1) as avg_versions,
+                COUNT(*) as product_count
+            FROM vendors v
+            JOIN (
+                SELECT ds.vendor_fk, COUNT(DISTINCT pv.software_version) as version_count
+                FROM device_summary ds
+                JOIN product_versions pv ON ds.id = pv.device_id
+                GROUP BY ds.id
+            ) version_counts ON v.id = version_counts.vendor_fk
+            GROUP BY v.id
+            HAVING product_count >= 3
+            ORDER BY avg_versions DESC
+            LIMIT 20
+        ")->fetchAllAssociative();
+
+        return [
+            'activelyUpdated' => $activelyUpdated,
+            'versionStats' => $versionStats,
+            'recentUpdates' => $recentUpdates,
+            'vendorUpdateFrequency' => $vendorUpdateFrequency,
+        ];
+    }
 }
