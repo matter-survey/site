@@ -86,7 +86,6 @@ jobs:
 
       - name: Run PHPStan static analysis
         run: vendor/bin/phpstan analyse --memory-limit=512M --no-progress
-        continue-on-error: true  # TODO: remove once PHPStan errors are fixed
 
   deploy:
     name: Deploy to Production

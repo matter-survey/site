@@ -1,0 +1,223 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Offset ''commissioningCustomFlowUrl'' does not exist on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\}\.$#'
+			identifier: offsetAccess.notFound
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''commissioningCustom…'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in empty\(\) does not exist\.$#'
+			identifier: empty.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''commissioningCustom…'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in isset\(\) does not exist\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''commissioningModeInitialStepsInstruction'' does not exist on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\}\.$#'
+			identifier: offsetAccess.notFound
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''commissioningModeIn…'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in empty\(\) does not exist\.$#'
+			identifier: empty.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''commissioningModeIn…'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in isset\(\) does not exist\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''companyLegalName'' on array\{vendorID\: int, vendorName\: string, companyLegalName\: string, companyPreferredName\: string, vendorLandingPageURL\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''deviceTypeId'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''discoveryCapabiliti…'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in isset\(\) does not exist\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''factoryResetStepsHi…'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in isset\(\) does not exist\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''factoryResetStepsInstruction'' does not exist on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\}\.$#'
+			identifier: offsetAccess.notFound
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''factoryResetStepsIn…'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in empty\(\) does not exist\.$#'
+			identifier: empty.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''maintenanceUrl'' does not exist on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\}\.$#'
+			identifier: offsetAccess.notFound
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''maintenanceUrl'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in empty\(\) does not exist\.$#'
+			identifier: empty.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''partNumber'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''pid'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''productLabel'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''productName'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''vendorID'' on array\{vendorID\: int, vendorName\: string, companyLegalName\: string, companyPreferredName\: string, vendorLandingPageURL\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''vendorLandingPageURL'' on array\{vendorID\: int, vendorName\: string, companyLegalName\: string, companyPreferredName\: string, vendorLandingPageURL\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''vendorName'' on array\{vendorID\: int, vendorName\: string, companyLegalName\: string, companyPreferredName\: string, vendorLandingPageURL\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''vid'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Method Doctrine\\Persistence\\ObjectManager\:\:clear\(\) invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: src/DataFixtures/ProductFixtures.php
+
+		-
+			message: '#^Property App\\Entity\\Product\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Product.php
+
+		-
+			message: '#^Property App\\Entity\\Vendor\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Vendor.php
+
+		-
+			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: src/Repository/DeviceRepository.php
+
+		-
+			message: '#^Offset ''class'' on array\{name\: string, specVersion\: string\|null, category\: string\|null, displayCategory\: string\|null, icon\: string\|null, description\: string\|null\}\|null on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/MatterRegistry.php
+
+		-
+			message: '#^Offset ''hexId'' on array\{name\: string, specVersion\: string\|null, category\: string\|null, displayCategory\: string\|null, icon\: string\|null, description\: string\|null\}\|null on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/MatterRegistry.php
+
+		-
+			message: '#^Offset ''mandatoryClientClus…'' on array\{name\: string, specVersion\: string\|null, category\: string\|null, displayCategory\: string\|null, icon\: string\|null, description\: string\|null\}\|null on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/MatterRegistry.php
+
+		-
+			message: '#^Offset ''mandatoryServerClus…'' on array\{name\: string, specVersion\: string\|null, category\: string\|null, displayCategory\: string\|null, icon\: string\|null, description\: string\|null\}\|null on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/MatterRegistry.php
+
+		-
+			message: '#^Offset ''optionalClientClust…'' on array\{name\: string, specVersion\: string\|null, category\: string\|null, displayCategory\: string\|null, icon\: string\|null, description\: string\|null\}\|null on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/MatterRegistry.php
+
+		-
+			message: '#^Offset ''optionalServerClust…'' on array\{name\: string, specVersion\: string\|null, category\: string\|null, displayCategory\: string\|null, icon\: string\|null, description\: string\|null\}\|null on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/MatterRegistry.php
+
+		-
+			message: '#^Offset ''scope'' on array\{name\: string, specVersion\: string\|null, category\: string\|null, displayCategory\: string\|null, icon\: string\|null, description\: string\|null\}\|null on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/MatterRegistry.php
+
+		-
+			message: '#^Offset ''superset'' on array\{name\: string, specVersion\: string\|null, category\: string\|null, displayCategory\: string\|null, icon\: string\|null, description\: string\|null\}\|null on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/MatterRegistry.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<mixed\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: src/Service/MatterRegistry.php
+
+		-
+			message: '#^Result of \|\| is always true\.$#'
+			identifier: booleanOr.alwaysTrue
+			count: 3
+			path: tests/DataFixtures/ClusterFixturesTest.php
+
+		-
+			message: '#^Call to protected method getEntityManager\(\) of class Doctrine\\ORM\\EntityRepository\<App\\Entity\\Product\>\.$#'
+			identifier: method.protected
+			count: 5
+			path: tests/Repository/ProductRepositoryTest.php

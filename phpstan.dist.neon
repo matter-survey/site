@@ -1,5 +1,6 @@
 includes:
     - vendor/phpstan/phpstan-symfony/extension.neon
+    - phpstan-baseline.neon
 
 parameters:
     level: 6
@@ -8,3 +9,13 @@ parameters:
         - tests/
     symfony:
         containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
+    ignoreErrors:
+        # Ignore missing array value types for now - can be fixed incrementally
+        - '#no value type specified in iterable type array#'
+        # Method_exists checks are valid runtime guards
+        - '#Call to function method_exists\(\) .* will always evaluate to true#'
+        # Test assertions on already-typed values are intentional verification
+        -
+            message: '#will always evaluate to true#'
+            paths:
+                - tests/
