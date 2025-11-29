@@ -149,6 +149,9 @@ class MatterRegistry
             'specVersion' => $cluster->getSpecVersion(),
             'category' => $cluster->getCategory(),
             'isGlobal' => $cluster->isGlobal(),
+            'attributes' => $cluster->getAttributes(),
+            'commands' => $cluster->getCommands(),
+            'features' => $cluster->getFeatures(),
         ];
     }
 

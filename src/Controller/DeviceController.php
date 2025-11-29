@@ -158,12 +158,14 @@ class DeviceController extends AbstractController
 
         $id = (int) $device['id'];
 
+        // Get DCL Product data for additional info (URLs, commissioning hints, etc.)
+        $product = $this->productRepo->findByVendorAndProductId(
+            (int) $device['vendor_id'],
+            (int) $device['product_id']
+        );
+
         // If device has no product name, try to get it from DCL Product registry
         if (empty($device['product_name']) || $device['product_name'] === '-') {
-            $product = $this->productRepo->findByVendorAndProductId(
-                (int) $device['vendor_id'],
-                (int) $device['product_id']
-            );
             if ($product && $product->getProductName()) {
                 $device['product_name'] = $product->getProductName();
             }
@@ -187,6 +189,7 @@ class DeviceController extends AbstractController
 
         return $this->render('device/show.html.twig', [
             'device' => $device,
+            'product' => $product,
             'endpoints' => $endpoints,
             'versions' => $versions,
             'compatibleDevices' => $compatibleDevices,
