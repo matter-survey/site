@@ -198,6 +198,10 @@
         border-radius: 0.25rem;
     }
 
+    .badge-ble { background: #dbeafe; color: #1d4ed8; }
+    .badge-softap { background: #fef3c7; color: #92400e; }
+    .badge-network { background: #d1fae5; color: #065f46; }
+
     .section {
         background: white;
         padding: 1.5rem;
@@ -964,6 +968,11 @@
                         <span class="badge badge-{{ connType }}" title="{{ connType|capitalize }} Network">{{ connType|capitalize }}</span>
                     {% endfor %}
                 {% endif %}
+            {% endif %}
+            {% if product and product.discoveryCapabilitiesBitmask %}
+                {% if product.discoveryCapabilitiesBitmask b-and 1 %}<span class="badge badge-softap" title="Can be discovered via SoftAP (Wi-Fi access point mode)">SoftAP</span>{% endif %}
+                {% if product.discoveryCapabilitiesBitmask b-and 2 %}<span class="badge badge-ble" title="Can be discovered via Bluetooth Low Energy">BLE</span>{% endif %}
+                {% if product.discoveryCapabilitiesBitmask b-and 4 %}<span class="badge badge-network" title="Can be discovered on the network (mDNS/DNS-SD)">On Network</span>{% endif %}
             {% endif %}
         </div>
 
