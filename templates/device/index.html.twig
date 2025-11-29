@@ -598,13 +598,13 @@
                         <div class="device-item">
                             <div class="device-info">
                                 <h3>
-                                    <a href="{{ path('device_show', {slug: device.slug}) }}">
+                                    <a href="{{ path('device_show', {slug: device.slug}) }}" data-turbo-frame="_top">
                                         {{ device.product_name ?? 'Unknown Product' }}
                                     </a>
                                 </h3>
                                 <div class="device-meta">
                                     {% if device.vendor_slug %}
-                                        <a href="{{ path('vendor_show', {slug: device.vendor_slug}) }}">{{ device.vendor_name ?? 'Unknown Vendor' }}</a>
+                                        <a href="{{ path('vendor_show', {slug: device.vendor_slug}) }}" data-turbo-frame="_top">{{ device.vendor_name ?? 'Unknown Vendor' }}</a>
                                     {% else %}
                                         {{ device.vendor_name ?? 'Unknown Vendor' }}
                                     {% endif %}
