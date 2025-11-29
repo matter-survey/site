@@ -1,42 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Offset ''commissioningCustomFlowUrl'' does not exist on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\}\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: src/Command/DclSyncCommand.php
-
-		-
-			message: '#^Offset ''commissioningCustom…'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in empty\(\) does not exist\.$#'
-			identifier: empty.offset
-			count: 1
-			path: src/Command/DclSyncCommand.php
-
-		-
-			message: '#^Offset ''commissioningCustom…'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in isset\(\) does not exist\.$#'
-			identifier: isset.offset
-			count: 1
-			path: src/Command/DclSyncCommand.php
-
-		-
-			message: '#^Offset ''commissioningModeInitialStepsInstruction'' does not exist on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\}\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: src/Command/DclSyncCommand.php
-
-		-
-			message: '#^Offset ''commissioningModeIn…'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in empty\(\) does not exist\.$#'
-			identifier: empty.offset
-			count: 1
-			path: src/Command/DclSyncCommand.php
-
-		-
-			message: '#^Offset ''commissioningModeIn…'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in isset\(\) does not exist\.$#'
-			identifier: isset.offset
-			count: 1
-			path: src/Command/DclSyncCommand.php
-
-		-
 			message: '#^Offset ''companyLegalName'' on array\{vendorID\: int, vendorName\: string, companyLegalName\: string, companyPreferredName\: string, vendorLandingPageURL\: string\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
@@ -45,42 +9,6 @@ parameters:
 		-
 			message: '#^Offset ''deviceTypeId'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
-			count: 1
-			path: src/Command/DclSyncCommand.php
-
-		-
-			message: '#^Offset ''discoveryCapabiliti…'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in isset\(\) does not exist\.$#'
-			identifier: isset.offset
-			count: 1
-			path: src/Command/DclSyncCommand.php
-
-		-
-			message: '#^Offset ''factoryResetStepsHi…'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in isset\(\) does not exist\.$#'
-			identifier: isset.offset
-			count: 1
-			path: src/Command/DclSyncCommand.php
-
-		-
-			message: '#^Offset ''factoryResetStepsInstruction'' does not exist on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\}\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: src/Command/DclSyncCommand.php
-
-		-
-			message: '#^Offset ''factoryResetStepsIn…'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in empty\(\) does not exist\.$#'
-			identifier: empty.offset
-			count: 1
-			path: src/Command/DclSyncCommand.php
-
-		-
-			message: '#^Offset ''maintenanceUrl'' does not exist on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\}\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: src/Command/DclSyncCommand.php
-
-		-
-			message: '#^Offset ''maintenanceUrl'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in empty\(\) does not exist\.$#'
-			identifier: empty.offset
 			count: 1
 			path: src/Command/DclSyncCommand.php
 

@@ -108,6 +108,13 @@ class ProductFixtures extends Fixture implements FixtureGroupInterface, Dependen
             $product->setCommissioningInitialStepsInstruction(
                 trim($data['commissioningModeInitialStepsInstruction'] ?? '') ?: null
             );
+            if (isset($data['commissioningModeSecondaryStepsHint'])) {
+                $product->setCommissioningSecondaryStepsHint((int) $data['commissioningModeSecondaryStepsHint']);
+            }
+            $product->setCommissioningSecondaryStepsInstruction(
+                trim($data['commissioningModeSecondaryStepsInstruction'] ?? '') ?: null
+            );
+            $product->setCommissioningFallbackUrl(trim($data['commissioningFallbackUrl'] ?? '') ?: null);
 
             // Set factory reset fields
             if (isset($data['factoryResetStepsHint'])) {
@@ -116,6 +123,25 @@ class ProductFixtures extends Fixture implements FixtureGroupInterface, Dependen
             $product->setFactoryResetStepsInstruction(
                 trim($data['factoryResetStepsInstruction'] ?? '') ?: null
             );
+
+            // Set ICD (Intermittently Connected Device) fields
+            if (isset($data['icdUserActiveModeTriggerHint'])) {
+                $product->setIcdUserActiveModeTriggerHint((int) $data['icdUserActiveModeTriggerHint']);
+            }
+            $product->setIcdUserActiveModeTriggerInstruction(
+                trim($data['icdUserActiveModeTriggerInstruction'] ?? '') ?: null
+            );
+
+            // Set LSF (Label/Setup File) fields
+            $product->setLsfUrl(trim($data['lsfUrl'] ?? '') ?: null);
+            if (isset($data['lsfRevision'])) {
+                $product->setLsfRevision((int) $data['lsfRevision']);
+            }
+
+            // Set certified software versions from DCL
+            if (isset($data['certifiedSoftwareVersions']) && \is_array($data['certifiedSoftwareVersions'])) {
+                $product->setCertifiedSoftwareVersions($data['certifiedSoftwareVersions']);
+            }
 
             $manager->persist($product);
             $count++;

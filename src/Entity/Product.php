@@ -89,6 +89,35 @@ class Product
     #[ORM\Column(name: 'factory_reset_steps_instruction', type: Types::TEXT, nullable: true)]
     private ?string $factoryResetStepsInstruction = null;
 
+    #[ORM\Column(name: 'commissioning_secondary_steps_hint', nullable: true)]
+    private ?int $commissioningSecondaryStepsHint = null;
+
+    #[ORM\Column(name: 'commissioning_secondary_steps_instruction', type: Types::TEXT, nullable: true)]
+    private ?string $commissioningSecondaryStepsInstruction = null;
+
+    #[ORM\Column(name: 'commissioning_fallback_url', length: 512, nullable: true)]
+    private ?string $commissioningFallbackUrl = null;
+
+    #[ORM\Column(name: 'icd_user_active_mode_trigger_hint', nullable: true)]
+    private ?int $icdUserActiveModeTriggerHint = null;
+
+    #[ORM\Column(name: 'icd_user_active_mode_trigger_instruction', type: Types::TEXT, nullable: true)]
+    private ?string $icdUserActiveModeTriggerInstruction = null;
+
+    #[ORM\Column(name: 'lsf_url', length: 512, nullable: true)]
+    private ?string $lsfUrl = null;
+
+    #[ORM\Column(name: 'lsf_revision', nullable: true)]
+    private ?int $lsfRevision = null;
+
+    /**
+     * Certified software versions from the DCL.
+     *
+     * @var array<int>|null
+     */
+    #[ORM\Column(name: 'certified_software_versions', type: Types::JSON, nullable: true)]
+    private ?array $certifiedSoftwareVersions = null;
+
     /**
      * Network connectivity types derived from telemetry (thread, wifi, ethernet).
      *
@@ -364,6 +393,108 @@ class Product
     public function setFactoryResetStepsInstruction(?string $factoryResetStepsInstruction): static
     {
         $this->factoryResetStepsInstruction = $factoryResetStepsInstruction;
+
+        return $this;
+    }
+
+    public function getCommissioningSecondaryStepsHint(): ?int
+    {
+        return $this->commissioningSecondaryStepsHint;
+    }
+
+    public function setCommissioningSecondaryStepsHint(?int $commissioningSecondaryStepsHint): static
+    {
+        $this->commissioningSecondaryStepsHint = $commissioningSecondaryStepsHint;
+
+        return $this;
+    }
+
+    public function getCommissioningSecondaryStepsInstruction(): ?string
+    {
+        return $this->commissioningSecondaryStepsInstruction;
+    }
+
+    public function setCommissioningSecondaryStepsInstruction(?string $commissioningSecondaryStepsInstruction): static
+    {
+        $this->commissioningSecondaryStepsInstruction = $commissioningSecondaryStepsInstruction;
+
+        return $this;
+    }
+
+    public function getCommissioningFallbackUrl(): ?string
+    {
+        return $this->commissioningFallbackUrl;
+    }
+
+    public function setCommissioningFallbackUrl(?string $commissioningFallbackUrl): static
+    {
+        $this->commissioningFallbackUrl = $commissioningFallbackUrl;
+
+        return $this;
+    }
+
+    public function getIcdUserActiveModeTriggerHint(): ?int
+    {
+        return $this->icdUserActiveModeTriggerHint;
+    }
+
+    public function setIcdUserActiveModeTriggerHint(?int $icdUserActiveModeTriggerHint): static
+    {
+        $this->icdUserActiveModeTriggerHint = $icdUserActiveModeTriggerHint;
+
+        return $this;
+    }
+
+    public function getIcdUserActiveModeTriggerInstruction(): ?string
+    {
+        return $this->icdUserActiveModeTriggerInstruction;
+    }
+
+    public function setIcdUserActiveModeTriggerInstruction(?string $icdUserActiveModeTriggerInstruction): static
+    {
+        $this->icdUserActiveModeTriggerInstruction = $icdUserActiveModeTriggerInstruction;
+
+        return $this;
+    }
+
+    public function getLsfUrl(): ?string
+    {
+        return $this->lsfUrl;
+    }
+
+    public function setLsfUrl(?string $lsfUrl): static
+    {
+        $this->lsfUrl = $lsfUrl;
+
+        return $this;
+    }
+
+    public function getLsfRevision(): ?int
+    {
+        return $this->lsfRevision;
+    }
+
+    public function setLsfRevision(?int $lsfRevision): static
+    {
+        $this->lsfRevision = $lsfRevision;
+
+        return $this;
+    }
+
+    /**
+     * @return array<int>|null
+     */
+    public function getCertifiedSoftwareVersions(): ?array
+    {
+        return $this->certifiedSoftwareVersions;
+    }
+
+    /**
+     * @param array<int>|null $certifiedSoftwareVersions
+     */
+    public function setCertifiedSoftwareVersions(?array $certifiedSoftwareVersions): static
+    {
+        $this->certifiedSoftwareVersions = $certifiedSoftwareVersions;
 
         return $this;
     }
