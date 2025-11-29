@@ -22,37 +22,93 @@ class SitemapController extends AbstractController
         private DeviceTypeRepository $deviceTypeRepo,
     ) {}
 
-    #[Route('/sitemap.xml', name: 'sitemap', methods: ['GET'])]
+    /**
+     * Sitemap index - lists all individual sitemaps.
+     */
+    #[Route('/sitemap.xml', name: 'sitemap_index', methods: ['GET'])]
     public function index(): Response
     {
-        $urls = [];
+        $sitemaps = [
+            ['route' => 'sitemap_pages', 'changefreq' => 'weekly'],
+            ['route' => 'sitemap_devices', 'changefreq' => 'daily'],
+            ['route' => 'sitemap_vendors', 'changefreq' => 'weekly'],
+            ['route' => 'sitemap_specs', 'changefreq' => 'monthly'],
+        ];
 
-        // Static pages
-        $urls[] = $this->createUrl('device_index', [], 1.0, 'daily');
-        $urls[] = $this->createUrl('vendor_index', [], 0.8, 'weekly');
-        $urls[] = $this->createUrl('stats_dashboard', [], 0.7, 'weekly');
-        $urls[] = $this->createUrl('stats_clusters', [], 0.7, 'weekly');
-        $urls[] = $this->createUrl('stats_device_types', [], 0.7, 'weekly');
-        $urls[] = $this->createUrl('stats_binding', [], 0.6, 'weekly');
-        $urls[] = $this->createUrl('stats_versions', [], 0.6, 'weekly');
-        $urls[] = $this->createUrl('stats_pairings', [], 0.6, 'weekly');
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $xml .= '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
 
-        // Device pages
-        $devices = $this->getAllDevicesForSitemap();
-        foreach ($devices as $device) {
-            if (!empty($device['slug'])) {
-                $urls[] = $this->createUrl(
-                    'device_show',
-                    ['slug' => $device['slug']],
-                    0.8,
-                    'weekly',
-                    $device['last_seen'] ?? null
-                );
-            }
+        foreach ($sitemaps as $sitemap) {
+            $loc = $this->generateUrl($sitemap['route'], [], UrlGeneratorInterface::ABSOLUTE_URL);
+            $xml .= '  <sitemap>' . "\n";
+            $xml .= '    <loc>' . htmlspecialchars($loc, ENT_XML1, 'UTF-8') . '</loc>' . "\n";
+            $xml .= '    <lastmod>' . date('Y-m-d') . '</lastmod>' . "\n";
+            $xml .= '  </sitemap>' . "\n";
         }
 
-        // Vendor pages
+        $xml .= '</sitemapindex>';
+
+        return $this->createXmlResponse($xml, 3600);
+    }
+
+    /**
+     * Static pages sitemap.
+     */
+    #[Route('/sitemap-pages.xml', name: 'sitemap_pages', methods: ['GET'])]
+    public function pages(): Response
+    {
+        $urls = [
+            $this->createUrl('device_index', [], 1.0, 'daily'),
+            $this->createUrl('vendor_index', [], 0.8, 'weekly'),
+            $this->createUrl('stats_dashboard', [], 0.7, 'weekly'),
+            $this->createUrl('stats_clusters', [], 0.7, 'weekly'),
+            $this->createUrl('stats_device_types', [], 0.7, 'weekly'),
+            $this->createUrl('stats_binding', [], 0.6, 'weekly'),
+            $this->createUrl('stats_versions', [], 0.6, 'weekly'),
+            $this->createUrl('stats_pairings', [], 0.6, 'weekly'),
+        ];
+
+        return $this->createXmlResponse($this->renderSitemapXml($urls), 86400);
+    }
+
+    /**
+     * Device pages sitemap.
+     */
+    #[Route('/sitemap-devices.xml', name: 'sitemap_devices', methods: ['GET'])]
+    public function devices(): Response
+    {
+        $urls = [];
+        $offset = 0;
+        $limit = 1000;
+
+        do {
+            $batch = $this->deviceRepo->getAllDevices($limit, $offset);
+            foreach ($batch as $device) {
+                if (!empty($device['slug'])) {
+                    $urls[] = $this->createUrl(
+                        'device_show',
+                        ['slug' => $device['slug']],
+                        0.8,
+                        'weekly',
+                        $device['last_seen'] ?? null
+                    );
+                }
+            }
+            $offset += $limit;
+        } while (\count($batch) === $limit);
+
+        return $this->createXmlResponse($this->renderSitemapXml($urls), 3600);
+    }
+
+    /**
+     * Vendor pages sitemap.
+     */
+    #[Route('/sitemap-vendors.xml', name: 'sitemap_vendors', methods: ['GET'])]
+    public function vendors(): Response
+    {
+        $urls = [];
         $vendors = $this->vendorRepo->findAllOrderedByDeviceCount();
+
         foreach ($vendors as $vendor) {
             $urls[] = $this->createUrl(
                 'vendor_show',
@@ -62,6 +118,17 @@ class SitemapController extends AbstractController
                 $vendor->getUpdatedAt()->format('Y-m-d')
             );
         }
+
+        return $this->createXmlResponse($this->renderSitemapXml($urls), 3600);
+    }
+
+    /**
+     * Specs sitemap (device types + clusters).
+     */
+    #[Route('/sitemap-specs.xml', name: 'sitemap_specs', methods: ['GET'])]
+    public function specs(): Response
+    {
+        $urls = [];
 
         // Device type pages
         $deviceTypes = $this->deviceTypeRepo->findAll();
@@ -85,42 +152,14 @@ class SitemapController extends AbstractController
             );
         }
 
-        $response = new Response(
-            $this->renderSitemapXml($urls),
-            Response::HTTP_OK,
-            ['Content-Type' => 'application/xml; charset=utf-8']
-        );
-
-        // Cache for 1 hour
-        $response->setSharedMaxAge(3600);
-
-        return $response;
-    }
-
-    /**
-     * Get all devices for sitemap (with pagination to handle large datasets).
-     *
-     * @return array<array{slug: string|null, last_seen: string|null}>
-     */
-    private function getAllDevicesForSitemap(): array
-    {
-        $devices = [];
-        $offset = 0;
-        $limit = 1000;
-
-        do {
-            $batch = $this->deviceRepo->getAllDevices($limit, $offset);
-            $devices = array_merge($devices, $batch);
-            $offset += $limit;
-        } while (\count($batch) === $limit);
-
-        return $devices;
+        return $this->createXmlResponse($this->renderSitemapXml($urls), 86400);
     }
 
     /**
      * Create a URL entry for the sitemap.
      *
      * @param array<string, mixed> $params
+     * @return array{loc: string, priority: float, changefreq: string, lastmod: string|null}
      */
     private function createUrl(
         string $route,
@@ -138,6 +177,22 @@ class SitemapController extends AbstractController
     }
 
     /**
+     * Create XML response with caching.
+     */
+    private function createXmlResponse(string $content, int $maxAge): Response
+    {
+        $response = new Response(
+            $content,
+            Response::HTTP_OK,
+            ['Content-Type' => 'application/xml; charset=utf-8']
+        );
+
+        $response->setSharedMaxAge($maxAge);
+
+        return $response;
+    }
+
+    /**
      * Render sitemap XML.
      *
      * @param array<array{loc: string, priority: float, changefreq: string, lastmod: string|null}> $urls
@@ -152,13 +207,10 @@ class SitemapController extends AbstractController
             $xml .= '    <loc>' . htmlspecialchars($url['loc'], ENT_XML1, 'UTF-8') . '</loc>' . "\n";
 
             if ($url['lastmod'] !== null) {
-                // Ensure date is in W3C format (YYYY-MM-DD or full ISO 8601)
                 $date = $url['lastmod'];
                 if (\strlen($date) === 10) {
-                    // Already YYYY-MM-DD format
                     $xml .= '    <lastmod>' . $date . '</lastmod>' . "\n";
                 } elseif (strtotime($date) !== false) {
-                    // Convert to YYYY-MM-DD
                     $xml .= '    <lastmod>' . date('Y-m-d', strtotime($date)) . '</lastmod>' . "\n";
                 }
             }

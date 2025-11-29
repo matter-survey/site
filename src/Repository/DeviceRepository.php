@@ -1286,6 +1286,80 @@ class DeviceRepository
     }
 
     /**
+     * Get the most popular product for each of the top N categories (excluding System).
+     * Used for dashboard highlights section.
+     *
+     * @param int $limit Number of categories to return
+     *
+     * @return array<array{category: string, product_id: int, product_name: string, vendor_name: string, slug: string, count: int}>
+     */
+    public function getTopProductsByCategory(\App\Service\MatterRegistry $registry, int $limit = 3): array
+    {
+        // Get category distribution (excluding System)
+        $categoryDistribution = $this->getCategoryDistribution($registry);
+        unset($categoryDistribution['System']);
+
+        // Take top N categories
+        $topCategories = array_slice(array_keys($categoryDistribution), 0, $limit);
+
+        if (empty($topCategories)) {
+            return [];
+        }
+
+        $highlights = [];
+
+        foreach ($topCategories as $category) {
+            // Get the device type IDs for this category
+            $allDeviceTypes = $registry->getAllDeviceTypeMetadata();
+            $categoryDeviceTypeIds = [];
+            foreach ($allDeviceTypes as $id => $meta) {
+                if (($meta['displayCategory'] ?? 'System') === $category) {
+                    $categoryDeviceTypeIds[] = $id;
+                }
+            }
+
+            if (empty($categoryDeviceTypeIds)) {
+                continue;
+            }
+
+            // Find the most popular product with this device type
+            $placeholders = implode(',', array_fill(0, \count($categoryDeviceTypeIds), '?'));
+            $result = $this->db->executeQuery("
+                SELECT
+                    ds.id as product_id,
+                    ds.product_name,
+                    ds.vendor_name,
+                    ds.slug,
+                    ds.vendor_slug,
+                    COUNT(DISTINCT pe.device_id) as count
+                FROM device_summary ds
+                JOIN product_endpoints pe ON ds.id = pe.device_id
+                WHERE EXISTS (
+                    SELECT 1 FROM json_each(pe.device_types)
+                    WHERE json_extract(value, \"\$.id\") IN ({$placeholders})
+                )
+                GROUP BY ds.id
+                ORDER BY count DESC, ds.submission_count DESC
+                LIMIT 1
+            ", $categoryDeviceTypeIds)->fetchAssociative();
+
+            if ($result) {
+                $highlights[] = [
+                    'category' => $category,
+                    'product_id' => (int) $result['product_id'],
+                    'product_name' => $result['product_name'] ?? 'Unknown Product',
+                    'vendor_name' => $result['vendor_name'] ?? 'Unknown Vendor',
+                    'slug' => $result['slug'],
+                    'vendor_slug' => $result['vendor_slug'],
+                    'count' => (int) $result['count'],
+                ];
+            }
+        }
+
+        return $highlights;
+    }
+
+    /**
      * Get market insights for the vendor index page.
      *
      * @return array{totalVendors: int, totalProducts: int, vendorsWithDevices: int, top10ProductShare: float, avgProductsPerVendor: float}

@@ -31,6 +31,7 @@ class StatsController extends AbstractController
         $topVendors = $this->deviceRepo->getTopVendors(10);
         $specVersionDistribution = $this->deviceRepo->getSpecVersionDistribution($this->matterRegistry);
         $recentDevices = $this->deviceRepo->getRecentDevices(5);
+        $categoryHighlights = $this->deviceRepo->getTopProductsByCategory($this->matterRegistry, 3);
 
         return $this->render('stats/dashboard.html.twig', [
             'stats' => $stats,
@@ -38,25 +39,115 @@ class StatsController extends AbstractController
             'topVendors' => $topVendors,
             'specVersionDistribution' => $specVersionDistribution,
             'recentDevices' => $recentDevices,
+            'categoryHighlights' => $categoryHighlights,
         ]);
     }
 
     #[Route('/clusters', name: 'stats_clusters', methods: ['GET'])]
-    public function clusters(): Response
+    public function clusters(Request $request): Response
     {
         $stats = $this->telemetryService->getStats();
-        $clusterStats = $this->deviceRepo->getClusterStats();
-        $clusterCoOccurrence = $this->deviceRepo->getClusterCoOccurrence(15);
+        $rawClusterStats = $this->deviceRepo->getClusterStats();
+        $clusterCoOccurrence = $this->deviceRepo->getClusterCoOccurrence(20);
 
-        // Enrich with cluster names
-        foreach ($clusterStats as &$cluster) {
-            $cluster['name'] = $this->matterRegistry->getClusterName((int) $cluster['cluster_id']);
+        // Combine server/client into unified cluster data and enrich with metadata
+        $clusterMap = [];
+        foreach ($rawClusterStats as $row) {
+            $clusterId = (int) $row['cluster_id'];
+            $type = $row['cluster_type'];
+            $count = (int) $row['product_count'];
+
+            if (!isset($clusterMap[$clusterId])) {
+                $metadata = $this->matterRegistry->getClusterMetadata($clusterId);
+                $clusterMap[$clusterId] = [
+                    'id' => $clusterId,
+                    'hexId' => sprintf('0x%04X', $clusterId),
+                    'name' => $metadata['name'] ?? "Cluster $clusterId",
+                    'description' => $metadata['description'] ?? '',
+                    'category' => $metadata['category'] ?? 'utility',
+                    'specVersion' => $metadata['specVersion'] ?? '1.0',
+                    'isGlobal' => $metadata['isGlobal'] ?? false,
+                    'serverCount' => 0,
+                    'clientCount' => 0,
+                    'totalCount' => 0,
+                ];
+            }
+
+            if ($type === 'server') {
+                $clusterMap[$clusterId]['serverCount'] = $count;
+            } else {
+                $clusterMap[$clusterId]['clientCount'] = $count;
+            }
+            $clusterMap[$clusterId]['totalCount'] = max(
+                $clusterMap[$clusterId]['serverCount'],
+                $clusterMap[$clusterId]['clientCount']
+            );
         }
+
+        // Sort by total count descending
+        uasort($clusterMap, fn ($a, $b) => $b['totalCount'] <=> $a['totalCount']);
+        $clusters = array_values($clusterMap);
+
+        // Group by category
+        $categories = [];
+        foreach ($clusters as $cluster) {
+            $cat = $cluster['category'];
+            if (!isset($categories[$cat])) {
+                $categories[$cat] = ['name' => $cat, 'clusters' => [], 'totalDevices' => 0];
+            }
+            $categories[$cat]['clusters'][] = $cluster;
+            $categories[$cat]['totalDevices'] += $cluster['totalCount'];
+        }
+
+        // Sort categories by total devices
+        uasort($categories, fn ($a, $b) => $b['totalDevices'] <=> $a['totalDevices']);
+
+        // Calculate insights
+        $totalClusters = \count($clusters);
+        $avgClustersPerDevice = $stats['total_devices'] > 0
+            ? round(array_sum(array_column($clusters, 'serverCount')) / $stats['total_devices'], 1)
+            : 0;
+
+        // Most common category
+        $topCategory = !empty($categories) ? array_key_first($categories) : 'N/A';
+
+        // Clusters only seen as client (interesting edge cases)
+        $clientOnlyClusters = array_filter($clusters, fn ($c) => $c['serverCount'] === 0 && $c['clientCount'] > 0);
+
+        $insights = [
+            'totalClusters' => $totalClusters,
+            'avgClustersPerDevice' => $avgClustersPerDevice,
+            'topCategory' => ucfirst($topCategory),
+            'clientOnlyCount' => \count($clientOnlyClusters),
+        ];
+
+        // Enrich co-occurrence with context
+        $enrichedCoOccurrence = [];
+        foreach ($clusterCoOccurrence as $pair) {
+            $clusterA = $this->matterRegistry->getClusterMetadata((int) $pair['cluster_a']);
+            $clusterB = $this->matterRegistry->getClusterMetadata((int) $pair['cluster_b']);
+
+            $enrichedCoOccurrence[] = [
+                'cluster_a' => (int) $pair['cluster_a'],
+                'cluster_b' => (int) $pair['cluster_b'],
+                'name_a' => $clusterA['name'] ?? "Cluster {$pair['cluster_a']}",
+                'name_b' => $clusterB['name'] ?? "Cluster {$pair['cluster_b']}",
+                'category_a' => $clusterA['category'] ?? 'utility',
+                'category_b' => $clusterB['category'] ?? 'utility',
+                'count' => (int) $pair['co_occurrence_count'],
+            ];
+        }
+
+        // Get active filter
+        $filterCategory = $request->query->getString('category', '');
 
         return $this->render('stats/clusters.html.twig', [
             'stats' => $stats,
-            'clusterStats' => $clusterStats,
-            'clusterCoOccurrence' => $clusterCoOccurrence,
+            'clusters' => $clusters,
+            'categories' => $categories,
+            'insights' => $insights,
+            'clusterCoOccurrence' => $enrichedCoOccurrence,
+            'filterCategory' => $filterCategory,
             'matterRegistry' => $this->matterRegistry,
         ]);
     }

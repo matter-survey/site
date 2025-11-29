@@ -2,7 +2,7 @@
 
 {% block title %}Matter Survey - Dashboard{% endblock %}
 
-{% block header_subtitle %}<p>Ecosystem insights from community-contributed Matter device data</p>{% endblock %}
+{% block header_subtitle %}<p>Real-world Matter device adoption data contributed by Home Assistant users</p>{% endblock %}
 
 {% block extra_styles %}
     .dashboard-nav {
@@ -44,6 +44,7 @@
         padding: 1.25rem;
         border-radius: 0.5rem;
         border: 1px solid var(--gray-200);
+        cursor: help;
     }
 
     .stat-card .value {
@@ -56,6 +57,20 @@
         font-size: 0.875rem;
         color: var(--gray-500);
         margin-top: 0.25rem;
+    }
+
+    .stat-card .label .help-icon {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        line-height: 14px;
+        text-align: center;
+        font-size: 10px;
+        background: var(--gray-200);
+        color: var(--gray-500);
+        border-radius: 50%;
+        margin-left: 0.25rem;
+        vertical-align: middle;
     }
 
     .dashboard-grid {
@@ -176,6 +191,94 @@
         color: var(--gray-500);
         margin-top: 0.25rem;
     }
+
+    /* De-emphasized System category */
+    .chart-bar.system-category {
+        opacity: 0.5;
+    }
+
+    .chart-bar.system-category .label {
+        font-size: 0.8rem;
+    }
+
+    .system-note {
+        font-size: 0.75rem;
+        color: var(--gray-400);
+        margin-top: 0.5rem;
+        font-style: italic;
+    }
+
+    /* Category highlights section */
+    .highlights-section {
+        margin-bottom: 2rem;
+    }
+
+    .highlights-section h2 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--gray-700);
+        margin-bottom: 1rem;
+    }
+
+    .highlights-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+
+    .highlight-card {
+        background: white;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .highlight-card .category-label {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+    }
+
+    .highlight-card .product-name {
+        font-weight: 600;
+        color: var(--gray-900);
+        margin-bottom: 0.25rem;
+    }
+
+    .highlight-card .product-name a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .highlight-card .product-name a:hover {
+        color: var(--primary);
+    }
+
+    .highlight-card .vendor-name {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+    }
+
+    .highlight-card .vendor-name a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .highlight-card .vendor-name a:hover {
+        text-decoration: underline;
+    }
+
+    .highlight-card.category-lights { border-left: 3px solid #fbbf24; }
+    .highlight-card.category-climate { border-left: 3px solid #3b82f6; }
+    .highlight-card.category-sensors { border-left: 3px solid #10b981; }
+    .highlight-card.category-security { border-left: 3px solid #ef4444; }
+    .highlight-card.category-appliances { border-left: 3px solid #8b5cf6; }
+    .highlight-card.category-entertainment { border-left: 3px solid #ec4899; }
+    .highlight-card.category-energy { border-left: 3px solid #f97316; }
 {% endblock %}
 
 {% block body %}
@@ -191,27 +294,50 @@
     </div>
 
     <div class="stats-grid">
-        <div class="stat-card">
+        <div class="stat-card" title="Unique product models (vendor + product ID combinations) seen in submissions">
             <div class="value">{{ stats.total_devices|number_format }}</div>
-            <div class="label">Known Devices</div>
+            <div class="label">Known Products <span class="help-icon">?</span></div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" title="Unique manufacturers registered in the Matter DCL (Distributed Compliance Ledger)">
             <div class="value">{{ stats.total_vendors|number_format }}</div>
-            <div class="label">Vendors</div>
+            <div class="label">Vendors <span class="help-icon">?</span></div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" title="Products with binding cluster, enabling device-to-device automation without going through a hub">
             <div class="value">{{ stats.bindable_devices|number_format }}</div>
-            <div class="label">Support Binding</div>
+            <div class="label">Support Binding <span class="help-icon">?</span></div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" title="Unique Home Assistant installations that have submitted data">
             <div class="value">{{ stats.total_installations|number_format }}</div>
-            <div class="label">Contributors</div>
+            <div class="label">Contributors <span class="help-icon">?</span></div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" title="Total data submissions received (one installation can submit multiple times as devices are added)">
             <div class="value">{{ stats.total_submissions|number_format }}</div>
-            <div class="label">Submissions</div>
+            <div class="label">Submissions <span class="help-icon">?</span></div>
         </div>
     </div>
+
+    {% if categoryHighlights|length > 0 %}
+    <div class="highlights-section">
+        <h2>Most Popular by Category</h2>
+        <div class="highlights-grid">
+            {% for highlight in categoryHighlights %}
+                <div class="highlight-card category-{{ highlight.category|lower|replace({' ': '-'}) }}">
+                    <span class="category-label">{{ highlight.category }}</span>
+                    <span class="product-name">
+                        <a href="{{ path('device_show', {slug: highlight.slug}) }}">{{ highlight.product_name }}</a>
+                    </span>
+                    <span class="vendor-name">
+                        {% if highlight.vendor_slug %}
+                            <a href="{{ path('vendor_show', {slug: highlight.vendor_slug}) }}">{{ highlight.vendor_name }}</a>
+                        {% else %}
+                            {{ highlight.vendor_name }}
+                        {% endif %}
+                    </span>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 
     <div class="dashboard-grid">
         <div class="dashboard-card">
@@ -219,8 +345,11 @@
                 Device Categories
                 <a href="{{ path('stats_device_types') }}">View all &rarr;</a>
             </h2>
-            {% set maxCategory = categoryDistribution|first %}
-            {% for category, count in categoryDistribution %}
+            {# Separate System from other categories #}
+            {% set nonSystemCategories = categoryDistribution|filter((v, k) => k != 'System') %}
+            {% set systemCount = categoryDistribution.System ?? 0 %}
+            {% set maxCategory = nonSystemCategories|first %}
+            {% for category, count in nonSystemCategories %}
                 <div class="chart-bar category-{{ category|lower|replace({' ': '-'}) }}">
                     <span class="label">{{ category }}</span>
                     <div class="bar-container">
@@ -231,6 +360,16 @@
             {% else %}
                 <p style="color: var(--gray-500); font-size: 0.875rem;">No data available yet.</p>
             {% endfor %}
+            {% if systemCount > 0 %}
+                <div class="chart-bar category-system system-category">
+                    <span class="label">System</span>
+                    <div class="bar-container">
+                        <div class="bar" style="width: {{ maxCategory > 0 ? (systemCount / maxCategory * 100)|min(100) : 0 }}%"></div>
+                    </div>
+                    <span class="count">{{ systemCount }}</span>
+                </div>
+                <p class="system-note">System types (Root Node, OTA, etc.) appear on all devices</p>
+            {% endif %}
         </div>
 
         <div class="dashboard-card">
