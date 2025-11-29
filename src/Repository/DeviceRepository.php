@@ -1041,4 +1041,201 @@ class DeviceRepository
                 : 0,
         ];
     }
+
+    // ========================================
+    // Device Pairing / Co-occurrence Methods
+    // ========================================
+
+    /**
+     * Get products frequently paired with a given product.
+     * Returns products that appear together in the same installation.
+     *
+     * @param int $productId The product to find pairings for
+     * @param int $minSharedInstallations Minimum number of shared installations (default 2)
+     * @param int $limit Maximum results
+     *
+     * @return array<array{id: int, slug: string, vendor_name: string, product_name: string, shared_installations: int, pairing_strength: float}>
+     */
+    public function getFrequentlyPairedProducts(int $productId, int $minSharedInstallations = 2, int $limit = 10): array
+    {
+        // Get the total installations for the source product (for calculating pairing strength)
+        $sourceInstallations = $this->getProductInstallationCount($productId);
+        if ($sourceInstallations === 0) {
+            return [];
+        }
+
+        $rows = $this->db->executeQuery('
+            SELECT
+                ds.id,
+                ds.slug,
+                ds.vendor_name,
+                ds.product_name,
+                ds.vendor_slug,
+                COUNT(DISTINCT ip1.installation_id) as shared_installations
+            FROM installation_products ip1
+            JOIN installation_products ip2 ON ip1.installation_id = ip2.installation_id
+            JOIN device_summary ds ON ip2.product_id = ds.id
+            WHERE ip1.product_id = :product_id
+              AND ip2.product_id != :product_id
+            GROUP BY ip2.product_id
+            HAVING shared_installations >= :min_shared
+            ORDER BY shared_installations DESC
+            LIMIT :limit
+        ', [
+            'product_id' => $productId,
+            'min_shared' => $minSharedInstallations,
+            'limit' => $limit,
+        ], [
+            'product_id' => \Doctrine\DBAL\ParameterType::INTEGER,
+            'min_shared' => \Doctrine\DBAL\ParameterType::INTEGER,
+            'limit' => \Doctrine\DBAL\ParameterType::INTEGER,
+        ])->fetchAllAssociative();
+
+        // Add pairing strength (percentage of source installations that include this product)
+        foreach ($rows as &$row) {
+            $row['pairing_strength'] = round(((int) $row['shared_installations'] / $sourceInstallations) * 100, 1);
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Get the number of installations that include a specific product.
+     */
+    public function getProductInstallationCount(int $productId): int
+    {
+        return (int) $this->db->executeQuery(
+            'SELECT COUNT(DISTINCT installation_id) FROM installation_products WHERE product_id = :product_id',
+            ['product_id' => $productId],
+            ['product_id' => \Doctrine\DBAL\ParameterType::INTEGER]
+        )->fetchOne();
+    }
+
+    /**
+     * Get top product pairings across all installations.
+     * Uses the product_cooccurrence view for efficiency.
+     *
+     * @return array<array{product_a: int, product_b: int, shared_installations: int, product_a_name: string, product_b_name: string}>
+     */
+    public function getTopProductPairings(int $limit = 20): array
+    {
+        return $this->db->executeQuery('
+            SELECT
+                pc.product_a,
+                pc.product_b,
+                pc.shared_installations,
+                pa.product_name as product_a_name,
+                pa.vendor_name as product_a_vendor,
+                pa.slug as product_a_slug,
+                pb.product_name as product_b_name,
+                pb.vendor_name as product_b_vendor,
+                pb.slug as product_b_slug
+            FROM product_cooccurrence pc
+            JOIN device_summary pa ON pc.product_a = pa.id
+            JOIN device_summary pb ON pc.product_b = pb.id
+            ORDER BY pc.shared_installations DESC
+            LIMIT :limit
+        ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+    }
+
+    /**
+     * Get pairing statistics overview.
+     *
+     * @return array{total_installations: int, installations_with_multiple_products: int, total_pairings: int, avg_products_per_installation: float}
+     */
+    public function getPairingStats(): array
+    {
+        $result = $this->db->executeQuery('
+            SELECT
+                COUNT(DISTINCT installation_id) as total_installations,
+                (SELECT COUNT(DISTINCT installation_id)
+                 FROM installation_products
+                 GROUP BY installation_id
+                 HAVING COUNT(product_id) > 1) as multi_product_installations
+            FROM installation_products
+        ')->fetchAssociative();
+
+        $avgProducts = $this->db->executeQuery('
+            SELECT AVG(product_count) as avg_products
+            FROM (
+                SELECT installation_id, COUNT(product_id) as product_count
+                FROM installation_products
+                GROUP BY installation_id
+            )
+        ')->fetchOne();
+
+        $totalPairings = $this->db->executeQuery('
+            SELECT COUNT(*) FROM product_cooccurrence
+        ')->fetchOne();
+
+        return [
+            'total_installations' => (int) ($result['total_installations'] ?? 0),
+            'installations_with_multiple_products' => (int) ($result['multi_product_installations'] ?? 0),
+            'total_pairings' => (int) ($totalPairings ?? 0),
+            'avg_products_per_installation' => round((float) ($avgProducts ?? 0), 1),
+        ];
+    }
+
+    /**
+     * Get products that are commonly the "hub" of installations
+     * (appear in the most multi-product installations).
+     *
+     * @return array<array{id: int, product_name: string, vendor_name: string, installation_count: int, unique_pairings: int}>
+     */
+    public function getMostConnectedProducts(int $limit = 10): array
+    {
+        return $this->db->executeQuery('
+            SELECT
+                ds.id,
+                ds.slug,
+                ds.product_name,
+                ds.vendor_name,
+                ds.vendor_slug,
+                COUNT(DISTINCT ip.installation_id) as installation_count,
+                (SELECT COUNT(DISTINCT ip2.product_id)
+                 FROM installation_products ip2
+                 WHERE ip2.installation_id IN (
+                     SELECT installation_id FROM installation_products WHERE product_id = ds.id
+                 ) AND ip2.product_id != ds.id
+                ) as unique_pairings
+            FROM device_summary ds
+            JOIN installation_products ip ON ds.id = ip.product_id
+            WHERE EXISTS (
+                SELECT 1 FROM installation_products ip3
+                WHERE ip3.installation_id = ip.installation_id
+                  AND ip3.product_id != ip.product_id
+            )
+            GROUP BY ds.id
+            ORDER BY unique_pairings DESC, installation_count DESC
+            LIMIT :limit
+        ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+    }
+
+    /**
+     * Get vendor pairings - which vendors' products are commonly used together.
+     *
+     * @return array<array{vendor_a: string, vendor_b: string, shared_installations: int}>
+     */
+    public function getVendorPairings(int $limit = 15): array
+    {
+        return $this->db->executeQuery('
+            SELECT
+                va.name as vendor_a,
+                va.slug as vendor_a_slug,
+                vb.name as vendor_b,
+                vb.slug as vendor_b_slug,
+                COUNT(DISTINCT ip1.installation_id) as shared_installations
+            FROM installation_products ip1
+            JOIN installation_products ip2 ON ip1.installation_id = ip2.installation_id
+            JOIN products pa ON ip1.product_id = pa.id
+            JOIN products pb ON ip2.product_id = pb.id
+            JOIN vendors va ON pa.vendor_fk = va.id
+            JOIN vendors vb ON pb.vendor_fk = vb.id
+            WHERE va.id < vb.id
+            GROUP BY va.id, vb.id
+            HAVING shared_installations >= 2
+            ORDER BY shared_installations DESC
+            LIMIT :limit
+        ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+    }
 }

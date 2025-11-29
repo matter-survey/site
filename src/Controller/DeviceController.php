@@ -178,12 +178,18 @@ class DeviceController extends AbstractController
         // Build inverse compatibility map based on server clusters (can provide data to)
         $canProvideToDevices = $this->buildInverseCompatibilityMap($id, $endpoints);
 
+        // Get frequently paired products (from installation data)
+        $frequentlyPairedWith = $this->deviceRepo->getFrequentlyPairedProducts($id, 2, 8);
+        $installationCount = $this->deviceRepo->getProductInstallationCount($id);
+
         return $this->render('device/show.html.twig', [
             'device' => $device,
             'endpoints' => $endpoints,
             'versions' => $versions,
             'compatibleDevices' => $compatibleDevices,
             'canProvideToDevices' => $canProvideToDevices,
+            'frequentlyPairedWith' => $frequentlyPairedWith,
+            'installationCount' => $installationCount,
             'matterRegistry' => $this->matterRegistry,
         ]);
     }

@@ -61,7 +61,9 @@ class TelemetryService
 
             $processedCount = 0;
             foreach ($devices as $device) {
-                if ($this->processDevice($device)) {
+                $productId = $this->processDevice($device);
+                if ($productId !== null) {
+                    $this->recordInstallationProduct($installationId, $productId);
                     $processedCount++;
                 }
             }
@@ -132,10 +134,15 @@ class TelemetryService
         ]);
     }
 
-    private function processDevice(array $device): bool
+    /**
+     * Process a single device from the telemetry payload.
+     *
+     * @return int|null The product ID if successfully processed, null otherwise
+     */
+    private function processDevice(array $device): ?int
     {
         if (empty($device['vendor_id']) && empty($device['product_id'])) {
-            return false;
+            return null;
         }
 
         $vendorId = $device['vendor_id'] ?? null;
@@ -199,7 +206,23 @@ class TelemetryService
             );
         }
 
-        return true;
+        return $deviceId;
+    }
+
+    /**
+     * Record that a product belongs to an installation (for pairing analytics).
+     */
+    private function recordInstallationProduct(string $installationId, int $productId): void
+    {
+        $this->db->executeStatement('
+            INSERT INTO installation_products (installation_id, product_id, first_seen, last_seen)
+            VALUES (:installation_id, :product_id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            ON CONFLICT(installation_id, product_id) DO UPDATE SET
+                last_seen = CURRENT_TIMESTAMP
+        ', [
+            'installation_id' => $installationId,
+            'product_id' => $productId,
+        ]);
     }
 
     /**

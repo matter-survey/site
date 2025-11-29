@@ -218,4 +218,22 @@ class StatsController extends AbstractController
             'matterRegistry' => $this->matterRegistry,
         ]);
     }
+
+    #[Route('/pairings', name: 'stats_pairings', methods: ['GET'])]
+    public function pairings(): Response
+    {
+        $stats = $this->telemetryService->getStats();
+        $pairingStats = $this->deviceRepo->getPairingStats();
+        $topPairings = $this->deviceRepo->getTopProductPairings(20);
+        $mostConnectedProducts = $this->deviceRepo->getMostConnectedProducts(10);
+        $vendorPairings = $this->deviceRepo->getVendorPairings(15);
+
+        return $this->render('stats/pairings.html.twig', [
+            'stats' => $stats,
+            'pairingStats' => $pairingStats,
+            'topPairings' => $topPairings,
+            'mostConnectedProducts' => $mostConnectedProducts,
+            'vendorPairings' => $vendorPairings,
+        ]);
+    }
 }

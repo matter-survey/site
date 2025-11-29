@@ -500,6 +500,112 @@
         font-size: 0.8125rem;
         color: var(--gray-500);
     }
+
+    .pairing-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+        margin-bottom: 1.5rem;
+    }
+
+    .pairing-section h3 {
+        font-size: 1.125rem;
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .pairing-subtitle {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+        margin-bottom: 1rem;
+    }
+
+    .paired-products {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .paired-product {
+        display: flex;
+        flex-direction: column;
+        padding: 0.75rem;
+        background: var(--gray-50);
+        border: 1px solid var(--gray-200);
+        border-radius: 0.375rem;
+        text-decoration: none;
+        color: inherit;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .paired-product:hover {
+        border-color: var(--primary);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .paired-product-name {
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+        color: var(--gray-900);
+    }
+
+    .paired-product-vendor {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        margin-bottom: 0.5rem;
+    }
+
+    .pairing-stats {
+        display: flex;
+        gap: 0.75rem;
+        font-size: 0.75rem;
+    }
+
+    .pairing-stat {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .pairing-stat-value {
+        font-weight: 600;
+        color: var(--primary);
+    }
+
+    .pairing-stat-label {
+        color: var(--gray-500);
+    }
+
+    .pairing-strength-bar {
+        width: 100%;
+        height: 4px;
+        background: var(--gray-200);
+        border-radius: 2px;
+        margin-top: 0.5rem;
+        overflow: hidden;
+    }
+
+    .pairing-strength-fill {
+        height: 100%;
+        background: var(--primary);
+        border-radius: 2px;
+    }
+
+    .installation-stat {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.25rem 0.5rem;
+        background: var(--blue-50);
+        border: 1px solid var(--blue-200);
+        border-radius: 0.25rem;
+        font-size: 0.8125rem;
+        color: var(--blue-700);
+        margin-left: 0.5rem;
+    }
 {% endblock %}
 
 {% block body %}
@@ -604,6 +710,43 @@
                     </div>
                 {% endfor %}
             {% endif %}
+        </div>
+    {% endif %}
+
+    {% if frequentlyPairedWith is not empty %}
+        <div class="pairing-section">
+            <h3>
+                Frequently Paired With
+                {% if installationCount > 0 %}
+                    <span class="installation-stat">
+                        Found in {{ installationCount }} installation{{ installationCount != 1 ? 's' : '' }}
+                    </span>
+                {% endif %}
+            </h3>
+            <p class="pairing-subtitle">
+                These devices are commonly found together in the same smart home setup based on anonymous telemetry data.
+            </p>
+            <div class="paired-products">
+                {% for paired in frequentlyPairedWith %}
+                    <a href="{{ path('device_show', {slug: paired.slug}) }}" class="paired-product">
+                        <span class="paired-product-name">{{ paired.product_name ?? 'Unknown Product' }}</span>
+                        <span class="paired-product-vendor">{{ paired.vendor_name ?? 'Unknown Vendor' }}</span>
+                        <div class="pairing-stats">
+                            <span class="pairing-stat">
+                                <span class="pairing-stat-value">{{ paired.shared_installations }}</span>
+                                <span class="pairing-stat-label">shared</span>
+                            </span>
+                            <span class="pairing-stat">
+                                <span class="pairing-stat-value">{{ paired.pairing_strength }}%</span>
+                                <span class="pairing-stat-label">of installs</span>
+                            </span>
+                        </div>
+                        <div class="pairing-strength-bar">
+                            <div class="pairing-strength-fill" style="width: {{ paired.pairing_strength }}%;"></div>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
         </div>
     {% endif %}
 
