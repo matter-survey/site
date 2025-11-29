@@ -1,7 +1,7 @@
 # Matter Cluster Definitions
 # Based on Matter 1.4 Specification
 # Attributes, commands, and features synced from connectedhomeip ZAP XML files
-# Last ZAP sync: 2025-11-26 12:12:44
+# Last ZAP sync: 2025-11-29 16:58:04
 
 -
   id: 3
@@ -637,7 +637,7 @@
       name: UniqueID
       type: char_string
       writable: false
-      optional: false
+      optional: true
     -
       code: 19
       name: CapabilityMinima
@@ -655,19 +655,19 @@
       name: SpecificationVersion
       type: int32u
       writable: false
-      optional: false
+      optional: true
     -
       code: 22
       name: MaxPathsPerInvoke
       type: int16u
       writable: false
-      optional: false
+      optional: true
     -
       code: 24
       name: ConfigurationVersion
       type: int32u
       writable: false
-      optional: false
+      optional: true
 -
   id: 41
   name: 'OTA Software Update Provider'
@@ -1281,7 +1281,7 @@
           type: NetworkCommissioningStatusEnum
         -
           name: DebugText
-          type: char_string
+          type: long_char_string
         -
           name: WiFiScanResults
           type: WiFiInterfaceScanResultStruct
@@ -1347,7 +1347,7 @@
           type: NetworkCommissioningStatusEnum
         -
           name: DebugText
-          type: char_string
+          type: long_char_string
         -
           name: NetworkIndex
           type: int8u
@@ -1547,6 +1547,12 @@
       type: boolean
       writable: false
       optional: false
+    -
+      code: 10
+      name: DeviceLoadStatus
+      type: DeviceLoadStruct
+      writable: false
+      optional: true
   commands:
     -
       code: 0
@@ -1601,13 +1607,18 @@
       parameters:
         -
           name: Payload
-          type: octet_string
+          type: long_octet_string
   features:
     -
       bit: 0
       code: DMTEST
       name: DataModelTest
       summary: 'Support specific testing needs for extended Data Model features'
+    -
+      bit: 1
+      code: LOAD
+      name: DeviceLoad
+      summary: 'Support for reporting device load metrics (mandatory in revision 3 and above)'
 -
   id: 52
   name: 'Software Diagnostics'
@@ -2534,7 +2545,7 @@
       name: UniqueID
       type: char_string
       writable: false
-      optional: false
+      optional: true
     -
       code: 20
       name: ProductAppearance
