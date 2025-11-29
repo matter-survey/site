@@ -81,6 +81,13 @@ jobs:
       - name: Check for security vulnerabilities
         run: composer audit
 
+      - name: Warm up Symfony cache for PHPStan
+        run: php bin/console cache:warmup --env=dev
+
+      - name: Run PHPStan static analysis
+        run: vendor/bin/phpstan analyse --memory-limit=512M --no-progress
+        continue-on-error: true  # TODO: remove once PHPStan errors are fixed
+
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
