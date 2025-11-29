@@ -1,0 +1,235 @@
+# General UI strings - German
+
+# Page titles
+title:
+    dashboard: "Matter Survey - Dashboard"
+    clusters: "Matter Survey - Cluster-Statistiken"
+    device_types: "Matter Survey - Gerätetypen"
+    binding: "Matter Survey - Binding-Kompatibilität"
+    versions: "Matter Survey - Versionsübersicht"
+    pairings: "Matter Survey - Gerätekombinationen"
+    devices: "Matter Survey - Gerätebrowser"
+    vendors: "Matter Survey - Hersteller"
+    about: "Über uns - Matter Survey"
+    faq: "FAQ - Matter Survey"
+    glossary: "Glossar - Matter Survey"
+
+# Page subtitles
+subtitle:
+    dashboard: "Reale Matter-Gerätedaten, beigetragen von Home Assistant-Nutzern"
+    clusters: "Server- und Client-Cluster-Verbreitung bei Matter-Geräten"
+    device_types: "Verteilung der Matter-Gerätetypen in der Praxis"
+    binding: "Geräte mit direkter Gerät-zu-Gerät-Steuerung via Binding"
+    versions: "Firmware- und Hardware-Versionen aller Matter-Geräte"
+    pairings: "Geräte, die häufig zusammen in Haushalten vorkommen"
+    devices: "Alle entdeckten Matter-Geräte durchsuchen"
+    vendors: "Hersteller von Matter-kompatiblen Geräten"
+
+# Dashboard
+dashboard:
+    what_is_this: "Was ist das?"
+    what_is_this_text: "Dieses Dashboard zeigt reale Nutzungsdaten von Matter-Smart-Home-Geräten. Die Daten stammen von anonymen Beiträgen von Home Assistant-Nutzern, die das Matter Binding Helper Add-on verwenden."
+    learn_more: "Mehr erfahren"
+    known_products: "Bekannte Produkte"
+    known_products_tooltip: "Einzigartige Produktmodelle (Hersteller + Produkt-ID Kombinationen) aus Einreichungen"
+    vendors: "Hersteller"
+    vendors_tooltip: "Einzigartige Hersteller, registriert im Matter DCL (Distributed Compliance Ledger)"
+    support_binding: "Unterstützen Binding"
+    support_binding_tooltip: "Produkte mit Binding-Cluster für Gerät-zu-Gerät-Automatisierung ohne Hub"
+    contributors: "Beitragende"
+    contributors_tooltip: "Einzigartige Home Assistant-Installationen, die Daten eingereicht haben"
+    submissions: "Einreichungen"
+    submissions_tooltip: "Gesamtzahl der Dateneinreichungen (eine Installation kann mehrfach einreichen)"
+    most_popular_category: "Beliebteste nach Kategorie"
+    device_categories: "Gerätekategorien"
+    view_all: "Alle anzeigen"
+    top_vendors: "Top-Hersteller"
+    matter_spec_versions: "Matter-Spezifikationsversionen"
+    spec_version_note: "Basierend auf Gerätetypen aus der Umfrage"
+    recently_discovered: "Kürzlich entdeckt"
+    browse_all: "Alle durchsuchen"
+    first_seen: "Erstmals gesehen"
+    system_note: "Systemtypen (Root Node, OTA, etc.) erscheinen bei allen Geräten"
+    no_data: "Noch keine Daten verfügbar."
+    no_vendors: "Noch keine Hersteller."
+    no_devices: "Noch keine Geräte."
+
+# Stats pages common
+stats:
+    overview: "Übersicht"
+    clusters: "Cluster"
+    device_types: "Gerätetypen"
+    binding: "Binding"
+    versions: "Versionen"
+    pairings: "Kombinationen"
+    browse_devices: "Geräte durchsuchen"
+    devices: "Geräte"
+    total_devices: "Geräte gesamt"
+    of_all_devices: "Aller Geräte"
+
+# Clusters page
+clusters:
+    what_are_clusters: "Was sind Cluster?"
+    what_are_clusters_text: 'Bei Matter sind Cluster Gruppen verwandter Funktionen. Ein "Level Control"-Cluster steuert das Dimmen, ein "Color Control"-Cluster die RGB-Farben. Geräte listen ihre unterstützten Cluster als "Server" (sie bieten die Funktion) oder "Client" (sie steuern diese Funktion bei anderen Geräten).'
+    server_clusters: "Server-Cluster"
+    server_clusters_desc: "Funktionen, die diese Geräte anderen bereitstellen"
+    client_clusters: "Client-Cluster"
+    client_clusters_desc: "Funktionen, die diese Geräte bei anderen steuern"
+    cluster: "Cluster"
+    category: "Kategorie"
+    spec_version: "Spec-Version"
+    empty_state: "Noch keine Cluster-Daten verfügbar."
+
+# Device types page
+device_types:
+    what_are_device_types: "Was sind Gerätetypen?"
+    what_are_device_types_text: 'Gerätetypen sind standardisierte Vorlagen, die definieren, was ein Gerät ist. Ein "Dimmable Light" muss On/Off- und Level Control-Cluster unterstützen. Dies stellt sicher, dass alle dimmbaren Lichter gleich funktionieren, unabhängig vom Hersteller.'
+    all_device_types: "Alle Gerätetypen"
+    by_category: "Gerätetypen nach Kategorie"
+    device_type: "Gerätetyp"
+    unseen_types: "Nicht gesehene Gerätetypen"
+    unseen_types_desc: "Gerätetypen aus der Matter-Spezifikation, die noch nicht in unserer Umfrage aufgetaucht sind"
+    empty_state: "Noch keine Gerätetyp-Daten verfügbar."
+
+# Binding page
+binding:
+    what_is_binding: "Was ist Binding?"
+    what_is_binding_text: "Matter Binding ermöglicht direkte Gerät-zu-Gerät-Kommunikation ohne Hub. Zum Beispiel kann ein Lichtschalter direkt eine Glühbirne steuern – auch wenn Ihr WLAN ausfällt."
+    bindable_devices: "Binding-fähige Geräte"
+    support_by_category: "Binding-Unterstützung nach Kategorie"
+    support_by_category_desc: "Prozentsatz der Geräte pro Kategorie, die Binding unterstützen"
+    binding_capable_devices: "Binding-fähige Geräte"
+    binding_cluster_desc: "Alle Geräte mit dem Binding-Cluster (0x001E)"
+    device: "Gerät"
+    vendor: "Hersteller"
+    submissions: "Einreichungen"
+    endpoints: "Endpoints"
+    no_binding_devices: "Noch keine Binding-fähigen Geräte gefunden."
+    no_category_data: "Noch keine Kategoriedaten verfügbar."
+
+# Versions page
+versions:
+    why_track_versions: "Warum Versionen verfolgen?"
+    why_track_versions_text: "Firmware-Updates können Gerätefunktionen hinzufügen oder ändern. Geräte mit mehreren Softwareversionen erhalten wahrscheinlich Over-the-Air (OTA) Updates. Mehrere Hardwareversionen können auf Produktrevisionen oder regionale Varianten hinweisen."
+    products_with_version_info: "Produkte mit Versionsinformationen"
+    unique_software_versions: "Einzigartige Softwareversionen"
+    unique_hardware_versions: "Einzigartige Hardwareversionen"
+    products_with_updates: "Produkte mit Updates"
+    products_multiple_versions: "Produkte mit mehreren Versionen"
+    products_multiple_versions_desc: "Geräte, die mit verschiedenen Software- oder Hardwareversionen gesehen wurden (OTA-Aktivität oder Produktrevisionen)"
+    product: "Produkt"
+    sw_versions: "SW-Versionen"
+    hw_versions: "HW-Versionen"
+    software_version_list: "Softwareversionsliste"
+    ota_badge: "OTA"
+    revisions_badge: "Revisionen"
+    no_products: "Noch keine Produkte mit mehreren Versionen gefunden."
+    no_products_note: "Mit mehr gesammelten Daten werden hier Produkte mit OTA-Updates erscheinen."
+
+# Pairings page
+pairings:
+    title: "Gerätekombinationen"
+    description: "Sehen Sie, welche Geräte häufig zusammen in Matter-Smart-Homes verwendet werden."
+
+# Device browser
+device:
+    search_results: "Suchergebnisse für"
+    clear_search: "Suche leeren"
+    showing_devices: "%count% Geräte angezeigt"
+    unknown_product: "Unbekanntes Produkt"
+    unknown_vendor: "Unbekannter Hersteller"
+    endpoint: "Endpoint"
+    endpoints: "Endpoints"
+    no_devices_found: "Keine Geräte gefunden."
+    try_different_search: "Versuchen Sie einen anderen Suchbegriff oder"
+    browse_all_devices: "alle Geräte durchsuchen"
+
+# Device detail page
+device_detail:
+    vendor: "Hersteller"
+    vendor_id: "Hersteller-ID"
+    product_id: "Produkt-ID"
+    first_seen: "Erstmals gesehen"
+    submissions: "Einreichungen"
+    overview: "Übersicht"
+    endpoints: "Endpoints"
+    versions: "Versionen"
+    dcl_info: "DCL-Informationen"
+    endpoint: "Endpoint"
+    device_types: "Gerätetypen"
+    server_clusters: "Server-Cluster"
+    client_clusters: "Client-Cluster"
+    required: "Erforderlich"
+    optional: "Optional"
+    missing_required: "Fehlend (erforderlich)"
+    whats_missing: "Was fehlt"
+    software_versions: "Softwareversionen"
+    hardware_versions: "Hardwareversionen"
+    version: "Version"
+    seen_count: "Anzahl gesehen"
+    dcl_link: "Im DCL ansehen"
+    frequently_paired: "Häufig kombiniert mit"
+    devices_seen_with: "Diese Geräte werden oft in denselben Haushalten gesehen"
+
+# Vendor pages
+vendor:
+    products: "Produkte"
+    product: "Produkt"
+    no_vendors_found: "Keine Hersteller gefunden."
+    view_on_dcl: "Im DCL ansehen"
+
+# Common
+common:
+    unknown: "Unbekannt"
+    na: "N/A"
+    yes: "Ja"
+    no: "Nein"
+    loading: "Laden..."
+    error: "Fehler"
+    back: "Zurück"
+    next: "Weiter"
+    previous: "Zurück"
+    example: "Beispiel"
+    examples: "Beispiele"
+
+# Badges
+badge:
+    binding: "Binding"
+    thread: "Thread"
+    wifi: "WLAN"
+    ethernet: "Ethernet"
+
+# About page
+about:
+    title: "Über Matter Survey"
+    intro: "Matter Survey ist eine Community-basierte Datenbank, die die realen Fähigkeiten von Matter-kompatiblen Smart-Home-Geräten katalogisiert. Wir sammeln anonyme Daten von echten Geräten der Nutzer, um Ihnen zu zeigen, was mit was funktioniert."
+    what_is_matter: "Was ist Matter?"
+    what_is_matter_text_1: "Matter ist ein neuer Smart-Home-Standard, der Geräte verschiedener Marken zusammenarbeiten lässt. Vor Matter funktionierte eine Philips-Glühbirne vielleicht nur mit der Philips-App. Ein Samsung-Sensor nur mit SmartThings. Alles miteinander zu verbinden war ein Albtraum."
+    what_is_matter_text_2: "Matter löst dieses Problem. Es ist eine gemeinsame Sprache, die Geräte sprechen können, unterstützt von großen Technologieunternehmen:"
+    and_others: "und über 200 weitere"
+    plain_english: "Einfach erklärt:"
+    plain_english_text: "Wenn ein Gerät das Matter-Logo hat, sollte es mit Apple Home, Google Home, Amazon Alexa oder jedem anderen Matter-kompatiblen System funktionieren."
+    why_exists: "Warum gibt es diese Seite?"
+    why_exists_intro: "Matter verspricht Kompatibilität, aber die Realität ist komplexer:"
+    reason_1: "Verschiedene Geräte haben verschiedene Funktionen."
+    reason_1_detail: "Eine einfache Glühbirne schaltet nur an/aus. Eine teure unterstützt Farben, Helligkeit und Szenen."
+    reason_2: "Nicht alle Funktionen werden offengelegt."
+    reason_2_detail: "Einige Geräte haben Fähigkeiten, die sie nicht über Matter bewerben."
+    reason_3: "Binding-Unterstützung variiert."
+    reason_3_detail: '"Binding" ermöglicht Geräten, direkt miteinander zu kommunizieren (wie ein Schalter, der eine Glühbirne ohne Hub steuert). Nicht alle Geräte unterstützen dies.'
+    reason_4: "Firmware-Updates ändern Dinge."
+    reason_4_detail: "Ein Gerät kann im Laufe der Zeit Funktionen gewinnen oder verlieren."
+    reality_text: "Matter Survey sammelt echte Daten von echten Geräten, um Ihnen genau zu zeigen, was jedes Gerät kann – nicht nur was das Marketing sagt."
+    what_data: "Welche Daten sammeln wir?"
+    what_data_intro: "Wir sammeln nur technische Geräteinformationen:"
+    data_1: "Geräte-Identifikatoren (Hersteller-ID, Produkt-ID)"
+    data_2: "Unterstützte Funktionen (Cluster, Gerätetypen)"
+    data_3: "Firmware-Versionen"
+    data_4: "Verbindungstyp (Thread, WLAN, Ethernet)"
+    no_collect: "Wir sammeln NICHT:"
+    no_collect_text: "Ihren Namen, Standort, Netzwerkinformationen, Nutzungsmuster oder irgendetwas, das Sie persönlich identifizieren könnte. Ihre Privatsphäre wird respektiert."
+    how_collected: "Wie werden Daten gesammelt?"
+    how_collected_text: "Daten werden von Nutzern des Matter Binding Helper Home Assistant Add-ons beigetragen. Wenn Nutzer zustimmen, werden ihre Gerätefähigkeiten anonym an diese Datenbank übermittelt."
+    ready_explore: "Bereit zum Erkunden?"
+    browse_devices: "Geräte durchsuchen"
+    read_faq: "FAQ lesen"

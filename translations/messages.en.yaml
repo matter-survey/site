@@ -189,6 +189,8 @@ common:
     back: "Back"
     next: "Next"
     previous: "Previous"
+    example: "Example"
+    examples: "Examples"
 
 # Badges
 badge:

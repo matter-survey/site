@@ -1,0 +1,119 @@
+# Glossary page translations - German
+
+title: "Glossar"
+meta_title: "Matter-Glossar - Smart-Home-Begriffe erklärt"
+meta_description: "Verständliche Erklärungen zu Matter, Thread, Clustern, Binding und anderen Smart-Home-Begriffen."
+intro: "Verständliche Erklärungen zu Matter und Smart-Home-Begriffen."
+
+# Navigation
+nav:
+    connectivity: "Konnektivität"
+    clusters: "Cluster"
+    device_concepts: "Gerätekonzepte"
+    matter_spec: "Matter-Spezifikation"
+
+# Connectivity section
+connectivity:
+    title: "Konnektivität"
+
+    thread:
+        name: "Thread"
+        description_1: "Ein energiesparendes drahtloses Mesh-Netzwerk für Smart-Home-Geräte. Thread-Geräte bilden ein Mesh, in dem jedes Gerät Nachrichten an andere weiterleiten kann, was Reichweite und Zuverlässigkeit verbessert."
+        description_2: "Thread eignet sich besonders für batteriebetriebene Geräte wie Sensoren und Schlösser. Erfordert einen Thread Border Router (integriert in Apple TV 4K, HomePod Mini, einigen Google/Amazon-Geräten)."
+        example: "Der Eve Türsensor verwendet Thread und kann monatelang mit einer einzigen Batterie laufen."
+
+    wifi:
+        name: "WLAN"
+        description: "Standard-WLAN-Verbindung über Ihr Heim-WLAN-Netzwerk. Kein zusätzlicher Hub erforderlich. Am häufigsten bei Steckdosen, Glühbirnen und dauerhaft mit Strom versorgten Geräten."
+        example: "Eine Meross Smart Plug verbindet sich direkt mit Ihrem WLAN-Router."
+
+    ethernet:
+        name: "Ethernet"
+        description: "Kabelgebundene Netzwerkverbindung. Bietet die zuverlässigste Verbindung, erfordert aber Kabelverlegung. Typischerweise in Hubs, Bridges und einigen High-End-Geräten zu finden."
+
+    border_router:
+        name: "Border Router"
+        description: "Ein Gerät, das ein Thread-Netzwerk mit Ihrem IP-Netzwerk (WLAN/Ethernet) verbindet. Erforderlich, damit Thread-Geräte mit dem Internet und Ihrem Smartphone kommunizieren können."
+        example: "Apple TV 4K, HomePod Mini, Google Nest Hub (2. Gen), Amazon Echo (4. Gen)"
+
+# Clusters section
+clusters:
+    title: "Cluster"
+
+    cluster:
+        name: "Cluster"
+        description: 'Eine Gruppe verwandter Funktionen, die ein Gerät haben kann. Jeder Cluster definiert spezifische Attribute (Daten, die das Gerät meldet) und Befehle (Aktionen, die Sie auslösen können).'
+        example: 'Der "On/Off"-Cluster enthält ein Attribut für den aktuellen Zustand (ein oder aus) und Befehle zum Einschalten, Ausschalten oder Umschalten.'
+
+    server_cluster:
+        name: "Server-Cluster"
+        description: "Eine Fähigkeit, die ein Gerät bereitstellt. Wenn ein Gerät einen Server-Cluster hat, bedeutet das, dass andere Geräte (oder Ihre App) Daten davon lesen oder Befehle senden können."
+        example: 'Eine Glühbirne hat "On/Off" als Server-Cluster — sie kann von anderen ein-/ausgeschaltet werden.'
+
+    client_cluster:
+        name: "Client-Cluster"
+        description: "Eine Fähigkeit, die ein Gerät von anderen Geräten nutzt. Wenn ein Gerät einen Client-Cluster hat, kann es diese Funktion bei anderen Geräten steuern."
+        example: 'Ein Wandschalter hat "On/Off" als Client-Cluster — er kann andere Geräte ein-/ausschalten.'
+
+    common_clusters:
+        name: "Häufige Cluster"
+        description: "Hier sind einige Cluster, die Sie häufig sehen werden:"
+        onoff: "Gerät ein- oder ausschalten"
+        level_control: "Dimmen, Lautstärke oder andere Stufen"
+        color_control: "Farbtemperatur und RGB-Farben"
+        temperature_measurement: "Meldet Temperaturwerte"
+        occupancy_sensing: "Bewegungs-/Anwesenheitserkennung"
+        door_lock: "Verriegeln und Entriegeln"
+        thermostat: "Heizungs-/Klimasteuerung"
+
+# Device Concepts section
+device_concepts:
+    title: "Gerätekonzepte"
+
+    binding:
+        name: "Binding"
+        description: "Eine direkte Verbindung zwischen zwei Geräten, die ihnen ermöglicht, ohne Hub zu kommunizieren. Bindings funktionieren auch, wenn Ihr Internet oder Hub offline ist."
+        example: "Verbinden Sie einen smarten Schalter mit einer smarten Glühbirne. Drücken Sie den Schalter, und die Glühbirne reagiert sofort — keine Cloud, kein Hub, keine Verzögerung."
+
+    endpoint:
+        name: "Endpoint"
+        description: "Ein logisches Untergerät innerhalb eines physischen Geräts. Ein einzelnes Matter-Gerät kann mehrere Endpoints haben, die jeweils unterschiedliche Funktionalität repräsentieren."
+        example: "Eine Steckdosenleiste mit 4 Steckdosen könnte 4 Endpoints haben (einen pro Steckdose) plus einen 5. Endpoint für die Gesamtgerätesteuerung."
+
+    device_type:
+        name: "Gerätetyp"
+        description: 'Eine vordefinierte Vorlage, die festlegt, welche Cluster ein Gerät unterstützen sollte. Gerätetypen gewährleisten Konsistenz — alle "Dimmable Lights" unterstützen dieselben grundlegenden Funktionen.'
+        examples: "On/Off Light, Dimmable Light, Color Temperature Light, Door Lock, Thermostat, Contact Sensor"
+
+    vendor_id:
+        name: "Hersteller-ID"
+        description: "Eine eindeutige Nummer, die jedem Hersteller von der Connectivity Standards Alliance (CSA) zugewiesen wird. Wird verwendet, um zu identifizieren, wer ein Gerät hergestellt hat."
+        examples: "Eve = 4874, Aqara = 4447, Philips = 4107"
+
+    product_id:
+        name: "Produkt-ID"
+        description: "Eine vom Hersteller zugewiesene Nummer zur Identifikation eines spezifischen Produktmodells. Zusammen mit der Hersteller-ID identifiziert sie jedes Matter-Gerät eindeutig."
+
+# Matter Spec section
+matter_spec:
+    title: "Matter-Spezifikation"
+
+    matter_version:
+        name: "Matter-Version / Spec-Version"
+        description: "Die Version der Matter-Spezifikation, nach der ein Gerät gebaut wurde. Neuere Versionen fügen Funktionen und Gerätetypen hinzu. Aktuelle Versionen sind 1.0, 1.1, 1.2, 1.3 und 1.4."
+        example: "Matter 1.3 fügte Unterstützung für Wasserleck-Sensoren und Elektrofahrzeug-Ladegeräte hinzu."
+
+    mandatory_cluster:
+        name: "Obligatorischer Cluster"
+        description: "Ein Cluster, den die Matter-Spezifikation für einen bestimmten Gerätetyp vorschreibt. Wenn einem Gerät obligatorische Cluster fehlen, ist es nicht vollständig Spezifikations-konform."
+
+    optional_cluster:
+        name: "Optionaler Cluster"
+        description: "Ein Cluster, den ein Gerät unterstützen kann, aber nicht muss. Optionale Cluster bieten zusätzliche Funktionalität über die Grundlagen hinaus."
+
+    dcl:
+        name: "DCL (Distributed Compliance Ledger)"
+        description: "Eine öffentliche Datenbank der CSA, die alle zertifizierten Matter-Geräte auflistet. Wir verwenden DCL-Daten, um Hersteller-/Produkt-IDs mit Produktnamen abzugleichen."
+
+# Back to top
+back_to_top: "Nach oben"

@@ -15,6 +15,9 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class SitemapController extends AbstractController
 {
+    /** @var string[] */
+    private const LOCALES = ['en', 'de'];
+
     public function __construct(
         private DeviceRepository $deviceRepo,
         private VendorRepository $vendorRepo,
@@ -57,19 +60,29 @@ class SitemapController extends AbstractController
     #[Route('/sitemap-pages.xml', name: 'sitemap_pages', methods: ['GET'])]
     public function pages(): Response
     {
-        $urls = [
-            $this->createUrl('device_index', [], 1.0, 'daily'),
-            $this->createUrl('vendor_index', [], 0.8, 'weekly'),
-            $this->createUrl('stats_dashboard', [], 0.7, 'weekly'),
-            $this->createUrl('stats_clusters', [], 0.7, 'weekly'),
-            $this->createUrl('stats_device_types', [], 0.7, 'weekly'),
-            $this->createUrl('stats_binding', [], 0.6, 'weekly'),
-            $this->createUrl('stats_versions', [], 0.6, 'weekly'),
-            $this->createUrl('stats_pairings', [], 0.6, 'weekly'),
-            $this->createUrl('page_about', [], 0.5, 'monthly'),
-            $this->createUrl('page_faq', [], 0.5, 'monthly'),
-            $this->createUrl('page_glossary', [], 0.5, 'monthly'),
+        $routes = [
+            ['route' => 'device_index', 'params' => [], 'priority' => 1.0, 'changefreq' => 'daily'],
+            ['route' => 'vendor_index', 'params' => [], 'priority' => 0.8, 'changefreq' => 'weekly'],
+            ['route' => 'stats_dashboard', 'params' => [], 'priority' => 0.7, 'changefreq' => 'weekly'],
+            ['route' => 'stats_clusters', 'params' => [], 'priority' => 0.7, 'changefreq' => 'weekly'],
+            ['route' => 'stats_device_types', 'params' => [], 'priority' => 0.7, 'changefreq' => 'weekly'],
+            ['route' => 'stats_binding', 'params' => [], 'priority' => 0.6, 'changefreq' => 'weekly'],
+            ['route' => 'stats_versions', 'params' => [], 'priority' => 0.6, 'changefreq' => 'weekly'],
+            ['route' => 'stats_pairings', 'params' => [], 'priority' => 0.6, 'changefreq' => 'weekly'],
+            ['route' => 'page_about', 'params' => [], 'priority' => 0.5, 'changefreq' => 'monthly'],
+            ['route' => 'page_faq', 'params' => [], 'priority' => 0.5, 'changefreq' => 'monthly'],
+            ['route' => 'page_glossary', 'params' => [], 'priority' => 0.5, 'changefreq' => 'monthly'],
         ];
+
+        $urls = [];
+        foreach ($routes as $routeInfo) {
+            $urls[] = $this->createLocalizedUrl(
+                $routeInfo['route'],
+                $routeInfo['params'],
+                $routeInfo['priority'],
+                $routeInfo['changefreq']
+            );
+        }
 
         return $this->createXmlResponse($this->renderSitemapXml($urls), 86400);
     }
@@ -88,7 +101,7 @@ class SitemapController extends AbstractController
             $batch = $this->deviceRepo->getAllDevices($limit, $offset);
             foreach ($batch as $device) {
                 if (!empty($device['slug'])) {
-                    $urls[] = $this->createUrl(
+                    $urls[] = $this->createLocalizedUrl(
                         'device_show',
                         ['slug' => $device['slug']],
                         0.8,
@@ -113,7 +126,7 @@ class SitemapController extends AbstractController
         $vendors = $this->vendorRepo->findAllOrderedByDeviceCount();
 
         foreach ($vendors as $vendor) {
-            $urls[] = $this->createUrl(
+            $urls[] = $this->createLocalizedUrl(
                 'vendor_show',
                 ['slug' => $vendor->getSlug()],
                 0.7,
@@ -136,7 +149,7 @@ class SitemapController extends AbstractController
         // Device type pages
         $deviceTypes = $this->deviceTypeRepo->findAll();
         foreach ($deviceTypes as $deviceType) {
-            $urls[] = $this->createUrl(
+            $urls[] = $this->createLocalizedUrl(
                 'stats_device_type_show',
                 ['type' => $deviceType->getId()],
                 0.6,
@@ -147,7 +160,7 @@ class SitemapController extends AbstractController
         // Cluster pages
         $clusters = $this->clusterRepo->findAll();
         foreach ($clusters as $cluster) {
-            $urls[] = $this->createUrl(
+            $urls[] = $this->createLocalizedUrl(
                 'stats_cluster_show',
                 ['hexId' => $cluster->getHexId()],
                 0.6,
@@ -159,23 +172,34 @@ class SitemapController extends AbstractController
     }
 
     /**
-     * Create a URL entry for the sitemap.
+     * Create a localized URL entry for the sitemap with alternates.
      *
      * @param array<string, mixed> $params
-     * @return array{loc: string, priority: float, changefreq: string, lastmod: string|null}
+     * @return array{loc: string, priority: float, changefreq: string, lastmod: string|null, alternates: array<string, string>}
      */
-    private function createUrl(
+    private function createLocalizedUrl(
         string $route,
         array $params,
         float $priority,
         string $changefreq,
         ?string $lastmod = null
     ): array {
+        $alternates = [];
+        foreach (self::LOCALES as $locale) {
+            $alternates[$locale] = $this->generateUrl(
+                $route,
+                array_merge($params, ['_locale' => $locale]),
+                UrlGeneratorInterface::ABSOLUTE_URL
+            );
+        }
+
+        // Default locale (English) as the main URL
         return [
-            'loc' => $this->generateUrl($route, $params, UrlGeneratorInterface::ABSOLUTE_URL),
+            'loc' => $alternates['en'],
             'priority' => $priority,
             'changefreq' => $changefreq,
             'lastmod' => $lastmod,
+            'alternates' => $alternates,
         ];
     }
 
@@ -196,18 +220,29 @@ class SitemapController extends AbstractController
     }
 
     /**
-     * Render sitemap XML.
+     * Render sitemap XML with xhtml:link alternates for localization.
      *
-     * @param array<array{loc: string, priority: float, changefreq: string, lastmod: string|null}> $urls
+     * @param array<array{loc: string, priority: float, changefreq: string, lastmod: string|null, alternates?: array<string, string>}> $urls
      */
     private function renderSitemapXml(array $urls): string
     {
         $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
-        $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+        $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">' . "\n";
 
         foreach ($urls as $url) {
             $xml .= '  <url>' . "\n";
             $xml .= '    <loc>' . htmlspecialchars($url['loc'], ENT_XML1, 'UTF-8') . '</loc>' . "\n";
+
+            // Add hreflang alternates if available
+            if (isset($url['alternates']) && \count($url['alternates']) > 0) {
+                foreach ($url['alternates'] as $locale => $href) {
+                    $xml .= '    <xhtml:link rel="alternate" hreflang="' . $locale . '" href="' . htmlspecialchars($href, ENT_XML1, 'UTF-8') . '" />' . "\n";
+                }
+                // Add x-default pointing to English
+                if (isset($url['alternates']['en'])) {
+                    $xml .= '    <xhtml:link rel="alternate" hreflang="x-default" href="' . htmlspecialchars($url['alternates']['en'], ENT_XML1, 'UTF-8') . '" />' . "\n";
+                }
+            }
 
             if ($url['lastmod'] !== null) {
                 $date = $url['lastmod'];

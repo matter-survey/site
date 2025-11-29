@@ -1,0 +1,85 @@
+# FAQ page translations - German
+
+title: "Häufig gestellte Fragen"
+meta_title: "Häufig gestellte Fragen - Matter Survey"
+meta_description: "Häufige Fragen zu Matter Smart-Home-Geräten, Kompatibilität und zur Nutzung von Matter Survey."
+
+# Section headers
+section:
+    matter_basics: "Matter-Grundlagen"
+    understanding_device_data: "Gerätedaten verstehen"
+    about_this_site: "Über diese Seite"
+
+# Matter Basics questions
+matter_basics:
+    what_is_matter:
+        question: "Was ist Matter?"
+        answer_1: "Matter ist ein Smart-Home-Konnektivitätsstandard, der es Geräten verschiedener Hersteller ermöglicht, zusammenzuarbeiten. Stellen Sie es sich als gemeinsame Sprache vor, die Ihre smarte Glühbirne, Ihr Thermostat und Ihr Türschloss alle sprechen können."
+        answer_2: "Es wird von Apple, Google, Amazon, Samsung und über 200 weiteren Unternehmen unterstützt. Wenn ein Gerät das Matter-Logo trägt, sollte es mit jedem Matter-kompatiblen Smart-Home-System funktionieren."
+
+    is_device_compatible:
+        question: "Ist mein Gerät Matter-kompatibel?"
+        answer_1: "Achten Sie auf das Matter-Logo auf der Verpackung oder Produktseite. Sie können auch auf dieser Seite nach Ihrem Gerät suchen – wenn wir Daten dazu haben, ist es Matter-kompatibel."
+        answer_2: "Beachten Sie, dass einige ältere Geräte durch Firmware-Updates Matter-Unterstützung erhalten können. Erkundigen Sie sich bei Ihrem Gerätehersteller."
+
+    thread_wifi_ethernet:
+        question: "Was ist der Unterschied zwischen Thread, WLAN und Ethernet?"
+        intro: "Dies sind die Verbindungsmöglichkeiten eines Matter-Geräts mit Ihrem Netzwerk:"
+        wifi: "Verbindet sich mit Ihrem normalen WLAN-Netzwerk. Üblich für Steckdosen, Glühbirnen und größere Geräte. Kein zusätzlicher Hub erforderlich."
+        thread: "Ein energiesparendes Mesh-Netzwerk für Smart-Home-Geräte. Erfordert einen Thread Border Router (in vielen modernen Hubs wie Apple TV 4K, HomePod Mini oder Google Nest Hub integriert). Ideal für batteriebetriebene Geräte."
+        ethernet: "Kabelverbindung. Selten, bietet aber die zuverlässigste Verbindung. Meist in Hubs und Bridges zu finden."
+
+# Understanding Device Data questions
+device_data:
+    what_are_clusters:
+        question: 'Was sind "Cluster"?'
+        answer_1: "Cluster sind Gruppen verwandter Funktionen, die ein Gerät unterstützt. Stellen Sie sie sich als Fähigkeitskategorien vor:"
+        onoff: "Das Gerät kann ein- und ausgeschaltet werden"
+        level_control: "Das Gerät unterstützt Dimmen oder variable Stufen"
+        color_control: "Das Gerät kann Farben wechseln"
+        temperature: "Das Gerät kann die Temperatur melden"
+        answer_2: "Das vollständige Glossar enthält weitere Cluster-Erklärungen."
+
+    server_vs_client:
+        question: 'Was ist der Unterschied zwischen "Server"- und "Client"-Clustern?'
+        answer_1: "Server-Cluster sind Fähigkeiten, die das Gerät bereitstellt. Eine Glühbirne hat einen On/Off Server-Cluster, weil sie ein- und ausgeschaltet werden kann."
+        answer_2: "Client-Cluster sind Fähigkeiten, die das Gerät von anderen Geräten nutzt. Ein smarter Schalter könnte einen On/Off Client-Cluster haben, weil er den Ein/Aus-Zustand anderer Geräte steuern möchte."
+        answer_3: "Die meisten Geräte, mit denen Sie interagieren (Glühbirnen, Sensoren, Steckdosen), haben hauptsächlich Server-Cluster. Controller und Schalter haben tendenziell Client-Cluster."
+
+    binding_support:
+        question: 'Was bedeutet "Binding-Unterstützung"?'
+        answer_1: "Binding ermöglicht es zwei Geräten, direkt miteinander zu kommunizieren, ohne über Ihren Smart-Home-Hub zu gehen."
+        answer_2: "Beispiel: Wenn Sie einen smarten Schalter mit einer smarten Glühbirne verbinden, schaltet das Drücken des Schalters die Glühbirne sofort ein – selbst wenn Ihr WLAN ausgefallen ist oder Ihr Hub offline ist."
+        answer_3: 'Nicht alle Geräte unterstützen Binding. Geräte mit dem "Binding"-Badge auf dieser Seite haben diese Fähigkeit.'
+
+    missing_required:
+        question: 'Warum zeigt ein Gerät "Fehlend (erforderlich)"-Cluster an?'
+        answer_1: "Die Matter-Spezifikation definiert, welche Cluster für jeden Gerätetyp obligatorisch sind. Wenn einem Gerät erforderliche Cluster fehlen, bedeutet das:"
+        reason_1: "Das Gerät ist möglicherweise nicht vollständig Spezifikations-konform"
+        reason_2: "Das Gerät verwendet möglicherweise eine ältere Matter-Version"
+        reason_3: "Einige Funktionen funktionieren möglicherweise nicht wie erwartet mit bestimmten Controllern"
+        answer_2: "Das bedeutet nicht unbedingt, dass das Gerät defekt ist – es funktioniert oft trotzdem einwandfrei, nur ohne bestimmte standardisierte Funktionen."
+
+# About This Site questions
+about_site:
+    where_does_data_come_from:
+        question: "Woher stammen diese Daten?"
+        answer: "Die Daten werden von Nutzern des Matter Binding Helper Home Assistant Add-ons crowdgesourced. Wenn Nutzer zustimmen, werden ihre Geräteinformationen anonym an unsere Datenbank übermittelt."
+
+    is_personal_data_collected:
+        question: "Werden meine persönlichen Daten erfasst?"
+        answer: "Nein. Wir erfassen nur technische Geräteinformationen (Hersteller-ID, Produkt-ID, unterstützte Funktionen). Wir erfassen nicht Ihren Namen, Standort, Netzwerkdetails oder andere persönlich identifizierbare Informationen."
+
+    why_not_listed:
+        question: "Warum ist mein Gerät nicht aufgeführt?"
+        intro: "Wir können nur Geräte anzeigen, die von unseren Beitragenden eingereicht wurden. Wenn Ihr Gerät nicht aufgeführt ist, wurde es entweder:"
+        reason_1: "Noch von niemandem eingereicht"
+        reason_2: "Ist sehr neu auf dem Markt"
+        reason_3: "Ist nicht Matter-kompatibel"
+
+# Related links section
+related_links:
+    title: "Mehr erfahren"
+    about: "Über Matter Survey"
+    glossary: "Glossar"
+    browse_devices: "Geräte durchsuchen"
