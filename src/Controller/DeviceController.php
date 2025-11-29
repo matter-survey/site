@@ -87,16 +87,22 @@ class DeviceController extends AbstractController
             $filters['binding'] = false;
         }
 
-        // Vendor filter
-        $vendor = $request->query->getInt('vendor');
-        if ($vendor > 0) {
-            $filters['vendor'] = $vendor;
+        // Vendor filter (check for non-empty before getInt to avoid error on empty string)
+        $vendorParam = $request->query->get('vendor', '');
+        if ($vendorParam !== '' && is_numeric($vendorParam)) {
+            $vendor = (int) $vendorParam;
+            if ($vendor > 0) {
+                $filters['vendor'] = $vendor;
+            }
         }
 
-        // Device type filter
-        $deviceType = $request->query->getInt('device_type');
-        if ($deviceType > 0) {
-            $filters['device_type'] = $deviceType;
+        // Device type filter (check for non-empty before getInt to avoid error on empty string)
+        $deviceTypeParam = $request->query->get('device_type', '');
+        if ($deviceTypeParam !== '' && is_numeric($deviceTypeParam)) {
+            $deviceType = (int) $deviceTypeParam;
+            if ($deviceType > 0) {
+                $filters['device_type'] = $deviceType;
+            }
         }
 
         return $filters;

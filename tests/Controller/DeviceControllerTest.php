@@ -536,6 +536,35 @@ class DeviceControllerTest extends WebTestCase
         $this->assertSelectorTextContains('.active-filter', 'Type:');
     }
 
+    public function testIndexPageHandlesEmptyFilterParameters(): void
+    {
+        $client = static::createClient();
+
+        // Test URL pattern that was causing 400: ?q=&device_type=770&vendor=
+        $client->request('GET', '/', [
+            'q' => '',
+            'device_type' => '770',
+            'vendor' => '',
+        ]);
+
+        $this->assertResponseIsSuccessful();
+    }
+
+    public function testIndexPageHandlesAllEmptyParameters(): void
+    {
+        $client = static::createClient();
+
+        // All empty parameters
+        $client->request('GET', '/', [
+            'q' => '',
+            'device_type' => '',
+            'vendor' => '',
+            'binding' => '',
+        ]);
+
+        $this->assertResponseIsSuccessful();
+    }
+
     // ========================================
     // Structured Data Tests
     // ========================================
