@@ -81,6 +81,9 @@
         border: 1px solid var(--gray-200);
         position: sticky;
         top: 1rem;
+        max-height: calc(100vh - 2rem);
+        display: flex;
+        flex-direction: column;
     }
 
     .filter-header {
@@ -89,6 +92,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        flex-shrink: 0;
     }
 
     .filter-header h3 {
@@ -105,6 +109,12 @@
 
     .filter-clear:hover {
         text-decoration: underline;
+    }
+
+    .filter-form {
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
     }
 
     .filter-section {
@@ -447,7 +457,7 @@
                 {% endif %}
             </div>
 
-            <form method="get" action="{{ path('device_index') }}" id="filter-form">
+            <form method="get" action="{{ path('device_index') }}" id="filter-form" class="filter-form">
                 {# Search within filters #}
                 <div class="filter-section">
                     <h4>Search</h4>
@@ -493,6 +503,10 @@
                 <div class="filter-section">
                     <h4>Device Type</h4>
                     <div class="vendor-list">
+                        <label class="filter-option {{ filters.device_type is not defined ? 'active' : '' }}">
+                            <input type="radio" name="device_type" value="" {{ filters.device_type is not defined ? 'checked' : '' }} onchange="this.form.submit()">
+                            <span>All Types</span>
+                        </label>
                         {% for dt in facets.device_types %}
                             <label class="filter-option {{ (filters.device_type ?? 0) == dt.id ? 'active' : '' }}">
                                 <input type="radio" name="device_type" value="{{ dt.id }}" {{ (filters.device_type ?? 0) == dt.id ? 'checked' : '' }} onchange="this.form.submit()">
@@ -500,12 +514,6 @@
                                 <span class="count">{{ dt.count }}</span>
                             </label>
                         {% endfor %}
-                        {% if filters.device_type is defined %}
-                            <label class="filter-option">
-                                <input type="radio" name="device_type" value="" onchange="this.form.submit()">
-                                <span style="color: var(--gray-500);">All Types</span>
-                            </label>
-                        {% endif %}
                     </div>
                 </div>
 
@@ -513,6 +521,10 @@
                 <div class="filter-section">
                     <h4>Vendor</h4>
                     <div class="vendor-list">
+                        <label class="filter-option {{ filters.vendor is not defined ? 'active' : '' }}">
+                            <input type="radio" name="vendor" value="" {{ filters.vendor is not defined ? 'checked' : '' }} onchange="this.form.submit()">
+                            <span>All Vendors</span>
+                        </label>
                         {% for vendor in facets.vendors %}
                             <label class="filter-option {{ (filters.vendor ?? 0) == vendor.id ? 'active' : '' }}">
                                 <input type="radio" name="vendor" value="{{ vendor.id }}" {{ (filters.vendor ?? 0) == vendor.id ? 'checked' : '' }} onchange="this.form.submit()">
@@ -520,12 +532,6 @@
                                 <span class="count">{{ vendor.count }}</span>
                             </label>
                         {% endfor %}
-                        {% if filters.vendor is defined %}
-                            <label class="filter-option">
-                                <input type="radio" name="vendor" value="" onchange="this.form.submit()">
-                                <span style="color: var(--gray-500);">All Vendors</span>
-                            </label>
-                        {% endif %}
                     </div>
                 </div>
 
