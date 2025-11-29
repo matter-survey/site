@@ -126,6 +126,157 @@ class DeviceRepository
         return (int) $this->db->executeQuery('SELECT COUNT(*) FROM products')->fetchOne();
     }
 
+    /**
+     * Get devices with optional filters.
+     *
+     * @param array{
+     *     connectivity?: array<string>,
+     *     binding?: bool|null,
+     *     vendor?: int|null,
+     *     search?: string|null
+     * } $filters
+     */
+    public function getFilteredDevices(array $filters, int $limit = 100, int $offset = 0): array
+    {
+        $sql = 'SELECT * FROM device_summary WHERE 1=1';
+        $params = [];
+        $types = [];
+
+        $sql = $this->applyFilters($sql, $filters, $params, $types);
+
+        $sql .= ' ORDER BY submission_count DESC, last_seen DESC LIMIT :limit OFFSET :offset';
+        $params['limit'] = $limit;
+        $params['offset'] = $offset;
+        $types['limit'] = \Doctrine\DBAL\ParameterType::INTEGER;
+        $types['offset'] = \Doctrine\DBAL\ParameterType::INTEGER;
+
+        return $this->db->executeQuery($sql, $params, $types)->fetchAllAssociative();
+    }
+
+    /**
+     * Get count of devices with optional filters.
+     *
+     * @param array{
+     *     connectivity?: array<string>,
+     *     binding?: bool|null,
+     *     vendor?: int|null,
+     *     search?: string|null
+     * } $filters
+     */
+    public function getFilteredDeviceCount(array $filters): int
+    {
+        $sql = 'SELECT COUNT(*) FROM device_summary WHERE 1=1';
+        $params = [];
+        $types = [];
+
+        $sql = $this->applyFilters($sql, $filters, $params, $types);
+
+        return (int) $this->db->executeQuery($sql, $params, $types)->fetchOne();
+    }
+
+    /**
+     * Apply filters to SQL query.
+     *
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $types
+     */
+    private function applyFilters(string $sql, array $filters, array &$params, array &$types): string
+    {
+        // Connectivity filter
+        if (!empty($filters['connectivity'])) {
+            $connectivityConditions = [];
+            foreach ($filters['connectivity'] as $i => $type) {
+                $paramName = 'conn_' . $i;
+                $connectivityConditions[] = "connectivity_types LIKE :{$paramName}";
+                $params[$paramName] = '%"' . $type . '"%';
+            }
+            $sql .= ' AND (' . implode(' OR ', $connectivityConditions) . ')';
+        }
+
+        // Binding filter
+        if (isset($filters['binding'])) {
+            $sql .= ' AND supports_binding = :binding';
+            $params['binding'] = $filters['binding'] ? 1 : 0;
+            $types['binding'] = \Doctrine\DBAL\ParameterType::INTEGER;
+        }
+
+        // Vendor filter
+        if (!empty($filters['vendor'])) {
+            $sql .= ' AND vendor_fk = :vendor';
+            $params['vendor'] = $filters['vendor'];
+            $types['vendor'] = \Doctrine\DBAL\ParameterType::INTEGER;
+        }
+
+        // Search filter
+        if (!empty($filters['search'])) {
+            $sql .= ' AND (vendor_name LIKE :search OR product_name LIKE :search
+                      OR CAST(vendor_id AS TEXT) LIKE :search OR CAST(product_id AS TEXT) LIKE :search)';
+            $params['search'] = '%' . $filters['search'] . '%';
+        }
+
+        return $sql;
+    }
+
+    /**
+     * Get connectivity type facets (counts per type).
+     *
+     * @return array<string, int>
+     */
+    public function getConnectivityFacets(): array
+    {
+        $result = $this->db->executeQuery("
+            SELECT
+                SUM(CASE WHEN connectivity_types LIKE '%\"thread\"%' THEN 1 ELSE 0 END) as thread,
+                SUM(CASE WHEN connectivity_types LIKE '%\"wifi\"%' THEN 1 ELSE 0 END) as wifi,
+                SUM(CASE WHEN connectivity_types LIKE '%\"ethernet\"%' THEN 1 ELSE 0 END) as ethernet
+            FROM products
+        ")->fetchAssociative();
+
+        return [
+            'thread' => (int) ($result['thread'] ?? 0),
+            'wifi' => (int) ($result['wifi'] ?? 0),
+            'ethernet' => (int) ($result['ethernet'] ?? 0),
+        ];
+    }
+
+    /**
+     * Get binding support facets.
+     *
+     * @return array{with_binding: int, without_binding: int}
+     */
+    public function getBindingFacets(): array
+    {
+        $result = $this->db->executeQuery('
+            SELECT
+                SUM(CASE WHEN supports_binding = 1 THEN 1 ELSE 0 END) as with_binding,
+                SUM(CASE WHEN supports_binding = 0 THEN 1 ELSE 0 END) as without_binding
+            FROM device_summary
+        ')->fetchAssociative();
+
+        return [
+            'with_binding' => (int) ($result['with_binding'] ?? 0),
+            'without_binding' => (int) ($result['without_binding'] ?? 0),
+        ];
+    }
+
+    /**
+     * Get top vendors with device counts for faceted search.
+     *
+     * @return array<array{id: int, name: string, slug: string, count: int}>
+     */
+    public function getVendorFacets(int $limit = 20): array
+    {
+        return $this->db->executeQuery('
+            SELECT v.id, v.name, v.slug, COUNT(p.id) as count
+            FROM vendors v
+            JOIN products p ON p.vendor_fk = v.id
+            GROUP BY v.id
+            HAVING count > 0
+            ORDER BY count DESC
+            LIMIT :limit
+        ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+    }
+
     public function getDevice(int $id): ?array
     {
         $result = $this->db->executeQuery(

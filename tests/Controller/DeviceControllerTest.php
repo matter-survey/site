@@ -75,7 +75,7 @@ class DeviceControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Should show empty state
-        $this->assertSelectorTextContains('.empty-state', 'No devices found');
+        $this->assertSelectorTextContains('.empty-state', 'No devices match your filters');
     }
 
     public function testIndexPageWithPagination(): void
@@ -327,6 +327,184 @@ class DeviceControllerTest extends WebTestCase
         $this->assertSelectorExists('.compatibility-section');
         $this->assertSelectorTextContains('.compatibility-section', 'Can provide data to');
         $this->assertSelectorTextContains('.compatibility-section', 'On/Off');
+    }
+
+    // ========================================
+    // Faceted Search Tests
+    // ========================================
+
+    public function testIndexPageHasFilterSidebar(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/');
+
+        $this->assertResponseIsSuccessful();
+
+        // Check filter sidebar elements
+        $this->assertSelectorExists('.filter-sidebar');
+        $this->assertSelectorExists('.filter-section');
+
+        // Check connectivity filters exist
+        $this->assertSelectorTextContains('.filter-sidebar', 'Connectivity');
+
+        // Check vendor filters exist
+        $this->assertSelectorTextContains('.filter-sidebar', 'Vendor');
+
+        // Check binding filters exist
+        $this->assertSelectorTextContains('.filter-sidebar', 'Binding Support');
+    }
+
+    public function testIndexPageFilterByConnectivityThread(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/', ['connectivity' => ['thread']]);
+
+        $this->assertResponseIsSuccessful();
+
+        // Should show active filter in results header
+        $this->assertSelectorExists('.active-filters');
+        $this->assertSelectorTextContains('.active-filter', 'Thread');
+
+        // Thread checkbox should be checked
+        $threadCheckbox = $crawler->filter('input[name="connectivity[]"][value="thread"]');
+        if ($threadCheckbox->count() > 0) {
+            $this->assertEquals('checked', $threadCheckbox->attr('checked'));
+        }
+    }
+
+    public function testIndexPageFilterByConnectivityWifi(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/', ['connectivity' => ['wifi']]);
+
+        $this->assertResponseIsSuccessful();
+
+        // Should show active filter (capitalized as "Wifi")
+        $this->assertSelectorExists('.active-filters');
+        $this->assertSelectorTextContains('.active-filter', 'Wifi');
+    }
+
+    public function testIndexPageFilterByBindingEnabled(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/', ['binding' => '1']);
+
+        $this->assertResponseIsSuccessful();
+
+        // Should show active filter pill for binding (with capital B)
+        $this->assertSelectorExists('.active-filters');
+        $this->assertSelectorTextContains('.active-filter', 'With Binding');
+    }
+
+    public function testIndexPageFilterByBindingDisabled(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/', ['binding' => '0']);
+
+        $this->assertResponseIsSuccessful();
+
+        // Should show active filter pill for binding (with capital B)
+        $this->assertSelectorExists('.active-filters');
+        $this->assertSelectorTextContains('.active-filter', 'Without Binding');
+    }
+
+    public function testIndexPageClearAllFilters(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/', [
+            'connectivity' => ['thread'],
+            'binding' => '1',
+        ]);
+
+        $this->assertResponseIsSuccessful();
+
+        // Should show clear all link in filter header
+        $clearLink = $crawler->filter('.filter-clear');
+        $this->assertGreaterThan(0, $clearLink->count(), 'Should have clear all link');
+
+        // Click clear all
+        $client->click($clearLink->link());
+        $this->assertResponseIsSuccessful();
+
+        // Should redirect to page without filters
+        $this->assertStringNotContainsString('connectivity', $client->getRequest()->getUri());
+    }
+
+    public function testIndexPageCombinedFilters(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/', [
+            'connectivity' => ['thread'],
+            'binding' => '1',
+            'q' => 'Eve',
+        ]);
+
+        $this->assertResponseIsSuccessful();
+
+        // Should show multiple active filters
+        $this->assertSelectorExists('.active-filters');
+        $activeFilters = $crawler->filter('.active-filter');
+        $this->assertGreaterThanOrEqual(2, $activeFilters->count(), 'Should show multiple active filters');
+    }
+
+    public function testIndexPagePaginationPreservesFilters(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/', [
+            'connectivity' => ['thread'],
+            'page' => '1',
+        ]);
+
+        $this->assertResponseIsSuccessful();
+
+        // Check if pagination links preserve filter parameters
+        $paginationLinks = $crawler->filter('.pagination a');
+        if ($paginationLinks->count() > 0) {
+            $href = $paginationLinks->first()->attr('href');
+            $this->assertStringContainsString('connectivity', $href, 'Pagination should preserve filter parameters');
+        }
+    }
+
+    public function testIndexPageRemoveIndividualFilter(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/', [
+            'connectivity' => ['thread', 'wifi'],
+        ]);
+
+        $this->assertResponseIsSuccessful();
+
+        // Find remove link in active filters
+        $removeLinks = $crawler->filter('.active-filter a');
+        if ($removeLinks->count() > 0) {
+            // Remove one filter
+            $client->click($removeLinks->first()->link());
+            $this->assertResponseIsSuccessful();
+        }
+    }
+
+    public function testIndexPageMobileFilterToggle(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/');
+
+        $this->assertResponseIsSuccessful();
+
+        // Check mobile toggle button exists
+        $this->assertSelectorExists('.filter-toggle');
+        $this->assertSelectorTextContains('.filter-toggle', 'Filters');
+    }
+
+    public function testIndexPageFacetCounts(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/');
+
+        $this->assertResponseIsSuccessful();
+
+        // Check that facet counts are displayed (using .count class)
+        $facetCounts = $crawler->filter('.filter-option .count');
+        $this->assertGreaterThan(0, $facetCounts->count(), 'Should show facet counts');
     }
 
     // ========================================

@@ -26,20 +26,26 @@ class DeviceController extends AbstractController
     public function index(Request $request): Response
     {
         $page = max(1, $request->query->getInt('page', 1));
-        $search = trim($request->query->getString('q', ''));
         $perPage = 50;
         $offset = ($page - 1) * $perPage;
 
-        if ($search !== '') {
-            $devices = $this->deviceRepo->searchDevices($search, $perPage);
-            $totalDevices = count($devices);
-        } else {
-            $devices = $this->deviceRepo->getAllDevices($perPage, $offset);
-            $totalDevices = $this->deviceRepo->getDeviceCount();
-        }
+        // Build filters from request
+        $filters = $this->buildFiltersFromRequest($request);
+        $hasFilters = $this->hasActiveFilters($filters);
+
+        // Get filtered devices
+        $devices = $this->deviceRepo->getFilteredDevices($filters, $perPage, $offset);
+        $totalDevices = $this->deviceRepo->getFilteredDeviceCount($filters);
 
         $totalPages = max(1, (int) ceil($totalDevices / $perPage));
         $stats = $this->telemetryService->getStats();
+
+        // Get facet data for filters
+        $facets = [
+            'connectivity' => $this->deviceRepo->getConnectivityFacets(),
+            'binding' => $this->deviceRepo->getBindingFacets(),
+            'vendors' => $this->deviceRepo->getVendorFacets(15),
+        ];
 
         return $this->render('device/index.html.twig', [
             'devices' => $devices,
@@ -47,8 +53,57 @@ class DeviceController extends AbstractController
             'page' => $page,
             'totalPages' => $totalPages,
             'totalDevices' => $totalDevices,
-            'search' => $search,
+            'filters' => $filters,
+            'facets' => $facets,
+            'hasFilters' => $hasFilters,
         ]);
+    }
+
+    /**
+     * Build filters array from request parameters.
+     */
+    private function buildFiltersFromRequest(Request $request): array
+    {
+        $filters = [];
+
+        // Search query
+        $search = trim($request->query->getString('q', ''));
+        if ($search !== '') {
+            $filters['search'] = $search;
+        }
+
+        // Connectivity types (array)
+        $connectivity = $request->query->all('connectivity');
+        if (!empty($connectivity)) {
+            $filters['connectivity'] = array_filter($connectivity, fn ($v) => \in_array($v, ['thread', 'wifi', 'ethernet'], true));
+        }
+
+        // Binding filter
+        $binding = $request->query->get('binding');
+        if ($binding === '1') {
+            $filters['binding'] = true;
+        } elseif ($binding === '0') {
+            $filters['binding'] = false;
+        }
+
+        // Vendor filter
+        $vendor = $request->query->getInt('vendor');
+        if ($vendor > 0) {
+            $filters['vendor'] = $vendor;
+        }
+
+        return $filters;
+    }
+
+    /**
+     * Check if any filters are active.
+     */
+    private function hasActiveFilters(array $filters): bool
+    {
+        return !empty($filters['connectivity'])
+            || isset($filters['binding'])
+            || !empty($filters['vendor'])
+            || !empty($filters['search']);
     }
 
     #[Route('/device/{id}', name: 'device_show', requirements: ['id' => '\d+'], methods: ['GET'])]
