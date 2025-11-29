@@ -4,7 +4,7 @@
 -include .env.local
 export
 
-.PHONY: help install dev prod clean lint test db-init db-reset db-migrate db-fixtures test-reset deploy
+.PHONY: help install dev prod clean lint lint-fix analyse phpstan test db-init db-reset db-migrate db-fixtures test-reset deploy
 
 # Default target
 help:
@@ -15,7 +15,8 @@ help:
 	@echo "Development:"
 	@echo "  install     Install PHP dependencies"
 	@echo "  dev         Start development server (localhost:8000)"
-	@echo "  lint        Run code style checks"
+	@echo "  lint        Run code style checks (php-cs-fixer)"
+	@echo "  analyse     Run static analysis (PHPStan)"
 	@echo "  test        Run tests"
 	@echo ""
 	@echo "Database:"
@@ -54,13 +55,17 @@ prod:
 clear-cache:
 	rm -rf var/cache/*
 
-# Linting
+# Linting & Static Analysis
 lint:
 	vendor/bin/php-cs-fixer fix --dry-run --diff || true
-	vendor/bin/phpstan analyse src --level=5 || true
 
 lint-fix:
 	vendor/bin/php-cs-fixer fix
+
+analyse:
+	vendor/bin/phpstan analyse --memory-limit=512M
+
+phpstan: analyse
 
 # Database
 db-migrate:
