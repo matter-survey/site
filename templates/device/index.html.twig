@@ -445,7 +445,7 @@
                 {% endif %}
             </div>
 
-            <form method="get" action="{{ path('device_index') }}" id="filter-form">
+            <form method="get" action="{{ path('device_index') }}" id="filter-form" data-turbo-frame="device-results">
                 {# Search within filters #}
                 <div class="filter-section">
                     <h4>Search</h4>
@@ -527,8 +527,8 @@
             </form>
         </aside>
 
-        {# Main Content #}
-        <main class="main-content">
+        {# Main Content - Turbo Frame for instant filter updates #}
+        <turbo-frame id="device-results" class="main-content" data-turbo-action="advance">
             <div class="results-header">
                 <span class="results-count">
                     {{ totalDevices|number_format }} device{{ totalDevices != 1 ? 's' : '' }}
@@ -652,7 +652,7 @@
                     </div>
                 {% endif %}
             {% endif %}
-        </main>
+        </turbo-frame>
     </div>
 
     <script>
