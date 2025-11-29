@@ -6,8 +6,9 @@
     {% set attrs = meta.attributes ?? [] %}
     {% set cmds = meta.commands ?? [] %}
     {% set desc = meta.description ?? '' %}
+    {% set isProprietary = matterRegistry.isProprietaryCluster(clusterId) %}
     <span class="cluster-tooltip">
-        <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(clusterId)}) }}" class="tag {{ isClient ? 'tag-client' : '' }}">
+        <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(clusterId)}) }}" class="tag{{ isClient ? ' tag-client' : '' }}{{ isProprietary ? ' tag-proprietary' : '' }}">
             {{ meta.name ?? ('Cluster ' ~ clusterId) }}
         </a>
         {% if desc or attrs|length > 0 or cmds|length > 0 %}
@@ -396,6 +397,12 @@
         background: #dbeafe;
         color: #1e40af;
         border: 1px dashed #93c5fd;
+    }
+
+    .tag-proprietary {
+        background: #faf5ff;
+        color: #7c3aed;
+        border: 1px dashed #c4b5fd;
     }
 
     /* Category-based colors */

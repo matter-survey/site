@@ -98,6 +98,15 @@ class MatterRegistry
     }
 
     /**
+     * Check if a cluster is proprietary/manufacturer-specific.
+     * Per Matter spec, cluster IDs >= 0xFC00 (64512) are manufacturer-specific.
+     */
+    public function isProprietaryCluster(int $id): bool
+    {
+        return $id >= 0xFC00;
+    }
+
+    /**
      * Get the hex ID for a cluster.
      */
     public function getClusterHexId(int $id): string
