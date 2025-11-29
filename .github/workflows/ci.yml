@@ -43,6 +43,9 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress
 
+      - name: Install importmap vendor assets
+        run: php bin/console importmap:install
+
       - name: Run database migrations
         run: |
           mkdir -p data
@@ -121,4 +124,4 @@ jobs:
 
       - name: Install dependencies, run migrations, load fixtures, and clear cache
         run: |
-          ssh ${{ secrets.SFTP_USER }}@${{ secrets.SFTP_HOST }} "cd ${{ secrets.SFTP_PATH }} && composer install --no-dev --optimize-autoloader && php bin/console cache:clear --env=prod && php bin/console doctrine:migrations:migrate --no-interaction && php bin/console doctrine:fixtures:load --group=matter --append --no-interaction"
+          ssh ${{ secrets.SFTP_USER }}@${{ secrets.SFTP_HOST }} "cd ${{ secrets.SFTP_PATH }} && composer install --no-dev --optimize-autoloader && php bin/console importmap:install && php bin/console asset-map:compile && php bin/console cache:clear --env=prod && php bin/console doctrine:migrations:migrate --no-interaction && php bin/console doctrine:fixtures:load --group=matter --append --no-interaction"
