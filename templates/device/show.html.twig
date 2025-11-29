@@ -537,6 +537,14 @@
             {% if device.supports_binding %}
                 <span class="badge badge-binding">Supports Binding</span>
             {% endif %}
+            {% if device.connectivity_types %}
+                {% set connTypes = device.connectivity_types|json_decode %}
+                {% if connTypes %}
+                    {% for connType in connTypes %}
+                        <span class="badge badge-{{ connType }}" title="{{ connType|capitalize }} Network">{{ connType|capitalize }}</span>
+                    {% endfor %}
+                {% endif %}
+            {% endif %}
         </div>
     </div>
 

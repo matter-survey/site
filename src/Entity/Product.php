@@ -85,6 +85,14 @@ class Product
     #[ORM\Column(name: 'factory_reset_steps_instruction', type: Types::TEXT, nullable: true)]
     private ?string $factoryResetStepsInstruction = null;
 
+    /**
+     * Network connectivity types derived from telemetry (thread, wifi, ethernet).
+     *
+     * @var array<string>|null
+     */
+    #[ORM\Column(name: 'connectivity_types', type: Types::JSON, nullable: true)]
+    private ?array $connectivityTypes = null;
+
     public function __construct()
     {
         $this->firstSeen = new \DateTime();
@@ -352,6 +360,39 @@ class Product
     public function setFactoryResetStepsInstruction(?string $factoryResetStepsInstruction): static
     {
         $this->factoryResetStepsInstruction = $factoryResetStepsInstruction;
+
+        return $this;
+    }
+
+    /**
+     * @return array<string>|null
+     */
+    public function getConnectivityTypes(): ?array
+    {
+        return $this->connectivityTypes;
+    }
+
+    /**
+     * @param array<string>|null $connectivityTypes
+     */
+    public function setConnectivityTypes(?array $connectivityTypes): static
+    {
+        $this->connectivityTypes = $connectivityTypes;
+
+        return $this;
+    }
+
+    /**
+     * Merge new connectivity types with existing ones.
+     *
+     * @param array<string> $newTypes
+     */
+    public function mergeConnectivityTypes(array $newTypes): static
+    {
+        $existing = $this->connectivityTypes ?? [];
+        $merged = array_unique(array_merge($existing, $newTypes));
+        sort($merged);
+        $this->connectivityTypes = $merged ?: null;
 
         return $this;
     }

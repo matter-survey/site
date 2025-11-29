@@ -25,23 +25,35 @@ class DeviceRepository
     {
         // Check if device already exists
         $existing = $this->db->executeQuery(
-            'SELECT id FROM products WHERE vendor_id = :vendor_id AND product_id = :product_id',
+            'SELECT id, connectivity_types FROM products WHERE vendor_id = :vendor_id AND product_id = :product_id',
             [
                 'vendor_id' => $deviceData['vendor_id'],
                 'product_id' => $deviceData['product_id'],
             ]
-        )->fetchOne();
+        )->fetchAssociative();
 
         $isNew = ($existing === false);
 
+        // Merge connectivity types if we have new data
+        $connectivityTypes = $deviceData['connectivity_types'] ?? [];
+        if (!$isNew && !empty($connectivityTypes)) {
+            $existingTypes = $existing['connectivity_types']
+                ? json_decode($existing['connectivity_types'], true) ?? []
+                : [];
+            $connectivityTypes = array_values(array_unique(array_merge($existingTypes, $connectivityTypes)));
+            sort($connectivityTypes);
+        }
+        $connectivityTypesJson = !empty($connectivityTypes) ? json_encode($connectivityTypes) : null;
+
         $result = $this->db->executeQuery('
-            INSERT INTO products (vendor_id, vendor_name, vendor_fk, product_id, product_name, first_seen, last_seen, submission_count)
-            VALUES (:vendor_id, :vendor_name, :vendor_fk, :product_id, :product_name, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1)
+            INSERT INTO products (vendor_id, vendor_name, vendor_fk, product_id, product_name, connectivity_types, first_seen, last_seen, submission_count)
+            VALUES (:vendor_id, :vendor_name, :vendor_fk, :product_id, :product_name, :connectivity_types, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1)
             ON CONFLICT(vendor_id, product_id) DO UPDATE SET
                 -- DCL is normative: keep existing names, only use survey data as fallback
                 vendor_name = COALESCE(products.vendor_name, excluded.vendor_name),
                 vendor_fk = COALESCE(products.vendor_fk, excluded.vendor_fk),
                 product_name = COALESCE(products.product_name, excluded.product_name),
+                connectivity_types = excluded.connectivity_types,
                 last_seen = CURRENT_TIMESTAMP,
                 submission_count = products.submission_count + 1
             RETURNING id
@@ -51,6 +63,7 @@ class DeviceRepository
             'vendor_fk' => $deviceData['vendor_fk'] ?? null,
             'product_id' => $deviceData['product_id'],
             'product_name' => $deviceData['product_name'],
+            'connectivity_types' => $connectivityTypesJson,
         ]);
 
         return (int) $result->fetchOne();

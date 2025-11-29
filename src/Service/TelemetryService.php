@@ -19,6 +19,15 @@ class TelemetryService
      */
     private const BRIDGED_NODE_DEVICE_TYPE_ID = 19;
 
+    /**
+     * Network Diagnostics cluster IDs that indicate connectivity type.
+     */
+    private const CONNECTIVITY_CLUSTERS = [
+        53 => 'thread',   // Thread Network Diagnostics
+        54 => 'wifi',     // WiFi Network Diagnostics
+        55 => 'ethernet', // Ethernet Network Diagnostics
+    ];
+
     private Connection $db;
 
     public function __construct(
@@ -145,6 +154,9 @@ class TelemetryService
             }
         }
 
+        // Extract connectivity types from endpoint clusters
+        $connectivityTypes = $this->extractConnectivityTypes($device['endpoints'] ?? []);
+
         $isNewDevice = false;
         $deviceId = $this->deviceRepo->upsertDevice([
             'vendor_id' => $vendorId,
@@ -152,6 +164,7 @@ class TelemetryService
             'vendor_fk' => $vendorFk,
             'product_id' => $device['product_id'] ?? null,
             'product_name' => $this->sanitizeString($device['product_name'] ?? null),
+            'connectivity_types' => $connectivityTypes,
         ], $isNewDevice);
 
         // Update vendor device count if this is a new device
@@ -189,6 +202,31 @@ class TelemetryService
         return true;
     }
 
+    /**
+     * Extract connectivity types from endpoint server clusters.
+     *
+     * @param array<array{server_clusters?: array<int>}> $endpoints
+     *
+     * @return array<string>
+     */
+    private function extractConnectivityTypes(array $endpoints): array
+    {
+        $types = [];
+
+        foreach ($endpoints as $endpoint) {
+            foreach ($endpoint['server_clusters'] ?? [] as $clusterId) {
+                if (isset(self::CONNECTIVITY_CLUSTERS[$clusterId])) {
+                    $types[] = self::CONNECTIVITY_CLUSTERS[$clusterId];
+                }
+            }
+        }
+
+        $unique = array_unique($types);
+        sort($unique);
+
+        return $unique;
+    }
+
     private function sanitizeString(?string $value): ?string
     {
         if ($value === null) {
@@ -196,7 +234,7 @@ class TelemetryService
         }
 
         $value = trim($value);
-        if (strlen($value) > 255) {
+        if (\strlen($value) > 255) {
             $value = substr($value, 0, 255);
         }
 
@@ -215,7 +253,7 @@ class TelemetryService
 
         foreach ($deviceTypes as $deviceType) {
             // Handle both formats: plain ID or object with 'id' field
-            $typeId = is_array($deviceType) ? ($deviceType['id'] ?? null) : $deviceType;
+            $typeId = \is_array($deviceType) ? ($deviceType['id'] ?? null) : $deviceType;
 
             if ((int) $typeId === self::BRIDGED_NODE_DEVICE_TYPE_ID) {
                 return true;
