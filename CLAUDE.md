@@ -17,12 +17,19 @@ make dev
 php bin/phpunit
 php bin/phpunit --filter ApiController  # Run specific test class
 
+# Linting & Static Analysis
+make lint                    # Check code style (php-cs-fixer dry-run)
+make lint-fix                # Fix code style issues
+make analyse                 # Run PHPStan (level 6)
+
 # Clear cache
 php bin/console cache:clear
 
 # Deploy to production (requires .env.local with SFTP credentials)
 make deploy
 ```
+
+**Important:** Always run `make lint` and `make analyse` before committing.
 
 The SQLite database schema is managed via Doctrine Migrations. Run migrations with:
 
@@ -41,9 +48,16 @@ php bin/console doctrine:migrations:migrate
 - **ApiController** (`POST /api/submit`) - Telemetry submission with rate limiting and validation via DTOs
 - **HealthController** (`GET /health`) - Health check endpoint with database connectivity verification
 - **DeviceController** - Device browser with pagination and search (`/`, `/device/{id}`)
+- **VendorController** - Vendor pages (`/vendor/{id}`)
+- **StatsController** - Statistics pages for clusters and device types
 - **TelemetryService** - Processes submissions, logs via `LoggerInterface`
 - **DeviceRepository** - Data access for devices, versions, and endpoints
 - **MatterRegistry** - Lookup for Matter cluster/device type names and metadata (database-backed)
+
+### Console Commands
+
+- `app:dcl:sync` - Fetch vendor/product data from Matter DCL API and generate YAML fixtures
+- `app:zap:sync` - Fetch cluster details from Matter SDK ZAP XML files and update fixtures
 
 ### Matter Registry Data
 
@@ -99,8 +113,10 @@ Database views: `device_summary`, `cluster_stats`
 Single workflow in `.github/workflows/ci.yml`:
 
 - `test` job: PHPUnit on PHP 8.4
-- `code-quality` job: composer validate, security audit
+- `code-quality` job: composer validate, security audit, PHPStan analysis
 - `deploy` job: runs after test/code-quality pass, only on main branch push
+
+PHPStan is configured at level 6 with a baseline (`phpstan-baseline.neon`) for existing issues.
 
 ## Structured Data & SEO
 
