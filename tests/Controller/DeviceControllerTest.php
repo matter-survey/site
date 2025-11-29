@@ -507,6 +507,35 @@ class DeviceControllerTest extends WebTestCase
         $this->assertGreaterThan(0, $facetCounts->count(), 'Should show facet counts');
     }
 
+    public function testIndexPageHasDeviceTypeFilter(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/');
+
+        $this->assertResponseIsSuccessful();
+
+        // Check device type filter section exists
+        $this->assertSelectorTextContains('.filter-sidebar', 'Device Type');
+
+        // Check device type radio buttons exist
+        $deviceTypeInputs = $crawler->filter('input[name="device_type"]');
+        $this->assertGreaterThan(0, $deviceTypeInputs->count(), 'Should have device type filter options');
+    }
+
+    public function testIndexPageFilterByDeviceType(): void
+    {
+        $client = static::createClient();
+
+        // Extended Color Light is device type 269 (0x010D)
+        $crawler = $client->request('GET', '/', ['device_type' => '269']);
+
+        $this->assertResponseIsSuccessful();
+
+        // Should show active filter for device type
+        $this->assertSelectorExists('.active-filters');
+        $this->assertSelectorTextContains('.active-filter', 'Type:');
+    }
+
     // ========================================
     // Structured Data Tests
     // ========================================

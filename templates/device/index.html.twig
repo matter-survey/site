@@ -489,6 +489,26 @@
                     {% endif %}
                 </div>
 
+                {# Device type filter #}
+                <div class="filter-section">
+                    <h4>Device Type</h4>
+                    <div class="vendor-list">
+                        {% for dt in facets.device_types %}
+                            <label class="filter-option {{ (filters.device_type ?? 0) == dt.id ? 'active' : '' }}">
+                                <input type="radio" name="device_type" value="{{ dt.id }}" {{ (filters.device_type ?? 0) == dt.id ? 'checked' : '' }} onchange="this.form.submit()">
+                                <span>{{ dt.name }}</span>
+                                <span class="count">{{ dt.count }}</span>
+                            </label>
+                        {% endfor %}
+                        {% if filters.device_type is defined %}
+                            <label class="filter-option">
+                                <input type="radio" name="device_type" value="" onchange="this.form.submit()">
+                                <span style="color: var(--gray-500);">All Types</span>
+                            </label>
+                        {% endif %}
+                    </div>
+                </div>
+
                 {# Vendor filter #}
                 <div class="filter-section">
                     <h4>Vendor</h4>
@@ -552,6 +572,13 @@
                             <span class="active-filter">
                                 Vendor: {{ vendorName.name ?? 'Unknown' }}
                                 <a href="{{ path('device_index', filters|filter((v, k) => k != 'vendor')) }}" title="Remove">&times;</a>
+                            </span>
+                        {% endif %}
+                        {% if filters.device_type is defined %}
+                            {% set deviceTypeName = facets.device_types|filter(dt => dt.id == filters.device_type)|first %}
+                            <span class="active-filter">
+                                Type: {{ deviceTypeName.name ?? 'Unknown' }}
+                                <a href="{{ path('device_index', filters|filter((v, k) => k != 'device_type')) }}" title="Remove">&times;</a>
                             </span>
                         {% endif %}
                     </div>

@@ -207,6 +207,20 @@ class DeviceRepository
             $types['vendor'] = \Doctrine\DBAL\ParameterType::INTEGER;
         }
 
+        // Device type filter
+        if (!empty($filters['device_type'])) {
+            $sql .= ' AND id IN (
+                SELECT DISTINCT pe.device_id
+                FROM product_endpoints pe
+                WHERE EXISTS (
+                    SELECT 1 FROM json_each(pe.device_types)
+                    WHERE json_extract(value, "$.id") = :device_type
+                )
+            )';
+            $params['device_type'] = $filters['device_type'];
+            $types['device_type'] = \Doctrine\DBAL\ParameterType::INTEGER;
+        }
+
         // Search filter
         if (!empty($filters['search'])) {
             $sql .= ' AND (vendor_name LIKE :search OR product_name LIKE :search
@@ -271,6 +285,31 @@ class DeviceRepository
             FROM vendors v
             JOIN products p ON p.vendor_fk = v.id
             GROUP BY v.id
+            HAVING count > 0
+            ORDER BY count DESC
+            LIMIT :limit
+        ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+    }
+
+    /**
+     * Get device type facets with counts for faceted search.
+     * Uses the device_types table for names and joins with product_endpoints.
+     *
+     * @return array<array{id: int, name: string, count: int}>
+     */
+    public function getDeviceTypeFacets(int $limit = 15): array
+    {
+        return $this->db->executeQuery('
+            SELECT
+                dt.id,
+                dt.name,
+                COUNT(DISTINCT pe.device_id) as count
+            FROM device_types dt
+            JOIN product_endpoints pe ON EXISTS (
+                SELECT 1 FROM json_each(pe.device_types)
+                WHERE json_extract(value, "$.id") = dt.id
+            )
+            GROUP BY dt.id
             HAVING count > 0
             ORDER BY count DESC
             LIMIT :limit

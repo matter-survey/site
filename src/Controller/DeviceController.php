@@ -45,6 +45,7 @@ class DeviceController extends AbstractController
             'connectivity' => $this->deviceRepo->getConnectivityFacets(),
             'binding' => $this->deviceRepo->getBindingFacets(),
             'vendors' => $this->deviceRepo->getVendorFacets(15),
+            'device_types' => $this->deviceRepo->getDeviceTypeFacets(15),
         ];
 
         return $this->render('device/index.html.twig', [
@@ -92,6 +93,12 @@ class DeviceController extends AbstractController
             $filters['vendor'] = $vendor;
         }
 
+        // Device type filter
+        $deviceType = $request->query->getInt('device_type');
+        if ($deviceType > 0) {
+            $filters['device_type'] = $deviceType;
+        }
+
         return $filters;
     }
 
@@ -103,6 +110,7 @@ class DeviceController extends AbstractController
         return !empty($filters['connectivity'])
             || isset($filters['binding'])
             || !empty($filters['vendor'])
+            || !empty($filters['device_type'])
             || !empty($filters['search']);
     }
 
