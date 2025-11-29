@@ -1,6 +1,24 @@
 parameters:
 	ignoreErrors:
 		-
+			message: '#^Offset ''commissioningCustom…'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''commissioningModeIn…'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''commissioningModeSe…'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
 			message: '#^Offset ''companyLegalName'' on array\{vendorID\: int, vendorName\: string, companyLegalName\: string, companyPreferredName\: string, vendorLandingPageURL\: string\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
@@ -9,6 +27,30 @@ parameters:
 		-
 			message: '#^Offset ''deviceTypeId'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''discoveryCapabiliti…'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''factoryResetStepsHi…'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''icdUserActiveModeTr…'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/Command/DclSyncCommand.php
+
+		-
+			message: '#^Offset ''lsfRevision'' on array\{vid\: int, pid\: int, deviceTypeId\: int, productName\: string, productLabel\: string, partNumber\: string, productUrl\: string, supportUrl\: string, \.\.\.\} in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
 			count: 1
 			path: src/Command/DclSyncCommand.php
 

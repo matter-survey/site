@@ -230,20 +230,20 @@ class DclSyncCommand extends Command
                 $fixture['lsfUrl'] = $model['lsfUrl'];
             }
 
-            // Discovery and commissioning fields (only include if non-zero)
-            if (!empty($model['discoveryCapabilitiesBitmask'])) {
+            // Discovery and commissioning fields (use isset to preserve 0 values)
+            if (isset($model['discoveryCapabilitiesBitmask'])) {
                 $fixture['discoveryCapabilitiesBitmask'] = $model['discoveryCapabilitiesBitmask'];
             }
-            if (!empty($model['commissioningCustomFlow'])) {
+            if (isset($model['commissioningCustomFlow'])) {
                 $fixture['commissioningCustomFlow'] = $model['commissioningCustomFlow'];
             }
-            if (!empty($model['commissioningModeInitialStepsHint'])) {
+            if (isset($model['commissioningModeInitialStepsHint'])) {
                 $fixture['commissioningModeInitialStepsHint'] = $model['commissioningModeInitialStepsHint'];
             }
             if (!empty($model['commissioningModeInitialStepsInstruction'])) {
                 $fixture['commissioningModeInitialStepsInstruction'] = $model['commissioningModeInitialStepsInstruction'];
             }
-            if (!empty($model['commissioningModeSecondaryStepsHint'])) {
+            if (isset($model['commissioningModeSecondaryStepsHint'])) {
                 $fixture['commissioningModeSecondaryStepsHint'] = $model['commissioningModeSecondaryStepsHint'];
             }
             if (!empty($model['commissioningModeSecondaryStepsInstruction'])) {
@@ -251,7 +251,7 @@ class DclSyncCommand extends Command
             }
 
             // Factory reset fields
-            if (!empty($model['factoryResetStepsHint'])) {
+            if (isset($model['factoryResetStepsHint'])) {
                 $fixture['factoryResetStepsHint'] = $model['factoryResetStepsHint'];
             }
             if (!empty($model['factoryResetStepsInstruction'])) {
@@ -259,7 +259,7 @@ class DclSyncCommand extends Command
             }
 
             // ICD (Intermittently Connected Device) fields
-            if (!empty($model['icdUserActiveModeTriggerHint'])) {
+            if (isset($model['icdUserActiveModeTriggerHint'])) {
                 $fixture['icdUserActiveModeTriggerHint'] = $model['icdUserActiveModeTriggerHint'];
             }
             if (!empty($model['icdUserActiveModeTriggerInstruction'])) {
@@ -267,7 +267,7 @@ class DclSyncCommand extends Command
             }
 
             // LSF (Label/Setup File)
-            if (!empty($model['lsfRevision'])) {
+            if (isset($model['lsfRevision'])) {
                 $fixture['lsfRevision'] = $model['lsfRevision'];
             }
 
