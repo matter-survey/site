@@ -271,10 +271,11 @@
 {% block body %}
     {{ include('stats/_nav.html.twig', { active: 'stats_commissioning' }) }}
 
-    <div class="page-header">
-        <h1>Commissioning Guides</h1>
-        <p>Setup instructions, factory reset steps, and commissioning complexity for Matter devices</p>
-    </div>
+    {{ include('stats/_header.html.twig', {
+        title: 'Commissioning Guides',
+        subtitle: 'Setup instructions, factory reset steps, and commissioning complexity',
+        color: 'cyan'
+    }) }}
 
     <div class="stats-grid">
         <div class="stat-card">

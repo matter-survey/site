@@ -296,11 +296,11 @@
 {% block body %}
     {{ include('stats/_nav.html.twig', { active: 'stats_pairings' }) }}
 
-    <div class="info-box">
-        <strong>About Device Pairings</strong>
-        This page shows which Matter devices are commonly found together in the same smart home installation.
-        This data is based on anonymous telemetry submissions and helps you discover popular device combinations.
-    </div>
+    {{ include('stats/_header.html.twig', {
+        title: 'Device Pairings',
+        subtitle: 'Discover which Matter devices are commonly used together',
+        color: 'pink'
+    }) }}
 
     <div class="stats-row">
         <div class="stat-card">

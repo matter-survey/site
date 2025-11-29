@@ -297,10 +297,11 @@
 {% block body %}
     {{ include('stats/_nav.html.twig', { active: 'stats_market' }) }}
 
-    <div class="page-header">
-        <h1>Market Analysis</h1>
-        <p>Comprehensive overview of the Matter smart home ecosystem</p>
-    </div>
+    {{ include('stats/_header.html.twig', {
+        title: 'Market Analysis',
+        subtitle: 'Comprehensive overview of the Matter smart home ecosystem',
+        color: 'green'
+    }) }}
 
     <div class="insights-grid">
         <div class="insight-card">

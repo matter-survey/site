@@ -342,10 +342,11 @@
 {% block body %}
     {{ include('stats/_nav.html.twig', { active: 'stats_versions' }) }}
 
-    <div class="page-header">
-        <h1>Firmware & Version Timeline</h1>
-        <p>Track firmware updates and version history across Matter devices</p>
-    </div>
+    {{ include('stats/_header.html.twig', {
+        title: 'Firmware & Version Timeline',
+        subtitle: 'Track firmware updates and version history across Matter devices',
+        color: 'purple'
+    }) }}
 
     <div class="stats-grid">
         <div class="stat-card">

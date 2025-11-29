@@ -200,12 +200,11 @@
 {% block body %}
     {{ include('stats/_nav.html.twig', { active: 'stats_binding' }) }}
 
-    <div class="info-box">
-        <strong>What is Binding?</strong>
-        Matter Binding enables direct device-to-device communication without going through a hub.
-        For example, a light switch can directly control a light bulb &mdash; even if your WiFi goes down.
-        <a href="{{ path('page_glossary') }}#binding" style="color: inherit; text-decoration: underline;">Learn more</a>
-    </div>
+    {{ include('stats/_header.html.twig', {
+        title: 'Binding Support',
+        subtitle: 'Direct device-to-device communication capabilities',
+        color: 'indigo'
+    }) }}
 
     <div class="stats-row">
         <div class="stat-card">

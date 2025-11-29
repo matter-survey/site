@@ -409,11 +409,11 @@
 {% block body %}
     {{ include('stats/_nav.html.twig', { active: 'stats_clusters' }) }}
 
-    <div class="info-box" style="background: var(--blue-100); border-radius: 0.5rem; padding: 1rem 1.25rem; margin-bottom: 2rem; font-size: 0.875rem; color: var(--blue-700);">
-        <strong>What are clusters?</strong>
-        Clusters are groups of related features in the Matter protocol. For example, the "On/Off" cluster lets devices be turned on and off, while "Color Control" enables color changes. This page shows which clusters are most common across real devices.
-        <a href="{{ path('page_glossary') }}#cluster" style="color: inherit; text-decoration: underline;">Learn more</a>
-    </div>
+    {{ include('stats/_header.html.twig', {
+        title: 'Cluster Analytics',
+        subtitle: 'Matter protocol clusters and their adoption across devices',
+        color: 'teal'
+    }) }}
 
     {# Insights #}
     <div class="insights-grid">
