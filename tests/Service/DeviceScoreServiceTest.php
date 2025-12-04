@@ -158,8 +158,8 @@ class DeviceScoreServiceTest extends KernelTestCase
         );
 
         $this->assertFalse($score->isCompliant);
-        // Non-compliant devices should have lower star rating
-        $this->assertLessThanOrEqual(2, $score->starRating);
+        // Non-compliant devices should have lower star rating (capped at 2.5)
+        $this->assertLessThanOrEqual(2.5, $score->starRating);
     }
 
     public function testCalculateDeviceTypeScoreWithOptionalClusters(): void
@@ -229,26 +229,37 @@ class DeviceScoreServiceTest extends KernelTestCase
 
     public function testScoreToStarsConversion(): void
     {
-        // Test all thresholds
-        $this->assertEquals(5, $this->scoreService->scoreToStars(95.0, true));
-        $this->assertEquals(5, $this->scoreService->scoreToStars(90.0, true));
-        $this->assertEquals(4, $this->scoreService->scoreToStars(89.0, true));
-        $this->assertEquals(4, $this->scoreService->scoreToStars(75.0, true));
-        $this->assertEquals(3, $this->scoreService->scoreToStars(74.0, true));
-        $this->assertEquals(3, $this->scoreService->scoreToStars(60.0, true));
-        $this->assertEquals(2, $this->scoreService->scoreToStars(59.0, true));
-        $this->assertEquals(2, $this->scoreService->scoreToStars(40.0, true));
-        $this->assertEquals(1, $this->scoreService->scoreToStars(39.0, true));
-        $this->assertEquals(1, $this->scoreService->scoreToStars(0.0, true));
+        // Test all thresholds (now with half-star support)
+        $this->assertEquals(5.0, $this->scoreService->scoreToStars(95.0, true));
+        $this->assertEquals(4.5, $this->scoreService->scoreToStars(90.0, true));
+        $this->assertEquals(4.5, $this->scoreService->scoreToStars(85.0, true));
+        $this->assertEquals(4.0, $this->scoreService->scoreToStars(84.0, true));
+        $this->assertEquals(4.0, $this->scoreService->scoreToStars(75.0, true));
+        $this->assertEquals(3.5, $this->scoreService->scoreToStars(74.0, true));
+        $this->assertEquals(3.5, $this->scoreService->scoreToStars(65.0, true));
+        $this->assertEquals(3.0, $this->scoreService->scoreToStars(64.0, true));
+        $this->assertEquals(3.0, $this->scoreService->scoreToStars(55.0, true));
+        $this->assertEquals(2.5, $this->scoreService->scoreToStars(54.0, true));
+        $this->assertEquals(2.5, $this->scoreService->scoreToStars(45.0, true));
+        $this->assertEquals(2.0, $this->scoreService->scoreToStars(44.0, true));
+        $this->assertEquals(2.0, $this->scoreService->scoreToStars(35.0, true));
+        $this->assertEquals(1.5, $this->scoreService->scoreToStars(34.0, true));
+        $this->assertEquals(1.5, $this->scoreService->scoreToStars(25.0, true));
+        $this->assertEquals(1.0, $this->scoreService->scoreToStars(24.0, true));
+        $this->assertEquals(1.0, $this->scoreService->scoreToStars(15.0, true));
+        $this->assertEquals(0.5, $this->scoreService->scoreToStars(14.0, true));
+        $this->assertEquals(0.5, $this->scoreService->scoreToStars(0.0, true));
     }
 
-    public function testNonCompliantDevicesCappedAt2Stars(): void
+    public function testNonCompliantDevicesCappedAtTwoAndHalfStars(): void
     {
-        // Even with a high score, non-compliant should be max 2 stars
-        $this->assertEquals(2, $this->scoreService->scoreToStars(95.0, false));
-        $this->assertEquals(2, $this->scoreService->scoreToStars(80.0, false));
-        $this->assertEquals(2, $this->scoreService->scoreToStars(50.0, false));
-        $this->assertEquals(1, $this->scoreService->scoreToStars(30.0, false));
+        // Even with a high score, non-compliant should be max 2.5 stars
+        $this->assertEquals(2.5, $this->scoreService->scoreToStars(95.0, false));
+        $this->assertEquals(2.5, $this->scoreService->scoreToStars(80.0, false));
+        $this->assertEquals(2.5, $this->scoreService->scoreToStars(50.0, false));
+        $this->assertEquals(2.0, $this->scoreService->scoreToStars(40.0, false));
+        $this->assertEquals(1.5, $this->scoreService->scoreToStars(30.0, false));
+        $this->assertEquals(0.5, $this->scoreService->scoreToStars(10.0, false));
     }
 
     // ========================================================================
