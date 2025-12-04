@@ -242,6 +242,16 @@ class DeviceRepository
             $params['search'] = '%'.$filters['search'].'%';
         }
 
+        // Minimum star rating filter
+        if (!empty($filters['min_rating'])) {
+            $sql .= ' AND id IN (
+                SELECT device_id FROM device_scores
+                WHERE star_rating >= :min_rating
+            )';
+            $params['min_rating'] = $filters['min_rating'];
+            $types['min_rating'] = \Doctrine\DBAL\ParameterType::INTEGER;
+        }
+
         return $sql;
     }
 
@@ -285,6 +295,37 @@ class DeviceRepository
             'with_binding' => (int) ($result['with_binding'] ?? 0),
             'without_binding' => (int) ($result['without_binding'] ?? 0),
         ];
+    }
+
+    /**
+     * Get star rating facets (count of devices per star rating).
+     *
+     * @return array<int, int> Rating (1-5) => count
+     */
+    public function getStarRatingFacets(): array
+    {
+        $results = $this->db->executeQuery('
+            SELECT star_rating, COUNT(*) as count
+            FROM device_scores
+            GROUP BY star_rating
+            ORDER BY star_rating DESC
+        ')->fetchAllAssociative();
+
+        $facets = [];
+        foreach ($results as $row) {
+            $facets[(int) $row['star_rating']] = (int) $row['count'];
+        }
+
+        // Ensure all ratings 1-5 are represented
+        for ($i = 5; $i >= 1; --$i) {
+            if (!isset($facets[$i])) {
+                $facets[$i] = 0;
+            }
+        }
+
+        krsort($facets);
+
+        return $facets;
     }
 
     /**
@@ -515,20 +556,27 @@ class DeviceRepository
 
     /**
      * Get devices that implement a specific device type.
+     *
+     * @param string $sort Sort order: 'name' for alphabetical, 'recent' for most recent
      */
-    public function getDevicesByDeviceType(int $deviceTypeId, int $limit = 50, int $offset = 0): array
+    public function getDevicesByDeviceType(int $deviceTypeId, int $limit = 50, int $offset = 0, string $sort = 'recent'): array
     {
-        return $this->db->executeQuery('
+        $orderBy = match ($sort) {
+            'name' => 'ds.product_name ASC, ds.vendor_name ASC',
+            default => 'ds.submission_count DESC, ds.last_seen DESC',
+        };
+
+        return $this->db->executeQuery("
             SELECT DISTINCT ds.*
             FROM device_summary ds
             JOIN product_endpoints pe ON ds.id = pe.device_id
             WHERE EXISTS (
                 SELECT 1 FROM json_each(pe.device_types)
-                WHERE json_extract(value, "$.id") = :device_type_id
+                WHERE json_extract(value, \"$.id\") = :device_type_id
             )
-            ORDER BY ds.submission_count DESC, ds.last_seen DESC
+            ORDER BY {$orderBy}
             LIMIT :limit OFFSET :offset
-        ', [
+        ", [
             'device_type_id' => $deviceTypeId,
             'limit' => $limit,
             'offset' => $offset,

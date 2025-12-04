@@ -1,0 +1,63 @@
+{#
+ # Star rating component for device scores
+ #
+ # Usage:
+ #   {% from 'components/_star_rating.html.twig' import stars, starsCompact, starsBadge %}
+ #   {{ stars(4, 85.5, true) }}      - Full star display with score
+ #   {{ starsCompact(4) }}           - Compact "4★" format
+ #   {{ starsBadge(4, 85.5, true) }} - Badge with star and compliance indicator
+ #}
+
+{#
+ # Full star display with optional score percentage
+ #
+ # @param int rating      Star rating (1-5)
+ # @param float score     Score percentage (0-100)
+ # @param bool showScore  Whether to show the percentage
+ # @param bool isCompliant Whether the device is compliant (all mandatory clusters)
+ #}
+{% macro stars(rating, score, showScore, isCompliant) %}
+    {% set showScore = showScore|default(false) %}
+    {% set isCompliant = isCompliant|default(true) %}
+    <span class="star-rating star-rating-{{ rating }}{% if not isCompliant %} star-rating-noncompliant{% endif %}" title="{{ score|round(1) }}% Feature Score{% if not isCompliant %} (missing required clusters){% endif %}">
+        {% for i in 1..5 %}
+            {% if i <= rating %}
+                <span class="star star-filled">&#9733;</span>
+            {% else %}
+                <span class="star star-empty">&#9734;</span>
+            {% endif %}
+        {% endfor %}
+        {% if showScore %}
+            <span class="score-value">({{ score|round(0) }}%)</span>
+        {% endif %}
+    </span>
+{% endmacro %}
+
+{#
+ # Compact star display (e.g., "4★")
+ #
+ # @param int rating Star rating (1-5)
+ #}
+{% macro starsCompact(rating) %}
+    <span class="star-rating-compact star-rating-{{ rating }}" title="{{ rating }} star{% if rating != 1 %}s{% endif %}">
+        {{ rating }}&#9733;
+    </span>
+{% endmacro %}
+
+{#
+ # Star badge for list pages
+ #
+ # @param int rating      Star rating (1-5)
+ # @param float score     Score percentage (0-100)
+ # @param bool isCompliant Whether the device is compliant
+ #}
+{% macro starsBadge(rating, score, isCompliant) %}
+    {% set isCompliant = isCompliant|default(true) %}
+    <span class="badge badge-rating badge-rating-{{ rating }}{% if not isCompliant %} badge-rating-noncompliant{% endif %}"
+          title="{{ score|round(1) }}% - {% if isCompliant %}Compliant{% else %}Missing required clusters{% endif %}">
+        {{ rating }}&#9733;
+        {% if not isCompliant %}
+            <span class="compliance-warning" title="Missing required clusters">!</span>
+        {% endif %}
+    </span>
+{% endmacro %}

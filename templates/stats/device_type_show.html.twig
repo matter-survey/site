@@ -388,6 +388,89 @@
         color: var(--gray-900);
     }
 
+    .section-header-with-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .section-header-with-controls .section-title {
+        margin: 0;
+    }
+
+    .sort-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .sort-label {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+    }
+
+    .sort-option {
+        font-size: 0.875rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        text-decoration: none;
+        color: var(--gray-600);
+        background: var(--gray-100);
+        transition: all 0.15s;
+    }
+
+    .sort-option:hover {
+        background: var(--gray-200);
+    }
+
+    .sort-option.active {
+        background: var(--primary);
+        color: white;
+    }
+
+    .device-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .device-card-header h3 {
+        flex: 1;
+        min-width: 0;
+    }
+
+    /* Star rating badge styles */
+    .badge-rating {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.125rem;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .badge-rating-5 { background: #dcfce7; color: #15803d; }
+    .badge-rating-4 { background: #dbeafe; color: #1d4ed8; }
+    .badge-rating-3 { background: #fef3c7; color: #b45309; }
+    .badge-rating-2 { background: #fed7aa; color: #c2410c; }
+    .badge-rating-1 { background: #fee2e2; color: #dc2626; }
+
+    .badge-rating-noncompliant {
+        position: relative;
+    }
+
+    .badge-rating .compliance-warning {
+        color: #dc2626;
+        font-weight: 700;
+        margin-left: 0.125rem;
+    }
+
     .icon-lightbulb::before { content: '💡'; }
     .icon-thermometer::before { content: '🌡️'; }
     .icon-lock::before { content: '🔒'; }
@@ -434,6 +517,8 @@
     .icon-play-circle::before { content: '▶️'; }
     .icon-network-wired::before { content: '🔌'; }
 {% endblock %}
+
+{% from 'components/_star_rating.html.twig' import starsBadge %}
 
 {% block body %}
     <div class="breadcrumb">
@@ -583,7 +668,17 @@
         </div>
     {% endif %}
 
-    <h2 class="section-title">Devices Implementing This Type</h2>
+    <div class="section-header-with-controls">
+        <h2 class="section-title">Devices Implementing This Type</h2>
+        {% if devices is not empty %}
+            <div class="sort-controls">
+                <span class="sort-label">Sort by:</span>
+                <a href="{{ path('stats_device_type_show', {type: deviceType.id, sort: 'rating'}) }}" class="sort-option{% if currentSort == 'rating' %} active{% endif %}">Rating</a>
+                <a href="{{ path('stats_device_type_show', {type: deviceType.id, sort: 'name'}) }}" class="sort-option{% if currentSort == 'name' %} active{% endif %}">Name</a>
+                <a href="{{ path('stats_device_type_show', {type: deviceType.id, sort: 'recent'}) }}" class="sort-option{% if currentSort == 'recent' %} active{% endif %}">Recent</a>
+            </div>
+        {% endif %}
+    </div>
 
     {% if devices is empty %}
         <div class="empty-state">
@@ -593,9 +688,15 @@
     {% else %}
         <div class="device-grid">
             {% for device in devices %}
+                {% set score = deviceScores[device.id] ?? null %}
                 <div class="device-card">
                     <a href="{{ path('device_show', {slug: device.slug}) }}">
-                        <h3>{{ device.product_name ?? 'Unknown Product' }}</h3>
+                        <div class="device-card-header">
+                            <h3>{{ device.product_name ?? 'Unknown Product' }}</h3>
+                            {% if score %}
+                                {{ starsBadge(score.star_rating, score.overall_score, score.is_compliant) }}
+                            {% endif %}
+                        </div>
                         <div class="vendor">{{ device.vendor_name ?? 'Unknown Vendor' }}</div>
                         <div class="device-meta">
                             <span>Vendor: {{ device.vendor_id }}</span>
@@ -613,19 +714,19 @@
         {% if totalPages > 1 %}
             <div class="pagination">
                 {% if currentPage > 1 %}
-                    <a href="{{ path('stats_device_type_show', {type: deviceType.id, page: currentPage - 1}) }}">&laquo; Prev</a>
+                    <a href="{{ path('stats_device_type_show', {type: deviceType.id, page: currentPage - 1, sort: currentSort}) }}">&laquo; Prev</a>
                 {% endif %}
 
                 {% for i in max(1, currentPage - 2)..min(totalPages, currentPage + 2) %}
                     {% if i == currentPage %}
                         <span class="current">{{ i }}</span>
                     {% else %}
-                        <a href="{{ path('stats_device_type_show', {type: deviceType.id, page: i}) }}">{{ i }}</a>
+                        <a href="{{ path('stats_device_type_show', {type: deviceType.id, page: i, sort: currentSort}) }}">{{ i }}</a>
                     {% endif %}
                 {% endfor %}
 
                 {% if currentPage < totalPages %}
-                    <a href="{{ path('stats_device_type_show', {type: deviceType.id, page: currentPage + 1}) }}">Next &raquo;</a>
+                    <a href="{{ path('stats_device_type_show', {type: deviceType.id, page: currentPage + 1, sort: currentSort}) }}">Next &raquo;</a>
                 {% endif %}
             </div>
         {% endif %}

@@ -8,6 +8,7 @@ use App\Repository\ClusterRepository;
 use App\Repository\DeviceRepository;
 use App\Repository\ProductRepository;
 use App\Service\ChartFactory;
+use App\Service\DeviceScoreService;
 use App\Service\MatterRegistry;
 use App\Service\TelemetryService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -25,6 +26,7 @@ class StatsController extends AbstractController
         private ClusterRepository $clusterRepo,
         private ProductRepository $productRepo,
         private ChartFactory $chartFactory,
+        private DeviceScoreService $deviceScoreService,
     ) {
     }
 
@@ -231,16 +233,32 @@ class StatsController extends AbstractController
         $metadata = $this->matterRegistry->getDeviceTypeMetadata($type);
 
         if (null === $metadata) {
-            throw new NotFoundHttpException(sprintf('Device type %d not found', $type));
+            throw new NotFoundHttpException(\sprintf('Device type %d not found', $type));
         }
 
         $page = max(1, $request->query->getInt('page', 1));
         $limit = 24;
         $offset = ($page - 1) * $limit;
 
-        $devices = $this->deviceRepo->getDevicesByDeviceType($type, $limit, $offset);
+        // Get sort parameter (default to 'rating' for best experience)
+        $sort = $request->query->getString('sort', 'rating');
+        if (!\in_array($sort, ['rating', 'name', 'recent'], true)) {
+            $sort = 'rating';
+        }
+
+        // Fetch devices based on sort method
+        if ('rating' === $sort) {
+            $devices = $this->deviceScoreService->getDevicesRankedByScore($type, $limit, $offset);
+        } else {
+            $devices = $this->deviceRepo->getDevicesByDeviceType($type, $limit, $offset, $sort);
+        }
+
         $totalDevices = $this->deviceRepo->countDevicesByDeviceType($type);
         $totalPages = (int) ceil($totalDevices / $limit);
+
+        // Fetch cached scores for the devices
+        $deviceIds = array_column($devices, 'id');
+        $deviceScores = $this->deviceScoreService->getCachedScoresForDevices($deviceIds);
 
         // Get extended data from YAML fixture
         $extendedData = $this->matterRegistry->getExtendedDeviceType($type);
@@ -264,9 +282,11 @@ class StatsController extends AbstractController
             'mandatoryClientClusters' => $this->matterRegistry->getMandatoryClientClusters($type),
             'optionalClientClusters' => $this->matterRegistry->getOptionalClientClusters($type),
             'devices' => $devices,
+            'deviceScores' => $deviceScores,
             'totalDevices' => $totalDevices,
             'currentPage' => $page,
             'totalPages' => $totalPages,
+            'currentSort' => $sort,
             'matterRegistry' => $this->matterRegistry,
         ]);
     }

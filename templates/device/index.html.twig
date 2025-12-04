@@ -1,5 +1,7 @@
 {% extends 'base.html.twig' %}
 
+{% from 'components/_star_rating.html.twig' import starsBadge %}
+
 {% block title %}Matter Survey - Device Index{% endblock %}
 
 {% block og_title %}Matter Survey - Smart Home Device Database{% endblock %}
@@ -402,6 +404,38 @@
             font-size: 1.125rem;
         }
     }
+
+    /* Star rating badges */
+    .badge-rating {
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.125rem;
+    }
+
+    .badge-rating-5 { background: #dcfce7; color: #166534; }
+    .badge-rating-4 { background: #dbeafe; color: #1e40af; }
+    .badge-rating-3 { background: #fef3c7; color: #92400e; }
+    .badge-rating-2 { background: #fee2e2; color: #991b1b; }
+    .badge-rating-1 { background: #fee2e2; color: #991b1b; }
+
+    .badge-rating .compliance-warning {
+        margin-left: 0.125rem;
+        color: #dc2626;
+        font-weight: bold;
+        font-size: 0.75rem;
+    }
+
+    /* Rating filter stars */
+    .rating-stars {
+        font-weight: 600;
+    }
+
+    .rating-5 { color: #166534; }
+    .rating-4 { color: #1e40af; }
+    .rating-3 { color: #92400e; }
+    .rating-2 { color: #c2410c; }
+    .rating-1 { color: #991b1b; }
 {% endblock %}
 
 {% block body %}
@@ -483,6 +517,26 @@
                         <label class="filter-option">
                             <input type="radio" name="binding" value="" onchange="this.form.submit()">
                             <span style="color: var(--gray-500);">Any</span>
+                        </label>
+                    {% endif %}
+                </div>
+
+                {# Star rating filter #}
+                <div class="filter-section">
+                    <h4>Minimum Rating</h4>
+                    {% for rating, count in facets.star_ratings %}
+                        {% if count > 0 %}
+                            <label class="filter-option {{ (filters.min_rating ?? 0) == rating ? 'active' : '' }}">
+                                <input type="radio" name="min_rating" value="{{ rating }}" {{ (filters.min_rating ?? 0) == rating ? 'checked' : '' }} onchange="this.form.submit()">
+                                <span class="rating-stars rating-{{ rating }}">{{ rating }}&#9733;{% if rating < 5 %}&nbsp;+{% endif %}</span>
+                                <span class="count">{{ count }}</span>
+                            </label>
+                        {% endif %}
+                    {% endfor %}
+                    {% if filters.min_rating is defined %}
+                        <label class="filter-option">
+                            <input type="radio" name="min_rating" value="" onchange="this.form.submit()">
+                            <span style="color: var(--gray-500);">Any Rating</span>
                         </label>
                     {% endif %}
                 </div>
@@ -578,6 +632,12 @@
                                 </span>
                             {% endfor %}
                         {% endif %}
+                        {% if filters.min_rating is defined %}
+                            <span class="active-filter">
+                                {{ filters.min_rating }}&#9733;+ Rating
+                                <a href="{{ path('device_index', filters|filter((v, k) => k != 'min_rating')) }}" title="Remove">&times;</a>
+                            </span>
+                        {% endif %}
                     </div>
                 {% endif %}
             </div>
@@ -615,6 +675,10 @@
                                 </div>
                             </div>
                             <div class="device-badges">
+                                {% if deviceScores[device.id] is defined %}
+                                    {% set score = deviceScores[device.id] %}
+                                    {{ starsBadge(score.starRating, score.overallScore, score.isCompliant) }}
+                                {% endif %}
                                 {% if device.supports_binding %}
                                     <span class="badge badge-binding">Binding</span>
                                 {% endif %}

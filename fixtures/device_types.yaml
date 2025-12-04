@@ -938,6 +938,14 @@
     - { id: 1026, name: "Temperature Measurement" }
     - { id: 1029, name: "Relative Humidity Measurement" }
     - { id: 1030, name: "Occupancy Sensing" }
+  # Thermostats benefit significantly from client cluster integration with external sensors
+  scoringWeights:
+    mandatoryServerWeight: 0.30
+    mandatoryClientWeight: 0.20
+    optionalServerWeight: 0.15
+    optionalClientWeight: 0.35
+    keyClientClusters: [514, 1026, 1029, 1030]
+    keyClientBonus: 0.15
 
 - id: 43
   hexId: "0x002B"

@@ -62,6 +62,9 @@ class DeviceTypeFixtures extends Fixture implements FixtureGroupInterface
             $deviceType->setMandatoryClientClusters($data['mandatoryClientClusters'] ?? []);
             $deviceType->setOptionalClientClusters($data['optionalClientClusters'] ?? []);
 
+            // Set scoring weights if specified
+            $deviceType->setScoringWeights($data['scoringWeights'] ?? null);
+
             $deviceType->setUpdatedAt(new \DateTime());
 
             $manager->persist($deviceType);

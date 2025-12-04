@@ -193,7 +193,7 @@ class MatterRegistry
     /**
      * Get full metadata for a device type.
      *
-     * @return array{name: string, specVersion: ?string, category: ?string, displayCategory: ?string, icon: ?string, description: ?string, id?: int, hexId?: string, class?: string, scope?: string, superset?: string, mandatoryServerClusters?: array, optionalServerClusters?: array, mandatoryClientClusters?: array, optionalClientClusters?: array}|null
+     * @return array{name: string, specVersion: ?string, category: ?string, displayCategory: ?string, icon: ?string, description: ?string, id?: int, hexId?: string, class?: string, scope?: string, superset?: string, mandatoryServerClusters?: array, optionalServerClusters?: array, mandatoryClientClusters?: array, optionalClientClusters?: array, scoringWeights?: array{mandatoryServerWeight: float, mandatoryClientWeight: float, optionalServerWeight: float, optionalClientWeight: float, keyClientClusters: int[], keyClientBonus: float}}|null
      */
     public function getDeviceTypeMetadata(int $id): ?array
     {
@@ -412,6 +412,7 @@ class MatterRegistry
             'optionalServerClusters' => $deviceType->getOptionalServerClusters(),
             'mandatoryClientClusters' => $deviceType->getMandatoryClientClusters(),
             'optionalClientClusters' => $deviceType->getOptionalClientClusters(),
+            'scoringWeights' => $deviceType->getScoringWeightsWithDefaults(),
         ];
     }
 
@@ -516,6 +517,31 @@ class MatterRegistry
         $deviceType = $this->getDeviceTypeMetadata($id);
 
         return $deviceType['scope'] ?? null;
+    }
+
+    /**
+     * Get scoring weights for a device type.
+     *
+     * @return array{mandatoryServerWeight: float, mandatoryClientWeight: float, optionalServerWeight: float, optionalClientWeight: float, keyClientClusters: int[], keyClientBonus: float}
+     */
+    public function getDeviceTypeScoringWeights(int $id): array
+    {
+        $deviceType = $this->getDeviceTypeMetadata($id);
+
+        $defaults = [
+            'mandatoryServerWeight' => 0.40,
+            'mandatoryClientWeight' => 0.20,
+            'optionalServerWeight' => 0.25,
+            'optionalClientWeight' => 0.15,
+            'keyClientClusters' => [],
+            'keyClientBonus' => 0.0,
+        ];
+
+        if (null === $deviceType || !isset($deviceType['scoringWeights'])) {
+            return $defaults;
+        }
+
+        return $deviceType['scoringWeights'];
     }
 
     /**

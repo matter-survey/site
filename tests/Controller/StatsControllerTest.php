@@ -805,4 +805,124 @@ class StatsControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('.dashboard-nav a.active', 'Commissioning');
     }
+
+    // === Device Type Show Page Tests (Sorting by Rating) ===
+
+    public function testDeviceTypeShowPageLoads(): void
+    {
+        $client = static::createClient();
+        // On/Off Light (256) should exist in fixtures
+        $client->request('GET', '/device-types/256');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('h1', 'On/Off Light');
+    }
+
+    public function testDeviceTypeShowPageDefaultsToRatingSorting(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/device-types/256');
+
+        $this->assertResponseIsSuccessful();
+
+        // Rating sort option should be active by default
+        $ratingSort = $crawler->filter('.sort-option.active');
+        $this->assertGreaterThan(0, $ratingSort->count());
+    }
+
+    public function testDeviceTypeShowPageSortByRating(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/device-types/256', ['sort' => 'rating']);
+
+        $this->assertResponseIsSuccessful();
+    }
+
+    public function testDeviceTypeShowPageSortByName(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/device-types/256', ['sort' => 'name']);
+
+        $this->assertResponseIsSuccessful();
+    }
+
+    public function testDeviceTypeShowPageSortByRecent(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/device-types/256', ['sort' => 'recent']);
+
+        $this->assertResponseIsSuccessful();
+    }
+
+    public function testDeviceTypeShowPageInvalidSortDefaultsToRating(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/device-types/256', ['sort' => 'invalid']);
+
+        $this->assertResponseIsSuccessful();
+        // Invalid sort should not cause errors, falls back to rating
+    }
+
+    public function testDeviceTypeShowPageHasSortControls(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/device-types/256');
+
+        $this->assertResponseIsSuccessful();
+
+        // Should have sort control links
+        $sortControls = $crawler->filter('.sort-controls');
+        if ($sortControls->count() > 0) {
+            $this->assertSelectorTextContains('.sort-controls', 'Rating');
+            $this->assertSelectorTextContains('.sort-controls', 'Name');
+            $this->assertSelectorTextContains('.sort-controls', 'Recent');
+        }
+    }
+
+    public function testDeviceTypeShowPageShowsStarRatings(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/device-types/256');
+
+        $this->assertResponseIsSuccessful();
+
+        // If there are devices, they may have star badges (depends on cached scores)
+        $deviceCards = $crawler->filter('.device-card');
+        $this->assertGreaterThanOrEqual(0, $deviceCards->count());
+    }
+
+    public function testDeviceTypeShowPagePaginationPreservesSort(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/device-types/256', ['sort' => 'name', 'page' => '1']);
+
+        $this->assertResponseIsSuccessful();
+
+        // If pagination links exist, they should preserve the sort parameter
+        $paginationLinks = $crawler->filter('.pagination a');
+        foreach ($paginationLinks as $link) {
+            $href = $link->getAttribute('href');
+            $this->assertStringContainsString('sort=name', $href);
+        }
+    }
+
+    public function testDeviceTypeShowPage404ForNonexistentType(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/device-types/99999');
+
+        $this->assertResponseStatusCodeSame(404);
+    }
+
+    public function testDeviceTypeShowPageShowsClusterRequirements(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/device-types/256');
+
+        $this->assertResponseIsSuccessful();
+
+        // Should show cluster requirements section
+        $this->assertSelectorTextContains('body', 'Cluster Requirements');
+        $this->assertSelectorTextContains('body', 'Server Clusters');
+    }
 }

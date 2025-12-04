@@ -1,5 +1,7 @@
 {% extends 'base.html.twig' %}
 
+{% from 'components/_star_rating.html.twig' import stars, starsCompact, starsBadge %}
+
 {# Macro for rendering cluster tag with tooltip showing attributes/commands #}
 {% macro clusterTag(clusterId, matterRegistry, isClient) %}
     {% set meta = matterRegistry.getClusterMetadata(clusterId) %}
@@ -168,9 +170,87 @@
         margin-bottom: 1.5rem;
     }
 
+    .device-header-title {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
     .device-header h2 {
         font-size: 1.5rem;
         margin-bottom: 0.5rem;
+    }
+
+    .device-rating {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    .compliance-notice {
+        font-size: 0.75rem;
+        color: #b91c1c;
+        background: #fef2f2;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+
+    /* Star rating styles */
+    .star-rating {
+        font-size: 1.25rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.125rem;
+    }
+
+    .star-rating .star-filled { color: #f59e0b; }
+    .star-rating .star-empty { color: #d1d5db; }
+
+    .star-rating .score-value {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+        margin-left: 0.5rem;
+    }
+
+    .star-rating-noncompliant .star-filled { color: #9ca3af; }
+
+    .star-rating-compact {
+        font-size: 0.875rem;
+        font-weight: 600;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .star-rating-5.star-rating-compact { background: #dcfce7; color: #166534; }
+    .star-rating-4.star-rating-compact { background: #dbeafe; color: #1e40af; }
+    .star-rating-3.star-rating-compact { background: #fef3c7; color: #92400e; }
+    .star-rating-2.star-rating-compact { background: #fee2e2; color: #991b1b; }
+    .star-rating-1.star-rating-compact { background: #fee2e2; color: #991b1b; }
+
+    /* Badge rating for list pages */
+    .badge-rating {
+        font-weight: 600;
+    }
+
+    .badge-rating-5 { background: #dcfce7; color: #166534; }
+    .badge-rating-4 { background: #dbeafe; color: #1e40af; }
+    .badge-rating-3 { background: #fef3c7; color: #92400e; }
+    .badge-rating-2 { background: #fee2e2; color: #991b1b; }
+    .badge-rating-1 { background: #fee2e2; color: #991b1b; }
+
+    .badge-rating-noncompliant {
+        position: relative;
+    }
+
+    .badge-rating .compliance-warning {
+        margin-left: 0.25rem;
+        color: #dc2626;
+        font-weight: bold;
     }
 
     .device-header .vendor {
@@ -775,6 +855,19 @@
         text-align: right;
     }
 
+    .type-star-rating {
+        margin-right: 0.75rem;
+    }
+
+    .client-bonus-indicator {
+        font-size: 0.75rem;
+        color: #166534;
+        background: #dcfce7;
+        padding: 0.125rem 0.375rem;
+        border-radius: 0.25rem;
+        margin-left: 0.5rem;
+    }
+
     .gap-clusters-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -972,7 +1065,17 @@
     </div>
 
     <div class="device-header">
-        <h2>{{ device.product_name ?? 'Unknown Product' }}</h2>
+        <div class="device-header-title">
+            <h2>{{ device.product_name ?? 'Unknown Product' }}</h2>
+            {% if deviceScore and deviceScore.scoresByType|length > 0 %}
+                <div class="device-rating">
+                    {{ stars(deviceScore.starRating, deviceScore.overallScore, true, deviceScore.isCompliant) }}
+                    {% if not deviceScore.isCompliant %}
+                        <span class="compliance-notice" title="This device is missing some mandatory clusters for full Matter spec compliance">Missing required clusters</span>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
         <div class="vendor">
             {% if device.vendor_slug %}
                 <a href="{{ path('vendor_show', {slug: device.vendor_slug}) }}">{{ device.vendor_name ?? 'Unknown Vendor' }}</a>
@@ -1227,12 +1330,22 @@
                         </div>
 
                         <div class="compliance-score">
+                            {% set typeScore = deviceScore.scoresByType[deviceTypeId] ?? null %}
+                            {% if typeScore %}
+                                <span class="type-star-rating">
+                                    {{ stars(typeScore.starRating, typeScore.score, false, typeScore.isCompliant) }}
+                                </span>
+                            {% endif %}
                             <span style="font-size: 0.75rem; color: var(--gray-500);">Feature Score:</span>
                             <div class="compliance-score-bar">
-                                <div class="compliance-score-fill {% if analysis.compliance.score >= 80 %}compliance-score-fill-high{% elseif analysis.compliance.score >= 50 %}compliance-score-fill-medium{% else %}compliance-score-fill-low{% endif %}"
-                                     style="width: {{ analysis.compliance.score }}%;"></div>
+                                {% set displayScore = typeScore ? typeScore.score : analysis.compliance.score %}
+                                <div class="compliance-score-fill {% if displayScore >= 80 %}compliance-score-fill-high{% elseif displayScore >= 50 %}compliance-score-fill-medium{% else %}compliance-score-fill-low{% endif %}"
+                                     style="width: {{ displayScore }}%;"></div>
                             </div>
-                            <span class="compliance-score-value">{{ analysis.compliance.score }}%</span>
+                            <span class="compliance-score-value">{{ typeScore ? typeScore.score : analysis.compliance.score }}%</span>
+                            {% if typeScore and typeScore.clientBonus > 0 %}
+                                <span class="client-bonus-indicator" title="Bonus for implementing key client clusters">+{{ typeScore.clientBonus|round(0) }}% bonus</span>
+                            {% endif %}
                         </div>
 
                         <div class="gap-clusters-grid">

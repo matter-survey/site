@@ -60,6 +60,9 @@ class DeviceType
     #[ORM\Column(name: 'optional_client_clusters', type: Types::JSON)]
     private array $optionalClientClusters = [];
 
+    #[ORM\Column(name: 'scoring_weights', type: Types::JSON, nullable: true)]
+    private ?array $scoringWeights = null;
+
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE)]
     private \DateTimeInterface $createdAt;
 
@@ -245,6 +248,41 @@ class DeviceType
         $this->optionalClientClusters = $clusters;
 
         return $this;
+    }
+
+    public function getScoringWeights(): ?array
+    {
+        return $this->scoringWeights;
+    }
+
+    public function setScoringWeights(?array $scoringWeights): static
+    {
+        $this->scoringWeights = $scoringWeights;
+
+        return $this;
+    }
+
+    /**
+     * Get scoring weights with defaults applied.
+     *
+     * @return array{mandatoryServerWeight: float, mandatoryClientWeight: float, optionalServerWeight: float, optionalClientWeight: float, keyClientClusters: int[], keyClientBonus: float}
+     */
+    public function getScoringWeightsWithDefaults(): array
+    {
+        $defaults = [
+            'mandatoryServerWeight' => 0.40,
+            'mandatoryClientWeight' => 0.20,
+            'optionalServerWeight' => 0.25,
+            'optionalClientWeight' => 0.15,
+            'keyClientClusters' => [],
+            'keyClientBonus' => 0.0,
+        ];
+
+        if (null === $this->scoringWeights) {
+            return $defaults;
+        }
+
+        return array_merge($defaults, $this->scoringWeights);
     }
 
     public function getCreatedAt(): \DateTimeInterface

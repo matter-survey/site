@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Repository\DeviceRepository;
 use App\Repository\ProductRepository;
+use App\Service\DeviceScoreService;
 use App\Service\MatterRegistry;
 use App\Service\TelemetryService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -21,6 +22,7 @@ class DeviceController extends AbstractController
         private ProductRepository $productRepo,
         private TelemetryService $telemetryService,
         private MatterRegistry $matterRegistry,
+        private DeviceScoreService $deviceScoreService,
     ) {
     }
 
@@ -48,7 +50,12 @@ class DeviceController extends AbstractController
             'binding' => $this->deviceRepo->getBindingFacets(),
             'vendors' => $this->deviceRepo->getVendorFacets(15),
             'device_types' => $this->deviceRepo->getDeviceTypeFacets(15),
+            'star_ratings' => $this->deviceRepo->getStarRatingFacets(),
         ];
+
+        // Fetch cached device scores for display
+        $deviceIds = array_column($devices, 'id');
+        $deviceScores = $this->deviceScoreService->getCachedScoresForDevices($deviceIds);
 
         return $this->render('device/index.html.twig', [
             'devices' => $devices,
@@ -59,6 +66,7 @@ class DeviceController extends AbstractController
             'filters' => $filters,
             'facets' => $facets,
             'hasFilters' => $hasFilters,
+            'deviceScores' => $deviceScores,
         ]);
     }
 
@@ -107,6 +115,15 @@ class DeviceController extends AbstractController
             );
         }
 
+        // Minimum star rating filter
+        $minRatingParam = $request->query->get('min_rating', '');
+        if ('' !== $minRatingParam && is_numeric($minRatingParam)) {
+            $minRating = (int) $minRatingParam;
+            if ($minRating >= 1 && $minRating <= 5) {
+                $filters['min_rating'] = $minRating;
+            }
+        }
+
         return $filters;
     }
 
@@ -119,7 +136,8 @@ class DeviceController extends AbstractController
             || isset($filters['binding'])
             || !empty($filters['vendor'])
             || !empty($filters['device_types'])
-            || !empty($filters['search']);
+            || !empty($filters['search'])
+            || !empty($filters['min_rating']);
     }
 
     /**
@@ -212,6 +230,12 @@ class DeviceController extends AbstractController
         // Analyze cluster gaps (what's missing vs spec)
         $clusterGapAnalysis = $this->matterRegistry->analyzeDeviceClusterGaps($endpoints);
 
+        // Calculate device score based on latest version endpoints
+        $latestEndpoints = $this->deviceScoreService->getLatestVersionEndpoints($id);
+        $deviceScore = $this->deviceScoreService->calculateDeviceScore(
+            !empty($latestEndpoints) ? $latestEndpoints : $endpoints
+        );
+
         return $this->render('device/show.html.twig', [
             'device' => $device,
             'product' => $product,
@@ -223,6 +247,7 @@ class DeviceController extends AbstractController
             'installationCount' => $installationCount,
             'clusterGapAnalysis' => $clusterGapAnalysis,
             'matterRegistry' => $this->matterRegistry,
+            'deviceScore' => $deviceScore,
         ]);
     }
 
