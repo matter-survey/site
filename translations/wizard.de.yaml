@@ -1,0 +1,53 @@
+wizard:
+    title: "Finde dein perfektes Gerät"
+    og_title: "Gerätefinder-Assistent"
+    og_description: "Nutze unseren Assistenten, um das perfekte Matter Smart Home Gerät für deine Bedürfnisse zu finden."
+    step: "Schritt %step% von %total%"
+    continue: "Weiter"
+    back: "Zurück"
+    skip: "Überspringen"
+    find_devices: "Geräte finden"
+
+    step1:
+        label: "Kategorie"
+        title: "Was möchtest du steuern?"
+        subtitle: "Wähle eine Kategorie zum Starten"
+
+    step2:
+        label: "Funktionen"
+        title: "Welche Funktionen sind dir wichtig?"
+        subtitle: "Passe deine Präferenzen an (alles optional)"
+        connectivity:
+            title: "Verbindungstyp"
+            description: "Wähle deine bevorzugten Verbindungsarten"
+        rating:
+            title: "Mindest-Qualitätsbewertung"
+            description: "Zeige nur Geräte mit dieser Bewertung oder höher"
+            any: "Beliebig"
+        binding:
+            title: "Gerät-zu-Gerät Binding"
+            description: "Binding ermöglicht direkte Kommunikation zwischen Geräten ohne Hub"
+            any: "Beliebig"
+            required: "Erforderlich"
+
+    step3:
+        label: "Kompatibilität"
+        title: "Welche Geräte besitzt du bereits?"
+        subtitle: "Optional: Wir finden Geräte, die gut mit deinem bestehenden Setup funktionieren"
+        search:
+            title: "Suche nach deinen Geräten"
+            placeholder: "Beginne einen Gerätenamen einzugeben..."
+
+    category:
+        lights: "Beleuchtung"
+        climate: "Klima"
+        sensors: "Sensoren"
+        security: "Sicherheit"
+        appliances: "Haushaltsgeräte"
+        entertainment: "Unterhaltung"
+        energy: "Energie"
+
+    connectivity:
+        thread: "Thread"
+        wifi: "WLAN"
+        ethernet: "Ethernet"

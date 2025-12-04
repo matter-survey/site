@@ -1,0 +1,65 @@
+<h2 class="wizard-title">{{ 'wizard.step2.title'|trans({}, 'wizard') }}</h2>
+<p class="wizard-subtitle">{{ 'wizard.step2.subtitle'|trans({}, 'wizard') }}</p>
+
+<form method="get" action="{{ path('wizard_index') }}" id="wizard-form-step2">
+    <input type="hidden" name="step" value="3">
+    <input type="hidden" name="category" value="{{ wizardState.category }}">
+
+    <div class="feature-section">
+        <h3>{{ 'wizard.step2.connectivity.title'|trans({}, 'wizard') }}</h3>
+        <p>{{ 'wizard.step2.connectivity.description'|trans({}, 'wizard') }}</p>
+        <div class="feature-options">
+            {% for type, count in stepData.connectivityOptions %}
+                {% if count > 0 %}
+                    <label class="feature-option">
+                        <input type="checkbox" name="connectivity[]" value="{{ type }}"
+                               {{ type in wizardState.connectivity ? 'checked' : '' }}>
+                        {{ ('wizard.connectivity.' ~ type)|trans({}, 'wizard') }} ({{ count }})
+                    </label>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="feature-section">
+        <h3>{{ 'wizard.step2.rating.title'|trans({}, 'wizard') }}</h3>
+        <p>{{ 'wizard.step2.rating.description'|trans({}, 'wizard') }}</p>
+        <div class="feature-options">
+            <label class="feature-option">
+                <input type="radio" name="min_rating" value="" {{ wizardState.min_rating == 0 ? 'checked' : '' }}>
+                {{ 'wizard.step2.rating.any'|trans({}, 'wizard') }}
+            </label>
+            {% for rating in [3, 4, 5] %}
+                <label class="feature-option">
+                    <input type="radio" name="min_rating" value="{{ rating }}"
+                           {{ wizardState.min_rating == rating ? 'checked' : '' }}>
+                    {{ rating }}+ &#9733;
+                </label>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="feature-section">
+        <h3>{{ 'wizard.step2.binding.title'|trans({}, 'wizard') }}</h3>
+        <p>{{ 'wizard.step2.binding.description'|trans({}, 'wizard') }}</p>
+        <div class="feature-options">
+            <label class="feature-option">
+                <input type="radio" name="binding" value="" {{ wizardState.binding is same as(null) or wizardState.binding == '' ? 'checked' : '' }}>
+                {{ 'wizard.step2.binding.any'|trans({}, 'wizard') }}
+            </label>
+            <label class="feature-option">
+                <input type="radio" name="binding" value="1" {{ wizardState.binding == '1' ? 'checked' : '' }}>
+                {{ 'wizard.step2.binding.required'|trans({}, 'wizard') }} ({{ stepData.bindingOptions.with_binding|default(0) }})
+            </label>
+        </div>
+    </div>
+
+    <div class="wizard-nav">
+        <a href="{{ path('wizard_index', {step: 1, category: wizardState.category}) }}" class="wizard-btn wizard-btn-secondary">
+            &larr; {{ 'wizard.back'|trans({}, 'wizard') }}
+        </a>
+        <button type="submit" class="wizard-btn wizard-btn-primary">
+            {{ 'wizard.continue'|trans({}, 'wizard') }} &rarr;
+        </button>
+    </div>
+</form>

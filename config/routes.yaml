@@ -39,3 +39,10 @@ page_controllers:
     prefix:
         en: ''
         de: '/de'
+
+wizard_controllers:
+    resource: ../src/Controller/WizardController.php
+    type: attribute
+    prefix:
+        en: ''
+        de: '/de'

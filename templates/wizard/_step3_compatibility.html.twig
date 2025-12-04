@@ -1,0 +1,66 @@
+<h2 class="wizard-title">{{ 'wizard.step3.title'|trans({}, 'wizard') }}</h2>
+<p class="wizard-subtitle">{{ 'wizard.step3.subtitle'|trans({}, 'wizard') }}</p>
+
+<form method="get" action="{{ path('wizard_results') }}" id="wizard-form-step3">
+    {# Pass through previous state #}
+    <input type="hidden" name="category" value="{{ wizardState.category }}">
+    {% for conn in wizardState.connectivity %}
+        <input type="hidden" name="connectivity[]" value="{{ conn }}">
+    {% endfor %}
+    {% if wizardState.min_rating %}
+        <input type="hidden" name="min_rating" value="{{ wizardState.min_rating }}">
+    {% endif %}
+    {% if wizardState.binding %}
+        <input type="hidden" name="binding" value="{{ wizardState.binding }}">
+    {% endif %}
+
+    {# Device search with autocomplete #}
+    <div class="feature-section">
+        <h3>{{ 'wizard.step3.search.title'|trans({}, 'wizard') }}</h3>
+        <div class="device-search-container" data-controller="device-search" data-device-search-url-value="{{ path('wizard_device_search') }}">
+            <input type="text"
+                   class="device-search-input"
+                   placeholder="{{ 'wizard.step3.search.placeholder'|trans({}, 'wizard') }}"
+                   data-device-search-target="input"
+                   data-action="input->device-search#search focus->device-search#search keydown->device-search#onKeydown"
+                   autocomplete="off">
+            <div class="device-search-results" data-device-search-target="results"></div>
+        </div>
+    </div>
+
+    {# Selected devices #}
+    <div class="owned-devices" data-device-search-target="selectedList">
+        {% for device in stepData.ownedDevices %}
+            <span class="owned-device-tag" data-device-id="{{ device.id }}">
+                {{ device.product_name }}
+                <input type="hidden" name="owned[]" value="{{ device.id }}">
+                <span class="owned-device-remove" data-action="click->device-search#removeDevice">&times;</span>
+            </span>
+        {% endfor %}
+    </div>
+
+    <div class="wizard-nav">
+        <a href="{{ path('wizard_index', {
+            step: 2,
+            category: wizardState.category,
+            connectivity: wizardState.connectivity,
+            min_rating: wizardState.min_rating,
+            binding: wizardState.binding
+        }) }}" class="wizard-btn wizard-btn-secondary">
+            &larr; {{ 'wizard.back'|trans({}, 'wizard') }}
+        </a>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="{{ path('wizard_results', {
+                category: wizardState.category,
+                connectivity: wizardState.connectivity,
+                min_rating: wizardState.min_rating,
+                binding: wizardState.binding
+            }) }}" class="wizard-btn wizard-btn-secondary">
+                {{ 'wizard.skip'|trans({}, 'wizard') }}
+            </a>
+            <button type="submit" class="wizard-btn wizard-btn-success">
+                {{ 'wizard.find_devices'|trans({}, 'wizard') }} &#10003;
+            </button>
+        </div>
+    </div>
+</form>

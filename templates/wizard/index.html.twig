@@ -1,0 +1,415 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'wizard.title'|trans({}, 'wizard') }} - {{ 'wizard.step'|trans({'%step%': step, '%total%': totalSteps}, 'wizard') }}{% endblock %}
+
+{% block og_title %}{{ 'wizard.og_title'|trans({}, 'wizard') }}{% endblock %}
+{% block og_description %}{{ 'wizard.og_description'|trans({}, 'wizard') }}{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "{{ 'wizard.title'|trans({}, 'wizard') }}",
+    "description": "{{ 'wizard.og_description'|trans({}, 'wizard') }}"
+}
+</script>
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+.wizard-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.wizard-progress {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.wizard-progress::before {
+    content: '';
+    position: absolute;
+    top: 1.25rem;
+    left: 2.5rem;
+    right: 2.5rem;
+    height: 2px;
+    background: var(--gray-200);
+    z-index: 1;
+}
+
+.wizard-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+    flex: 1;
+}
+
+.wizard-step-number {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--gray-300);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s;
+}
+
+.wizard-step.active .wizard-step-number {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.wizard-step.completed .wizard-step-number {
+    background: var(--green-700);
+    border-color: var(--green-700);
+    color: white;
+}
+
+.wizard-step-label {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    text-align: center;
+}
+
+.wizard-step.active .wizard-step-label,
+.wizard-step.completed .wizard-step-label {
+    color: var(--gray-700);
+    font-weight: 500;
+}
+
+.wizard-card {
+    background: white;
+    border-radius: 0.5rem;
+    border: 1px solid var(--gray-200);
+    padding: 2rem;
+}
+
+.wizard-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.wizard-subtitle {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+/* Category cards grid */
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+}
+
+.category-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.25rem 1rem;
+    border: 2px solid var(--gray-200);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    color: inherit;
+    background: white;
+}
+
+.category-card:hover {
+    border-color: var(--primary);
+    background: var(--gray-50);
+}
+
+.category-card.selected {
+    border-color: var(--primary);
+    background: var(--blue-100);
+}
+
+.category-card input[type="radio"] {
+    display: none;
+}
+
+.category-icon {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+}
+
+.category-name {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    font-size: 0.9375rem;
+}
+
+.category-desc {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    text-align: center;
+    line-height: 1.4;
+}
+
+/* Feature sections */
+.feature-section {
+    margin-bottom: 1.5rem;
+}
+
+.feature-section:last-child {
+    margin-bottom: 0;
+}
+
+.feature-section h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.feature-section p {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    margin-bottom: 0.75rem;
+}
+
+.feature-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.feature-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: white;
+    border: 1px solid var(--gray-300);
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+}
+
+.feature-option:hover {
+    border-color: var(--primary);
+}
+
+.feature-option:has(input:checked) {
+    border-color: var(--primary);
+    background: var(--blue-100);
+}
+
+.feature-option input {
+    accent-color: var(--primary);
+}
+
+/* Wizard navigation */
+.wizard-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+.wizard-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.375rem;
+    font-size: 1rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.wizard-btn-secondary {
+    background: white;
+    border: 1px solid var(--gray-300);
+    color: var(--gray-700);
+}
+
+.wizard-btn-secondary:hover {
+    background: var(--gray-50);
+    border-color: var(--gray-400);
+}
+
+.wizard-btn-primary {
+    background: var(--primary);
+    border: none;
+    color: white;
+}
+
+.wizard-btn-primary:hover {
+    background: var(--primary-dark);
+}
+
+.wizard-btn-success {
+    background: var(--green-700);
+    border: none;
+    color: white;
+}
+
+.wizard-btn-success:hover {
+    background: #166534;
+}
+
+/* Device search and tags */
+.device-search-container {
+    position: relative;
+}
+
+.device-search-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--gray-300);
+    border-radius: 0.375rem;
+    font-size: 1rem;
+}
+
+.device-search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.device-search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 0.375rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+}
+
+.device-search-results.show {
+    display: block;
+}
+
+.device-search-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.device-search-item:last-child {
+    border-bottom: none;
+}
+
+.device-search-item:hover {
+    background: var(--gray-50);
+}
+
+.device-search-item-name {
+    font-weight: 500;
+}
+
+.device-search-item-vendor {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+}
+
+.owned-devices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.owned-device-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    background: var(--blue-100);
+    border-radius: 9999px;
+    font-size: 0.875rem;
+}
+
+.owned-device-remove {
+    cursor: pointer;
+    opacity: 0.7;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.owned-device-remove:hover {
+    opacity: 1;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .wizard-card {
+        padding: 1.5rem 1rem;
+    }
+
+    .category-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .wizard-nav {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .wizard-nav > * {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .wizard-progress::before {
+        left: 1.5rem;
+        right: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="wizard-container" data-controller="wizard">
+    {# Progress indicator #}
+    <div class="wizard-progress">
+        {% for i in 1..totalSteps %}
+            <div class="wizard-step {{ i == step ? 'active' : '' }} {{ i < step ? 'completed' : '' }}">
+                <div class="wizard-step-number">
+                    {% if i < step %}&#10003;{% else %}{{ i }}{% endif %}
+                </div>
+                <span class="wizard-step-label">
+                    {% if i == 1 %}{{ 'wizard.step1.label'|trans({}, 'wizard') }}
+                    {% elseif i == 2 %}{{ 'wizard.step2.label'|trans({}, 'wizard') }}
+                    {% else %}{{ 'wizard.step3.label'|trans({}, 'wizard') }}
+                    {% endif %}
+                </span>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="wizard-card">
+        {% if step == 1 %}
+            {% include 'wizard/_step1_category.html.twig' %}
+        {% elseif step == 2 %}
+            {% include 'wizard/_step2_features.html.twig' %}
+        {% else %}
+            {% include 'wizard/_step3_compatibility.html.twig' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

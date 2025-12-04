@@ -252,7 +252,74 @@ class DeviceRepository
             $types['min_rating'] = \Doctrine\DBAL\ParameterType::INTEGER;
         }
 
+        // Compatible with owned devices filter
+        if (!empty($filters['compatible_with'])) {
+            $compatibleIds = $this->findCompatibleDevices($filters['compatible_with']);
+            if (!empty($compatibleIds)) {
+                $placeholders = [];
+                foreach ($compatibleIds as $i => $id) {
+                    $paramName = 'compat_'.$i;
+                    $placeholders[] = ':'.$paramName;
+                    $params[$paramName] = $id;
+                    $types[$paramName] = \Doctrine\DBAL\ParameterType::INTEGER;
+                }
+                $sql .= ' AND id IN ('.implode(', ', $placeholders).')';
+            } else {
+                // No compatible devices found - return no results
+                $sql .= ' AND 1=0';
+            }
+        }
+
         return $sql;
+    }
+
+    /**
+     * Find products that are compatible with the given owned device IDs.
+     * Compatibility is determined by co-occurrence in installations.
+     *
+     * @param array<int> $ownedDeviceIds Device IDs the user owns
+     * @param int        $limit          Maximum number of compatible devices to return
+     *
+     * @return array<int> Product IDs that are compatible
+     */
+    private function findCompatibleDevices(array $ownedDeviceIds, int $limit = 200): array
+    {
+        if (empty($ownedDeviceIds)) {
+            return [];
+        }
+
+        // Build placeholders for IN clause
+        $placeholders = [];
+        $params = [];
+        foreach ($ownedDeviceIds as $i => $id) {
+            $placeholders[] = ':owned_'.$i;
+            $params['owned_'.$i] = $id;
+        }
+        $inClause = implode(', ', $placeholders);
+
+        // Find products that frequently appear in the same installations as owned products
+        $sql = "
+            SELECT ip2.product_id, COUNT(DISTINCT ip1.installation_id) as shared_count
+            FROM installation_products ip1
+            JOIN installation_products ip2 ON ip1.installation_id = ip2.installation_id
+            WHERE ip1.product_id IN ({$inClause})
+              AND ip2.product_id NOT IN ({$inClause})
+            GROUP BY ip2.product_id
+            HAVING shared_count >= 1
+            ORDER BY shared_count DESC
+            LIMIT :limit
+        ";
+        $params['limit'] = $limit;
+
+        $types = [];
+        foreach ($ownedDeviceIds as $i => $id) {
+            $types['owned_'.$i] = \Doctrine\DBAL\ParameterType::INTEGER;
+        }
+        $types['limit'] = \Doctrine\DBAL\ParameterType::INTEGER;
+
+        $results = $this->db->executeQuery($sql, $params, $types)->fetchAllAssociative();
+
+        return array_map(fn (array $row) => (int) $row['product_id'], $results);
     }
 
     /**

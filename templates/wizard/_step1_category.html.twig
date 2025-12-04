@@ -1,0 +1,39 @@
+<h2 class="wizard-title">{{ 'wizard.step1.title'|trans({}, 'wizard') }}</h2>
+<p class="wizard-subtitle">{{ 'wizard.step1.subtitle'|trans({}, 'wizard') }}</p>
+
+<form method="get" action="{{ path('wizard_index') }}" id="wizard-form-step1">
+    <input type="hidden" name="step" value="2">
+
+    <div class="category-grid">
+        {% for category in stepData.categories %}
+            {% set meta = categoryMeta[category] ?? {} %}
+            <label class="category-card {{ wizardState.category == category ? 'selected' : '' }}">
+                <input type="radio" name="category" value="{{ category }}"
+                       {{ wizardState.category == category ? 'checked' : '' }}
+                       onchange="this.form.submit()">
+                <span class="category-icon">
+                    {% if category == 'Lights' %}💡
+                    {% elseif category == 'Climate' %}🌡️
+                    {% elseif category == 'Sensors' %}📡
+                    {% elseif category == 'Security' %}🔒
+                    {% elseif category == 'Appliances' %}🏠
+                    {% elseif category == 'Entertainment' %}📺
+                    {% elseif category == 'Energy' %}⚡
+                    {% else %}📦
+                    {% endif %}
+                </span>
+                <span class="category-name">{{ ('wizard.category.' ~ category|lower)|trans({}, 'wizard') }}</span>
+                <span class="category-desc">{{ meta.desc|default('')|trans({}, 'wizard') }}</span>
+            </label>
+        {% endfor %}
+    </div>
+
+    <div class="wizard-nav">
+        <span></span>
+        <noscript>
+            <button type="submit" class="wizard-btn wizard-btn-primary">
+                {{ 'wizard.continue'|trans({}, 'wizard') }} &rarr;
+            </button>
+        </noscript>
+    </div>
+</form>

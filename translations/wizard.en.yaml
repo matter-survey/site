@@ -1,0 +1,53 @@
+wizard:
+    title: "Find Your Perfect Device"
+    og_title: "Device Finder Wizard"
+    og_description: "Use our guided wizard to find the perfect Matter smart home device for your needs."
+    step: "Step %step% of %total%"
+    continue: "Continue"
+    back: "Back"
+    skip: "Skip"
+    find_devices: "Find Devices"
+
+    step1:
+        label: "Category"
+        title: "What do you want to control?"
+        subtitle: "Select a category to get started"
+
+    step2:
+        label: "Features"
+        title: "What features matter to you?"
+        subtitle: "Customize your preferences (all optional)"
+        connectivity:
+            title: "Connectivity Type"
+            description: "Select your preferred connection types"
+        rating:
+            title: "Minimum Quality Rating"
+            description: "Only show devices with this rating or higher"
+            any: "Any"
+        binding:
+            title: "Device-to-Device Binding"
+            description: "Binding allows direct communication between devices without a hub"
+            any: "Any"
+            required: "Required"
+
+    step3:
+        label: "Compatibility"
+        title: "What devices do you already own?"
+        subtitle: "Optional: We'll find devices that work well with your existing setup"
+        search:
+            title: "Search for your devices"
+            placeholder: "Start typing a device name..."
+
+    category:
+        lights: "Lights"
+        climate: "Climate"
+        sensors: "Sensors"
+        security: "Security"
+        appliances: "Appliances"
+        entertainment: "Entertainment"
+        energy: "Energy"
+
+    connectivity:
+        thread: "Thread"
+        wifi: "WiFi"
+        ethernet: "Ethernet"
