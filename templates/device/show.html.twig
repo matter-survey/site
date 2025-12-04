@@ -2,49 +2,20 @@
 
 {% from 'components/_star_rating.html.twig' import stars, starsCompact, starsBadge %}
 
-{# Macro for rendering cluster tag with tooltip showing attributes/commands #}
+{# Macro for rendering cluster tag with tooltip showing spec info #}
 {% macro clusterTag(clusterId, matterRegistry, isClient) %}
     {% set meta = matterRegistry.getClusterMetadata(clusterId) %}
-    {% set attrs = meta.attributes ?? [] %}
-    {% set cmds = meta.commands ?? [] %}
     {% set desc = meta.description ?? '' %}
     {% set isProprietary = matterRegistry.isProprietaryCluster(clusterId) %}
     <span class="cluster-tooltip">
         <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(clusterId)}) }}" class="tag{{ isClient ? ' tag-client' : '' }}{{ isProprietary ? ' tag-proprietary' : '' }}">
             {{ meta.name ?? ('Cluster ' ~ clusterId) }}
         </a>
-        {% if desc or attrs|length > 0 or cmds|length > 0 %}
+        {% if desc %}
             <span class="cluster-details">
                 <h5>{{ meta.name ?? ('Cluster ' ~ clusterId) }}</h5>
-                {% if desc %}
-                    <p style="margin: 0 0 0.5rem; opacity: 0.9; font-size: 0.6875rem;">{{ desc|length > 150 ? desc|slice(0, 150) ~ '...' : desc }}</p>
-                {% endif %}
-                {% if attrs|length > 0 %}
-                    <div class="cluster-details-section">
-                        <div class="cluster-details-label">Attributes ({{ attrs|length }})</div>
-                        <div class="cluster-details-list">
-                            {% for attr in attrs|slice(0, 8) %}
-                                <span class="cluster-attr">{{ attr.name }}</span>
-                            {% endfor %}
-                            {% if attrs|length > 8 %}
-                                <span class="cluster-attr" style="opacity: 0.6;">+{{ attrs|length - 8 }} more</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% endif %}
-                {% if cmds|length > 0 %}
-                    <div class="cluster-details-section">
-                        <div class="cluster-details-label">Commands ({{ cmds|length }})</div>
-                        <div class="cluster-details-list">
-                            {% for cmd in cmds|slice(0, 6) %}
-                                <span class="cluster-attr">{{ cmd.name }}</span>
-                            {% endfor %}
-                            {% if cmds|length > 6 %}
-                                <span class="cluster-attr" style="opacity: 0.6;">+{{ cmds|length - 6 }} more</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% endif %}
+                <p style="margin: 0; opacity: 0.9; font-size: 0.6875rem;">{{ desc|length > 200 ? desc|slice(0, 200) ~ '...' : desc }}</p>
+                <p style="margin: 0.5rem 0 0; font-size: 0.625rem; opacity: 0.6;">Click for full spec details</p>
             </span>
         {% endif %}
     </span>
