@@ -122,6 +122,6 @@ jobs:
             --exclude='.claude/' \
             ./ ${{ secrets.SFTP_USER }}@${{ secrets.SFTP_HOST }}:${{ secrets.SFTP_PATH }}/
 
-      - name: Install dependencies, run migrations, load fixtures, and clear cache
+      - name: Install dependencies, run migrations, load fixtures, rebuild scores, and clear cache
         run: |
-          ssh ${{ secrets.SFTP_USER }}@${{ secrets.SFTP_HOST }} "cd ${{ secrets.SFTP_PATH }} && composer install --no-dev --optimize-autoloader && php bin/console cache:clear --env=prod && php bin/console importmap:install && php bin/console asset-map:compile && php bin/console doctrine:migrations:migrate --no-interaction && php bin/console doctrine:fixtures:load --group=matter --append --no-interaction"
+          ssh ${{ secrets.SFTP_USER }}@${{ secrets.SFTP_HOST }} "cd ${{ secrets.SFTP_PATH }} && composer install --no-dev --optimize-autoloader && php bin/console cache:clear --env=prod && php bin/console importmap:install && php bin/console asset-map:compile && php bin/console doctrine:migrations:migrate --no-interaction && php bin/console doctrine:fixtures:load --group=matter --append --no-interaction && php bin/console app:scores:rebuild"
