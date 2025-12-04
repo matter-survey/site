@@ -12,7 +12,15 @@ info:
     - **No personal data collected**: Device names, locations, and user-configured information are never transmitted
     - **Only public device info**: Vendor IDs, product IDs, and capability data from the Matter specification
     - **Anonymous installations**: Random UUIDs used only for deduplication, not tracking
-  version: 1.0.0
+
+    ## Schema Versions
+
+    - **v1**: Legacy format (deprecated)
+    - **v2**: Basic cluster IDs only (current minimum supported)
+    - **v3**: Rich cluster data with feature maps, commands, and attributes (recommended)
+
+    The API accepts all versions. Clients should send the highest version they support.
+  version: 1.1.0
   contact:
     name: Matter Binding Helper
     url: https://github.com/cedricziel/ha-matter-binding-helper
@@ -40,27 +48,63 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TelemetrySubmission'
-            example:
-              installation_id: "550e8400-e29b-41d4-a716-446655440000"
-              schema_version: 2
-              devices:
-                - vendor_id: 4456
-                  vendor_name: "Eve Systems"
-                  product_id: 80
-                  product_name: "Eve Energy"
-                  hardware_version: "1.0"
-                  software_version: "2.1.0"
-                  endpoints:
-                    - endpoint_id: 1
-                      device_types:
-                        - id: 266
-                          revision: 2
-                      server_clusters:
-                        - 6
-                        - 8
-                        - 29
-                      client_clusters:
-                        - 6
+            examples:
+              schema_v3:
+                summary: Schema v3 (recommended) - Rich cluster data
+                value:
+                  installation_id: "550e8400-e29b-41d4-a716-446655440000"
+                  schema_version: 3
+                  devices:
+                    - vendor_id: 4456
+                      vendor_name: "Eve Systems"
+                      product_id: 80
+                      product_name: "Eve Energy"
+                      hardware_version: "1.0"
+                      software_version: "2.1.0"
+                      endpoints:
+                        - endpoint_id: 1
+                          device_types:
+                            - id: 266
+                              revision: 2
+                          server_clusters:
+                            - id: 6
+                              feature_map: 1
+                              attribute_list: [0, 16384, 16385, 65528, 65529, 65530, 65531, 65532, 65533]
+                              accepted_command_list: [0, 1, 2]
+                              generated_command_list: []
+                            - id: 8
+                              feature_map: 3
+                              attribute_list: [0, 1, 15, 17, 65528, 65529, 65530, 65531, 65532, 65533]
+                              accepted_command_list: [0, 1, 2, 3, 4, 5, 6, 7]
+                              generated_command_list: []
+                            - id: 29
+                              feature_map: 0
+                          client_clusters:
+                            - id: 6
+                              feature_map: 0
+              schema_v2:
+                summary: Schema v2 - Basic cluster IDs only
+                value:
+                  installation_id: "550e8400-e29b-41d4-a716-446655440000"
+                  schema_version: 2
+                  devices:
+                    - vendor_id: 4456
+                      vendor_name: "Eve Systems"
+                      product_id: 80
+                      product_name: "Eve Energy"
+                      hardware_version: "1.0"
+                      software_version: "2.1.0"
+                      endpoints:
+                        - endpoint_id: 1
+                          device_types:
+                            - id: 266
+                              revision: 2
+                          server_clusters:
+                            - 6
+                            - 8
+                            - 29
+                          client_clusters:
+                            - 6
       responses:
         '200':
           description: Submission processed successfully
@@ -185,20 +229,74 @@ components:
         server_clusters:
           type: array
           description: |
-            Server cluster IDs implemented on this endpoint.
+            Server clusters implemented on this endpoint.
             Server clusters expose attributes and accept commands (the "thing being controlled").
+
+            **Schema v2**: Array of cluster IDs (integers)
+            **Schema v3**: Array of ClusterInfo objects with rich capability data
           items:
-            type: integer
-          example: [6, 8, 29]
+            oneOf:
+              - type: integer
+                description: Cluster ID (schema v2)
+              - $ref: '#/components/schemas/ClusterInfo'
         client_clusters:
           type: array
           description: |
-            Client cluster IDs implemented on this endpoint.
+            Client clusters implemented on this endpoint.
             Client clusters read attributes and send commands (the "controller").
             Devices with client clusters can use bindings to control other devices.
+
+            **Schema v2**: Array of cluster IDs (integers)
+            **Schema v3**: Array of ClusterInfo objects with rich capability data
+          items:
+            oneOf:
+              - type: integer
+                description: Cluster ID (schema v2)
+              - $ref: '#/components/schemas/ClusterInfo'
+
+    ClusterInfo:
+      type: object
+      description: |
+        Rich cluster capability data (schema v3).
+        Contains the cluster ID along with implementation details from Matter global attributes.
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+          description: Cluster ID from Matter specification
+          example: 6
+        feature_map:
+          type: integer
+          description: |
+            Feature map bitmask (global attribute 0xFFFC).
+            Indicates which optional features of the cluster are implemented.
+            Each bit corresponds to a specific feature defined in the cluster specification.
+          example: 1
+        attribute_list:
+          type: array
+          description: |
+            List of implemented attribute IDs (global attribute 0xFFFB).
+            Standard global attributes (65528-65533) are typically always present.
           items:
             type: integer
-          example: [6]
+          example: [0, 16384, 16385, 65528, 65529, 65530, 65531, 65532, 65533]
+        accepted_command_list:
+          type: array
+          description: |
+            List of command IDs the cluster accepts (global attribute 0xFFF9).
+            These are commands that can be sent TO this cluster.
+          items:
+            type: integer
+          example: [0, 1, 2]
+        generated_command_list:
+          type: array
+          description: |
+            List of command IDs the cluster generates (global attribute 0xFFFA).
+            These are commands/responses sent FROM this cluster.
+          items:
+            type: integer
+          example: []
 
     DeviceType:
       type: object
