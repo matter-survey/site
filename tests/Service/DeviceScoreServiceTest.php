@@ -125,7 +125,7 @@ class DeviceScoreServiceTest extends KernelTestCase
         $score = $this->scoreService->calculateDeviceScore($endpoints);
 
         // Overall score should be from the best device type
-        $bestTypeScore = $score->getBestDeviceTypeScore();
+        $bestTypeScore = $score->getBestTypeScore();
         $this->assertNotNull($bestTypeScore);
         $this->assertEquals($bestTypeScore->score, $score->overallScore);
     }
@@ -312,7 +312,7 @@ class DeviceScoreServiceTest extends KernelTestCase
     // Device Score DTO Tests
     // ========================================================================
 
-    public function testDeviceScoreGetBestDeviceTypeScore(): void
+    public function testDeviceScoreGetBestTypeScore(): void
     {
         $endpoints = [
             [
@@ -323,16 +323,16 @@ class DeviceScoreServiceTest extends KernelTestCase
         ];
 
         $score = $this->scoreService->calculateDeviceScore($endpoints);
-        $best = $score->getBestDeviceTypeScore();
+        $best = $score->getBestTypeScore();
 
         $this->assertNotNull($best);
         $this->assertEquals(256, $best->deviceTypeId);
     }
 
-    public function testDeviceScoreGetBestDeviceTypeScoreReturnsNullWhenEmpty(): void
+    public function testDeviceScoreGetBestTypeScoreReturnsNullWhenEmpty(): void
     {
         $score = $this->scoreService->calculateDeviceScore([]);
-        $best = $score->getBestDeviceTypeScore();
+        $best = $score->getBestTypeScore();
 
         $this->assertNull($best);
     }
@@ -365,6 +365,10 @@ class DeviceScoreServiceTest extends KernelTestCase
     {
         $devices = $this->scoreService->getDevicesRankedByScore(256, 20, 0);
 
+        // Should always return an array (empty or not)
+        $this->assertIsArray($devices);
+
+        // If we have multiple devices, verify they're sorted by score descending
         if (\count($devices) > 1) {
             $previousScore = PHP_INT_MAX;
             foreach ($devices as $device) {

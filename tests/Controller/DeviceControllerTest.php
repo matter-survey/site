@@ -845,6 +845,7 @@ class DeviceControllerTest extends WebTestCase
         // If pagination exists, links should preserve the filter
         $paginationLinks = $crawler->filter('.pagination a');
         foreach ($paginationLinks as $link) {
+            \assert($link instanceof \DOMElement);
             $href = $link->getAttribute('href');
             // Links should either not exist or preserve min_rating
             // (pagination may not exist if few results)
