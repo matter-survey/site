@@ -626,14 +626,13 @@
                         {% endif %}
                         {% if filters.device_types is defined and filters.device_types is not empty %}
                             {% for typeId in filters.device_types %}
-                                {% set deviceTypeName = facets.device_types|filter(dt => dt.id == typeId)|first %}
                                 {% set otherTypes = filters.device_types|filter(t => t != typeId) %}
                                 {% set newFilters = filters|merge({device_types: otherTypes}) %}
                                 {% if otherTypes is empty %}
                                     {% set newFilters = filters|filter((v, k) => k != 'device_types') %}
                                 {% endif %}
                                 <span class="active-filter">
-                                    {{ deviceTypeName.name ?? 'Unknown' }}
+                                    {{ deviceTypeNames[typeId] ?? 'Unknown' }}
                                     <a href="{{ path('device_index', newFilters) }}" title="Remove">&times;</a>
                                 </span>
                             {% endfor %}

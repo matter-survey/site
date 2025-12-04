@@ -59,6 +59,14 @@ class DeviceController extends AbstractController
         $deviceIds = array_column($devices, 'id');
         $deviceScores = $this->deviceScoreService->getCachedScoresForDevices($deviceIds);
 
+        // Build device type names map for filtered types (may not be in facets)
+        $deviceTypeNames = [];
+        if (!empty($filters['device_types'])) {
+            foreach ($filters['device_types'] as $typeId) {
+                $deviceTypeNames[$typeId] = $this->matterRegistry->getDeviceTypeName((int) $typeId);
+            }
+        }
+
         return $this->render('device/index.html.twig', [
             'devices' => $devices,
             'stats' => $stats,
@@ -69,6 +77,7 @@ class DeviceController extends AbstractController
             'facets' => $facets,
             'hasFilters' => $hasFilters,
             'deviceScores' => $deviceScores,
+            'deviceTypeNames' => $deviceTypeNames,
         ]);
     }
 
