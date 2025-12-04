@@ -301,9 +301,6 @@
                     <a href="{{ path('vendor_index') }}">{{ 'nav.vendors'|trans({}, 'navigation') }}</a>
                     <a href="{{ path('stats_dashboard') }}">{{ 'nav.stats'|trans({}, 'navigation') }}</a>
                     <span class="nav-divider"></span>
-                    <a href="{{ path('page_about') }}">{{ 'nav.about'|trans({}, 'navigation') }}</a>
-                    <a href="{{ path('page_faq') }}">{{ 'nav.faq'|trans({}, 'navigation') }}</a>
-                    <span class="nav-divider"></span>
                     {% set current_route = app.request.attributes.get('_route') %}
                     {% set route_params = app.request.attributes.get('_route_params', {}) %}
                     {% if app.request.locale == 'en' %}
