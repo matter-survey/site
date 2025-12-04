@@ -60,10 +60,12 @@ class TelemetryService
             $this->recordInstallation($installationId);
             $this->logSubmission($installationId, count($devices), $ipHash);
 
+            $schemaVersion = $payload['schema_version'] ?? 2;
+
             $processedCount = 0;
             $processedDeviceIds = [];
             foreach ($devices as $device) {
-                $productId = $this->processDevice($device);
+                $productId = $this->processDevice($device, $schemaVersion);
                 if (null !== $productId) {
                     $this->recordInstallationProduct($installationId, $productId);
                     $processedDeviceIds[] = $productId;
@@ -156,7 +158,7 @@ class TelemetryService
      *
      * @return int|null The product ID if successfully processed, null otherwise
      */
-    private function processDevice(array $device): ?int
+    private function processDevice(array $device, int $schemaVersion = 2): ?int
     {
         if (empty($device['vendor_id']) && empty($device['product_id'])) {
             return null;
@@ -210,20 +212,92 @@ class TelemetryService
                 continue;
             }
 
+            // Normalize cluster data - extract IDs for backwards compatibility
+            $normalizedEndpoint = $this->normalizeEndpointClusters($endpoint, $schemaVersion);
+
             $this->deviceRepo->upsertEndpoint(
                 $deviceId,
-                [
-                    'endpoint_id' => $endpoint['endpoint_id'] ?? 0,
-                    'device_types' => $endpoint['device_types'] ?? [],
-                    'server_clusters' => $endpoint['server_clusters'] ?? [],
-                    'client_clusters' => $endpoint['client_clusters'] ?? [],
-                ],
+                $normalizedEndpoint,
                 $hardwareVersion,
                 $softwareVersion
             );
         }
 
         return $deviceId;
+    }
+
+    /**
+     * Normalize endpoint cluster data for storage.
+     * For v3 schema, extracts cluster IDs for existing columns and preserves full details.
+     */
+    private function normalizeEndpointClusters(array $endpoint, int $schemaVersion): array
+    {
+        $serverClusters = $endpoint['server_clusters'] ?? [];
+        $clientClusters = $endpoint['client_clusters'] ?? [];
+
+        // Detect if we have v3 format (array of objects with 'id' field)
+        $isV3Format = $this->isV3ClusterFormat($serverClusters) || $this->isV3ClusterFormat($clientClusters);
+        $effectiveVersion = $isV3Format ? 3 : $schemaVersion;
+
+        if ($isV3Format) {
+            // Extract just the IDs for the existing columns (backwards compatibility)
+            $serverClusterIds = $this->extractClusterIds($serverClusters);
+            $clientClusterIds = $this->extractClusterIds($clientClusters);
+
+            return [
+                'endpoint_id' => $endpoint['endpoint_id'] ?? 0,
+                'device_types' => $endpoint['device_types'] ?? [],
+                'server_clusters' => $serverClusterIds,
+                'client_clusters' => $clientClusterIds,
+                'server_cluster_details' => $serverClusters,
+                'client_cluster_details' => $clientClusters,
+                'schema_version' => $effectiveVersion,
+            ];
+        }
+
+        // v2 format - just cluster IDs, no details
+        return [
+            'endpoint_id' => $endpoint['endpoint_id'] ?? 0,
+            'device_types' => $endpoint['device_types'] ?? [],
+            'server_clusters' => $serverClusters,
+            'client_clusters' => $clientClusters,
+            'server_cluster_details' => null,
+            'client_cluster_details' => null,
+            'schema_version' => $effectiveVersion,
+        ];
+    }
+
+    /**
+     * Check if cluster array is in v3 format (objects with 'id' field).
+     */
+    private function isV3ClusterFormat(array $clusters): bool
+    {
+        if (empty($clusters)) {
+            return false;
+        }
+
+        $first = $clusters[0];
+
+        return \is_array($first) && isset($first['id']);
+    }
+
+    /**
+     * Extract cluster IDs from v3 format cluster objects.
+     *
+     * @return array<int>
+     */
+    private function extractClusterIds(array $clusters): array
+    {
+        $ids = [];
+        foreach ($clusters as $cluster) {
+            if (\is_array($cluster) && isset($cluster['id'])) {
+                $ids[] = (int) $cluster['id'];
+            } elseif (is_numeric($cluster)) {
+                $ids[] = (int) $cluster;
+            }
+        }
+
+        return $ids;
     }
 
     /**
@@ -244,8 +318,9 @@ class TelemetryService
 
     /**
      * Extract connectivity types from endpoint server clusters.
+     * Handles both v2 (integer arrays) and v3 (ClusterInfo objects) formats.
      *
-     * @param array<array{server_clusters?: array<int>}> $endpoints
+     * @param array<array{server_clusters?: array<mixed>}> $endpoints
      *
      * @return array<string>
      */
@@ -254,8 +329,15 @@ class TelemetryService
         $types = [];
 
         foreach ($endpoints as $endpoint) {
-            foreach ($endpoint['server_clusters'] ?? [] as $clusterId) {
-                if (isset(self::CONNECTIVITY_CLUSTERS[$clusterId])) {
+            foreach ($endpoint['server_clusters'] ?? [] as $cluster) {
+                // Handle both v2 (integer) and v3 (object with 'id') formats
+                if (\is_array($cluster)) {
+                    $clusterId = $cluster['id'] ?? null;
+                } else {
+                    $clusterId = $cluster;
+                }
+
+                if (null !== $clusterId && isset(self::CONNECTIVITY_CLUSTERS[$clusterId])) {
                     $types[] = self::CONNECTIVITY_CLUSTERS[$clusterId];
                 }
             }

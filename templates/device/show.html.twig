@@ -2,22 +2,90 @@
 
 {% from 'components/_star_rating.html.twig' import stars, starsCompact, starsBadge %}
 
-{# Macro for rendering cluster tag with tooltip showing spec info #}
-{% macro clusterTag(clusterId, matterRegistry, isClient) %}
+{# Macro for rendering cluster tag with tooltip showing spec info or actual telemetry data #}
+{% macro clusterTag(clusterId, matterRegistry, isClient, clusterDetails) %}
     {% set meta = matterRegistry.getClusterMetadata(clusterId) %}
     {% set desc = meta.description ?? '' %}
     {% set isProprietary = matterRegistry.isProprietaryCluster(clusterId) %}
+    {# Find matching cluster details from v3 telemetry if available #}
+    {% set actualDetails = null %}
+    {% if clusterDetails %}
+        {% for detail in clusterDetails %}
+            {% if detail.id == clusterId %}
+                {% set actualDetails = detail %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    {% set hasActualData = actualDetails is not null and (actualDetails.feature_map is defined or actualDetails.attribute_list is defined or actualDetails.accepted_command_list is defined) %}
     <span class="cluster-tooltip">
-        <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(clusterId)}) }}" class="tag{{ isClient ? ' tag-client' : '' }}{{ isProprietary ? ' tag-proprietary' : '' }}">
+        <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(clusterId)}) }}" class="tag{{ isClient ? ' tag-client' : '' }}{{ isProprietary ? ' tag-proprietary' : '' }}{{ hasActualData ? ' tag-has-details' : '' }}">
             {{ meta.name ?? ('Cluster ' ~ clusterId) }}
+            {% if hasActualData %}<span style="font-size: 0.625rem; opacity: 0.7;">✓</span>{% endif %}
         </a>
-        {% if desc %}
-            <span class="cluster-details">
-                <h5>{{ meta.name ?? ('Cluster ' ~ clusterId) }}</h5>
+        <span class="cluster-details">
+            <h5>{{ meta.name ?? ('Cluster ' ~ clusterId) }}</h5>
+            {% if hasActualData %}
+                {# Show actual telemetry data #}
+                {% if actualDetails.feature_map is defined and actualDetails.feature_map > 0 %}
+                    <div class="cluster-details-section">
+                        <div class="cluster-details-label">Feature Map</div>
+                        <div class="cluster-details-list">
+                            <span class="cluster-attr">0x{{ '%X'|format(actualDetails.feature_map) }}</span>
+                        </div>
+                    </div>
+                {% endif %}
+                {% if actualDetails.accepted_command_list is defined and actualDetails.accepted_command_list|length > 0 %}
+                    <div class="cluster-details-section">
+                        <div class="cluster-details-label">Accepts Commands ({{ actualDetails.accepted_command_list|length }})</div>
+                        <div class="cluster-details-list">
+                            {% for cmdId in actualDetails.accepted_command_list|slice(0, 8) %}
+                                {% set cmdName = matterRegistry.getClusterCommandName(clusterId, cmdId) %}
+                                <span class="cluster-attr" title="Command ID {{ cmdId }}">{{ cmdName ?? cmdId }}</span>
+                            {% endfor %}
+                            {% if actualDetails.accepted_command_list|length > 8 %}
+                                <span class="cluster-attr">+{{ actualDetails.accepted_command_list|length - 8 }} more</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+                {% if actualDetails.generated_command_list is defined and actualDetails.generated_command_list|length > 0 %}
+                    <div class="cluster-details-section">
+                        <div class="cluster-details-label">Generates Commands ({{ actualDetails.generated_command_list|length }})</div>
+                        <div class="cluster-details-list">
+                            {% for cmdId in actualDetails.generated_command_list|slice(0, 8) %}
+                                {% set cmdName = matterRegistry.getClusterCommandName(clusterId, cmdId) %}
+                                <span class="cluster-attr" title="Command ID {{ cmdId }}">{{ cmdName ?? cmdId }}</span>
+                            {% endfor %}
+                            {% if actualDetails.generated_command_list|length > 8 %}
+                                <span class="cluster-attr">+{{ actualDetails.generated_command_list|length - 8 }} more</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+                {% if actualDetails.attribute_list is defined and actualDetails.attribute_list|length > 0 %}
+                    <div class="cluster-details-section">
+                        <div class="cluster-details-label">Attributes ({{ actualDetails.attribute_list|length }})</div>
+                        <div class="cluster-details-list">
+                            {% for attrId in actualDetails.attribute_list|slice(0, 10) %}
+                                {% if attrId < 65528 %}{# Skip global attributes #}
+                                    {% set attrName = matterRegistry.getClusterAttributeName(clusterId, attrId) %}
+                                    <span class="cluster-attr" title="Attribute ID {{ attrId }}">{{ attrName ?? attrId }}</span>
+                                {% endif %}
+                            {% endfor %}
+                            {% set nonGlobalAttrs = actualDetails.attribute_list|filter(a => a < 65528) %}
+                            {% if nonGlobalAttrs|length > 10 %}
+                                <span class="cluster-attr">+{{ nonGlobalAttrs|length - 10 }} more</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+                <p style="margin: 0.5rem 0 0; font-size: 0.625rem; opacity: 0.6; color: #86efac;">✓ Actual device capabilities from telemetry</p>
+            {% elseif desc %}
+                {# Fallback to spec description #}
                 <p style="margin: 0; opacity: 0.9; font-size: 0.6875rem;">{{ desc|length > 200 ? desc|slice(0, 200) ~ '...' : desc }}</p>
                 <p style="margin: 0.5rem 0 0; font-size: 0.625rem; opacity: 0.6;">Click for full spec details</p>
-            </span>
-        {% endif %}
+            {% endif %}
+        </span>
     </span>
 {% endmacro %}
 
@@ -481,6 +549,11 @@
         background: #faf5ff;
         color: #7c3aed;
         border: 1px dashed #c4b5fd;
+    }
+
+    .tag-has-details {
+        background: #dcfce7;
+        border: 1px solid #86efac;
     }
 
     /* Category-based colors */
@@ -1913,10 +1986,10 @@
 
                     {% if ep.server_clusters is not empty %}
                         <div class="clusters">
-                            <div class="label">Server Clusters <span style="font-size: 0.625rem; opacity: 0.7;">(hover for details)</span></div>
+                            <div class="label">Server Clusters <span style="font-size: 0.625rem; opacity: 0.7;">(hover for details)</span>{% if ep.schema_version is defined and ep.schema_version >= 3 %}<span style="font-size: 0.625rem; color: #86efac; margin-left: 0.5rem;">✓ Rich data</span>{% endif %}</div>
                             <div class="tag-list">
                                 {% for cluster in ep.server_clusters %}
-                                    {{ _self.clusterTag(cluster, matterRegistry, false) }}
+                                    {{ _self.clusterTag(cluster, matterRegistry, false, ep.server_cluster_details) }}
                                 {% endfor %}
                             </div>
                         </div>
@@ -1927,7 +2000,7 @@
                             <div class="label">Client Clusters <span style="font-size: 0.625rem; opacity: 0.7;">(hover for details)</span></div>
                             <div class="tag-list">
                                 {% for cluster in ep.client_clusters %}
-                                    {{ _self.clusterTag(cluster, matterRegistry, true) }}
+                                    {{ _self.clusterTag(cluster, matterRegistry, true, ep.client_cluster_details) }}
                                 {% endfor %}
                             </div>
                         </div>

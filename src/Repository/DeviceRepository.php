@@ -95,13 +95,28 @@ class DeviceRepository
 
     public function upsertEndpoint(int $deviceId, array $endpointData, ?string $hardwareVersion = null, ?string $softwareVersion = null): void
     {
+        $serverClusterDetails = $endpointData['server_cluster_details'] ?? null;
+        $clientClusterDetails = $endpointData['client_cluster_details'] ?? null;
+        $schemaVersion = $endpointData['schema_version'] ?? 2;
+
         $this->db->executeStatement('
-            INSERT INTO product_endpoints (device_id, endpoint_id, hardware_version, software_version, device_types, server_clusters, client_clusters)
-            VALUES (:device_id, :endpoint_id, :hardware_version, :software_version, :device_types, :server_clusters, :client_clusters)
+            INSERT INTO product_endpoints (
+                device_id, endpoint_id, hardware_version, software_version,
+                device_types, server_clusters, client_clusters,
+                server_cluster_details, client_cluster_details, schema_version
+            )
+            VALUES (
+                :device_id, :endpoint_id, :hardware_version, :software_version,
+                :device_types, :server_clusters, :client_clusters,
+                :server_cluster_details, :client_cluster_details, :schema_version
+            )
             ON CONFLICT(device_id, endpoint_id, hardware_version, software_version) DO UPDATE SET
                 device_types = excluded.device_types,
                 server_clusters = excluded.server_clusters,
                 client_clusters = excluded.client_clusters,
+                server_cluster_details = COALESCE(excluded.server_cluster_details, product_endpoints.server_cluster_details),
+                client_cluster_details = COALESCE(excluded.client_cluster_details, product_endpoints.client_cluster_details),
+                schema_version = MAX(excluded.schema_version, COALESCE(product_endpoints.schema_version, 2)),
                 last_seen = CURRENT_TIMESTAMP,
                 submission_count = product_endpoints.submission_count + 1
         ', [
@@ -112,6 +127,9 @@ class DeviceRepository
             'device_types' => json_encode($endpointData['device_types'] ?? []),
             'server_clusters' => json_encode($endpointData['server_clusters'] ?? []),
             'client_clusters' => json_encode($endpointData['client_clusters'] ?? []),
+            'server_cluster_details' => null !== $serverClusterDetails ? json_encode($serverClusterDetails) : null,
+            'client_cluster_details' => null !== $clientClusterDetails ? json_encode($clientClusterDetails) : null,
+            'schema_version' => $schemaVersion,
         ]);
     }
 
@@ -465,7 +483,9 @@ class DeviceRepository
     public function getDeviceEndpoints(int $deviceId): array
     {
         $rows = $this->db->executeQuery('
-            SELECT endpoint_id, hardware_version, software_version, device_types, server_clusters, client_clusters, first_seen, last_seen, submission_count
+            SELECT endpoint_id, hardware_version, software_version, device_types, server_clusters, client_clusters,
+                   server_cluster_details, client_cluster_details, schema_version,
+                   first_seen, last_seen, submission_count
             FROM product_endpoints
             WHERE device_id = :device_id
             ORDER BY software_version DESC, hardware_version DESC, endpoint_id
@@ -476,6 +496,9 @@ class DeviceRepository
             $row['device_types'] = json_decode($row['device_types'], true) ?? [];
             $row['server_clusters'] = json_decode($row['server_clusters'], true) ?? [];
             $row['client_clusters'] = json_decode($row['client_clusters'], true) ?? [];
+            $row['server_cluster_details'] = $row['server_cluster_details'] ? json_decode($row['server_cluster_details'], true) : null;
+            $row['client_cluster_details'] = $row['client_cluster_details'] ? json_decode($row['client_cluster_details'], true) : null;
+            $row['schema_version'] = (int) ($row['schema_version'] ?? 2);
             // Derive binding support from either server or client clusters
             $row['has_binding_cluster'] = \in_array(self::BINDING_CLUSTER_ID, $row['server_clusters'], true)
                 || \in_array(self::BINDING_CLUSTER_ID, $row['client_clusters'], true);

@@ -129,6 +129,50 @@ class MatterRegistry
     }
 
     /**
+     * Get the name of a command within a cluster by its ID.
+     */
+    public function getClusterCommandName(int $clusterId, int $commandId): ?string
+    {
+        $clusters = $this->loadClusters();
+        $cluster = $clusters[$clusterId] ?? null;
+
+        if (!$cluster) {
+            return null;
+        }
+
+        $commands = $cluster['commands'] ?? [];
+        foreach ($commands as $cmd) {
+            if (($cmd['code'] ?? null) === $commandId) {
+                return $cmd['name'] ?? null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the name of an attribute within a cluster by its ID.
+     */
+    public function getClusterAttributeName(int $clusterId, int $attributeId): ?string
+    {
+        $clusters = $this->loadClusters();
+        $cluster = $clusters[$clusterId] ?? null;
+
+        if (!$cluster) {
+            return null;
+        }
+
+        $attributes = $cluster['attributes'] ?? [];
+        foreach ($attributes as $attr) {
+            if (($attr['code'] ?? null) === $attributeId) {
+                return $attr['name'] ?? null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Load cluster data from database.
      *
      * @return array<int, array>
