@@ -14,10 +14,10 @@
         <input type="hidden" name="binding" value="{{ wizardState.binding }}">
     {% endif %}
 
-    {# Device search with autocomplete #}
-    <div class="feature-section">
+    {# Device search with autocomplete - controller wraps both search and selected list #}
+    <div class="feature-section" data-controller="device-search" data-device-search-url-value="{{ path('wizard_device_search') }}">
         <h3>{{ 'wizard.step3.search.title'|trans({}, 'wizard') }}</h3>
-        <div class="device-search-container" data-controller="device-search" data-device-search-url-value="{{ path('wizard_device_search') }}">
+        <div class="device-search-container">
             <input type="text"
                    class="device-search-input"
                    placeholder="{{ 'wizard.step3.search.placeholder'|trans({}, 'wizard') }}"
@@ -26,10 +26,9 @@
                    autocomplete="off">
             <div class="device-search-results" data-device-search-target="results"></div>
         </div>
-    </div>
 
-    {# Selected devices #}
-    <div class="owned-devices" data-device-search-target="selectedList">
+        {# Selected devices #}
+        <div class="owned-devices" data-device-search-target="selectedList">
         {% for device in stepData.ownedDevices %}
             <span class="owned-device-tag" data-device-id="{{ device.id }}">
                 {{ device.product_name }}
@@ -37,6 +36,7 @@
                 <span class="owned-device-remove" data-action="click->device-search#removeDevice">&times;</span>
             </span>
         {% endfor %}
+        </div>
     </div>
 
     <div class="wizard-nav">
