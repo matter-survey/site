@@ -14,6 +14,20 @@ use Doctrine\DBAL\Connection;
  */
 class DeviceScoreService
 {
+    /**
+     * System/utility device type IDs that should be skipped for scoring.
+     * These are infrastructure device types, not user-facing devices.
+     */
+    private const SYSTEM_DEVICE_TYPES = [
+        14,  // Aggregator
+        17,  // Power Source
+        18,  // OTA Requestor
+        19,  // Bridged Node
+        20,  // OTA Provider
+        22,  // Root Node
+        25,  // Secondary Network Interface
+    ];
+
     public function __construct(
         private readonly MatterRegistry $matterRegistry,
         private readonly DeviceRepository $deviceRepository,
@@ -42,8 +56,8 @@ class DeviceScoreService
 
             foreach ($deviceTypes as $dt) {
                 $deviceTypeId = \is_array($dt) ? ($dt['id'] ?? null) : $dt;
-                if (null === $deviceTypeId || $deviceTypeId < 256) {
-                    // Skip system device types
+                if (null === $deviceTypeId || \in_array((int) $deviceTypeId, self::SYSTEM_DEVICE_TYPES, true)) {
+                    // Skip system/utility device types
                     continue;
                 }
 
