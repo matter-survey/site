@@ -34,6 +34,7 @@ class TelemetryService
         DatabaseService $databaseService,
         private DeviceRepository $deviceRepo,
         private VendorRepository $vendorRepo,
+        private DeviceScoreService $deviceScoreService,
         private EntityManagerInterface $em,
         private LoggerInterface $logger,
     ) {
@@ -60,10 +61,12 @@ class TelemetryService
             $this->logSubmission($installationId, count($devices), $ipHash);
 
             $processedCount = 0;
+            $processedDeviceIds = [];
             foreach ($devices as $device) {
                 $productId = $this->processDevice($device);
                 if (null !== $productId) {
                     $this->recordInstallationProduct($installationId, $productId);
+                    $processedDeviceIds[] = $productId;
                     ++$processedCount;
                 }
             }
@@ -72,6 +75,19 @@ class TelemetryService
             $this->em->flush();
 
             $this->db->commit();
+
+            // Update score cache for processed devices (after commit to ensure data is persisted)
+            foreach ($processedDeviceIds as $deviceId) {
+                try {
+                    $this->deviceScoreService->updateDeviceScoreCache($deviceId);
+                } catch (\Throwable $e) {
+                    // Log but don't fail the submission if score update fails
+                    $this->logger->warning('Failed to update device score cache', [
+                        'device_id' => $deviceId,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
 
             $this->logger->info('Telemetry submission processed', [
                 'installation_id' => $installationId,

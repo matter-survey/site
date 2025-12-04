@@ -529,4 +529,59 @@ class ApiControllerTest extends WebTestCase
         // Note: The text "Bridged Node" might still appear in other contexts,
         // so we count occurrences of "Endpoint 3" and "Endpoint 4" specifically
     }
+
+    public function testSubmitCalculatesAndCachesDeviceScore(): void
+    {
+        $client = static::createClient();
+
+        // Submit a device with proper endpoint data for scoring
+        $client->request('POST', '/api/submit', [], [], [
+            'CONTENT_TYPE' => 'application/json',
+        ], json_encode([
+            'installation_id' => '550e8400-e29b-41d4-a716-446655440040',
+            'schema_version' => 2,
+            'devices' => [
+                [
+                    'vendor_id' => 0x4444,
+                    'vendor_name' => 'Score Test Vendor',
+                    'product_id' => 0x0040,
+                    'product_name' => 'Score Test Light',
+                    'hardware_version' => '1.0',
+                    'software_version' => '1.0.0',
+                    'endpoints' => [
+                        [
+                            'endpoint_id' => 1,
+                            'device_types' => [['id' => 256, 'revision' => 1]], // On/Off Light
+                            'server_clusters' => [3, 4, 6, 29], // Identify, Groups, OnOff, Descriptor
+                            'client_clusters' => [],
+                        ],
+                    ],
+                ],
+            ],
+        ]));
+
+        $this->assertResponseIsSuccessful();
+        $response = json_decode($client->getResponse()->getContent(), true);
+        $this->assertEquals(1, $response['devices_processed']);
+
+        // Verify score was cached by checking the database directly
+        $container = static::getContainer();
+        $connection = $container->get('doctrine.dbal.default_connection');
+
+        // Find the device ID
+        $deviceId = $connection->fetchOne(
+            'SELECT id FROM products WHERE vendor_id = ? AND product_id = ?',
+            [0x4444, 0x0040]
+        );
+        $this->assertNotFalse($deviceId, 'Device should exist in database');
+
+        // Check that a score was cached for this device
+        $score = $connection->fetchAssociative(
+            'SELECT * FROM device_scores WHERE device_id = ?',
+            [$deviceId]
+        );
+        $this->assertNotFalse($score, 'Device score should be cached after telemetry submission');
+        $this->assertGreaterThan(0, $score['star_rating'], 'Star rating should be positive');
+        $this->assertGreaterThanOrEqual(0, $score['overall_score'], 'Overall score should be non-negative');
+    }
 }
