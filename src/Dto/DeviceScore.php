@@ -14,7 +14,7 @@ final class DeviceScore
      */
     public function __construct(
         public readonly float $overallScore,
-        public readonly int $starRating,
+        public readonly float $starRating,
         public readonly bool $isCompliant,
         public readonly array $scoresByType,
         public readonly ?string $bestVersion = null,
@@ -33,7 +33,7 @@ final class DeviceScore
 
         return new self(
             overallScore: (float) $data['overallScore'],
-            starRating: (int) $data['starRating'],
+            starRating: (float) $data['starRating'],
             isCompliant: (bool) $data['isCompliant'],
             scoresByType: $scoresByType,
             bestVersion: $data['bestVersion'] ?? null,

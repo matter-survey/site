@@ -83,7 +83,7 @@ class DeviceScoreService
         if (empty($scoresByType)) {
             return new DeviceScore(
                 overallScore: 0.0,
-                starRating: 1,
+                starRating: 1.0,
                 isCompliant: true,
                 scoresByType: [],
             );
@@ -197,29 +197,34 @@ class DeviceScoreService
     }
 
     /**
-     * Convert a percentage score to a 1-5 star rating.
+     * Convert a percentage score to a 0.5-5 star rating (supports half stars).
      */
-    public function scoreToStars(float $score, bool $isCompliant): int
+    public function scoreToStars(float $score, bool $isCompliant): float
     {
-        // Non-compliant devices are capped at 2 stars
+        // Non-compliant devices are capped at 2.5 stars
         if (!$isCompliant) {
-            return min(2, $this->percentageToStars($score));
+            return min(2.5, $this->percentageToStars($score));
         }
 
         return $this->percentageToStars($score);
     }
 
     /**
-     * Convert percentage to star rating.
+     * Convert percentage to star rating with half-star granularity.
      */
-    private function percentageToStars(float $score): int
+    private function percentageToStars(float $score): float
     {
         return match (true) {
-            $score >= 90 => 5,
-            $score >= 75 => 4,
-            $score >= 60 => 3,
-            $score >= 40 => 2,
-            default => 1,
+            $score >= 95 => 5.0,
+            $score >= 85 => 4.5,
+            $score >= 75 => 4.0,
+            $score >= 65 => 3.5,
+            $score >= 55 => 3.0,
+            $score >= 45 => 2.5,
+            $score >= 35 => 2.0,
+            $score >= 25 => 1.5,
+            $score >= 15 => 1.0,
+            default => 0.5,
         };
     }
 
@@ -258,7 +263,7 @@ class DeviceScoreService
 
             $scores[(int) $row['device_id']] = new DeviceScore(
                 overallScore: (float) $row['overall_score'],
-                starRating: (int) $row['star_rating'],
+                starRating: (float) $row['star_rating'],
                 isCompliant: (bool) $row['is_compliant'],
                 scoresByType: $parsedScoresByType,
                 bestVersion: $row['best_version'],

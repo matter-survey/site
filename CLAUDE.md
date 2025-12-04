@@ -53,11 +53,15 @@ php bin/console doctrine:migrations:migrate
 - **TelemetryService** - Processes submissions, logs via `LoggerInterface`
 - **DeviceRepository** - Data access for devices, versions, and endpoints
 - **MatterRegistry** - Lookup for Matter cluster/device type names and metadata (database-backed)
+- **DeviceScoreService** - Calculates device compliance scores based on cluster implementation
+- **DclApiService** - Interacts with the Matter DCL (Distributed Compliance Ledger) API
+- **DatabaseService** - Centralized database connection management
 
 ### Console Commands
 
 - `app:dcl:sync` - Fetch vendor/product data from Matter DCL API and generate YAML fixtures
 - `app:zap:sync` - Fetch cluster details from Matter SDK ZAP XML files and update fixtures
+- `app:scores:rebuild` - Rebuild the device scores cache table (used in deployment)
 
 ### Matter Registry Data
 
@@ -67,8 +71,8 @@ All Matter specification data (clusters, device types) is stored in the database
 - `fixtures/device_types.yaml` - 65+ device type definitions with cluster requirements
 
 **Entities:**
-- `Cluster` - id, hexId, name, description, specVersion, category, isGlobal
-- `DeviceType` - id, hexId, name, description, category, displayCategory, icon, cluster requirements
+- `Cluster` - id, hexId, name, description, specVersion, category, isGlobal, attributes (JSON), commands (JSON), features (JSON)
+- `DeviceType` - id, hexId, name, description, specVersion, category, displayCategory, deviceClass, scope, superset, icon, mandatoryServerClusters (JSON), optionalServerClusters (JSON), mandatoryClientClusters (JSON), optionalClientClusters (JSON), scoringWeights (JSON)
 
 **Fixture Groups:**
 - `clusters` - Load only cluster data
@@ -86,19 +90,26 @@ API submissions are validated using Symfony Validator with DTOs:
 
 ### Data Model
 
+**Doctrine Entities:**
+- `Product` - Main device entity (vendor_id, product_id, slug, vendor_name, product_name)
+- `Vendor` - Vendor information and device counts
+- `Cluster` - Matter cluster definitions with attributes, commands, features (JSON)
+- `DeviceType` - Matter device type definitions with cluster requirements (JSON)
+
+**Raw SQL Tables (accessed via DeviceRepository):**
 ```
-Devices (vendor_id, product_id)
-  ├─ DeviceVersions (hardware/software versions)
-  ├─ DeviceEndpoints (clusters JSON, device_types JSON)
-  └─ Installations (UUID deduplication)
+products (vendor_id, product_id)
+  ├─ device_versions (hardware/software versions)
+  ├─ device_endpoints (clusters JSON, device_types JSON)
+  └─ installations / installation_products (UUID deduplication)
 ```
 
-Database views: `device_summary`, `cluster_stats`
+Database views: `product_summary` (aliased as `device_summary`), `cluster_stats`
 
 ## Configuration
 
 - **Database path:** `data/matter-survey.db` (configured in `services.yaml`)
-- **Rate limiting:** Sliding window, 10/min per IP (configured in `rate_limiter.yaml`)
+- **Rate limiting:** Sliding window, 10/min per IP (configured in `framework.yaml`)
 - **CORS:** Configured in `nelmio_cors.yaml` for API endpoints
 - **Logging:** Monolog configured in `monolog.yaml`, logs to `var/log/`
 

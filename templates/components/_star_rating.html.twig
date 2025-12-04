@@ -3,15 +3,15 @@
  #
  # Usage:
  #   {% from 'components/_star_rating.html.twig' import stars, starsCompact, starsBadge %}
- #   {{ stars(4, 85.5, true) }}      - Full star display with score
- #   {{ starsCompact(4) }}           - Compact "4★" format
- #   {{ starsBadge(4, 85.5, true) }} - Badge with star and compliance indicator
+ #   {{ stars(4.5, 85.5, true) }}    - Full star display with score (supports half stars)
+ #   {{ starsCompact(4.5) }}         - Compact "4.5★" format
+ #   {{ starsBadge(4.5, 85.5, true) }} - Badge with star and compliance indicator
  #}
 
 {#
- # Full star display with optional score percentage
+ # Full star display with optional score percentage (supports half stars)
  #
- # @param int rating      Star rating (1-5)
+ # @param float rating    Star rating (0.5-5, supports half stars like 3.5, 4.5)
  # @param float score     Score percentage (0-100)
  # @param bool showScore  Whether to show the percentage
  # @param bool isCompliant Whether the device is compliant (all mandatory clusters)
@@ -19,10 +19,18 @@
 {% macro stars(rating, score, showScore, isCompliant) %}
     {% set showScore = showScore|default(false) %}
     {% set isCompliant = isCompliant|default(true) %}
-    <span class="star-rating star-rating-{{ rating }}{% if not isCompliant %} star-rating-noncompliant{% endif %}" title="{{ score|round(1) }}% Feature Score{% if not isCompliant %} (missing required clusters){% endif %}">
+    {% set fullStars = rating|round(0, 'floor') %}
+    {% set hasHalfStar = (rating - fullStars) >= 0.5 %}
+    {% set ratingClass = (rating * 10)|round(0) %}
+    <span class="star-rating star-rating-{{ ratingClass }}{% if not isCompliant %} star-rating-noncompliant{% endif %}" title="{{ score|round(1) }}% Feature Score{% if not isCompliant %} (missing required clusters){% endif %}">
         {% for i in 1..5 %}
-            {% if i <= rating %}
+            {% if i <= fullStars %}
                 <span class="star star-filled">&#9733;</span>
+            {% elseif i == fullStars + 1 and hasHalfStar %}
+                <span class="star star-half" aria-label="half star">
+                    <span class="star-half-filled">&#9733;</span>
+                    <span class="star-half-empty">&#9734;</span>
+                </span>
             {% else %}
                 <span class="star star-empty">&#9734;</span>
             {% endif %}
@@ -34,28 +42,32 @@
 {% endmacro %}
 
 {#
- # Compact star display (e.g., "4★")
+ # Compact star display (e.g., "4.5★")
  #
- # @param int rating Star rating (1-5)
+ # @param float rating Star rating (0.5-5, supports half stars)
  #}
 {% macro starsCompact(rating) %}
-    <span class="star-rating-compact star-rating-{{ rating }}" title="{{ rating }} star{% if rating != 1 %}s{% endif %}">
-        {{ rating }}&#9733;
+    {% set displayRating = (rating * 2)|round(0) / 2 %}
+    {% set ratingClass = (rating * 10)|round(0) %}
+    <span class="star-rating-compact star-rating-{{ ratingClass }}" title="{{ displayRating }} star{% if displayRating != 1 %}s{% endif %}">
+        {{ displayRating }}&#9733;
     </span>
 {% endmacro %}
 
 {#
  # Star badge for list pages
  #
- # @param int rating      Star rating (1-5)
+ # @param float rating    Star rating (0.5-5, supports half stars)
  # @param float score     Score percentage (0-100)
  # @param bool isCompliant Whether the device is compliant
  #}
 {% macro starsBadge(rating, score, isCompliant) %}
     {% set isCompliant = isCompliant|default(true) %}
-    <span class="badge badge-rating badge-rating-{{ rating }}{% if not isCompliant %} badge-rating-noncompliant{% endif %}"
+    {% set displayRating = (rating * 2)|round(0) / 2 %}
+    {% set ratingClass = (rating * 10)|round(0) %}
+    <span class="badge badge-rating badge-rating-{{ ratingClass }}{% if not isCompliant %} badge-rating-noncompliant{% endif %}"
           title="{{ score|round(1) }}% - {% if isCompliant %}Compliant{% else %}Missing required clusters{% endif %}">
-        {{ rating }}&#9733;
+        {{ displayRating }}&#9733;
         {% if not isCompliant %}
             <span class="compliance-warning" title="Missing required clusters">!</span>
         {% endif %}

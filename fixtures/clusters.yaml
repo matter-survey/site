@@ -9143,3 +9143,150 @@
         -
           name: Node
           type: node_id
+-
+  id: 74
+  name: 'Laundry Dryer Controls'
+  description: 'Provides control over laundry dryer settings such as dryness level and time.'
+  specVersion: '1.3'
+  category: appliances
+  isGlobal: false
+-
+  id: 82
+  name: 'Refrigerator And Temperature Controlled Cabinet Mode'
+  description: 'Manages operating modes for refrigerators and temperature-controlled cabinets.'
+  specVersion: '1.2'
+  category: appliances
+  isGlobal: false
+-
+  id: 85
+  name: 'RVC Clean Mode'
+  description: 'Controls cleaning modes for robotic vacuum cleaners.'
+  specVersion: '1.2'
+  category: appliances
+  isGlobal: false
+-
+  id: 86
+  name: 'Temperature Control'
+  description: 'Provides temperature control functionality for appliances that heat or cool.'
+  specVersion: '1.2'
+  category: hvac
+  isGlobal: false
+-
+  id: 97
+  name: 'RVC Operational State'
+  description: 'Reports operational state and errors for robotic vacuum cleaners.'
+  specVersion: '1.2'
+  category: appliances
+  isGlobal: false
+-
+  id: 113
+  name: 'HEPA Filter Monitoring'
+  description: 'Monitors the condition and replacement needs of HEPA filters in air purifiers.'
+  specVersion: '1.2'
+  category: hvac
+  isGlobal: false
+-
+  id: 114
+  name: 'Activated Carbon Filter Monitoring'
+  description: 'Monitors the condition and replacement needs of activated carbon filters.'
+  specVersion: '1.2'
+  category: hvac
+  isGlobal: false
+-
+  id: 129
+  name: 'Valve Configuration and Control'
+  description: 'Controls valves for water, gas, or other fluid management applications.'
+  specVersion: '1.3'
+  category: hvac
+  isGlobal: false
+-
+  id: 155
+  name: 'Energy Preference'
+  description: 'Allows users to configure energy usage preferences for devices.'
+  specVersion: '1.4'
+  category: energy
+  isGlobal: false
+-
+  id: 158
+  name: 'Water Heater Mode'
+  description: 'Controls operating modes for water heaters.'
+  specVersion: '1.4'
+  category: appliances
+  isGlobal: false
+-
+  id: 336
+  name: 'Service Area'
+  description: 'Defines and manages service areas for robotic devices like vacuum cleaners.'
+  specVersion: '1.4'
+  category: appliances
+  isGlobal: false
+-
+  id: 1036
+  name: 'Carbon Monoxide Concentration Measurement'
+  description: 'Measures and reports carbon monoxide concentration levels in the air.'
+  specVersion: '1.2'
+  category: sensors
+  isGlobal: false
+-
+  id: 1105
+  name: 'Wi-Fi Network Management'
+  description: 'Provides management capabilities for Wi-Fi networks in Matter deployments.'
+  specVersion: '1.4'
+  category: network
+  isGlobal: false
+-
+  id: 1106
+  name: 'Thread Border Router Management'
+  description: 'Manages Thread border router configuration and status.'
+  specVersion: '1.4'
+  category: network
+  isGlobal: false
+-
+  id: 1107
+  name: 'Thread Network Directory'
+  description: 'Provides directory services for Thread network devices.'
+  specVersion: '1.4'
+  category: network
+  isGlobal: false
+-
+  id: 1295
+  name: 'Content Control'
+  description: 'Manages content access controls and parental restrictions on media devices.'
+  specVersion: '1.0'
+  category: media
+  isGlobal: false
+-
+  id: 1296
+  name: 'Content App Observer'
+  description: 'Observes and reports on content application states for casting clients.'
+  specVersion: '1.0'
+  category: media
+  isGlobal: false
+-
+  id: 1872
+  name: 'Ecosystem Information'
+  description: 'Provides information about the ecosystem a bridged device belongs to.'
+  specVersion: '1.4'
+  category: utility
+  isGlobal: false
+-
+  id: 1873
+  name: 'Commissioner Control'
+  description: 'Enables control over commissioning operations for aggregator devices.'
+  specVersion: '1.4'
+  category: utility
+  isGlobal: false
+-
+  id: 1874
+  name: 'Joint Fabric Datastore'
+  description: 'Manages the datastore for joint fabric administration.'
+  specVersion: '1.4'
+  category: utility
+  isGlobal: false
+-
+  id: 1875
+  name: 'Joint Fabric PKI'
+  description: 'Handles PKI operations for joint fabric administration.'
+  specVersion: '1.4'
+  category: utility
+  isGlobal: false
