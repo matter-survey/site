@@ -1,0 +1,85 @@
+{#
+    Capabilities Component
+    Displays human-friendly device capabilities in a visual grid layout.
+
+    Parameters:
+    - capabilities: The capabilities analysis result from CapabilityService
+    - deviceScore: The device score (for star rating display)
+#}
+
+{% if capabilities and capabilities.byCategory|length > 0 %}
+<div class="capabilities-section">
+    <div class="capabilities-header">
+        <div class="capabilities-title">
+            <h3>What This Device Can Do</h3>
+            {% if capabilities.deviceCategory %}
+                <span class="device-category-badge">{{ capabilities.deviceCategory|capitalize }}</span>
+            {% endif %}
+        </div>
+        <div class="capabilities-summary">
+            {% if deviceScore and deviceScore.starRating is defined %}
+                <span class="capabilities-rating">
+                    {% for i in 1..5 %}
+                        {% if i <= deviceScore.starRating|round(0, 'floor') %}
+                            <span class="star-filled">&#9733;</span>
+                        {% elseif i - 0.5 <= deviceScore.starRating %}
+                            <span class="star-half"><span class="star-half-filled">&#9733;</span><span class="star-half-empty">&#9733;</span></span>
+                        {% else %}
+                            <span class="star-empty">&#9734;</span>
+                        {% endif %}
+                    {% endfor %}
+                </span>
+            {% endif %}
+            <span class="capabilities-percentage">{{ capabilities.summary.percentage }}% of features</span>
+        </div>
+    </div>
+
+    <div class="capabilities-grid">
+        {% for catKey, category in capabilities.byCategory %}
+            {% if category.supported|length > 0 or category.unsupported|length > 0 %}
+                <div class="capability-category">
+                    <h4 class="category-label">{{ category.label }}</h4>
+                    <div class="capability-cards">
+                        {# Supported capabilities #}
+                        {% for cap in category.supported %}
+                            <div class="capability-card capability-supported" title="{{ cap.description }}">
+                                <span class="capability-emoji">{{ cap.emoji }}</span>
+                                <span class="capability-label">{{ cap.label }}</span>
+                                <span class="capability-status">&#10003;</span>
+                            </div>
+                        {% endfor %}
+
+                        {# Unsupported capabilities #}
+                        {% for cap in category.unsupported %}
+                            <div class="capability-card capability-unsupported" title="{{ cap.description }} (not available)">
+                                <span class="capability-emoji">{{ cap.emoji }}</span>
+                                <span class="capability-label">{{ cap.label }}</span>
+                                <span class="capability-status">&#10005;</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    {% if capabilities.standouts|length > 0 or capabilities.missing|length > 0 %}
+        <div class="capabilities-callouts">
+            {% if capabilities.standouts|length > 0 %}
+                <div class="callout callout-standout">
+                    <span class="callout-icon">&#10024;</span>
+                    <span class="callout-label">Standout:</span>
+                    <span class="callout-text">{{ capabilities.standouts|join(', ') }}</span>
+                </div>
+            {% endif %}
+            {% if capabilities.missing|length > 0 %}
+                <div class="callout callout-missing">
+                    <span class="callout-icon">&#9888;</span>
+                    <span class="callout-label">Not available:</span>
+                    <span class="callout-text">{{ capabilities.missing|join(', ') }}</span>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endif %}

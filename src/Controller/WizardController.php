@@ -135,10 +135,14 @@ class WizardController extends AbstractController
      */
     private function buildWizardState(Request $request): array
     {
+        // Handle min_rating - getInt() throws on empty string, so check first
+        $minRatingParam = $request->query->get('min_rating');
+        $minRating = ('' !== $minRatingParam && null !== $minRatingParam) ? (int) $minRatingParam : 0;
+
         return [
             'category' => $request->query->getString('category', ''),
             'connectivity' => $request->query->all('connectivity'),
-            'min_rating' => $request->query->getInt('min_rating', 0),
+            'min_rating' => $minRating,
             'binding' => $request->query->get('binding'),
             'owned' => array_filter(array_map('intval', $request->query->all('owned'))),
         ];

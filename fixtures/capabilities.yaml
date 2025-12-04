@@ -1,0 +1,576 @@
+# Human-Friendly Capability Definitions
+# Maps Matter clusters to user-understandable features
+# Used to generate the "What This Device Can Do" section
+
+# Categories for grouping capabilities in the UI
+categories:
+  controls: "Controls"
+  sensors: "Sensors"
+  automation: "Automation & Scenes"
+  monitoring: "Info & Monitoring"
+  comfort: "Comfort & Climate"
+  security: "Security"
+  media: "Media & Entertainment"
+
+# Capability definitions
+# Each capability maps to one or more clusters (and optionally specific features)
+capabilities:
+
+  # ============================================
+  # CONTROLS - Things users can actively control
+  # ============================================
+
+  on_off:
+    label: "On/Off control"
+    icon: "toggle"
+    emoji: "💡"
+    category: controls
+    description: "Turn the device on or off"
+    clusters:
+      - id: 6  # On/Off cluster
+        role: server
+
+  dimming:
+    label: "Brightness dimming"
+    icon: "slider"
+    emoji: "🔆"
+    category: controls
+    description: "Adjust brightness level from 0-100%"
+    clusters:
+      - id: 8  # Level Control cluster
+        role: server
+
+  color_temperature:
+    label: "Color temperature"
+    icon: "thermometer"
+    emoji: "🎨"
+    category: controls
+    description: "Adjust from warm (2700K) to cool (6500K) white"
+    clusters:
+      - id: 768  # Color Control cluster
+        role: server
+        features: ["CT"]  # Color Temperature feature
+
+  full_color:
+    label: "Full color (RGB)"
+    icon: "palette"
+    emoji: "🌈"
+    category: controls
+    description: "Set any color using hue and saturation"
+    clusters:
+      - id: 768  # Color Control cluster
+        role: server
+        features: ["HS", "EHUE", "XY"]  # Any of these = full color
+
+  fan_speed:
+    label: "Fan speed control"
+    icon: "fan"
+    emoji: "🌀"
+    category: controls
+    description: "Adjust fan speed"
+    clusters:
+      - id: 514  # Fan Control cluster
+        role: server
+
+  window_covering:
+    label: "Blinds/shades control"
+    icon: "blinds"
+    emoji: "🪟"
+    category: controls
+    description: "Open, close, or position window coverings"
+    clusters:
+      - id: 258  # Window Covering cluster
+        role: server
+
+  lock_control:
+    label: "Lock/unlock"
+    icon: "lock"
+    emoji: "🔒"
+    category: controls
+    description: "Lock or unlock the door"
+    clusters:
+      - id: 257  # Door Lock cluster
+        role: server
+
+  thermostat_control:
+    label: "Temperature setpoint"
+    icon: "thermometer"
+    emoji: "🌡️"
+    category: controls
+    description: "Set target temperature"
+    clusters:
+      - id: 513  # Thermostat cluster
+        role: server
+
+  pump_control:
+    label: "Pump control"
+    icon: "water"
+    emoji: "💧"
+    category: controls
+    description: "Control pump operation"
+    clusters:
+      - id: 512  # Pump Configuration and Control
+        role: server
+
+  valve_control:
+    label: "Valve control"
+    icon: "faucet"
+    emoji: "🚰"
+    category: controls
+    description: "Open or close a valve"
+    clusters:
+      - id: 129  # Valve Configuration and Control
+        role: server
+
+  # ============================================
+  # SENSORS - Things the device can detect
+  # ============================================
+
+  temperature_sensing:
+    label: "Temperature sensor"
+    icon: "thermometer"
+    emoji: "🌡️"
+    category: sensors
+    description: "Measures ambient temperature"
+    clusters:
+      - id: 1026  # Temperature Measurement
+        role: server
+
+  humidity_sensing:
+    label: "Humidity sensor"
+    icon: "droplet"
+    emoji: "💧"
+    category: sensors
+    description: "Measures relative humidity"
+    clusters:
+      - id: 1029  # Relative Humidity Measurement
+        role: server
+
+  occupancy_sensing:
+    label: "Occupancy/motion sensor"
+    icon: "motion"
+    emoji: "👁️"
+    category: sensors
+    description: "Detects presence or motion"
+    clusters:
+      - id: 1030  # Occupancy Sensing
+        role: server
+
+  illuminance_sensing:
+    label: "Light level sensor"
+    icon: "sun"
+    emoji: "☀️"
+    category: sensors
+    description: "Measures ambient light level"
+    clusters:
+      - id: 1024  # Illuminance Measurement
+        role: server
+
+  contact_sensing:
+    label: "Open/close sensor"
+    icon: "door"
+    emoji: "🚪"
+    category: sensors
+    description: "Detects if door/window is open or closed"
+    clusters:
+      - id: 69  # Boolean State
+        role: server
+
+  pressure_sensing:
+    label: "Pressure sensor"
+    icon: "gauge"
+    emoji: "📊"
+    category: sensors
+    description: "Measures atmospheric pressure"
+    clusters:
+      - id: 1027  # Pressure Measurement
+        role: server
+
+  flow_sensing:
+    label: "Flow sensor"
+    icon: "water"
+    emoji: "🌊"
+    category: sensors
+    description: "Measures liquid or gas flow rate"
+    clusters:
+      - id: 1028  # Flow Measurement
+        role: server
+
+  air_quality_sensing:
+    label: "Air quality sensor"
+    icon: "leaf"
+    emoji: "🌿"
+    category: sensors
+    description: "Measures air quality metrics"
+    clusters:
+      - id: 91  # Air Quality
+        role: server
+
+  smoke_detection:
+    label: "Smoke detector"
+    icon: "alert"
+    emoji: "🔥"
+    category: sensors
+    description: "Detects smoke"
+    clusters:
+      - id: 92  # Smoke CO Alarm
+        role: server
+
+  co_detection:
+    label: "Carbon monoxide detector"
+    icon: "alert"
+    emoji: "⚠️"
+    category: sensors
+    description: "Detects carbon monoxide"
+    clusters:
+      - id: 92  # Smoke CO Alarm (also handles CO)
+        role: server
+
+  # ============================================
+  # AUTOMATION & SCENES
+  # ============================================
+
+  scenes:
+    label: "Scenes & presets"
+    icon: "scenes"
+    emoji: "🎬"
+    category: automation
+    description: "Save and recall device presets"
+    clusters:
+      - id: 98   # Scenes Management (new)
+        role: server
+      - id: 5    # Scenes (legacy)
+        role: server
+
+  groups:
+    label: "Group control"
+    icon: "group"
+    emoji: "👥"
+    category: automation
+    description: "Control multiple devices together"
+    clusters:
+      - id: 4  # Groups cluster
+        role: server
+
+  binding:
+    label: "Device-to-device control"
+    icon: "link"
+    emoji: "🔗"
+    category: automation
+    description: "Directly control other devices without a hub"
+    clusters:
+      - id: 30  # Binding cluster
+        role: server
+
+  actions:
+    label: "Automation actions"
+    icon: "play"
+    emoji: "▶️"
+    category: automation
+    description: "Trigger automated actions"
+    clusters:
+      - id: 37  # Actions cluster
+        role: server
+
+  mode_select:
+    label: "Operating modes"
+    icon: "sliders"
+    emoji: "🎚️"
+    category: automation
+    description: "Select between different operating modes"
+    clusters:
+      - id: 80  # Mode Select
+        role: server
+
+  scheduling:
+    label: "Scheduling"
+    icon: "clock"
+    emoji: "⏰"
+    category: automation
+    description: "Set time-based schedules"
+    clusters:
+      - id: 56  # Time Synchronization (prerequisite for schedules)
+        role: server
+
+  occupancy_response:
+    label: "Responds to occupancy"
+    icon: "motion"
+    emoji: "👁️"
+    category: automation
+    description: "Can react to presence sensors"
+    clusters:
+      - id: 1030  # Occupancy Sensing
+        role: client  # Client = can receive occupancy data
+
+  # ============================================
+  # INFO & MONITORING
+  # ============================================
+
+  energy_monitoring:
+    label: "Energy monitoring"
+    icon: "bolt"
+    emoji: "⚡"
+    category: monitoring
+    description: "Track power consumption"
+    clusters:
+      - id: 144  # Electrical Power Measurement
+        role: server
+      - id: 145  # Electrical Energy Measurement
+        role: server
+
+  battery_status:
+    label: "Battery status"
+    icon: "battery"
+    emoji: "🔋"
+    category: monitoring
+    description: "Shows battery level and status"
+    clusters:
+      - id: 47  # Power Source
+        role: server
+
+  diagnostics:
+    label: "Device diagnostics"
+    icon: "info"
+    emoji: "📊"
+    category: monitoring
+    description: "Health and diagnostic information"
+    clusters:
+      - id: 51  # General Diagnostics
+        role: server
+
+  ota_updates:
+    label: "Firmware updates"
+    icon: "download"
+    emoji: "⬇️"
+    category: monitoring
+    description: "Can receive over-the-air updates"
+    clusters:
+      - id: 42  # OTA Software Update Requestor
+        role: server
+
+  # ============================================
+  # COMFORT & CLIMATE
+  # ============================================
+
+  heating:
+    label: "Heating"
+    icon: "fire"
+    emoji: "🔥"
+    category: comfort
+    description: "Can heat the space"
+    clusters:
+      - id: 513  # Thermostat
+        role: server
+        features: ["HEAT"]
+
+  cooling:
+    label: "Cooling"
+    icon: "snowflake"
+    emoji: "❄️"
+    category: comfort
+    description: "Can cool the space"
+    clusters:
+      - id: 513  # Thermostat
+        role: server
+        features: ["COOL"]
+
+  humidity_control:
+    label: "Humidity control"
+    icon: "droplet"
+    emoji: "💧"
+    category: comfort
+    description: "Can control humidity levels"
+    clusters:
+      - id: 514  # Fan Control with humidity feature
+        role: server
+
+  air_purification:
+    label: "Air purification"
+    icon: "leaf"
+    emoji: "🌿"
+    category: comfort
+    description: "Filters and cleans air"
+    clusters:
+      - id: 113  # HEPA Filter Monitoring
+        role: server
+      - id: 114  # Activated Carbon Filter Monitoring
+        role: server
+
+  # ============================================
+  # SECURITY
+  # ============================================
+
+  pin_codes:
+    label: "PIN code access"
+    icon: "keypad"
+    emoji: "🔢"
+    category: security
+    description: "Unlock with PIN codes"
+    clusters:
+      - id: 257  # Door Lock
+        role: server
+        features: ["PIN"]
+
+  rfid_access:
+    label: "RFID/card access"
+    icon: "card"
+    emoji: "💳"
+    category: security
+    description: "Unlock with RFID cards or fobs"
+    clusters:
+      - id: 257  # Door Lock
+        role: server
+        features: ["RID"]
+
+  user_management:
+    label: "User management"
+    icon: "users"
+    emoji: "👤"
+    category: security
+    description: "Manage multiple users and access"
+    clusters:
+      - id: 257  # Door Lock
+        role: server
+        features: ["USR"]
+
+  alarm:
+    label: "Alarm/siren"
+    icon: "bell"
+    emoji: "🔔"
+    category: security
+    description: "Can sound an alarm"
+    clusters:
+      - id: 1282  # IAS WD (Warning Device)
+        role: server
+
+  # ============================================
+  # MEDIA & ENTERTAINMENT
+  # ============================================
+
+  media_playback:
+    label: "Media playback"
+    icon: "play"
+    emoji: "▶️"
+    category: media
+    description: "Play, pause, and control media"
+    clusters:
+      - id: 1286  # Media Playback
+        role: server
+
+  volume_control:
+    label: "Volume control"
+    icon: "volume"
+    emoji: "🔊"
+    category: media
+    description: "Adjust audio volume"
+    clusters:
+      - id: 1092  # Audio Output
+        role: server
+
+  channel_control:
+    label: "Channel selection"
+    icon: "tv"
+    emoji: "📺"
+    category: media
+    description: "Change TV channels"
+    clusters:
+      - id: 1284  # Channel
+        role: server
+
+  input_selection:
+    label: "Input selection"
+    icon: "input"
+    emoji: "🔌"
+    category: media
+    description: "Switch between input sources"
+    clusters:
+      - id: 1287  # Media Input
+        role: server
+
+  casting:
+    label: "Casting/streaming"
+    icon: "cast"
+    emoji: "📲"
+    category: media
+    description: "Receive streamed content"
+    clusters:
+      - id: 1289  # Content Launcher
+        role: server
+
+# Device type to relevant capabilities mapping
+# Defines which capabilities are relevant for each device type category
+# (used to show "N/A" vs "Not supported" - e.g., don't show RGB for a thermostat)
+device_type_relevant_capabilities:
+  lighting:
+    - on_off
+    - dimming
+    - color_temperature
+    - full_color
+    - scenes
+    - groups
+    - binding
+    - occupancy_response
+    - energy_monitoring
+
+  plugs:
+    - on_off
+    - dimming
+    - scenes
+    - groups
+    - energy_monitoring
+
+  switches:
+    - on_off
+    - dimming
+    - scenes
+    - groups
+    - binding
+    - battery_status
+
+  sensors:
+    - temperature_sensing
+    - humidity_sensing
+    - occupancy_sensing
+    - illuminance_sensing
+    - contact_sensing
+    - pressure_sensing
+    - air_quality_sensing
+    - battery_status
+
+  climate:
+    - thermostat_control
+    - heating
+    - cooling
+    - fan_speed
+    - humidity_control
+    - temperature_sensing
+    - humidity_sensing
+    - scheduling
+    - scenes
+
+  locks:
+    - lock_control
+    - pin_codes
+    - rfid_access
+    - user_management
+    - battery_status
+    - diagnostics
+
+  window_coverings:
+    - window_covering
+    - scenes
+    - groups
+    - scheduling
+
+  media:
+    - media_playback
+    - volume_control
+    - channel_control
+    - input_selection
+    - casting
+
+  safety:
+    - smoke_detection
+    - co_detection
+    - alarm
+    - battery_status

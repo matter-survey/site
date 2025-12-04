@@ -139,4 +139,51 @@ class WizardControllerTest extends WebTestCase
         // Second step should be active
         $this->assertSelectorExists('.wizard-step.active');
     }
+
+    public function testStep2FormSubmissionWithConnectivity(): void
+    {
+        $client = static::createClient();
+
+        // Load step 2
+        $crawler = $client->request('GET', '/wizard?step=2&category=Climate');
+        $this->assertResponseIsSuccessful();
+
+        // Submit the form by navigating directly (simulating form submission)
+        $client->request('GET', '/wizard?step=3&category=Climate&connectivity[]=thread&min_rating=&binding=');
+
+        // Should navigate to step 3 successfully
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorExists('.device-search-container');
+    }
+
+    public function testStep3LoadsWithConnectivityParameter(): void
+    {
+        $client = static::createClient();
+
+        // Navigate to step 3 with connectivity parameter - should not error
+        $crawler = $client->request('GET', '/wizard?step=3&category=Climate&connectivity[]=thread');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorExists('.device-search-container');
+    }
+
+    public function testStep2WithEmptyMinRating(): void
+    {
+        $client = static::createClient();
+
+        // Empty min_rating parameter should not cause Bad Request
+        $client->request('GET', '/wizard?step=2&category=Climate&min_rating=');
+
+        $this->assertResponseIsSuccessful();
+    }
+
+    public function testStep3WithAllEmptyOptionalParams(): void
+    {
+        $client = static::createClient();
+
+        // All optional params empty should not cause Bad Request
+        $client->request('GET', '/wizard?step=3&category=Climate&connectivity[]=&min_rating=&binding=');
+
+        $this->assertResponseIsSuccessful();
+    }
 }

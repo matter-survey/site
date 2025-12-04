@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Repository\DeviceRepository;
 use App\Repository\ProductRepository;
+use App\Service\CapabilityService;
 use App\Service\DeviceScoreService;
 use App\Service\MatterRegistry;
 use App\Service\TelemetryService;
@@ -23,6 +24,7 @@ class DeviceController extends AbstractController
         private TelemetryService $telemetryService,
         private MatterRegistry $matterRegistry,
         private DeviceScoreService $deviceScoreService,
+        private CapabilityService $capabilityService,
     ) {
     }
 
@@ -236,6 +238,11 @@ class DeviceController extends AbstractController
             !empty($latestEndpoints) ? $latestEndpoints : $endpoints
         );
 
+        // Analyze human-friendly capabilities (based on latest version)
+        $capabilities = $this->capabilityService->analyzeCapabilities(
+            !empty($latestEndpoints) ? $latestEndpoints : $endpoints
+        );
+
         return $this->render('device/show.html.twig', [
             'device' => $device,
             'product' => $product,
@@ -248,6 +255,7 @@ class DeviceController extends AbstractController
             'clusterGapAnalysis' => $clusterGapAnalysis,
             'matterRegistry' => $this->matterRegistry,
             'deviceScore' => $deviceScore,
+            'capabilities' => $capabilities,
         ]);
     }
 
