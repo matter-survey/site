@@ -139,9 +139,18 @@ class WizardController extends AbstractController
         $minRatingParam = $request->query->get('min_rating');
         $minRating = ('' !== $minRatingParam && null !== $minRatingParam) ? (int) $minRatingParam : 0;
 
+        // Validate capabilities against known keys
+        $capabilities = $request->query->all('capabilities');
+        $validCapabilityKeys = array_keys(DeviceRepository::CAPABILITY_FILTERS);
+        $validCapabilities = array_values(array_filter(
+            $capabilities,
+            fn ($v) => \in_array($v, $validCapabilityKeys, true)
+        ));
+
         return [
             'category' => $request->query->getString('category', ''),
             'connectivity' => $request->query->all('connectivity'),
+            'capabilities' => $validCapabilities,
             'min_rating' => $minRating,
             'binding' => $request->query->get('binding'),
             'owned' => array_filter(array_map('intval', $request->query->all('owned'))),
@@ -202,6 +211,7 @@ class WizardController extends AbstractController
             'connectivityOptions' => $this->deviceRepo->getConnectivityFacets(),
             'ratingOptions' => $this->deviceRepo->getStarRatingFacets(),
             'bindingOptions' => $this->deviceRepo->getBindingFacets(),
+            'capabilityOptions' => $this->deviceRepo->getCapabilityFacets(),
         ];
     }
 
@@ -246,6 +256,11 @@ class WizardController extends AbstractController
         // Pass through connectivity filter
         if (!empty($state['connectivity'])) {
             $filters['connectivity'] = $state['connectivity'];
+        }
+
+        // Pass through capabilities filter
+        if (!empty($state['capabilities'])) {
+            $filters['capabilities'] = $state['capabilities'];
         }
 
         // Pass through rating filter

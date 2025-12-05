@@ -20,6 +20,9 @@ wizard:
         connectivity:
             title: "Verbindungstyp"
             description: "Wähle deine bevorzugten Verbindungsarten"
+        capabilities:
+            title: "Gerätefunktionen"
+            description: "Wähle die Funktionen, die du benötigst"
         rating:
             title: "Mindest-Qualitätsbewertung"
             description: "Zeige nur Geräte mit dieser Bewertung oder höher"
@@ -51,3 +54,13 @@ wizard:
         thread: "Thread"
         wifi: "WLAN"
         ethernet: "Ethernet"
+
+    capability:
+        dimming: "Helligkeitsregelung"
+        full_color: "Volle Farben (RGB)"
+        color_temperature: "Farbtemperatur"
+        motion_detection: "Bewegungserkennung"
+        temperature_sensing: "Temperatursensor"
+        energy_monitoring: "Energieüberwachung"
+        battery_powered: "Batteriebetrieben"
+        window_covering: "Jalousien/Rollos"

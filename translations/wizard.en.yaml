@@ -20,6 +20,9 @@ wizard:
         connectivity:
             title: "Connectivity Type"
             description: "Select your preferred connection types"
+        capabilities:
+            title: "Device Capabilities"
+            description: "Select the features you need"
         rating:
             title: "Minimum Quality Rating"
             description: "Only show devices with this rating or higher"
@@ -51,3 +54,13 @@ wizard:
         thread: "Thread"
         wifi: "WiFi"
         ethernet: "Ethernet"
+
+    capability:
+        dimming: "Brightness Dimming"
+        full_color: "Full Color (RGB)"
+        color_temperature: "Color Temperature"
+        motion_detection: "Motion Detection"
+        temperature_sensing: "Temperature Sensor"
+        energy_monitoring: "Energy Monitoring"
+        battery_powered: "Battery Powered"
+        window_covering: "Blinds/Shades"

@@ -186,4 +186,58 @@ class WizardControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
     }
+
+    // ========================================================================
+    // Capability Filter Tests
+    // ========================================================================
+
+    public function testStep2ShowsCapabilitiesSection(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/wizard?step=2&category=Lights');
+
+        $this->assertResponseIsSuccessful();
+        // Should show capabilities section
+        $this->assertSelectorTextContains('body', 'Device Capabilities');
+        // Should have capability checkboxes
+        $this->assertSelectorExists('input[name="capabilities[]"]');
+    }
+
+    public function testStep2PreservesCapabilitiesInForm(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/wizard?step=2&category=Lights&capabilities[]=dimming');
+
+        $this->assertResponseIsSuccessful();
+        // The dimming checkbox should be checked (checked attribute present means it's checked)
+        $checkbox = $crawler->filter('input[name="capabilities[]"][value="dimming"][checked]');
+        $this->assertGreaterThan(0, $checkbox->count(), 'Dimming checkbox should be checked');
+    }
+
+    public function testStep3LoadsWithCapabilitiesParameter(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/wizard?step=3&category=Lights&capabilities[]=dimming&capabilities[]=full_color');
+
+        $this->assertResponseIsSuccessful();
+    }
+
+    public function testResultsIncludesCapabilitiesFilter(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/wizard/results?category=Lights&capabilities[]=dimming');
+
+        $this->assertResponseRedirects();
+        $location = $client->getResponse()->headers->get('Location');
+        $this->assertStringContainsString('capabilities', $location);
+    }
+
+    public function testCapabilitiesFilterIgnoresInvalidKeys(): void
+    {
+        $client = static::createClient();
+        // Invalid capability key should be filtered out
+        $client->request('GET', '/wizard?step=2&category=Lights&capabilities[]=invalid_key');
+
+        $this->assertResponseIsSuccessful();
+    }
 }

@@ -22,6 +22,22 @@
     </div>
 
     <div class="feature-section">
+        <h3>{{ 'wizard.step2.capabilities.title'|trans({}, 'wizard') }}</h3>
+        <p>{{ 'wizard.step2.capabilities.description'|trans({}, 'wizard') }}</p>
+        <div class="feature-options feature-options-grid">
+            {% for cap in stepData.capabilityOptions %}
+                {% if cap.count > 0 %}
+                    <label class="feature-option">
+                        <input type="checkbox" name="capabilities[]" value="{{ cap.key }}"
+                               {{ cap.key in wizardState.capabilities ? 'checked' : '' }}>
+                        {{ ('wizard.capability.' ~ cap.key)|trans({}, 'wizard') }} ({{ cap.count }})
+                    </label>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="feature-section">
         <h3>{{ 'wizard.step2.rating.title'|trans({}, 'wizard') }}</h3>
         <p>{{ 'wizard.step2.rating.description'|trans({}, 'wizard') }}</p>
         <div class="feature-options">
