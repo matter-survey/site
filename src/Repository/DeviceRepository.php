@@ -514,7 +514,8 @@ class DeviceRepository
     public function getDeviceEndpointsByVersion(int $deviceId, ?string $hardwareVersion, ?string $softwareVersion): array
     {
         $rows = $this->db->executeQuery('
-            SELECT endpoint_id, hardware_version, software_version, device_types, server_clusters, client_clusters, first_seen, last_seen, submission_count
+            SELECT endpoint_id, hardware_version, software_version, device_types, server_clusters, client_clusters,
+                   server_cluster_details, client_cluster_details, first_seen, last_seen, submission_count
             FROM product_endpoints
             WHERE device_id = :device_id
               AND (hardware_version = :hardware_version OR (hardware_version IS NULL AND :hardware_version IS NULL))
@@ -531,6 +532,8 @@ class DeviceRepository
             $row['device_types'] = json_decode($row['device_types'], true) ?? [];
             $row['server_clusters'] = json_decode($row['server_clusters'], true) ?? [];
             $row['client_clusters'] = json_decode($row['client_clusters'], true) ?? [];
+            $row['server_cluster_details'] = json_decode($row['server_cluster_details'] ?? 'null', true);
+            $row['client_cluster_details'] = json_decode($row['client_cluster_details'] ?? 'null', true);
             $row['has_binding_cluster'] = \in_array(self::BINDING_CLUSTER_ID, $row['server_clusters'], true)
                 || \in_array(self::BINDING_CLUSTER_ID, $row['client_clusters'], true);
             $endpoints[] = $row;
