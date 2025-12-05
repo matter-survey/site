@@ -1,7 +1,7 @@
 # Matter Cluster Definitions
 # Based on Matter 1.4 Specification
 # Attributes, commands, and features synced from connectedhomeip ZAP XML files
-# Last ZAP sync: 2025-12-04 06:42:06
+# Last ZAP sync: 2025-12-05 06:39:17
 
 -
   id: 3
@@ -9150,6 +9150,19 @@
   specVersion: '1.3'
   category: appliances
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: SupportedDrynessLevels
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: SelectedDrynessLevel
+      type: DrynessLevelEnum
+      writable: true
+      optional: false
 -
   id: 82
   name: 'Refrigerator And Temperature Controlled Cabinet Mode'
@@ -9157,6 +9170,41 @@
   specVersion: '1.2'
   category: appliances
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: SupportedModes
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: CurrentMode
+      type: int8u
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: ChangeToMode
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: NewMode
+          type: int8u
+    -
+      code: 1
+      name: ChangeToModeResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: Status
+          type: enum8
+        -
+          name: StatusText
+          type: char_string
 -
   id: 85
   name: 'RVC Clean Mode'
@@ -9164,6 +9212,47 @@
   specVersion: '1.2'
   category: appliances
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: SupportedModes
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: CurrentMode
+      type: int8u
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: ChangeToMode
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: NewMode
+          type: int8u
+    -
+      code: 1
+      name: ChangeToModeResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: Status
+          type: enum8
+        -
+          name: StatusText
+          type: char_string
+  features:
+    -
+      bit: 20
+      code: DIRECTMODECH
+      name: DirectModeChange
+      summary: 'Cluster supports changing clean modes from non-Idle states'
 -
   id: 86
   name: 'Temperature Control'
@@ -9171,6 +9260,72 @@
   specVersion: '1.2'
   category: hvac
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: TemperatureSetpoint
+      type: temperature
+      writable: false
+      optional: true
+    -
+      code: 1
+      name: MinTemperature
+      type: temperature
+      writable: false
+      optional: true
+    -
+      code: 2
+      name: MaxTemperature
+      type: temperature
+      writable: false
+      optional: true
+    -
+      code: 3
+      name: Step
+      type: temperature
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: SelectedTemperatureLevel
+      type: int8u
+      writable: false
+      optional: true
+    -
+      code: 5
+      name: SupportedTemperatureLevels
+      type: array
+      writable: false
+      optional: true
+  commands:
+    -
+      code: 0
+      name: SetTemperature
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: TargetTemperature
+          type: temperature
+        -
+          name: TargetTemperatureLevel
+          type: int8u
+  features:
+    -
+      bit: 0
+      code: TN
+      name: TemperatureNumber
+      summary: 'Use actual temperature numbers'
+    -
+      bit: 1
+      code: TL
+      name: TemperatureLevel
+      summary: 'Use temperature levels'
+    -
+      bit: 2
+      code: STEP
+      name: TemperatureStep
+      summary: 'Use step control with temperature numbers'
 -
   id: 97
   name: 'RVC Operational State'
@@ -9178,6 +9333,71 @@
   specVersion: '1.2'
   category: appliances
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: PhaseList
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: CurrentPhase
+      type: int8u
+      writable: false
+      optional: false
+    -
+      code: 2
+      name: CountdownTime
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 3
+      name: OperationalStateList
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 4
+      name: OperationalState
+      type: enum8
+      writable: false
+      optional: false
+    -
+      code: 5
+      name: OperationalError
+      type: ErrorStateStruct
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: Pause
+      direction: client→server
+      optional: true
+      parameters: {  }
+    -
+      code: 3
+      name: Resume
+      direction: client→server
+      optional: true
+      parameters: {  }
+    -
+      code: 4
+      name: OperationalCommandResponse
+      direction: server→client
+      optional: true
+      parameters:
+        -
+          name: CommandResponseState
+          type: ErrorStateStruct
+    -
+      code: 128
+      name: GoHome
+      direction: client→server
+      optional: true
+      parameters: {  }
 -
   id: 113
   name: 'HEPA Filter Monitoring'
@@ -9185,6 +9405,66 @@
   specVersion: '1.2'
   category: hvac
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: Condition
+      type: percent
+      writable: false
+      optional: true
+    -
+      code: 1
+      name: DegradationDirection
+      type: DegradationDirectionEnum
+      writable: false
+      optional: true
+    -
+      code: 2
+      name: ChangeIndication
+      type: ChangeIndicationEnum
+      writable: false
+      optional: false
+    -
+      code: 3
+      name: InPlaceIndicator
+      type: boolean
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: LastChangedTime
+      type: epoch_s
+      writable: true
+      optional: true
+    -
+      code: 5
+      name: ReplacementProductList
+      type: array
+      writable: false
+      optional: true
+  commands:
+    -
+      code: 0
+      name: ResetCondition
+      direction: client→server
+      optional: true
+      parameters: {  }
+  features:
+    -
+      bit: 0
+      code: CON
+      name: Condition
+      summary: 'Supports monitoring the condition of the resource in percentage'
+    -
+      bit: 1
+      code: WRN
+      name: Warning
+      summary: 'Supports warning indication'
+    -
+      bit: 2
+      code: REP
+      name: ReplacementProductList
+      summary: 'Supports specifying the list of replacement products'
 -
   id: 114
   name: 'Activated Carbon Filter Monitoring'
@@ -9199,6 +9479,103 @@
   specVersion: '1.3'
   category: hvac
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: OpenDuration
+      type: elapsed_s
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: DefaultOpenDuration
+      type: elapsed_s
+      writable: true
+      optional: false
+    -
+      code: 2
+      name: AutoCloseTime
+      type: epoch_us
+      writable: false
+      optional: false
+    -
+      code: 3
+      name: RemainingDuration
+      type: elapsed_s
+      writable: false
+      optional: false
+    -
+      code: 4
+      name: CurrentState
+      type: ValveStateEnum
+      writable: false
+      optional: false
+    -
+      code: 5
+      name: TargetState
+      type: ValveStateEnum
+      writable: false
+      optional: false
+    -
+      code: 6
+      name: CurrentLevel
+      type: percent
+      writable: false
+      optional: false
+    -
+      code: 7
+      name: TargetLevel
+      type: percent
+      writable: false
+      optional: false
+    -
+      code: 8
+      name: DefaultOpenLevel
+      type: percent
+      writable: true
+      optional: false
+    -
+      code: 9
+      name: ValveFault
+      type: ValveFaultBitmap
+      writable: false
+      optional: false
+    -
+      code: 10
+      name: LevelStep
+      type: int8u
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: Open
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: OpenDuration
+          type: elapsed_s
+        -
+          name: TargetLevel
+          type: percent
+    -
+      code: 1
+      name: Close
+      direction: client→server
+      optional: false
+      parameters: {  }
+  features:
+    -
+      bit: 0
+      code: TS
+      name: TimeSync
+      summary: 'UTC time is used for time indications'
+    -
+      bit: 1
+      code: LVL
+      name: Level
+      summary: 'Device supports setting the specific position of the valve'
 -
   id: 155
   name: 'Energy Preference'
@@ -9206,6 +9583,48 @@
   specVersion: '1.4'
   category: energy
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: EnergyBalances
+      type: array
+      writable: false
+      optional: true
+    -
+      code: 1
+      name: CurrentEnergyBalance
+      type: int8u
+      writable: true
+      optional: true
+    -
+      code: 2
+      name: EnergyPriorities
+      type: array
+      writable: false
+      optional: true
+    -
+      code: 3
+      name: LowPowerModeSensitivities
+      type: array
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: CurrentLowPowerModeSensitivity
+      type: int8u
+      writable: true
+      optional: true
+  features:
+    -
+      bit: 0
+      code: BALA
+      name: EnergyBalance
+      summary: 'Device can balance energy consumption vs. another priority'
+    -
+      bit: 1
+      code: LPMS
+      name: LowPowerModeSensitivity
+      summary: 'Device can adjust the conditions for entering a low power mode'
 -
   id: 158
   name: 'Water Heater Mode'
@@ -9213,6 +9632,47 @@
   specVersion: '1.4'
   category: appliances
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: SupportedModes
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: CurrentMode
+      type: int8u
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: ChangeToMode
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: NewMode
+          type: int8u
+    -
+      code: 1
+      name: ChangeToModeResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: Status
+          type: enum8
+        -
+          name: StatusText
+          type: char_string
+  features:
+    -
+      bit: 0
+      code: DEPONOFF
+      name: OnOff
+      summary: 'Dependency with the OnOff cluster'
 -
   id: 336
   name: 'Service Area'
@@ -9220,6 +9680,102 @@
   specVersion: '1.4'
   category: appliances
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: SupportedAreas
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: SupportedMaps
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 2
+      name: SelectedAreas
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 3
+      name: CurrentArea
+      type: int32u
+      writable: false
+      optional: false
+    -
+      code: 4
+      name: EstimatedEndTime
+      type: epoch_s
+      writable: false
+      optional: false
+    -
+      code: 5
+      name: Progress
+      type: array
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: SelectAreas
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: NewAreas
+          type: int32u
+    -
+      code: 1
+      name: SelectAreasResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: Status
+          type: SelectAreasStatus
+        -
+          name: StatusText
+          type: long_char_string
+    -
+      code: 2
+      name: SkipArea
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: SkippedArea
+          type: int32u
+    -
+      code: 3
+      name: SkipAreaResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: Status
+          type: SkipAreaStatus
+        -
+          name: StatusText
+          type: long_char_string
+  features:
+    -
+      bit: 0
+      code: SELRUN
+      name: SelectWhileRunning
+      summary: 'The device allows changing the selected areas while running'
+    -
+      bit: 1
+      code: PROG
+      name: ProgressReporting
+      summary: 'The device implements the progress reporting feature'
+    -
+      bit: 2
+      code: MAPS
+      name: Maps
+      summary: 'The device has map support'
 -
   id: 1036
   name: 'Carbon Monoxide Concentration Measurement'
@@ -9227,6 +9783,104 @@
   specVersion: '1.2'
   category: sensors
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: MeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 1
+      name: MinMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 2
+      name: MaxMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 3
+      name: PeakMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: PeakMeasuredValueWindow
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 5
+      name: AverageMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 6
+      name: AverageMeasuredValueWindow
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 7
+      name: Uncertainty
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 8
+      name: MeasurementUnit
+      type: MeasurementUnitEnum
+      writable: false
+      optional: true
+    -
+      code: 9
+      name: MeasurementMedium
+      type: MeasurementMediumEnum
+      writable: false
+      optional: false
+    -
+      code: 10
+      name: LevelValue
+      type: LevelValueEnum
+      writable: false
+      optional: true
+  features:
+    -
+      bit: 0
+      code: MEA
+      name: NumericMeasurement
+      summary: 'Cluster supports numeric measurement of substance'
+    -
+      bit: 1
+      code: LEV
+      name: LevelIndication
+      summary: 'Cluster supports basic level indication for substance using the ConcentrationLevel enum'
+    -
+      bit: 2
+      code: MED
+      name: MediumLevel
+      summary: 'Cluster supports the Medium Concentration Level'
+    -
+      bit: 3
+      code: CRI
+      name: CriticalLevel
+      summary: 'Cluster supports the Critical Concentration Level'
+    -
+      bit: 4
+      code: PEA
+      name: PeakMeasurement
+      summary: 'Cluster supports peak numeric measurement of substance'
+    -
+      bit: 5
+      code: AVG
+      name: AverageMeasurement
+      summary: 'Cluster supports average numeric measurement of substance'
 -
   id: 1105
   name: 'Wi-Fi Network Management'
@@ -9234,6 +9888,35 @@
   specVersion: '1.4'
   category: network
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: SSID
+      type: octet_string
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: PassphraseSurrogate
+      type: int64u
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: NetworkPassphraseRequest
+      direction: client→server
+      optional: false
+      parameters: {  }
+    -
+      code: 1
+      name: NetworkPassphraseResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: Passphrase
+          type: octet_string
 -
   id: 1106
   name: 'Thread Border Router Management'
@@ -9241,6 +9924,92 @@
   specVersion: '1.4'
   category: network
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: BorderRouterName
+      type: char_string
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: BorderAgentID
+      type: octet_string
+      writable: false
+      optional: false
+    -
+      code: 2
+      name: ThreadVersion
+      type: int16u
+      writable: false
+      optional: false
+    -
+      code: 3
+      name: InterfaceEnabled
+      type: boolean
+      writable: false
+      optional: false
+    -
+      code: 4
+      name: ActiveDatasetTimestamp
+      type: int64u
+      writable: false
+      optional: false
+    -
+      code: 5
+      name: PendingDatasetTimestamp
+      type: int64u
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: GetActiveDatasetRequest
+      direction: client→server
+      optional: false
+      parameters: {  }
+    -
+      code: 1
+      name: GetPendingDatasetRequest
+      direction: client→server
+      optional: false
+      parameters: {  }
+    -
+      code: 2
+      name: DatasetResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: Dataset
+          type: octet_string
+    -
+      code: 3
+      name: SetActiveDatasetRequest
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: ActiveDataset
+          type: octet_string
+        -
+          name: Breadcrumb
+          type: int64u
+    -
+      code: 4
+      name: SetPendingDatasetRequest
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: PendingDataset
+          type: octet_string
+  features:
+    -
+      bit: 0
+      code: PC
+      name: PANChange
+      summary: 'The ability to change PAN configuration with pending dataset setting request.'
 -
   id: 1107
   name: 'Thread Network Directory'
@@ -9248,6 +10017,62 @@
   specVersion: '1.4'
   category: network
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: PreferredExtendedPanID
+      type: octet_string
+      writable: true
+      optional: false
+    -
+      code: 1
+      name: ThreadNetworks
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 2
+      name: ThreadNetworkTableSize
+      type: int8u
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: AddNetwork
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: OperationalDataset
+          type: octet_string
+    -
+      code: 1
+      name: RemoveNetwork
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: ExtendedPanID
+          type: octet_string
+    -
+      code: 2
+      name: GetOperationalDataset
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: ExtendedPanID
+          type: octet_string
+    -
+      code: 3
+      name: OperationalDatasetResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: OperationalDataset
+          type: octet_string
 -
   id: 1295
   name: 'Content Control'
@@ -9255,6 +10080,259 @@
   specVersion: '1.0'
   category: media
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: Enabled
+      type: boolean
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: OnDemandRatings
+      type: array
+      writable: false
+      optional: true
+    -
+      code: 2
+      name: OnDemandRatingThreshold
+      type: char_string
+      writable: false
+      optional: true
+    -
+      code: 3
+      name: ScheduledContentRatings
+      type: array
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: ScheduledContentRatingThreshold
+      type: char_string
+      writable: false
+      optional: true
+    -
+      code: 5
+      name: ScreenDailyTime
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 6
+      name: RemainingScreenTime
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 7
+      name: BlockUnrated
+      type: boolean
+      writable: false
+      optional: true
+    -
+      code: 8
+      name: BlockChannelList
+      type: array
+      writable: false
+      optional: true
+    -
+      code: 9
+      name: BlockApplicationList
+      type: array
+      writable: false
+      optional: true
+    -
+      code: 10
+      name: BlockContentTimeWindow
+      type: array
+      writable: false
+      optional: true
+  commands:
+    -
+      code: 0
+      name: UpdatePIN
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: OldPIN
+          type: char_string
+        -
+          name: NewPIN
+          type: char_string
+    -
+      code: 1
+      name: ResetPIN
+      direction: client→server
+      optional: true
+      parameters: {  }
+    -
+      code: 2
+      name: ResetPINResponse
+      direction: server→client
+      optional: true
+      parameters:
+        -
+          name: PINCode
+          type: char_string
+    -
+      code: 3
+      name: Enable
+      direction: client→server
+      optional: false
+      parameters: {  }
+    -
+      code: 4
+      name: Disable
+      direction: client→server
+      optional: false
+      parameters: {  }
+    -
+      code: 5
+      name: AddBonusTime
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: PINCode
+          type: char_string
+        -
+          name: BonusTime
+          type: elapsed_s
+    -
+      code: 6
+      name: SetScreenDailyTime
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: ScreenTime
+          type: elapsed_s
+    -
+      code: 7
+      name: BlockUnratedContent
+      direction: client→server
+      optional: true
+      parameters: {  }
+    -
+      code: 8
+      name: UnblockUnratedContent
+      direction: client→server
+      optional: true
+      parameters: {  }
+    -
+      code: 9
+      name: SetOnDemandRatingThreshold
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: Rating
+          type: char_string
+    -
+      code: 10
+      name: SetScheduledContentRatingThreshold
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: Rating
+          type: char_string
+    -
+      code: 11
+      name: AddBlockChannels
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: Channels
+          type: BlockChannelStruct
+    -
+      code: 12
+      name: RemoveBlockChannels
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: ChannelIndexes
+          type: int16u
+    -
+      code: 13
+      name: AddBlockApplications
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: Applications
+          type: AppInfoStruct
+    -
+      code: 14
+      name: RemoveBlockApplications
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: Applications
+          type: AppInfoStruct
+    -
+      code: 15
+      name: SetBlockContentTimeWindow
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: TimeWindow
+          type: TimeWindowStruct
+    -
+      code: 16
+      name: RemoveBlockContentTimeWindow
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: TimeWindowIndexes
+          type: int16u
+  features:
+    -
+      bit: 0
+      code: ST
+      name: ScreenTime
+      summary: 'Supports managing screen time limits.'
+    -
+      bit: 1
+      code: PM
+      name: PINManagement
+      summary: 'Supports managing a PIN code which is used for restricting access to configuration of this feature.'
+    -
+      bit: 2
+      code: BU
+      name: BlockUnrated
+      summary: 'Supports managing content controls for unrated content.'
+    -
+      bit: 3
+      code: OCR
+      name: OnDemandContentRating
+      summary: 'Supports managing content controls based upon rating threshold for on demand content.'
+    -
+      bit: 4
+      code: SCR
+      name: ScheduledContentRating
+      summary: 'Supports managing content controls based upon rating threshold for scheduled content.'
+    -
+      bit: 5
+      code: BC
+      name: BlockChannels
+      summary: 'Supports managing a set of channels that are prohibited.'
+    -
+      bit: 6
+      code: BA
+      name: BlockApplications
+      summary: 'Supports managing a set of applications that are prohibited.'
+    -
+      bit: 7
+      code: BTW
+      name: BlockContentTimeWindow
+      summary: 'Supports managing content controls based upon setting time window in which all contents and applications SHALL be blocked.'
 -
   id: 1296
   name: 'Content App Observer'
@@ -9262,6 +10340,34 @@
   specVersion: '1.0'
   category: media
   isGlobal: false
+  commands:
+    -
+      code: 0
+      name: ContentAppMessage
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: Data
+          type: long_char_string
+        -
+          name: EncodingHint
+          type: char_string
+    -
+      code: 1
+      name: ContentAppMessageResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: Status
+          type: StatusEnum
+        -
+          name: Data
+          type: long_char_string
+        -
+          name: EncodingHint
+          type: char_string
 -
   id: 1872
   name: 'Ecosystem Information'
@@ -9269,6 +10375,19 @@
   specVersion: '1.4'
   category: utility
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: DeviceDirectory
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: LocationDirectory
+      type: array
+      writable: false
+      optional: false
 -
   id: 1873
   name: 'Commissioner Control'
@@ -9276,6 +10395,65 @@
   specVersion: '1.4'
   category: utility
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: SupportedDeviceCategories
+      type: SupportedDeviceCategoryBitmap
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: RequestCommissioningApproval
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: RequestID
+          type: int64u
+        -
+          name: VendorID
+          type: vendor_id
+        -
+          name: ProductID
+          type: int16u
+        -
+          name: Label
+          type: char_string
+    -
+      code: 1
+      name: CommissionNode
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: RequestID
+          type: int64u
+        -
+          name: ResponseTimeoutSeconds
+          type: int16u
+    -
+      code: 2
+      name: ReverseOpenCommissioningWindow
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: CommissioningTimeout
+          type: int16u
+        -
+          name: PAKEPasscodeVerifier
+          type: octet_string
+        -
+          name: Discriminator
+          type: int16u
+        -
+          name: Iterations
+          type: int32u
+        -
+          name: Salt
+          type: octet_string
 -
   id: 1874
   name: 'Joint Fabric Datastore'
@@ -9283,6 +10461,359 @@
   specVersion: '1.4'
   category: utility
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: AnchorRootCA
+      type: octet_string
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: AnchorNodeID
+      type: node_id
+      writable: false
+      optional: false
+    -
+      code: 2
+      name: AnchorVendorID
+      type: vendor_id
+      writable: false
+      optional: false
+    -
+      code: 3
+      name: FriendlyName
+      type: char_string
+      writable: false
+      optional: false
+    -
+      code: 4
+      name: GroupKeySetList
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 5
+      name: GroupList
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 6
+      name: NodeList
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 7
+      name: AdminList
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 8
+      name: Status
+      type: DatastoreStatusEntryStruct
+      writable: false
+      optional: false
+    -
+      code: 9
+      name: EndpointGroupIDList
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 10
+      name: EndpointBindingList
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 11
+      name: NodeKeySetList
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 12
+      name: NodeACLList
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 13
+      name: NodeEndpointList
+      type: array
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: AddKeySet
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: GroupKeySet
+          type: DatastoreGroupKeySetStruct
+    -
+      code: 1
+      name: UpdateKeySet
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: GroupKeySet
+          type: DatastoreGroupKeySetStruct
+    -
+      code: 2
+      name: RemoveKeySet
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: GroupKeySetID
+          type: int16u
+    -
+      code: 3
+      name: AddGroup
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: GroupID
+          type: group_id
+        -
+          name: FriendlyName
+          type: char_string
+        -
+          name: GroupKeySetID
+          type: int16u
+        -
+          name: GroupCAT
+          type: int16u
+        -
+          name: GroupCATVersion
+          type: int16u
+        -
+          name: GroupPermission
+          type: DatastoreAccessControlEntryPrivilegeEnum
+    -
+      code: 4
+      name: UpdateGroup
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: GroupID
+          type: group_id
+        -
+          name: FriendlyName
+          type: char_string
+        -
+          name: GroupKeySetID
+          type: int16u
+        -
+          name: GroupCAT
+          type: int16u
+        -
+          name: GroupCATVersion
+          type: int16u
+        -
+          name: GroupPermission
+          type: DatastoreAccessControlEntryPrivilegeEnum
+    -
+      code: 5
+      name: RemoveGroup
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: GroupID
+          type: group_id
+    -
+      code: 6
+      name: AddAdmin
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: NodeID
+          type: node_id
+        -
+          name: FriendlyName
+          type: char_string
+        -
+          name: VendorID
+          type: vendor_id
+        -
+          name: ICAC
+          type: long_octet_string
+    -
+      code: 7
+      name: UpdateAdmin
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: NodeID
+          type: node_id
+        -
+          name: FriendlyName
+          type: char_string
+        -
+          name: ICAC
+          type: long_octet_string
+    -
+      code: 8
+      name: RemoveAdmin
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: NodeID
+          type: node_id
+    -
+      code: 9
+      name: AddPendingNode
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: NodeID
+          type: node_id
+        -
+          name: FriendlyName
+          type: char_string
+    -
+      code: 10
+      name: RefreshNode
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: NodeID
+          type: node_id
+    -
+      code: 11
+      name: UpdateNode
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: NodeID
+          type: node_id
+        -
+          name: FriendlyName
+          type: char_string
+    -
+      code: 12
+      name: RemoveNode
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: NodeID
+          type: node_id
+    -
+      code: 13
+      name: UpdateEndpointForNode
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: EndpointID
+          type: endpoint_no
+        -
+          name: NodeID
+          type: node_id
+        -
+          name: FriendlyName
+          type: char_string
+    -
+      code: 14
+      name: AddGroupIDToEndpointForNode
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: NodeID
+          type: node_id
+        -
+          name: EndpointID
+          type: endpoint_no
+        -
+          name: GroupID
+          type: group_id
+    -
+      code: 15
+      name: RemoveGroupIDFromEndpointForNode
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: NodeID
+          type: node_id
+        -
+          name: EndpointID
+          type: endpoint_no
+        -
+          name: GroupID
+          type: group_id
+    -
+      code: 16
+      name: AddBindingToEndpointForNode
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: NodeID
+          type: node_id
+        -
+          name: EndpointID
+          type: endpoint_no
+        -
+          name: Binding
+          type: DatastoreBindingTargetStruct
+    -
+      code: 17
+      name: RemoveBindingFromEndpointForNode
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: ListID
+          type: int16u
+        -
+          name: EndpointID
+          type: endpoint_no
+        -
+          name: NodeID
+          type: node_id
+    -
+      code: 18
+      name: AddACLToNode
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: NodeID
+          type: node_id
+        -
+          name: ACLEntry
+          type: DatastoreAccessControlEntryStruct
+    -
+      code: 19
+      name: RemoveACLFromNode
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: ListID
+          type: int16u
+        -
+          name: NodeID
+          type: node_id
 -
   id: 1875
   name: 'Joint Fabric PKI'
@@ -9290,3 +10821,95 @@
   specVersion: '1.4'
   category: utility
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: AdministratorFabricIndex
+      type: fabric_idx
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: ICACCSRRequest
+      direction: client→server
+      optional: false
+      parameters: {  }
+    -
+      code: 1
+      name: ICACCSRResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: ICACCSR
+          type: long_octet_string
+    -
+      code: 2
+      name: AddICAC
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: ICACValue
+          type: long_octet_string
+    -
+      code: 3
+      name: ICACResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: StatusCode
+          type: ICACResponseStatusEnum
+    -
+      code: 4
+      name: OpenJointCommissioningWindow
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: CommissioningTimeout
+          type: int16u
+        -
+          name: PAKEPasscodeVerifier
+          type: octet_string
+        -
+          name: Discriminator
+          type: int16u
+        -
+          name: Iterations
+          type: int32u
+        -
+          name: Salt
+          type: octet_string
+    -
+      code: 5
+      name: TransferAnchorRequest
+      direction: client→server
+      optional: false
+      parameters: {  }
+    -
+      code: 6
+      name: TransferAnchorResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: StatusCode
+          type: TransferAnchorResponseStatusEnum
+    -
+      code: 7
+      name: TransferAnchorComplete
+      direction: client→server
+      optional: false
+      parameters: {  }
+    -
+      code: 8
+      name: AnnounceJointFabricAdministrator
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: EndpointID
+          type: endpoint_no
