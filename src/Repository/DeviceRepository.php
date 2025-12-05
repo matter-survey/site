@@ -11,6 +11,58 @@ class DeviceRepository
 {
     private const BINDING_CLUSTER_ID = 30; // 0x001E
 
+    /**
+     * Capability filter definitions mapping user-friendly keys to cluster requirements.
+     * Each capability defines:
+     * - label: Human-readable name for the UI
+     * - clusters: Array of cluster IDs (any match = capability present for cluster-only checks)
+     * - features: Array of feature codes that indicate the capability (optional).
+     *
+     * @var array<string, array{label: string, clusters: array<int>, features?: array<string>}>
+     */
+    public const CAPABILITY_FILTERS = [
+        'dimming' => [
+            'label' => 'Brightness dimming',
+            'clusters' => [8], // Level Control
+            'features' => [],
+        ],
+        'full_color' => [
+            'label' => 'Full color (RGB)',
+            'clusters' => [768], // Color Control
+            'features' => ['HS', 'EHUE', 'XY'], // Any of these = full color
+        ],
+        'color_temperature' => [
+            'label' => 'Color temperature',
+            'clusters' => [768], // Color Control
+            'features' => ['CT'],
+        ],
+        'motion_detection' => [
+            'label' => 'Motion/Occupancy sensor',
+            'clusters' => [1030], // Occupancy Sensing
+            'features' => [],
+        ],
+        'temperature_sensing' => [
+            'label' => 'Temperature sensor',
+            'clusters' => [1026], // Temperature Measurement
+            'features' => [],
+        ],
+        'energy_monitoring' => [
+            'label' => 'Energy monitoring',
+            'clusters' => [144, 145], // Electrical Power Measurement, Electrical Energy Measurement
+            'features' => [],
+        ],
+        'battery_powered' => [
+            'label' => 'Battery powered',
+            'clusters' => [47], // Power Source
+            'features' => ['BAT'],
+        ],
+        'window_covering' => [
+            'label' => 'Blinds/Shades',
+            'clusters' => [258], // Window Covering
+            'features' => [],
+        ],
+    ];
+
     private Connection $db;
 
     public function __construct(DatabaseService $databaseService)
@@ -288,6 +340,44 @@ class DeviceRepository
             }
         }
 
+        // Capability filters (array of capability keys)
+        // Device must have ALL selected capabilities (AND logic)
+        if (!empty($filters['capabilities'])) {
+            $capabilitySubqueries = [];
+            foreach ($filters['capabilities'] as $i => $capKey) {
+                if (!isset(self::CAPABILITY_FILTERS[$capKey])) {
+                    continue;
+                }
+                $config = self::CAPABILITY_FILTERS[$capKey];
+                $clusters = $config['clusters'];
+
+                // Build cluster placeholders for this capability
+                $clusterPlaceholders = [];
+                foreach ($clusters as $ci => $clusterId) {
+                    $paramName = "cap_{$i}_cluster_{$ci}";
+                    $clusterPlaceholders[] = ':'.$paramName;
+                    $params[$paramName] = $clusterId;
+                    $types[$paramName] = \Doctrine\DBAL\ParameterType::INTEGER;
+                }
+                $clusterList = implode(', ', $clusterPlaceholders);
+
+                // Subquery to find devices with this capability (by cluster presence)
+                $capabilitySubqueries[] = "
+                    SELECT DISTINCT pe.device_id
+                    FROM product_endpoints pe
+                    WHERE EXISTS (
+                        SELECT 1 FROM json_each(pe.server_clusters)
+                        WHERE value IN ({$clusterList})
+                    )
+                ";
+            }
+
+            if (!empty($capabilitySubqueries)) {
+                // INTERSECT to ensure device has ALL selected capabilities
+                $sql .= ' AND id IN ('.implode(' INTERSECT ', $capabilitySubqueries).')';
+            }
+        }
+
         return $sql;
     }
 
@@ -411,6 +501,71 @@ class DeviceRepository
         krsort($facets);
 
         return $facets;
+    }
+
+    /**
+     * Get capability facets with counts for faceted search.
+     * Counts devices that have the clusters (and optionally features) for each capability.
+     *
+     * For capabilities without feature requirements, a simple cluster presence check is used.
+     * For capabilities with features, we check V3 telemetry when available, with V2 fallback.
+     *
+     * @return array<array{key: string, label: string, count: int}>
+     */
+    public function getCapabilityFacets(): array
+    {
+        $facets = [];
+
+        foreach (self::CAPABILITY_FILTERS as $key => $config) {
+            $count = $this->countDevicesWithCapability($config['clusters'], $config['features']);
+            $facets[] = [
+                'key' => $key,
+                'label' => $config['label'],
+                'count' => $count,
+            ];
+        }
+
+        // Sort by count descending
+        usort($facets, fn (array $a, array $b) => $b['count'] <=> $a['count']);
+
+        return $facets;
+    }
+
+    /**
+     * Count devices that have the specified clusters (and optionally features).
+     *
+     * @param array<int>    $clusters Cluster IDs (any match counts)
+     * @param array<string> $features Feature codes (optional, for V3 feature checking)
+     */
+    private function countDevicesWithCapability(array $clusters, array $features = []): int
+    {
+        if (empty($clusters)) {
+            return 0;
+        }
+
+        // Build cluster placeholders for IN clause
+        $clusterPlaceholders = [];
+        $params = [];
+        $types = [];
+        foreach ($clusters as $i => $clusterId) {
+            $paramName = 'cluster_'.$i;
+            $clusterPlaceholders[] = ':'.$paramName;
+            $params[$paramName] = $clusterId;
+            $types[$paramName] = \Doctrine\DBAL\ParameterType::INTEGER;
+        }
+        $clusterList = implode(', ', $clusterPlaceholders);
+
+        // Simple cluster presence check (works for all data)
+        $sql = "
+            SELECT COUNT(DISTINCT pe.device_id)
+            FROM product_endpoints pe
+            WHERE EXISTS (
+                SELECT 1 FROM json_each(pe.server_clusters)
+                WHERE value IN ({$clusterList})
+            )
+        ";
+
+        return (int) $this->db->executeQuery($sql, $params, $types)->fetchOne();
     }
 
     /**

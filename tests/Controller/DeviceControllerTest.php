@@ -851,4 +851,130 @@ class DeviceControllerTest extends WebTestCase
             // (pagination may not exist if few results)
         }
     }
+
+    // ========================================================================
+    // Capability Filter Tests
+    // ========================================================================
+
+    public function testIndexPageHasCapabilitiesFilter(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/');
+
+        $this->assertResponseIsSuccessful();
+
+        // Check capabilities filter section exists
+        $this->assertSelectorTextContains('.filter-sidebar', 'Capabilities');
+
+        // Check capability checkboxes exist
+        $capabilityInputs = $crawler->filter('input[name="capabilities[]"]');
+        $this->assertGreaterThan(0, $capabilityInputs->count(), 'Should have capability filter options');
+    }
+
+    public function testIndexPageFilterByCapabilityDimming(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/', ['capabilities' => ['dimming']]);
+
+        $this->assertResponseIsSuccessful();
+
+        // Should show active filter for capability
+        $this->assertSelectorExists('.active-filters');
+        $this->assertSelectorTextContains('.active-filter', 'Brightness dimming');
+    }
+
+    public function testIndexPageFilterByCapabilityFullColor(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/', ['capabilities' => ['full_color']]);
+
+        $this->assertResponseIsSuccessful();
+
+        // Should show active filter for capability
+        $this->assertSelectorExists('.active-filters');
+        $this->assertSelectorTextContains('.active-filter', 'Full color');
+    }
+
+    public function testIndexPageFilterByMultipleCapabilities(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/', ['capabilities' => ['dimming', 'full_color']]);
+
+        $this->assertResponseIsSuccessful();
+
+        // Should show multiple active filters
+        $this->assertSelectorExists('.active-filters');
+        $activeFilters = $crawler->filter('.active-filter');
+        $this->assertGreaterThanOrEqual(2, $activeFilters->count(), 'Should show multiple capability filters');
+    }
+
+    public function testIndexPageCapabilityFilterRemovable(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/', ['capabilities' => ['dimming', 'motion_detection']]);
+
+        $this->assertResponseIsSuccessful();
+
+        // Active filter should have remove link
+        $removeLinks = $crawler->filter('.active-filter a');
+        $this->assertGreaterThan(0, $removeLinks->count(), 'Should have remove links for capability filters');
+    }
+
+    public function testIndexPageCapabilityFilterPreservedInPagination(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/', [
+            'capabilities' => ['dimming'],
+            'page' => '1',
+        ]);
+
+        $this->assertResponseIsSuccessful();
+
+        // If pagination exists, links should preserve the capability filter
+        $paginationLinks = $crawler->filter('.pagination a');
+        if ($paginationLinks->count() > 0) {
+            $href = $paginationLinks->first()->attr('href');
+            $this->assertStringContainsString('capabilities', $href, 'Pagination should preserve capability filter');
+        }
+    }
+
+    public function testIndexPageCapabilityCombinedWithOtherFilters(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/', [
+            'capabilities' => ['dimming'],
+            'connectivity' => ['thread'],
+            'q' => 'light',
+        ]);
+
+        $this->assertResponseIsSuccessful();
+
+        // Should show multiple active filters from different categories
+        $activeFilters = $crawler->filter('.active-filter');
+        $this->assertGreaterThanOrEqual(2, $activeFilters->count(), 'Should show combined filters');
+    }
+
+    public function testIndexPageCapabilityFilterIgnoresInvalidKeys(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/', ['capabilities' => ['invalid_capability_key']]);
+
+        // Should not cause error, just ignore invalid key
+        $this->assertResponseIsSuccessful();
+    }
+
+    public function testIndexPageCapabilityFacetShowsCount(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/');
+
+        $this->assertResponseIsSuccessful();
+
+        // Find capability section and check counts are shown
+        $capabilityOptions = $crawler->filter('input[name="capabilities[]"]')->closest('label');
+        if ($capabilityOptions->count() > 0) {
+            $firstOption = $capabilityOptions->first();
+            $this->assertStringContainsString('count', $firstOption->html(), 'Capability options should show counts');
+        }
+    }
 }

@@ -547,6 +547,22 @@
                     {% endif %}
                 </div>
 
+                {# Capabilities filter #}
+                <div class="filter-section">
+                    <h4>Capabilities</h4>
+                    <div class="vendor-list">
+                        {% for cap in facets.capabilities %}
+                            {% if cap.count > 0 %}
+                                <label class="filter-option {{ cap.key in (filters.capabilities ?? []) ? 'active' : '' }}">
+                                    <input type="checkbox" name="capabilities[]" value="{{ cap.key }}" {{ cap.key in (filters.capabilities ?? []) ? 'checked' : '' }} onchange="this.form.submit()">
+                                    <span>{{ cap.label }}</span>
+                                    <span class="count">{{ cap.count }}</span>
+                                </label>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
                 {# Device type filter #}
                 <div class="filter-section">
                     <h4>Device Type</h4>
@@ -642,6 +658,20 @@
                                 {{ filters.min_rating }}&#9733;+ Rating
                                 <a href="{{ path('device_index', filters|filter((v, k) => k != 'min_rating')) }}" title="Remove">&times;</a>
                             </span>
+                        {% endif %}
+                        {% if filters.capabilities is defined and filters.capabilities is not empty %}
+                            {% for capKey in filters.capabilities %}
+                                {% set otherCaps = filters.capabilities|filter(c => c != capKey) %}
+                                {% set newFilters = filters|merge({capabilities: otherCaps}) %}
+                                {% if otherCaps is empty %}
+                                    {% set newFilters = filters|filter((v, k) => k != 'capabilities') %}
+                                {% endif %}
+                                {% set capInfo = facets.capabilities|filter(c => c.key == capKey)|first %}
+                                <span class="active-filter">
+                                    {{ capInfo.label ?? capKey }}
+                                    <a href="{{ path('device_index', newFilters) }}" title="Remove">&times;</a>
+                                </span>
+                            {% endfor %}
                         {% endif %}
                     </div>
                 {% endif %}

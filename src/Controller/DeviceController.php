@@ -53,6 +53,7 @@ class DeviceController extends AbstractController
             'vendors' => $this->deviceRepo->getVendorFacets(15),
             'device_types' => $this->deviceRepo->getDeviceTypeFacets(15),
             'star_ratings' => $this->deviceRepo->getStarRatingFacets(),
+            'capabilities' => $this->deviceRepo->getCapabilityFacets(),
         ];
 
         // Fetch cached device scores for display
@@ -135,6 +136,17 @@ class DeviceController extends AbstractController
             }
         }
 
+        // Capability filters (array of capability keys)
+        $capabilities = $request->query->all('capabilities');
+        if (!empty($capabilities)) {
+            // Validate against known capability keys
+            $validKeys = array_keys(DeviceRepository::CAPABILITY_FILTERS);
+            $filters['capabilities'] = array_values(array_filter(
+                $capabilities,
+                fn ($v) => \in_array($v, $validKeys, true)
+            ));
+        }
+
         return $filters;
     }
 
@@ -148,7 +160,8 @@ class DeviceController extends AbstractController
             || !empty($filters['vendor'])
             || !empty($filters['device_types'])
             || !empty($filters['search'])
-            || !empty($filters['min_rating']);
+            || !empty($filters['min_rating'])
+            || !empty($filters['capabilities']);
     }
 
     /**
