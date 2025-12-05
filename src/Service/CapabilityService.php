@@ -39,8 +39,8 @@ class CapabilityService
      * }> $endpoints
      *
      * @return array{
-     *     supported: array<string, array{label: string, emoji: string, icon: string, description: string, category: string}>,
-     *     unsupported: array<string, array{label: string, emoji: string, icon: string, description: string, category: string}>,
+     *     supported: array<string, array{key: string, label: string, emoji: string, icon: string, description: string, category: string}>,
+     *     unsupported: array<string, array{key: string, label: string, emoji: string, icon: string, description: string, category: string}>,
      *     byCategory: array<string, array{supported: array<string, mixed>, unsupported: array<string, mixed>}>,
      *     summary: array{total: int, supported: int, percentage: int},
      *     standouts: array<int, string>,
