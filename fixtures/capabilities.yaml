@@ -287,10 +287,11 @@ capabilities:
     icon: "clock"
     emoji: "⏰"
     category: automation
-    description: "Set time-based schedules"
+    description: "Set time-based schedules on the device"
     clusters:
-      - id: 56  # Time Synchronization (prerequisite for schedules)
+      - id: 513  # Thermostat cluster with scheduling features
         role: server
+        features: ["SCH", "MSCH"]  # ScheduleConfiguration or MatterScheduleConfiguration
 
   occupancy_response:
     label: "Responds to occupancy"
@@ -373,6 +374,28 @@ capabilities:
       - id: 513  # Thermostat
         role: server
         features: ["COOL"]
+
+  auto_mode:
+    label: "Auto heat/cool"
+    icon: "sync"
+    emoji: "🔄"
+    category: comfort
+    description: "Automatically switches between heating and cooling"
+    clusters:
+      - id: 513  # Thermostat
+        role: server
+        features: ["AUTO"]
+
+  thermostat_presets:
+    label: "Temperature presets"
+    icon: "bookmark"
+    emoji: "📌"
+    category: comfort
+    description: "Save and recall temperature presets"
+    clusters:
+      - id: 513  # Thermostat
+        role: server
+        features: ["PRES"]
 
   humidity_control:
     label: "Humidity control"
@@ -541,6 +564,8 @@ device_type_relevant_capabilities:
     - thermostat_control
     - heating
     - cooling
+    - auto_mode
+    - thermostat_presets
     - fan_speed
     - humidity_control
     - temperature_sensing

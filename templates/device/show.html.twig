@@ -26,13 +26,28 @@
             <h5>{{ meta.name ?? ('Cluster ' ~ clusterId) }}</h5>
             {% if hasActualData %}
                 {# Show actual telemetry data #}
-                {% if actualDetails.feature_map is defined and actualDetails.feature_map > 0 %}
-                    <div class="cluster-details-section">
-                        <div class="cluster-details-label">Feature Map</div>
-                        <div class="cluster-details-list">
-                            <span class="cluster-attr">0x{{ '%X'|format(actualDetails.feature_map) }}</span>
+                {% if actualDetails.feature_map is defined and actualDetails.feature_map >= 0 %}
+                    {% set decodedFeatures = matterRegistry.decodeFeatureMap(clusterId, actualDetails.feature_map) %}
+                    {% if decodedFeatures|length > 0 %}
+                        <div class="cluster-details-section">
+                            <div class="cluster-details-label">Features</div>
+                            <div class="cluster-details-list">
+                                {% for feature in decodedFeatures %}
+                                    <span class="cluster-attr {{ feature.enabled ? 'feature-enabled' : 'feature-disabled' }}" title="{{ feature.summary|default(feature.name) }}">
+                                        {{ feature.enabled ? '✓' : '✗' }} {{ feature.name }}
+                                    </span>
+                                {% endfor %}
+                            </div>
                         </div>
-                    </div>
+                    {% elseif actualDetails.feature_map > 0 %}
+                        {# Fallback to raw hex if no feature definitions exist #}
+                        <div class="cluster-details-section">
+                            <div class="cluster-details-label">Feature Map</div>
+                            <div class="cluster-details-list">
+                                <span class="cluster-attr">0x{{ '%X'|format(actualDetails.feature_map) }}</span>
+                            </div>
+                        </div>
+                    {% endif %}
                 {% endif %}
                 {% if actualDetails.accepted_command_list is defined and actualDetails.accepted_command_list|length > 0 %}
                     <div class="cluster-details-section">
@@ -1092,6 +1107,16 @@
         background: rgba(255,255,255,0.1);
         border-radius: 0.25rem;
         font-size: 0.6875rem;
+    }
+
+    .cluster-attr.feature-enabled {
+        background: rgba(134, 239, 172, 0.2);
+        color: #86efac;
+    }
+
+    .cluster-attr.feature-disabled {
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.4);
     }
 
     /* Commissioning hint badges */

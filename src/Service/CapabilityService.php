@@ -20,8 +20,10 @@ class CapabilityService
 
     private string $fixturesPath;
 
-    public function __construct(string $projectDir)
-    {
+    public function __construct(
+        string $projectDir,
+        private MatterRegistry $matterRegistry,
+    ) {
         $this->fixturesPath = $projectDir.'/fixtures/capabilities.yaml';
     }
 
@@ -32,7 +34,8 @@ class CapabilityService
      *     endpoint_id: int,
      *     device_types: array<int, array{id: int}|int>,
      *     server_clusters: array<int, int>,
-     *     client_clusters: array<int, int>
+     *     client_clusters: array<int, int>,
+     *     server_cluster_details?: array<int, array{id: int, feature_map?: int}>
      * }> $endpoints
      *
      * @return array{
@@ -53,6 +56,7 @@ class CapabilityService
         // Collect all clusters from all endpoints
         $serverClusters = [];
         $clientClusters = [];
+        $serverClusterDetails = []; // V3 telemetry: clusterId => {feature_map, ...}
         $deviceTypeCategory = null;
 
         foreach ($endpoints as $endpoint) {
@@ -61,6 +65,11 @@ class CapabilityService
             }
             foreach ($endpoint['client_clusters'] as $clusterId) {
                 $clientClusters[$clusterId] = true;
+            }
+
+            // Build cluster details lookup from V3 telemetry (if available)
+            foreach ($endpoint['server_cluster_details'] ?? [] as $detail) {
+                $serverClusterDetails[$detail['id']] = $detail;
             }
 
             // Try to determine device type category from first non-system endpoint
@@ -95,7 +104,8 @@ class CapabilityService
             $isSupported = $this->checkCapabilitySupport(
                 $capability,
                 $serverClusters,
-                $clientClusters
+                $clientClusters,
+                $serverClusterDetails
             );
 
             $capInfo = [
@@ -154,16 +164,18 @@ class CapabilityService
     }
 
     /**
-     * Check if a capability is supported based on cluster presence.
+     * Check if a capability is supported based on cluster presence and feature flags.
      *
-     * @param array<string, mixed> $capability
-     * @param array<int, bool>     $serverClusters
-     * @param array<int, bool>     $clientClusters
+     * @param array<string, mixed>             $capability
+     * @param array<int, bool>                 $serverClusters
+     * @param array<int, bool>                 $clientClusters
+     * @param array<int, array<string, mixed>> $serverClusterDetails V3 telemetry cluster details
      */
     private function checkCapabilitySupport(
         array $capability,
         array $serverClusters,
         array $clientClusters,
+        array $serverClusterDetails = [],
     ): bool {
         $clusters = $capability['clusters'] ?? [];
 
@@ -175,6 +187,7 @@ class CapabilityService
         foreach ($clusters as $clusterDef) {
             $clusterId = $clusterDef['id'] ?? null;
             $role = $clusterDef['role'] ?? 'server';
+            $requiredFeatures = $clusterDef['features'] ?? [];
 
             if (null === $clusterId) {
                 continue;
@@ -184,11 +197,32 @@ class CapabilityService
                 ? isset($clientClusters[$clusterId])
                 : isset($serverClusters[$clusterId]);
 
-            if ($hasCluster) {
-                // TODO: Check features if specified
-                // For now, just having the cluster is enough
+            if (!$hasCluster) {
+                continue;
+            }
+
+            // If no specific features required, having the cluster is enough
+            if (empty($requiredFeatures)) {
                 return true;
             }
+
+            // Check if we have V3 telemetry details with feature_map
+            $details = $serverClusterDetails[$clusterId] ?? null;
+            if (null === $details || !isset($details['feature_map'])) {
+                // V2 fallback: can't verify features, so assume supported if cluster exists
+                return true;
+            }
+
+            $featureMap = (int) $details['feature_map'];
+
+            // Check if ANY of the required features are enabled (OR logic)
+            foreach ($requiredFeatures as $featureCode) {
+                if ($this->matterRegistry->hasFeature($clusterId, $featureCode, $featureMap)) {
+                    return true;
+                }
+            }
+
+            // Has cluster but missing required features - continue checking other cluster definitions
         }
 
         return false;

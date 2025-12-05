@@ -58,7 +58,7 @@ class MatterRegistry
     /**
      * Get full metadata for a cluster.
      *
-     * @return array{id: int, hexId: string, name: string, description: ?string, specVersion: ?string, category: ?string, isGlobal: bool}|null
+     * @return array{id: int, hexId: string, name: string, description: ?string, specVersion: ?string, category: ?string, isGlobal: bool, attributes?: array<int, mixed>, commands?: array<int, mixed>, features?: array<int, array{bit: int, code: string, name: string, summary?: string}>}|null
      */
     public function getClusterMetadata(int $id): ?array
     {
@@ -170,6 +170,73 @@ class MatterRegistry
         }
 
         return null;
+    }
+
+    /**
+     * Decode a feature_map bitmask into human-readable features.
+     *
+     * @return array<array{code: string, name: string, summary: string, enabled: bool}>
+     */
+    public function decodeFeatureMap(int $clusterId, int $featureMap): array
+    {
+        $cluster = $this->getClusterMetadata($clusterId);
+        if (!$cluster || empty($cluster['features'])) {
+            return [];
+        }
+
+        $decoded = [];
+        foreach ($cluster['features'] as $feature) {
+            $enabled = ($featureMap & (1 << $feature['bit'])) !== 0;
+            $decoded[] = [
+                'code' => $feature['code'],
+                'name' => $feature['name'],
+                'summary' => $feature['summary'] ?? '',
+                'enabled' => $enabled,
+            ];
+        }
+
+        return $decoded;
+    }
+
+    /**
+     * Check if a specific feature is enabled in a feature_map.
+     *
+     * @param int    $clusterId   The cluster ID
+     * @param string $featureCode The feature code (e.g., "HEAT", "SCH")
+     * @param int    $featureMap  The bitmask value from the device
+     */
+    public function hasFeature(int $clusterId, string $featureCode, int $featureMap): bool
+    {
+        $cluster = $this->getClusterMetadata($clusterId);
+        if (!$cluster || empty($cluster['features'])) {
+            return false;
+        }
+
+        foreach ($cluster['features'] as $feature) {
+            if ($feature['code'] === $featureCode) {
+                return ($featureMap & (1 << $feature['bit'])) !== 0;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get the names of enabled features from a feature_map.
+     *
+     * @return array<string> Array of feature names that are enabled
+     */
+    public function getEnabledFeatureNames(int $clusterId, int $featureMap): array
+    {
+        $decoded = $this->decodeFeatureMap($clusterId, $featureMap);
+        $names = [];
+        foreach ($decoded as $feature) {
+            if ($feature['enabled']) {
+                $names[] = $feature['name'];
+            }
+        }
+
+        return $names;
     }
 
     /**
