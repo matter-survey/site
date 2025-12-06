@@ -16,6 +16,7 @@ make dev
 # Run tests
 php bin/phpunit
 php bin/phpunit --filter ApiController  # Run specific test class
+php bin/phpunit --filter testMethodName  # Run specific test method
 
 # Linting & Static Analysis
 make lint                    # Check code style (php-cs-fixer dry-run)
@@ -52,7 +53,8 @@ php bin/console doctrine:migrations:migrate
 - **StatsController** - Statistics pages for clusters and device types
 - **TelemetryService** - Processes submissions, logs via `LoggerInterface`
 - **DeviceRepository** - Data access for devices, versions, and endpoints
-- **MatterRegistry** - Lookup for Matter cluster/device type names and metadata (database-backed)
+- **MatterRegistry** - Lookup for Matter cluster/device type names, metadata, commands, attributes (database-backed)
+- **CapabilityService** - Analyzes device endpoints and maps clusters to human-friendly capabilities
 - **DeviceScoreService** - Calculates device compliance scores based on cluster implementation
 - **DclApiService** - Interacts with the Matter DCL (Distributed Compliance Ledger) API
 - **DatabaseService** - Centralized database connection management
@@ -67,8 +69,9 @@ php bin/console doctrine:migrations:migrate
 
 All Matter specification data (clusters, device types) is stored in the database and loaded from YAML fixtures:
 
-- `fixtures/clusters.yaml` - 50+ cluster definitions with names, descriptions, categories
+- `fixtures/clusters.yaml` - 50+ cluster definitions with names, descriptions, commands, attributes, features
 - `fixtures/device_types.yaml` - 65+ device type definitions with cluster requirements
+- `fixtures/capabilities.yaml` - Human-friendly capability definitions mapping clusters to user-facing features
 
 **Entities:**
 - `Cluster` - id, hexId, name, description, specVersion, category, isGlobal, attributes (JSON), commands (JSON), features (JSON)
@@ -151,3 +154,26 @@ When creating new pages with entities, include appropriate JSON-LD in the `struc
 ## Commit Guidelines
 
 Use semantic commits (e.g., `feat:`, `fix:`, `ci:`, `docs:`, `refactor:`, `chore:`).
+
+## Testing Patterns
+
+Tests use Symfony's WebTestCase with an in-memory test database. Key patterns:
+
+- Controller tests navigate from index to detail pages using crawler
+- Service tests use the real MatterRegistry with fixture data
+- V3 telemetry tests include `server_cluster_details` with `feature_map`, `accepted_command_list`, `attribute_list`
+
+Example test endpoint data structure:
+```php
+$endpoints = [
+    [
+        'endpoint_id' => 1,
+        'device_types' => [256],
+        'server_clusters' => [6, 29],
+        'client_clusters' => [],
+        'server_cluster_details' => [
+            ['id' => 6, 'feature_map' => 0, 'accepted_command_list' => [0, 1, 2], 'attribute_list' => [0]],
+        ],
+    ],
+];
+```
