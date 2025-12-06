@@ -400,4 +400,82 @@ class MatterRegistryTest extends KernelTestCase
 
         $this->assertArrayHasKey(256, $analyses);
     }
+
+    public function testGetClusterSpecVersion(): void
+    {
+        // Test with known cluster (On/Off - cluster ID 6)
+        $specVersion = $this->registry->getClusterSpecVersion(6);
+
+        $this->assertNotNull($specVersion);
+        $this->assertIsString($specVersion);
+    }
+
+    public function testGetClusterSpecVersionReturnsNullForUnknown(): void
+    {
+        $specVersion = $this->registry->getClusterSpecVersion(999999);
+
+        $this->assertNull($specVersion);
+    }
+
+    public function testGetClusterCommands(): void
+    {
+        // Test with On/Off cluster (ID 6) which has known commands
+        $commands = $this->registry->getClusterCommands(6);
+
+        $this->assertIsArray($commands);
+        $this->assertNotEmpty($commands);
+
+        // Check structure of first command
+        $firstCommand = $commands[0];
+        $this->assertArrayHasKey('id', $firstCommand);
+        $this->assertArrayHasKey('name', $firstCommand);
+        $this->assertArrayHasKey('optional', $firstCommand);
+        $this->assertIsInt($firstCommand['id']);
+        $this->assertIsString($firstCommand['name']);
+        $this->assertIsBool($firstCommand['optional']);
+    }
+
+    public function testGetClusterCommandsReturnsEmptyForUnknown(): void
+    {
+        $commands = $this->registry->getClusterCommands(999999);
+
+        $this->assertIsArray($commands);
+        $this->assertEmpty($commands);
+    }
+
+    public function testGetClusterAttributes(): void
+    {
+        // Test with On/Off cluster (ID 6) which has known attributes
+        $attributes = $this->registry->getClusterAttributes(6);
+
+        $this->assertIsArray($attributes);
+        $this->assertNotEmpty($attributes);
+
+        // Check structure of first attribute
+        $firstAttribute = $attributes[0];
+        $this->assertArrayHasKey('id', $firstAttribute);
+        $this->assertArrayHasKey('name', $firstAttribute);
+        $this->assertArrayHasKey('optional', $firstAttribute);
+        $this->assertIsInt($firstAttribute['id']);
+        $this->assertIsString($firstAttribute['name']);
+        $this->assertIsBool($firstAttribute['optional']);
+    }
+
+    public function testGetClusterAttributesReturnsEmptyForUnknown(): void
+    {
+        $attributes = $this->registry->getClusterAttributes(999999);
+
+        $this->assertIsArray($attributes);
+        $this->assertEmpty($attributes);
+    }
+
+    public function testGetClusterAttributesExcludesGlobalAttributes(): void
+    {
+        // Global attributes have IDs >= 65528, they should be excluded
+        $attributes = $this->registry->getClusterAttributes(6);
+
+        foreach ($attributes as $attr) {
+            $this->assertLessThan(65528, $attr['id'], 'Global attributes should be excluded');
+        }
+    }
 }

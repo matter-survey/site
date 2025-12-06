@@ -389,4 +389,170 @@ class CapabilityServiceTest extends KernelTestCase
         $presetsCapability = array_filter($result['supported'], fn ($c) => 'thermostat_presets' === $c['key']);
         $this->assertNotEmpty($presetsCapability, 'Presets should be supported with PRES feature');
     }
+
+    public function testCapabilityIncludesSpecVersion(): void
+    {
+        // Test that analyzed capabilities include specVersion
+        $endpoints = [
+            [
+                'endpoint_id' => 1,
+                'device_types' => [256], // On/Off Light
+                'server_clusters' => [6, 29], // On/Off + Descriptor
+                'client_clusters' => [],
+            ],
+        ];
+
+        $result = $this->capabilityService->analyzeCapabilities($endpoints);
+
+        // Find on_off capability
+        $onOffCapability = array_filter($result['supported'], fn ($c) => 'on_off' === $c['key']);
+        $this->assertNotEmpty($onOffCapability);
+
+        $capability = reset($onOffCapability);
+        $this->assertArrayHasKey('specVersion', $capability);
+    }
+
+    public function testCapabilityDetailsIncludeImplementationStatus(): void
+    {
+        // Test with V3 telemetry data that includes accepted_command_list
+        $endpoints = [
+            [
+                'endpoint_id' => 1,
+                'device_types' => [256], // On/Off Light
+                'server_clusters' => [6, 29], // On/Off + Descriptor
+                'client_clusters' => [],
+                'server_cluster_details' => [
+                    [
+                        'id' => 6,
+                        'feature_map' => 0,
+                        'accepted_command_list' => [0, 1, 2], // Off, On, Toggle
+                        'attribute_list' => [0, 16384, 16385], // OnOff, GlobalSceneControl, OnTime
+                    ],
+                    ['id' => 29, 'feature_map' => 0],
+                ],
+            ],
+        ];
+
+        $result = $this->capabilityService->analyzeCapabilities($endpoints);
+
+        // Find on_off capability
+        $onOffCapability = array_filter($result['supported'], fn ($c) => 'on_off' === $c['key']);
+        $this->assertNotEmpty($onOffCapability);
+
+        /** @var array<string, mixed> $capability */
+        $capability = reset($onOffCapability);
+        $this->assertIsArray($capability);
+        $this->assertArrayHasKey('details', $capability);
+        $this->assertNotNull($capability['details']);
+
+        $details = $capability['details'];
+        $this->assertIsArray($details);
+
+        // Check that actions include 'implemented' field
+        if (!empty($details['actions'])) {
+            $actions = $details['actions'];
+            $this->assertIsArray($actions);
+            $firstAction = $actions[0];
+            $this->assertArrayHasKey('implemented', $firstAction);
+            $this->assertArrayHasKey('optional', $firstAction);
+        }
+
+        // Check that statuses include 'implemented' field
+        if (!empty($details['statuses'])) {
+            $statuses = $details['statuses'];
+            $this->assertIsArray($statuses);
+            $firstStatus = $statuses[0];
+            $this->assertArrayHasKey('implemented', $firstStatus);
+            $this->assertArrayHasKey('optional', $firstStatus);
+        }
+    }
+
+    public function testCapabilityDetailsShowUnimplementedOptionalCommands(): void
+    {
+        // Test with V3 telemetry that only implements mandatory commands
+        // The On/Off cluster has optional commands like OffWithEffect (64)
+        $endpoints = [
+            [
+                'endpoint_id' => 1,
+                'device_types' => [256],
+                'server_clusters' => [6, 29],
+                'client_clusters' => [],
+                'server_cluster_details' => [
+                    [
+                        'id' => 6,
+                        'feature_map' => 0,
+                        'accepted_command_list' => [0, 1, 2], // Only mandatory: Off, On, Toggle
+                        'attribute_list' => [0], // Only OnOff attribute
+                    ],
+                    ['id' => 29, 'feature_map' => 0],
+                ],
+            ],
+        ];
+
+        $result = $this->capabilityService->analyzeCapabilities($endpoints);
+
+        $onOffCapability = array_filter($result['supported'], fn ($c) => 'on_off' === $c['key']);
+        /** @var array<string, mixed>|false $capability */
+        $capability = reset($onOffCapability);
+
+        $this->assertIsArray($capability);
+        $this->assertArrayHasKey('details', $capability);
+
+        $details = $capability['details'];
+        if (\is_array($details) && !empty($details['actions'])) {
+            $actions = $details['actions'];
+            $this->assertIsArray($actions);
+
+            // Check for mix of implemented and not-implemented commands
+            $implementedCount = 0;
+            $notImplementedCount = 0;
+
+            foreach ($actions as $action) {
+                if (true === $action['implemented']) {
+                    ++$implementedCount;
+                } elseif (false === $action['implemented']) {
+                    ++$notImplementedCount;
+                }
+            }
+
+            // Should have some implemented commands (the ones in accepted_command_list)
+            $this->assertGreaterThan(0, $implementedCount, 'Should have implemented commands');
+        }
+    }
+
+    public function testCapabilityDetailsSpecVersionFromCluster(): void
+    {
+        // Test that details include specVersion from the cluster
+        $endpoints = [
+            [
+                'endpoint_id' => 1,
+                'device_types' => [256],
+                'server_clusters' => [6, 29],
+                'client_clusters' => [],
+                'server_cluster_details' => [
+                    [
+                        'id' => 6,
+                        'feature_map' => 0,
+                        'accepted_command_list' => [0, 1, 2],
+                        'attribute_list' => [0],
+                    ],
+                    ['id' => 29, 'feature_map' => 0],
+                ],
+            ],
+        ];
+
+        $result = $this->capabilityService->analyzeCapabilities($endpoints);
+
+        $onOffCapability = array_filter($result['supported'], fn ($c) => 'on_off' === $c['key']);
+        /** @var array<string, mixed>|false $capability */
+        $capability = reset($onOffCapability);
+
+        $this->assertIsArray($capability);
+        $this->assertArrayHasKey('details', $capability);
+
+        $details = $capability['details'];
+        if (\is_array($details)) {
+            $this->assertArrayHasKey('specVersion', $details);
+        }
+    }
 }

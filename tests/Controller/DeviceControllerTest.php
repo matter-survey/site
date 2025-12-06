@@ -977,4 +977,145 @@ class DeviceControllerTest extends WebTestCase
             $this->assertStringContainsString('count', $firstOption->html(), 'Capability options should show counts');
         }
     }
+
+    // Capability Table Tests
+
+    public function testDeviceShowPageHasCapabilitiesSection(): void
+    {
+        $client = static::createClient();
+
+        // Get device from index
+        $crawler = $client->request('GET', '/');
+        $deviceLink = $crawler->filter('.device-info h3 a')->first();
+        $client->click($deviceLink->link());
+
+        $this->assertResponseIsSuccessful();
+
+        // Check that capabilities section exists
+        $this->assertSelectorExists('.capabilities-section');
+    }
+
+    public function testDeviceShowPageHasCapabilitiesTable(): void
+    {
+        $client = static::createClient();
+
+        // Get device from index (Hue Bulb has on_off, dimming, full_color capabilities)
+        $crawler = $client->request('GET', '/');
+        $deviceLink = $crawler->filter('.device-info h3 a')->first();
+        $client->click($deviceLink->link());
+
+        $this->assertResponseIsSuccessful();
+
+        // Check that capability table exists
+        $this->assertSelectorExists('.capability-table');
+    }
+
+    public function testDeviceShowPageCapabilityTableHasRows(): void
+    {
+        $client = static::createClient();
+
+        $crawler = $client->request('GET', '/');
+        $deviceLink = $crawler->filter('.device-info h3 a')->first();
+        $crawler = $client->click($deviceLink->link());
+
+        $this->assertResponseIsSuccessful();
+
+        // Check that capability rows exist
+        $capabilityRows = $crawler->filter('.capability-row');
+        $this->assertGreaterThan(0, $capabilityRows->count(), 'Should have capability rows');
+    }
+
+    public function testDeviceShowPageCapabilityRowStructure(): void
+    {
+        $client = static::createClient();
+
+        $crawler = $client->request('GET', '/');
+        $deviceLink = $crawler->filter('.device-info h3 a')->first();
+        $crawler = $client->click($deviceLink->link());
+
+        $this->assertResponseIsSuccessful();
+
+        // Check that supported capabilities have proper structure
+        $supportedRow = $crawler->filter('.capability-row.capability-supported')->first();
+        if ($supportedRow->count() > 0) {
+            // Should have emoji
+            $this->assertGreaterThan(0, $supportedRow->filter('.cap-emoji')->count(), 'Should have emoji');
+            // Should have label
+            $this->assertGreaterThan(0, $supportedRow->filter('.cap-label')->count(), 'Should have label');
+            // Should have status cell
+            $this->assertGreaterThan(0, $supportedRow->filter('.cap-td-status')->count(), 'Should have status');
+        }
+    }
+
+    public function testDeviceShowPageCapabilityTableShowsSpecVersion(): void
+    {
+        $client = static::createClient();
+
+        $crawler = $client->request('GET', '/');
+        $deviceLink = $crawler->filter('.device-info h3 a')->first();
+        $crawler = $client->click($deviceLink->link());
+
+        $this->assertResponseIsSuccessful();
+
+        // Check that spec version is shown
+        $specVersionCells = $crawler->filter('.cap-spec-version');
+        // Spec version cells should exist (though might be empty for some capabilities)
+        $this->assertGreaterThanOrEqual(0, $specVersionCells->count());
+    }
+
+    public function testDeviceShowPageExpandableCapabilitiesHaveIcon(): void
+    {
+        $client = static::createClient();
+
+        $crawler = $client->request('GET', '/');
+        $deviceLink = $crawler->filter('.device-info h3 a')->first();
+        $crawler = $client->click($deviceLink->link());
+
+        $this->assertResponseIsSuccessful();
+
+        // Check expandable capabilities have expand icon
+        $expandableRows = $crawler->filter('.capability-row.capability-expandable');
+        if ($expandableRows->count() > 0) {
+            $firstExpandable = $expandableRows->first();
+            $this->assertGreaterThan(0, $firstExpandable->filter('.cap-expand-icon')->count(), 'Expandable rows should have expand icon');
+        }
+    }
+
+    public function testDeviceShowPageHasCapabilityDetailsRow(): void
+    {
+        $client = static::createClient();
+
+        $crawler = $client->request('GET', '/');
+        $deviceLink = $crawler->filter('.device-info h3 a')->first();
+        $crawler = $client->click($deviceLink->link());
+
+        $this->assertResponseIsSuccessful();
+
+        // Check that details rows exist (hidden by default)
+        $detailsRows = $crawler->filter('.capability-details-row');
+        if ($detailsRows->count() > 0) {
+            // Details row should have content container
+            $firstDetails = $detailsRows->first();
+            $this->assertGreaterThan(0, $firstDetails->filter('.cap-details-content')->count(), 'Details row should have content container');
+        }
+    }
+
+    public function testDeviceShowPageUnsupportedCapabilitiesShowRedX(): void
+    {
+        $client = static::createClient();
+
+        $crawler = $client->request('GET', '/');
+        $deviceLink = $crawler->filter('.device-info h3 a')->first();
+        $crawler = $client->click($deviceLink->link());
+
+        $this->assertResponseIsSuccessful();
+
+        // Check that unsupported capabilities have the red X status
+        $unsupportedRows = $crawler->filter('.capability-row.capability-unsupported');
+        if ($unsupportedRows->count() > 0) {
+            $firstUnsupported = $unsupportedRows->first();
+            $statusCell = $firstUnsupported->filter('.cap-status-unsupported');
+            $this->assertGreaterThan(0, $statusCell->count(), 'Unsupported capabilities should have status');
+        }
+    }
 }

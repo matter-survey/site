@@ -1,7 +1,9 @@
 {#
     Capabilities Component
-    Displays human-friendly device capabilities in a visual grid layout.
-    Supported capabilities are expandable to show detailed commands and attributes.
+    Displays human-friendly device capabilities in a table layout.
+    Each capability shows: name, Matter spec version, and support status.
+    Supported capabilities are expandable to show detailed commands and attributes
+    with implementation status (spec vs what device actually implements).
 
     Parameters:
     - capabilities: The capabilities analysis result from CapabilityService
@@ -35,86 +37,119 @@
         </div>
     </div>
 
-    <div class="capabilities-grid">
+    <div class="capabilities-tables">
         {% for catKey, category in capabilities.byCategory %}
             {% if category.supported|length > 0 or category.unsupported|length > 0 %}
                 <div class="capability-category">
-                    <h4 class="category-label">{{ category.label }}</h4>
-                    <div class="capability-cards">
-                        {# Supported capabilities - expandable if they have details #}
-                        {% for cap in category.supported %}
-                            {% set hasDetails = cap.details is defined and cap.details is not null and (cap.details.actions|length > 0 or cap.details.statuses|length > 0) %}
-                            <div class="capability-card capability-supported{% if hasDetails %} capability-expandable{% endif %}"
-                                 title="{{ cap.description }}"
-                                 {% if hasDetails %}data-expandable="true"{% endif %}>
-                                <div class="capability-summary"{% if hasDetails %} onclick="toggleCapabilityDetails(this)"{% endif %}>
-                                    <span class="capability-emoji">{{ cap.emoji }}</span>
-                                    <span class="capability-label">{{ cap.label }}</span>
-                                    <span class="capability-status">&#10003;</span>
-                                    {% if hasDetails %}
-                                        <span class="capability-expand-icon">&#9662;</span>
-                                    {% endif %}
-                                </div>
+                    <table class="capability-table">
+                        <thead>
+                            <tr>
+                                <th class="cap-th-name" colspan="3">{{ category.label }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {# Supported capabilities - expandable if they have details #}
+                            {% for cap in category.supported %}
+                                {% set hasDetails = cap.details is defined and cap.details is not null and (cap.details.actions|length > 0 or cap.details.statuses|length > 0) %}
+                                <tr class="capability-row capability-supported{% if hasDetails %} capability-expandable{% endif %}"
+                                    title="{{ cap.description }}"
+                                    {% if hasDetails %}onclick="toggleCapabilityRow(this)"{% endif %}>
+                                    <td class="cap-td-name">
+                                        {% if hasDetails %}
+                                            <span class="cap-expand-icon">&#9654;</span>
+                                        {% else %}
+                                            <span class="cap-expand-placeholder"></span>
+                                        {% endif %}
+                                        <span class="cap-emoji">{{ cap.emoji }}</span>
+                                        <span class="cap-label">{{ cap.label }}</span>
+                                    </td>
+                                    <td class="cap-td-spec">
+                                        {% if cap.specVersion %}
+                                            <span class="cap-spec-version">v{{ cap.specVersion }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="cap-td-status cap-status-supported">&#10003;</td>
+                                </tr>
                                 {% if hasDetails %}
-                                    <div class="capability-details" style="display: none;">
-                                        <div class="capability-cluster-name" title="Matter cluster: {{ cap.details.clusterName }} (ID: {{ cap.details.clusterId }})">
-                                            <span class="cluster-badge">{{ cap.details.clusterName }}</span>
-                                        </div>
-
-                                        {% if cap.details.actions|length > 0 %}
-                                            <div class="capability-actions">
-                                                <h5>What you can do:</h5>
-                                                <ul>
-                                                    {% for action in cap.details.actions %}
-                                                        <li title="Command: {{ action.technical }}">
-                                                            <span class="action-bullet">&#8226;</span>
-                                                            <span class="action-friendly">{{ action.friendly }}</span>
-                                                        </li>
-                                                    {% endfor %}
-                                                </ul>
-                                            </div>
-                                        {% endif %}
-
-                                        {% if cap.details.statuses|length > 0 %}
-                                            <div class="capability-statuses">
-                                                <h5>Information available:</h5>
-                                                <ul>
-                                                    {% for status in cap.details.statuses %}
-                                                        <li title="Attribute: {{ status.technical }}">
-                                                            <span class="status-bullet">&#8226;</span>
-                                                            <span class="status-friendly">{{ status.friendly }}</span>
-                                                        </li>
-                                                    {% endfor %}
-                                                </ul>
-                                            </div>
-                                        {% endif %}
-
-                                        {% if cap.details.features|length > 0 %}
-                                            <div class="capability-features">
-                                                <h5>Enabled features:</h5>
-                                                <div class="feature-tags">
-                                                    {% for feature in cap.details.features %}
-                                                        <span class="feature-tag" title="Feature: {{ feature.name }}">{{ feature.name }}</span>
-                                                    {% endfor %}
+                                    <tr class="capability-details-row" style="display: none;">
+                                        <td colspan="3" class="cap-td-details">
+                                            <div class="cap-details-content">
+                                                <div class="cap-cluster-name" title="Matter cluster: {{ cap.details.clusterName }} (ID: {{ cap.details.clusterId }})">
+                                                    <span class="cluster-badge">{{ cap.details.clusterName }}</span>
                                                 </div>
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
 
-                        {# Unsupported capabilities #}
-                        {% for cap in category.unsupported %}
-                            <div class="capability-card capability-unsupported" title="{{ cap.description }} (not available)">
-                                <div class="capability-summary">
-                                    <span class="capability-emoji">{{ cap.emoji }}</span>
-                                    <span class="capability-label">{{ cap.label }}</span>
-                                    <span class="capability-status">&#10005;</span>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
+                                                {% if cap.details.actions|length > 0 %}
+                                                    <div class="cap-detail-section">
+                                                        <h5>What you can do:</h5>
+                                                        <ul class="cap-detail-list">
+                                                            {% for action in cap.details.actions %}
+                                                                {% set implClass = action.implemented is same as(true) ? 'cap-implemented' : (action.implemented is same as(false) ? 'cap-not-implemented' : 'cap-unknown') %}
+                                                                {% set implIcon = action.implemented is same as(true) ? '&#10003;' : (action.implemented is same as(false) ? '&#10005;' : '&#8226;') %}
+                                                                <li class="{{ implClass }}" title="Command: {{ action.technical }}{% if action.optional %} (optional){% endif %}">
+                                                                    <span class="cap-impl-icon">{{ implIcon|raw }}</span>
+                                                                    <span class="cap-item-text">{{ action.friendly }}</span>
+                                                                    {% if action.implemented is same as(false) and action.optional %}
+                                                                        <span class="cap-optional-badge">optional</span>
+                                                                    {% endif %}
+                                                                </li>
+                                                            {% endfor %}
+                                                        </ul>
+                                                    </div>
+                                                {% endif %}
+
+                                                {% if cap.details.statuses|length > 0 %}
+                                                    <div class="cap-detail-section">
+                                                        <h5>Information available:</h5>
+                                                        <ul class="cap-detail-list">
+                                                            {% for status in cap.details.statuses %}
+                                                                {% set implClass = status.implemented is same as(true) ? 'cap-implemented' : (status.implemented is same as(false) ? 'cap-not-implemented' : 'cap-unknown') %}
+                                                                {% set implIcon = status.implemented is same as(true) ? '&#10003;' : (status.implemented is same as(false) ? '&#10005;' : '&#8226;') %}
+                                                                <li class="{{ implClass }}" title="Attribute: {{ status.technical }}{% if status.optional %} (optional){% endif %}">
+                                                                    <span class="cap-impl-icon">{{ implIcon|raw }}</span>
+                                                                    <span class="cap-item-text">{{ status.friendly }}</span>
+                                                                    {% if status.implemented is same as(false) and status.optional %}
+                                                                        <span class="cap-optional-badge">optional</span>
+                                                                    {% endif %}
+                                                                </li>
+                                                            {% endfor %}
+                                                        </ul>
+                                                    </div>
+                                                {% endif %}
+
+                                                {% if cap.details.features|length > 0 %}
+                                                    <div class="cap-detail-section">
+                                                        <h5>Enabled features:</h5>
+                                                        <div class="cap-feature-tags">
+                                                            {% for feature in cap.details.features %}
+                                                                <span class="cap-feature-tag" title="Feature: {{ feature.name }}">{{ feature.name }}</span>
+                                                            {% endfor %}
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            {% endfor %}
+
+                            {# Unsupported capabilities #}
+                            {% for cap in category.unsupported %}
+                                <tr class="capability-row capability-unsupported" title="{{ cap.description }} (not available)">
+                                    <td class="cap-td-name">
+                                        <span class="cap-expand-placeholder"></span>
+                                        <span class="cap-emoji">{{ cap.emoji }}</span>
+                                        <span class="cap-label">{{ cap.label }}</span>
+                                    </td>
+                                    <td class="cap-td-spec">
+                                        {% if cap.specVersion %}
+                                            <span class="cap-spec-version">v{{ cap.specVersion }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="cap-td-status cap-status-unsupported">&#10005;</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             {% endif %}
         {% endfor %}
@@ -141,19 +176,20 @@
 </div>
 
 <script>
-function toggleCapabilityDetails(element) {
-    const card = element.closest('.capability-card');
-    const details = card.querySelector('.capability-details');
-    const icon = card.querySelector('.capability-expand-icon');
+function toggleCapabilityRow(row) {
+    const detailsRow = row.nextElementSibling;
+    if (!detailsRow || !detailsRow.classList.contains('capability-details-row')) return;
 
-    if (details.style.display === 'none') {
-        details.style.display = 'block';
-        card.classList.add('expanded');
-        if (icon) icon.innerHTML = '&#9652;'; // Up arrow
+    const icon = row.querySelector('.cap-expand-icon');
+
+    if (detailsRow.style.display === 'none') {
+        detailsRow.style.display = 'table-row';
+        row.classList.add('expanded');
+        if (icon) icon.innerHTML = '&#9660;'; // Down arrow (expanded)
     } else {
-        details.style.display = 'none';
-        card.classList.remove('expanded');
-        if (icon) icon.innerHTML = '&#9662;'; // Down arrow
+        detailsRow.style.display = 'none';
+        row.classList.remove('expanded');
+        if (icon) icon.innerHTML = '&#9654;'; // Right arrow (collapsed)
     }
 }
 </script>

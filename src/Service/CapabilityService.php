@@ -108,6 +108,16 @@ class CapabilityService
                 $serverClusterDetails
             );
 
+            // Get spec version from the capability's primary cluster
+            $specVersion = null;
+            $clusterDefs = $capability['clusters'] ?? [];
+            if (!empty($clusterDefs)) {
+                $primaryClusterId = $clusterDefs[0]['id'] ?? null;
+                if (null !== $primaryClusterId) {
+                    $specVersion = $this->matterRegistry->getClusterSpecVersion($primaryClusterId);
+                }
+            }
+
             $capInfo = [
                 'key' => $capKey,
                 'label' => $capability['label'],
@@ -115,6 +125,7 @@ class CapabilityService
                 'icon' => $capability['icon'] ?? '',
                 'description' => $capability['description'] ?? '',
                 'category' => $capability['category'] ?? 'other',
+                'specVersion' => $specVersion,
                 'details' => null,
             ];
 
@@ -239,7 +250,8 @@ class CapabilityService
     /**
      * Get detailed cluster information for a capability's expandable view.
      *
-     * Returns user-friendly commands and attributes with technical names in tooltips.
+     * Compares the Matter spec (all possible commands/attributes) against
+     * what the device actually implements, marking each as implemented or not.
      *
      * @param array<string, mixed>             $capability           The capability definition from YAML
      * @param array<int, bool>                 $serverClusters       Map of available server cluster IDs
@@ -249,8 +261,9 @@ class CapabilityService
      * @return array{
      *     clusterId: int,
      *     clusterName: string,
-     *     actions: array<int, array{id: int, technical: string, friendly: string}>,
-     *     statuses: array<int, array{id: int, technical: string, friendly: string}>,
+     *     specVersion: ?string,
+     *     actions: array<int, array{id: int, technical: string, friendly: string, implemented: bool, optional: bool}>,
+     *     statuses: array<int, array{id: int, technical: string, friendly: string, implemented: bool, optional: bool}>,
      *     features: array<int, array{name: string, enabled: bool}>
      * }|null
      */
@@ -285,6 +298,7 @@ class CapabilityService
 
             // Found a matching cluster - build the details
             $clusterName = $this->matterRegistry->getClusterName($clusterId);
+            $specVersion = $this->matterRegistry->getClusterSpecVersion($clusterId);
             $actions = [];
             $statuses = [];
             $features = [];
@@ -294,6 +308,10 @@ class CapabilityService
             $acceptedCommands = $telemetryDetails['accepted_command_list'] ?? [];
             $attributeList = $telemetryDetails['attribute_list'] ?? [];
             $featureMap = $telemetryDetails['feature_map'] ?? null;
+
+            // Convert to lookup maps for quick checking
+            $implementedCommands = array_flip(array_map('intval', $acceptedCommands));
+            $implementedAttributes = array_flip(array_map('intval', $attributeList));
 
             // Build friendly action mappings from capability definition
             $friendlyActions = [];
@@ -311,9 +329,31 @@ class CapabilityService
                 }
             }
 
-            // Process commands
-            if (!empty($acceptedCommands)) {
-                // Use actual telemetry data
+            // Get all commands from the spec and compare against implementation
+            $specCommands = $this->matterRegistry->getClusterCommands($clusterId);
+            $hasV3Telemetry = !empty($acceptedCommands);
+
+            if (!empty($specCommands)) {
+                // We have spec data - show full spec with implementation status
+                foreach ($specCommands as $cmd) {
+                    $cmdId = $cmd['id'];
+                    $technicalName = $cmd['name'];
+                    $friendlyName = $friendlyActions[$cmdId] ?? $this->humanizeTechnicalName($technicalName);
+                    $isOptional = $cmd['optional'];
+
+                    // Check if implemented (only if we have V3 telemetry)
+                    $implemented = $hasV3Telemetry ? isset($implementedCommands[$cmdId]) : null;
+
+                    $actions[] = [
+                        'id' => $cmdId,
+                        'technical' => $technicalName,
+                        'friendly' => $friendlyName,
+                        'implemented' => $implemented,
+                        'optional' => $isOptional,
+                    ];
+                }
+            } elseif ($hasV3Telemetry) {
+                // No spec data but have telemetry - show only implemented commands
                 foreach ($acceptedCommands as $cmdId) {
                     $cmdId = (int) $cmdId;
                     $technicalName = $this->matterRegistry->getClusterCommandName($clusterId, $cmdId) ?? "Command {$cmdId}";
@@ -323,23 +363,49 @@ class CapabilityService
                         'id' => $cmdId,
                         'technical' => $technicalName,
                         'friendly' => $friendlyName,
+                        'implemented' => true,
+                        'optional' => false,
                     ];
                 }
             } elseif (!empty($friendlyActions)) {
-                // Fall back to capability definition (no V3 telemetry)
+                // Fall back to capability definition (no V3 telemetry, no spec)
                 foreach ($friendlyActions as $cmdId => $friendly) {
                     $technicalName = $this->matterRegistry->getClusterCommandName($clusterId, $cmdId) ?? "Command {$cmdId}";
                     $actions[] = [
                         'id' => $cmdId,
                         'technical' => $technicalName,
                         'friendly' => $friendly,
+                        'implemented' => null,
+                        'optional' => false,
                     ];
                 }
             }
 
-            // Process attributes (filter out global attributes > 65000)
-            if (!empty($attributeList)) {
-                // Use actual telemetry data
+            // Get all attributes from the spec and compare against implementation
+            $specAttributes = $this->matterRegistry->getClusterAttributes($clusterId);
+            $hasV3TelemetryAttrs = !empty($attributeList);
+
+            if (!empty($specAttributes)) {
+                // We have spec data - show full spec with implementation status
+                foreach ($specAttributes as $attr) {
+                    $attrId = $attr['id'];
+                    $technicalName = $attr['name'];
+                    $friendlyName = $friendlyStatuses[$attrId] ?? $this->humanizeTechnicalName($technicalName);
+                    $isOptional = $attr['optional'];
+
+                    // Check if implemented (only if we have V3 telemetry)
+                    $implemented = $hasV3TelemetryAttrs ? isset($implementedAttributes[$attrId]) : null;
+
+                    $statuses[] = [
+                        'id' => $attrId,
+                        'technical' => $technicalName,
+                        'friendly' => $friendlyName,
+                        'implemented' => $implemented,
+                        'optional' => $isOptional,
+                    ];
+                }
+            } elseif ($hasV3TelemetryAttrs) {
+                // No spec data but have telemetry - show only implemented attributes
                 foreach ($attributeList as $attrId) {
                     $attrId = (int) $attrId;
                     if ($attrId >= 65528) {
@@ -353,6 +419,8 @@ class CapabilityService
                         'id' => $attrId,
                         'technical' => $technicalName,
                         'friendly' => $friendlyName,
+                        'implemented' => true,
+                        'optional' => false,
                     ];
                 }
             } elseif (!empty($friendlyStatuses)) {
@@ -363,6 +431,8 @@ class CapabilityService
                         'id' => $attrId,
                         'technical' => $technicalName,
                         'friendly' => $friendly,
+                        'implemented' => null,
+                        'optional' => false,
                     ];
                 }
             }
@@ -388,6 +458,7 @@ class CapabilityService
             return [
                 'clusterId' => $clusterId,
                 'clusterName' => $clusterName,
+                'specVersion' => $specVersion,
                 'actions' => $actions,
                 'statuses' => $statuses,
                 'features' => $features,

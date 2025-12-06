@@ -1217,113 +1217,134 @@
         border-radius: 0.25rem;
     }
 
-    .capabilities-grid {
+    /* Capability Tables */
+    .capabilities-tables {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 1.25rem;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 1.5rem;
     }
 
     .capability-category {
         min-width: 0;
     }
 
-    .category-label {
-        font-size: 0.75rem;
+    .capability-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+    }
+
+    .capability-table thead th {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        background: var(--gray-50);
         font-weight: 600;
+        font-size: 0.75rem;
         text-transform: uppercase;
         color: var(--gray-500);
-        margin: 0 0 0.5rem;
         letter-spacing: 0.025em;
+        border-bottom: 2px solid var(--gray-200);
     }
 
-    .capability-cards {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
+    .capability-row {
+        transition: background 0.15s;
     }
 
-    .capability-card {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-        padding: 0.375rem 0.625rem;
-        border-radius: 0.375rem;
-        font-size: 0.8125rem;
-        cursor: default;
-        transition: transform 0.1s;
-    }
-
-    .capability-card:hover {
-        transform: translateY(-1px);
-    }
-
-    .capability-supported {
-        background: #dcfce7;
-        color: #166534;
-        border: 1px solid #bbf7d0;
-    }
-
-    .capability-unsupported {
-        background: var(--gray-100);
-        color: var(--gray-400);
-        border: 1px solid var(--gray-200);
-    }
-
-    .capability-emoji {
-        font-size: 1rem;
-    }
-
-    .capability-label {
-        font-weight: 500;
-    }
-
-    .capability-status {
-        font-size: 0.75rem;
-        font-weight: 600;
-        margin-left: auto;
-    }
-
-    .capability-supported .capability-status {
-        color: #166534;
-    }
-
-    .capability-unsupported .capability-status {
-        color: var(--gray-400);
-    }
-
-    /* Expandable capability cards */
-    .capability-card.capability-expandable {
-        flex-direction: column;
-        align-items: stretch;
+    .capability-row.capability-expandable {
         cursor: pointer;
     }
 
-    .capability-card.capability-expandable .capability-summary {
+    .capability-row:hover {
+        background: var(--gray-50);
+    }
+
+    .capability-row td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--gray-100);
+        vertical-align: middle;
+    }
+
+    .cap-td-name {
         display: flex;
         align-items: center;
-        gap: 0.375rem;
-        width: 100%;
+        gap: 0.5rem;
     }
 
-    .capability-expand-icon {
-        margin-left: auto;
-        font-size: 0.75rem;
-        color: #166534;
-        opacity: 0.6;
+    .cap-expand-icon {
+        width: 1rem;
+        font-size: 0.625rem;
+        color: var(--gray-400);
         transition: transform 0.2s;
+        flex-shrink: 0;
     }
 
-    .capability-card.expanded .capability-expand-icon {
-        transform: rotate(180deg);
+    .cap-expand-placeholder {
+        width: 1rem;
+        flex-shrink: 0;
     }
 
-    .capability-details {
-        margin-top: 0.75rem;
-        padding-top: 0.75rem;
-        border-top: 1px solid rgba(22, 101, 52, 0.2);
+    .capability-row.expanded .cap-expand-icon {
+        color: #166534;
     }
 
-    .capability-cluster-name {
+    .cap-emoji {
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .cap-label {
+        font-weight: 500;
+    }
+
+    .cap-td-spec {
+        width: 5rem;
+        text-align: center;
+    }
+
+    .cap-spec-version {
+        font-size: 0.75rem;
+        color: var(--gray-400);
+        font-family: var(--font-mono);
+    }
+
+    .cap-td-status {
+        width: 2.5rem;
+        text-align: center;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .cap-status-supported {
+        color: #16a34a;
+    }
+
+    .cap-status-unsupported {
+        color: #dc2626;
+    }
+
+    .capability-unsupported {
+        opacity: 0.6;
+    }
+
+    .capability-unsupported .cap-label {
+        color: var(--gray-500);
+    }
+
+    /* Capability Details Row */
+    .capability-details-row td {
+        padding: 0;
+        background: var(--gray-50);
+    }
+
+    .cap-td-details {
+        border-left: 3px solid #16a34a;
+    }
+
+    .cap-details-content {
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+    }
+
+    .cap-cluster-name {
         margin-bottom: 0.5rem;
     }
 
@@ -1337,51 +1358,90 @@
         font-weight: 500;
     }
 
-    .capability-details h5 {
+    .cap-detail-section {
+        margin-bottom: 0.75rem;
+    }
+
+    .cap-detail-section:last-child {
+        margin-bottom: 0;
+    }
+
+    .cap-detail-section h5 {
         font-size: 0.6875rem;
         font-weight: 600;
         text-transform: uppercase;
-        color: rgba(22, 101, 52, 0.7);
-        margin: 0.5rem 0 0.25rem;
+        color: var(--gray-500);
+        margin: 0 0 0.375rem;
         letter-spacing: 0.025em;
     }
 
-    .capability-details ul {
+    .cap-detail-list {
         list-style: none;
         margin: 0;
         padding: 0;
     }
 
-    .capability-details li {
+    .cap-detail-list li {
         font-size: 0.8125rem;
-        color: #166534;
-        padding: 0.125rem 0;
+        padding: 0.1875rem 0;
         display: flex;
         align-items: flex-start;
         gap: 0.375rem;
         cursor: help;
     }
 
-    .action-bullet, .status-bullet {
-        opacity: 0.5;
+    .cap-impl-icon {
+        width: 1rem;
         flex-shrink: 0;
+        text-align: center;
+        font-weight: 600;
     }
 
-    .action-friendly, .status-friendly {
+    .cap-implemented {
+        color: #166534;
+    }
+
+    .cap-implemented .cap-impl-icon {
+        color: #16a34a;
+    }
+
+    .cap-not-implemented {
+        color: var(--gray-500);
+    }
+
+    .cap-not-implemented .cap-impl-icon {
+        color: #dc2626;
+    }
+
+    .cap-unknown {
+        color: var(--gray-600);
+    }
+
+    .cap-unknown .cap-impl-icon {
+        color: var(--gray-400);
+    }
+
+    .cap-item-text {
         flex: 1;
     }
 
-    .capability-features {
-        margin-top: 0.5rem;
+    .cap-optional-badge {
+        font-size: 0.625rem;
+        padding: 0.0625rem 0.25rem;
+        background: var(--gray-200);
+        color: var(--gray-500);
+        border-radius: 0.25rem;
+        text-transform: uppercase;
+        font-weight: 500;
     }
 
-    .feature-tags {
+    .cap-feature-tags {
         display: flex;
         flex-wrap: wrap;
         gap: 0.25rem;
     }
 
-    .feature-tag {
+    .cap-feature-tag {
         display: inline-block;
         padding: 0.125rem 0.375rem;
         background: rgba(22, 101, 52, 0.1);

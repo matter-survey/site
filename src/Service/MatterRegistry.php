@@ -173,6 +173,78 @@ class MatterRegistry
     }
 
     /**
+     * Get the spec version for a cluster.
+     */
+    public function getClusterSpecVersion(int $clusterId): ?string
+    {
+        $metadata = $this->getClusterMetadata($clusterId);
+
+        return $metadata['specVersion'] ?? null;
+    }
+
+    /**
+     * Get all commands defined in the spec for a cluster.
+     *
+     * @return array<int, array{id: int, name: string, optional: bool}>
+     */
+    public function getClusterCommands(int $clusterId): array
+    {
+        $metadata = $this->getClusterMetadata($clusterId);
+
+        if (!$metadata) {
+            return [];
+        }
+
+        $commands = [];
+        foreach ($metadata['commands'] ?? [] as $cmd) {
+            $id = $cmd['code'] ?? $cmd['id'] ?? null;
+            if (null === $id) {
+                continue;
+            }
+            $commands[] = [
+                'id' => (int) $id,
+                'name' => $cmd['name'] ?? "Command {$id}",
+                'optional' => (bool) ($cmd['optional'] ?? false),
+            ];
+        }
+
+        return $commands;
+    }
+
+    /**
+     * Get all attributes defined in the spec for a cluster.
+     *
+     * @return array<int, array{id: int, name: string, optional: bool}>
+     */
+    public function getClusterAttributes(int $clusterId): array
+    {
+        $metadata = $this->getClusterMetadata($clusterId);
+
+        if (!$metadata) {
+            return [];
+        }
+
+        $attributes = [];
+        foreach ($metadata['attributes'] ?? [] as $attr) {
+            $id = $attr['code'] ?? $attr['id'] ?? null;
+            if (null === $id) {
+                continue;
+            }
+            // Skip global attributes (>= 65528)
+            if ((int) $id >= 65528) {
+                continue;
+            }
+            $attributes[] = [
+                'id' => (int) $id,
+                'name' => $attr['name'] ?? "Attribute {$id}",
+                'optional' => (bool) ($attr['optional'] ?? false),
+            ];
+        }
+
+        return $attributes;
+    }
+
+    /**
      * Decode a feature_map bitmask into human-readable features.
      *
      * @return array<array{code: string, name: string, summary: string, enabled: bool}>
