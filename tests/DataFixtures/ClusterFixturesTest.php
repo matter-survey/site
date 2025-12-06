@@ -159,9 +159,9 @@ class ClusterFixturesTest extends KernelTestCase
         $commands = $cluster->getCommands();
         $features = $cluster->getFeatures();
 
-        // Values should be either null or arrays
-        $this->assertTrue(null === $attributes || \is_array($attributes));
-        $this->assertTrue(null === $commands || \is_array($commands));
-        $this->assertTrue(null === $features || \is_array($features));
+        // Values should be either null or arrays - asserting proper return types
+        $this->assertThat($attributes, $this->logicalOr($this->isNull(), $this->isType('array')));
+        $this->assertThat($commands, $this->logicalOr($this->isNull(), $this->isType('array')));
+        $this->assertThat($features, $this->logicalOr($this->isNull(), $this->isType('array')));
     }
 }

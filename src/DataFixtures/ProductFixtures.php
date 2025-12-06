@@ -172,7 +172,7 @@ class ProductFixtures extends Fixture implements FixtureGroupInterface, Dependen
             // Batch flush to manage memory
             if (0 === $count % self::BATCH_SIZE) {
                 $manager->flush();
-                $manager->clear(Product::class);
+                $manager->clear();
             }
         }
 

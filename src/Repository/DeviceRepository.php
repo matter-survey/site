@@ -995,11 +995,9 @@ class DeviceRepository
             }
         }
 
-        // Calculate percentages
+        // Calculate percentages (total is always >= 1 since we only create entries when there's a row)
         foreach ($categoryStats as &$stat) {
-            $stat['percentage'] = $stat['total'] > 0
-                ? round(($stat['with_binding'] / $stat['total']) * 100, 1)
-                : 0;
+            $stat['percentage'] = round(($stat['with_binding'] / $stat['total']) * 100, 1);
         }
 
         uasort($categoryStats, fn ($a, $b) => $b['percentage'] <=> $a['percentage']);

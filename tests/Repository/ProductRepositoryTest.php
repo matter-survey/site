@@ -6,16 +6,19 @@ namespace App\Tests\Repository;
 
 use App\Entity\Product;
 use App\Repository\ProductRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class ProductRepositoryTest extends KernelTestCase
 {
     private ProductRepository $repository;
+    private EntityManagerInterface $entityManager;
 
     protected function setUp(): void
     {
         self::bootKernel();
         $this->repository = static::getContainer()->get(ProductRepository::class);
+        $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
     }
 
     public function testFindByVendorAndProductId(): void
@@ -49,7 +52,7 @@ class ProductRepositoryTest extends KernelTestCase
             $product->setProductName("Product $i");
             $this->repository->save($product);
         }
-        $this->repository->getEntityManager()->flush();
+        $this->entityManager->flush();
 
         // Find by specId
         $products = $this->repository->findByVendorSpecId(8888);
@@ -77,7 +80,7 @@ class ProductRepositoryTest extends KernelTestCase
             $product->setProductName("Product $i");
             $this->repository->save($product);
         }
-        $this->repository->getEntityManager()->flush();
+        $this->entityManager->flush();
 
         $count = $this->repository->countByVendorSpecId(6666);
         $this->assertEquals(5, $count);
@@ -105,7 +108,7 @@ class ProductRepositoryTest extends KernelTestCase
                 $this->repository->save($product);
             }
         }
-        $this->repository->getEntityManager()->flush();
+        $this->entityManager->flush();
 
         $counts = $this->repository->getProductCountsByVendor();
 
@@ -123,14 +126,14 @@ class ProductRepositoryTest extends KernelTestCase
     {
         // First call creates
         $product1 = $this->repository->findOrCreate(1111, 1, 'Vendor A', 'Product A');
-        $this->repository->getEntityManager()->flush();
+        $this->entityManager->flush();
 
         $this->assertNotNull($product1->getId());
         $this->assertEquals('Product A', $product1->getProductName());
 
         // Second call finds existing
         $product2 = $this->repository->findOrCreate(1111, 1, 'Vendor A Updated', 'Product A Updated');
-        $this->repository->getEntityManager()->flush();
+        $this->entityManager->flush();
 
         $this->assertEquals($product1->getId(), $product2->getId());
         // Names should be updated

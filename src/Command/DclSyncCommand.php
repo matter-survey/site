@@ -204,7 +204,7 @@ class DclSyncCommand extends Command
         $fixtures = [];
         foreach ($vendors as $vendor) {
             $name = $vendor['vendorName'] ?? '';
-            $specId = $vendor['vendorID'] ?? 0;
+            $specId = $vendor['vendorID'];
 
             // Generate unique slug with specId suffix (e.g., 'govee-4947')
             $baseSlug = Vendor::generateSlug($name, $specId);
@@ -249,8 +249,8 @@ class DclSyncCommand extends Command
         // Transform to fixture format
         $fixtures = [];
         foreach ($models as $model) {
-            $vid = $model['vid'] ?? 0;
-            $pid = $model['pid'] ?? 0;
+            $vid = $model['vid'];
+            $pid = $model['pid'];
 
             $fixture = [
                 'vendorId' => $vid,

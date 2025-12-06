@@ -26,10 +26,10 @@ class DclApiService
      *
      * @return array<int, array{
      *     vendorID: int,
-     *     vendorName: string,
-     *     companyLegalName: string,
-     *     companyPreferredName: string,
-     *     vendorLandingPageURL: string
+     *     vendorName?: string,
+     *     companyLegalName?: string,
+     *     companyPreferredName?: string,
+     *     vendorLandingPageURL?: string
      * }>
      */
     public function fetchAllVendors(): array
@@ -76,33 +76,33 @@ class DclApiService
      * @return array<int, array{
      *     vid: int,
      *     pid: int,
-     *     deviceTypeId: int,
-     *     productName: string,
-     *     productLabel: string,
-     *     partNumber: string,
-     *     productUrl: string,
-     *     supportUrl: string,
-     *     userManualUrl: string,
-     *     commissioningCustomFlow: int,
-     *     commissioningCustomFlowUrl: string,
-     *     commissioningModeInitialStepsHint: int,
-     *     commissioningModeInitialStepsInstruction: string,
-     *     commissioningModeSecondaryStepsHint: int,
-     *     commissioningModeSecondaryStepsInstruction: string,
-     *     discoveryCapabilitiesBitmask: int,
-     *     maintenanceUrl: string,
-     *     factoryResetStepsHint: int,
-     *     factoryResetStepsInstruction: string,
-     *     icdUserActiveModeTriggerHint: int,
-     *     icdUserActiveModeTriggerInstruction: string,
-     *     commissioningFallbackUrl: string,
-     *     lsfUrl: string,
-     *     lsfRevision: int,
-     *     enhancedSetupFlowOptions: int,
-     *     enhancedSetupFlowTCUrl: string,
-     *     enhancedSetupFlowTCRevision: int,
-     *     enhancedSetupFlowTCDigest: string,
-     *     enhancedSetupFlowTCFileSize: int
+     *     deviceTypeId?: int,
+     *     productName?: string,
+     *     productLabel?: string,
+     *     partNumber?: string,
+     *     productUrl?: string,
+     *     supportUrl?: string,
+     *     userManualUrl?: string,
+     *     commissioningCustomFlow?: int,
+     *     commissioningCustomFlowUrl?: string,
+     *     commissioningModeInitialStepsHint?: int,
+     *     commissioningModeInitialStepsInstruction?: string,
+     *     commissioningModeSecondaryStepsHint?: int,
+     *     commissioningModeSecondaryStepsInstruction?: string,
+     *     discoveryCapabilitiesBitmask?: int,
+     *     maintenanceUrl?: string,
+     *     factoryResetStepsHint?: int,
+     *     factoryResetStepsInstruction?: string,
+     *     icdUserActiveModeTriggerHint?: int,
+     *     icdUserActiveModeTriggerInstruction?: string,
+     *     commissioningFallbackUrl?: string,
+     *     lsfUrl?: string,
+     *     lsfRevision?: int,
+     *     enhancedSetupFlowOptions?: int,
+     *     enhancedSetupFlowTCUrl?: string,
+     *     enhancedSetupFlowTCRevision?: int,
+     *     enhancedSetupFlowTCDigest?: string,
+     *     enhancedSetupFlowTCFileSize?: int
      * }>
      */
     public function fetchAllModels(): array
