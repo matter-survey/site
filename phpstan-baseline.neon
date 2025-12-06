@@ -109,16 +109,58 @@ parameters:
 			path: src/DataFixtures/ProductFixtures.php
 
 		-
+			message: '#^Property App\\Entity\\ApiToken\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/ApiToken.php
+
+		-
+			message: '#^Property App\\Entity\\DeviceScore\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/DeviceScore.php
+
+		-
+			message: '#^Property App\\Entity\\Installation\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Installation.php
+
+		-
+			message: '#^Property App\\Entity\\InstallationProduct\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/InstallationProduct.php
+
+		-
 			message: '#^Property App\\Entity\\Product\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
 			identifier: property.unusedType
 			count: 1
 			path: src/Entity/Product.php
 
 		-
-			message: '#^Property App\\Entity\\Vendor\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			message: '#^Property App\\Entity\\Product\:\:\$score \(App\\Entity\\DeviceScore\|null\) is never assigned App\\Entity\\DeviceScore so it can be removed from the property type\.$#'
 			identifier: property.unusedType
 			count: 1
-			path: src/Entity/Vendor.php
+			path: src/Entity/Product.php
+
+		-
+			message: '#^Property App\\Entity\\ProductEndpoint\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/ProductEndpoint.php
+
+		-
+			message: '#^Property App\\Entity\\ProductVersion\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/ProductVersion.php
+
+		-
+			message: '#^Property App\\Entity\\Submission\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Submission.php
 
 		-
 			message: '#^Property App\\Entity\\User\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
@@ -127,10 +169,10 @@ parameters:
 			path: src/Entity/User.php
 
 		-
-			message: '#^Property App\\Entity\\ApiToken\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			message: '#^Property App\\Entity\\Vendor\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
 			identifier: property.unusedType
 			count: 1
-			path: src/Entity/ApiToken.php
+			path: src/Entity/Vendor.php
 
 		-
 			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'

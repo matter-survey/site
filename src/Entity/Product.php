@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\ProductRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -21,6 +23,17 @@ class Product
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
+
+    /** @var Collection<int, ProductVersion> */
+    #[ORM\OneToMany(mappedBy: 'product', targetEntity: ProductVersion::class, cascade: ['remove'])]
+    private Collection $versions;
+
+    /** @var Collection<int, ProductEndpoint> */
+    #[ORM\OneToMany(mappedBy: 'product', targetEntity: ProductEndpoint::class, cascade: ['remove'])]
+    private Collection $endpoints;
+
+    #[ORM\OneToOne(mappedBy: 'product', targetEntity: DeviceScore::class, cascade: ['remove'])]
+    private ?DeviceScore $score = null;
 
     #[ORM\Column(length: 255, unique: true, nullable: true)]
     private ?string $slug = null;
@@ -146,6 +159,8 @@ class Product
 
     public function __construct()
     {
+        $this->versions = new ArrayCollection();
+        $this->endpoints = new ArrayCollection();
         // firstSeen, lastSeen, and submissionCount are intentionally not set here.
         // They should only be populated when a device is seen through telemetry submissions,
         // not when imported from DCL fixtures.
@@ -621,5 +636,26 @@ class Product
         }
 
         return 'product-'.$vendorId.'-'.$productId;
+    }
+
+    /**
+     * @return Collection<int, ProductVersion>
+     */
+    public function getVersions(): Collection
+    {
+        return $this->versions;
+    }
+
+    /**
+     * @return Collection<int, ProductEndpoint>
+     */
+    public function getEndpoints(): Collection
+    {
+        return $this->endpoints;
+    }
+
+    public function getScore(): ?DeviceScore
+    {
+        return $this->score;
     }
 }
