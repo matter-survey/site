@@ -48,6 +48,7 @@ security:
         # Public API endpoints - no authentication required
         - { path: ^/api/submit$, roles: PUBLIC_ACCESS }
         - { path: ^/api/search$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/compare/search$, roles: PUBLIC_ACCESS }
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
         - { path: ^/api/$, roles: PUBLIC_ACCESS }  # Docs redirect
         # All other API endpoints require API role

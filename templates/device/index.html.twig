@@ -390,6 +390,72 @@
         }
     }
 
+    /* Compare selection */
+    .compare-checkbox {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .compare-checkbox input {
+        width: 1.25rem;
+        height: 1.25rem;
+        cursor: pointer;
+        accent-color: var(--primary);
+    }
+
+    .compare-floating {
+        position: fixed;
+        bottom: 1.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--primary);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 9999px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .compare-floating button {
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.375rem;
+        border: none;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: background 0.15s;
+    }
+
+    .compare-floating .compare-btn {
+        background: white;
+        color: var(--primary);
+    }
+
+    .compare-floating .compare-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .compare-floating .compare-btn:not(:disabled):hover {
+        background: var(--gray-100);
+    }
+
+    .compare-floating .clear-btn {
+        background: transparent;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .compare-floating .clear-btn:hover {
+        color: white;
+    }
+
     @media (max-width: 480px) {
         .stats {
             grid-template-columns: 1fr 1fr;
@@ -688,9 +754,26 @@
                     {% endif %}
                 </div>
             {% else %}
-                <div class="device-list">
+                <div class="device-list"
+                     data-controller="compare-select"
+                     data-compare-select-compare-url-value="{{ path('compare_empty') }}">
+                    {# Floating compare button #}
+                    <div class="compare-floating"
+                         data-compare-select-target="button"
+                         style="display: none;">
+                        <span>Compare (<span data-compare-select-target="count">0</span>)</span>
+                        <button class="compare-btn" data-action="compare-select#compare">Compare Devices</button>
+                        <button class="clear-btn" data-action="compare-select#clear">Clear</button>
+                    </div>
+
                     {% for device in devices %}
                         <div class="device-item">
+                            <label class="compare-checkbox" title="Add to comparison">
+                                <input type="checkbox"
+                                       data-compare-select-target="checkbox"
+                                       data-action="change->compare-select#toggle"
+                                       data-slug="{{ device.slug }}">
+                            </label>
                             <div class="device-info">
                                 <h3>
                                     <a href="{{ path('device_show', {slug: device.slug}) }}" data-turbo-frame="_top">

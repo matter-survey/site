@@ -1,0 +1,130 @@
+{#
+    Capability row for comparison table.
+    Shows capability name and support status for each device.
+    Expandable to show detailed commands/attributes per device.
+
+    Parameters:
+    - capability: Capability data (key, label, emoji, category, specVersion, hasDetails)
+    - capKey: Capability key
+    - devices: Array of devices being compared
+    - deviceCapabilities: Map of slug => capabilities analysis
+    - showAddColumn: Whether to show empty column for "add device"
+#}
+
+{# Check if any device has details for this capability #}
+{% set anyHasDetails = false %}
+{% for device in devices %}
+    {% set caps = deviceCapabilities[device.slug]|default({}) %}
+    {% set capData = caps.supported[capKey]|default(null) %}
+    {% if capData and capData.details is defined and capData.details and (capData.details.actions|length > 0 or capData.details.statuses|length > 0) %}
+        {% set anyHasDetails = true %}
+    {% endif %}
+{% endfor %}
+
+<tr class="capability-row{% if anyHasDetails %} expandable{% endif %}"
+    data-cap-key="{{ capKey }}"
+    {% if anyHasDetails %}data-action="click->compare#toggleRow"{% endif %}>
+    <td class="capability-header">
+        <div class="cap-name-cell">
+            {% if anyHasDetails %}
+                <span class="expand-icon">&#9654;</span>
+            {% else %}
+                <span class="expand-icon"></span>
+            {% endif %}
+            <span class="cap-emoji">{{ capability.emoji }}</span>
+            <span class="cap-label">{{ capability.label }}</span>
+            {% if capability.specVersion %}
+                <span class="spec-badge">v{{ capability.specVersion }}</span>
+            {% endif %}
+        </div>
+    </td>
+    {% for device in devices %}
+        {% set caps = deviceCapabilities[device.slug]|default({}) %}
+        {% set isSupported = caps.supported[capKey] is defined %}
+        <td class="capability-status {{ isSupported ? 'supported' : 'unsupported' }}">
+            {% if isSupported %}
+                <span class="status-icon">&#10003;</span>
+            {% else %}
+                <span class="status-icon">&#10005;</span>
+            {% endif %}
+        </td>
+    {% endfor %}
+    {% if showAddColumn %}<td class="add-device-placeholder"></td>{% endif %}
+</tr>
+
+{% if anyHasDetails %}
+<tr class="capability-details-row" style="display: none;">
+    <td colspan="{{ devices|length + 1 + (showAddColumn ? 1 : 0) }}" style="padding: 0;">
+        <div class="details-wrapper">
+            <div class="details-label">
+                <strong>Details</strong><br>
+                <small>Commands &amp; attributes</small>
+            </div>
+            {% for device in devices %}
+                {% set caps = deviceCapabilities[device.slug]|default({}) %}
+                {% set capData = caps.supported[capKey]|default(null) %}
+                <div class="device-details">
+                    {% if capData and capData.details is defined and capData.details %}
+                        {# Actions/Commands #}
+                        {% if capData.details.actions|length > 0 %}
+                            <div class="detail-section">
+                                <h5>Actions</h5>
+                                <ul>
+                                    {% for action in capData.details.actions|slice(0, 6) %}
+                                        {% set implClass = action.implemented is same as(true) ? 'implemented' : (action.implemented is same as(false) ? 'not-implemented' : 'unknown') %}
+                                        {% set implIcon = action.implemented is same as(true) ? '&#10003;' : (action.implemented is same as(false) ? '&#10005;' : '&#8226;') %}
+                                        <li class="{{ implClass }}" title="{{ action.technical }}">
+                                            <span class="cap-impl-icon">{{ implIcon|raw }}</span>
+                                            <span>{{ action.friendly }}</span>
+                                        </li>
+                                    {% endfor %}
+                                    {% if capData.details.actions|length > 6 %}
+                                        <li class="unknown"><span class="cap-impl-icon">&#8226;</span><em>+{{ capData.details.actions|length - 6 }} more</em></li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        {# Statuses/Attributes #}
+                        {% if capData.details.statuses|length > 0 %}
+                            <div class="detail-section">
+                                <h5>Info</h5>
+                                <ul>
+                                    {% for status in capData.details.statuses|slice(0, 6) %}
+                                        {% set implClass = status.implemented is same as(true) ? 'implemented' : (status.implemented is same as(false) ? 'not-implemented' : 'unknown') %}
+                                        {% set implIcon = status.implemented is same as(true) ? '&#10003;' : (status.implemented is same as(false) ? '&#10005;' : '&#8226;') %}
+                                        <li class="{{ implClass }}" title="{{ status.technical }}">
+                                            <span class="cap-impl-icon">{{ implIcon|raw }}</span>
+                                            <span>{{ status.friendly }}</span>
+                                        </li>
+                                    {% endfor %}
+                                    {% if capData.details.statuses|length > 6 %}
+                                        <li class="unknown"><span class="cap-impl-icon">&#8226;</span><em>+{{ capData.details.statuses|length - 6 }} more</em></li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        {# Features #}
+                        {% if capData.details.features|length > 0 %}
+                            <div class="detail-section">
+                                <h5>Features</h5>
+                                <div class="feature-tags">
+                                    {% for feature in capData.details.features %}
+                                        <span class="feature-tag">{{ feature.name }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <span class="no-data">Not supported</span>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            {% if showAddColumn %}
+                <div class="device-details add-device-placeholder"></div>
+            {% endif %}
+        </div>
+    </td>
+</tr>
+{% endif %}

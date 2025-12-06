@@ -1,0 +1,21 @@
+{#
+    Add device column for comparison table.
+    Shows search input to add more devices.
+
+    Parameters:
+    - remainingSlots: Number of devices that can still be added
+#}
+
+<div class="add-device-card" data-compare-target="addColumn">
+    <div class="add-device-search">
+        <input type="text"
+               placeholder="+ Add device..."
+               data-compare-target="searchInput"
+               data-action="input->compare#search focus->compare#search keydown->compare#onKeydown"
+               autocomplete="off">
+        <div class="compare-search-results" data-compare-target="results" style="display: none;"></div>
+    </div>
+    <div class="add-device-hint">
+        {{ remainingSlots }} slot{{ remainingSlots != 1 ? 's' : '' }} remaining
+    </div>
+</div>

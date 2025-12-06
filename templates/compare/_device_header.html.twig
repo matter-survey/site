@@ -1,0 +1,26 @@
+{#
+    Device header for comparison table column.
+    Shows device name, vendor, rating, and remove button.
+
+    Parameters:
+    - device: Device data including data.product_name, data.vendor_name, data.slug
+    - score: Device score from DeviceScoreService (optional)
+#}
+
+{% from 'components/_star_rating.html.twig' import starsBadge %}
+
+<div class="device-header-card">
+    <button class="remove-device"
+            data-action="compare#removeDevice"
+            data-compare-slug-param="{{ device.slug }}"
+            title="Remove from comparison">&times;</button>
+    <a href="{{ path('device_show', {slug: device.slug}) }}" class="device-name">
+        {{ device.data.product_name|default('Unknown Device') }}
+    </a>
+    <div class="device-vendor">{{ device.data.vendor_name|default('Unknown Vendor') }}</div>
+    {% if score and score.starRating is defined %}
+        <div class="device-rating">
+            {{ starsBadge(score.starRating, score.overallScore, score.isCompliant) }}
+        </div>
+    {% endif %}
+</div>

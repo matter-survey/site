@@ -54,3 +54,10 @@ wizard_controllers:
     prefix:
         en: ''
         de: '/de'
+
+compare_controllers:
+    resource: ../src/Controller/CompareController.php
+    type: attribute
+    prefix:
+        en: ''
+        de: '/de'
