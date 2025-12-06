@@ -234,6 +234,19 @@ capabilities:
     clusters:
       - id: 512  # Pump Configuration and Control
         role: server
+    statuses:
+      - attr: 0   # MaxPressure
+        friendly: "Maximum pressure supported"
+      - attr: 1   # MaxSpeed
+        friendly: "Maximum speed supported"
+      - attr: 2   # MaxFlow
+        friendly: "Maximum flow rate supported"
+      - attr: 16  # PumpStatus
+        friendly: "Current pump status"
+      - attr: 17  # EffectiveOperationMode
+        friendly: "Current operation mode"
+      - attr: 19  # EffectiveControlMode
+        friendly: "Current control mode"
 
   valve_control:
     label: "Valve control"
@@ -244,6 +257,18 @@ capabilities:
     clusters:
       - id: 129  # Valve Configuration and Control
         role: server
+    actions:
+      - cmd: 0    # Open
+        friendly: "Open the valve"
+      - cmd: 1    # Close
+        friendly: "Close the valve"
+    statuses:
+      - attr: 0   # OpenDuration
+        friendly: "Time valve has been open"
+      - attr: 3   # CurrentState
+        friendly: "Current valve state (open/closed)"
+      - attr: 4   # TargetState
+        friendly: "Target valve state"
 
   # ============================================
   # SENSORS - Things the device can detect
@@ -337,6 +362,13 @@ capabilities:
     clusters:
       - id: 1027  # Pressure Measurement
         role: server
+    statuses:
+      - attr: 0   # MeasuredValue
+        friendly: "Current pressure reading"
+      - attr: 1   # MinMeasuredValue
+        friendly: "Minimum measurable pressure"
+      - attr: 2   # MaxMeasuredValue
+        friendly: "Maximum measurable pressure"
 
   flow_sensing:
     label: "Flow sensor"
@@ -347,6 +379,13 @@ capabilities:
     clusters:
       - id: 1028  # Flow Measurement
         role: server
+    statuses:
+      - attr: 0   # MeasuredValue
+        friendly: "Current flow rate"
+      - attr: 1   # MinMeasuredValue
+        friendly: "Minimum measurable flow"
+      - attr: 2   # MaxMeasuredValue
+        friendly: "Maximum measurable flow"
 
   air_quality_sensing:
     label: "Air quality sensor"
@@ -357,6 +396,9 @@ capabilities:
     clusters:
       - id: 91  # Air Quality
         role: server
+    statuses:
+      - attr: 0   # AirQuality
+        friendly: "Overall air quality level (good/fair/poor)"
 
   smoke_detection:
     label: "Smoke detector"
@@ -367,6 +409,16 @@ capabilities:
     clusters:
       - id: 92  # Smoke CO Alarm
         role: server
+    actions:
+      - cmd: 0    # SelfTestRequest
+        friendly: "Run a self-test"
+    statuses:
+      - attr: 1   # SmokeState
+        friendly: "Smoke alarm state (normal/warning/critical)"
+      - attr: 5   # HardwareFaultAlert
+        friendly: "Hardware fault detected"
+      - attr: 7   # TestInProgress
+        friendly: "Self-test running"
 
   co_detection:
     label: "Carbon monoxide detector"
@@ -377,6 +429,16 @@ capabilities:
     clusters:
       - id: 92  # Smoke CO Alarm (also handles CO)
         role: server
+    actions:
+      - cmd: 0    # SelfTestRequest
+        friendly: "Run a self-test"
+    statuses:
+      - attr: 2   # COState
+        friendly: "CO alarm state (normal/warning/critical)"
+      - attr: 5   # HardwareFaultAlert
+        friendly: "Hardware fault detected"
+      - attr: 8   # EndOfServiceAlert
+        friendly: "Device needs replacement"
 
   # ============================================
   # AUTOMATION & SCENES
@@ -441,6 +503,9 @@ capabilities:
     clusters:
       - id: 30  # Binding cluster
         role: server
+    statuses:
+      - attr: 0   # Binding
+        friendly: "List of bound devices"
 
   actions:
     label: "Automation actions"
@@ -451,6 +516,26 @@ capabilities:
     clusters:
       - id: 37  # Actions cluster
         role: server
+    actions:
+      - cmd: 0    # InstantAction
+        friendly: "Trigger an action immediately"
+      - cmd: 1    # InstantActionWithTransition
+        friendly: "Trigger action with transition"
+      - cmd: 2    # StartAction
+        friendly: "Start an action sequence"
+      - cmd: 3    # StartActionWithDuration
+        friendly: "Start action for a duration"
+      - cmd: 4    # StopAction
+        friendly: "Stop an action"
+      - cmd: 5    # PauseAction
+        friendly: "Pause an action"
+      - cmd: 6    # ResumeAction
+        friendly: "Resume paused action"
+    statuses:
+      - attr: 0   # ActionList
+        friendly: "Available actions"
+      - attr: 2   # SetupURL
+        friendly: "Setup configuration URL"
 
   mode_select:
     label: "Operating modes"
@@ -480,6 +565,18 @@ capabilities:
       - id: 513  # Thermostat cluster with scheduling features
         role: server
         features: ["SCH", "MSCH"]  # ScheduleConfiguration or MatterScheduleConfiguration
+    actions:
+      - cmd: 1    # SetWeeklySchedule
+        friendly: "Set weekly temperature schedule"
+      - cmd: 2    # GetWeeklySchedule
+        friendly: "Get current weekly schedule"
+      - cmd: 3    # ClearWeeklySchedule
+        friendly: "Clear all scheduled settings"
+    statuses:
+      - attr: 32  # NumberOfWeeklyTransitions
+        friendly: "Max schedule changes per day"
+      - attr: 33  # NumberOfDailyTransitions
+        friendly: "Max schedule transitions"
 
   occupancy_response:
     label: "Responds to occupancy"
@@ -490,6 +587,9 @@ capabilities:
     clusters:
       - id: 1030  # Occupancy Sensing
         role: client  # Client = can receive occupancy data
+    statuses:
+      - attr: 0   # Occupancy
+        friendly: "Receives occupancy updates from sensors"
 
   # ============================================
   # INFO & MONITORING
@@ -538,6 +638,22 @@ capabilities:
     clusters:
       - id: 51  # General Diagnostics
         role: server
+    actions:
+      - cmd: 0    # TestEventTrigger
+        friendly: "Trigger test event"
+    statuses:
+      - attr: 0   # NetworkInterfaces
+        friendly: "Network interface information"
+      - attr: 1   # RebootCount
+        friendly: "Number of reboots"
+      - attr: 2   # UpTime
+        friendly: "Time since last restart"
+      - attr: 8   # ActiveHardwareFaults
+        friendly: "Active hardware faults"
+      - attr: 9   # ActiveRadioFaults
+        friendly: "Active radio faults"
+      - attr: 10  # ActiveNetworkFaults
+        friendly: "Active network faults"
 
   ota_updates:
     label: "Firmware updates"
@@ -548,6 +664,16 @@ capabilities:
     clusters:
       - id: 42  # OTA Software Update Requestor
         role: server
+    actions:
+      - cmd: 0    # AnnounceOTAProvider
+        friendly: "Request firmware update check"
+    statuses:
+      - attr: 1   # UpdatePossible
+        friendly: "Update available"
+      - attr: 2   # UpdateState
+        friendly: "Current update state"
+      - attr: 3   # UpdateStateProgress
+        friendly: "Update progress percentage"
 
   # ============================================
   # COMFORT & CLIMATE
@@ -563,6 +689,11 @@ capabilities:
       - id: 513  # Thermostat
         role: server
         features: ["HEAT"]
+    statuses:
+      - attr: 18  # OccupiedHeatingSetpoint
+        friendly: "Target heating temperature"
+      - attr: 0   # LocalTemperature
+        friendly: "Current room temperature"
 
   cooling:
     label: "Cooling"
@@ -574,6 +705,11 @@ capabilities:
       - id: 513  # Thermostat
         role: server
         features: ["COOL"]
+    statuses:
+      - attr: 17  # OccupiedCoolingSetpoint
+        friendly: "Target cooling temperature"
+      - attr: 0   # LocalTemperature
+        friendly: "Current room temperature"
 
   auto_mode:
     label: "Auto heat/cool"
@@ -585,6 +721,11 @@ capabilities:
       - id: 513  # Thermostat
         role: server
         features: ["AUTO"]
+    statuses:
+      - attr: 28  # SystemMode
+        friendly: "Current system mode"
+      - attr: 30  # ThermostatRunningState
+        friendly: "Currently heating or cooling"
 
   thermostat_presets:
     label: "Temperature presets"
@@ -596,6 +737,14 @@ capabilities:
       - id: 513  # Thermostat
         role: server
         features: ["PRES"]
+    actions:
+      - cmd: 4    # SetActivePresetRequest
+        friendly: "Activate a temperature preset"
+    statuses:
+      - attr: 80  # Presets
+        friendly: "Available temperature presets"
+      - attr: 81  # ActivePresetHandle
+        friendly: "Currently active preset"
 
   humidity_control:
     label: "Humidity control"
@@ -606,6 +755,9 @@ capabilities:
     clusters:
       - id: 514  # Fan Control with humidity feature
         role: server
+    statuses:
+      - attr: 0   # FanMode
+        friendly: "Current fan mode"
 
   air_purification:
     label: "Air purification"
@@ -618,6 +770,16 @@ capabilities:
         role: server
       - id: 114  # Activated Carbon Filter Monitoring
         role: server
+    actions:
+      - cmd: 0    # ResetCondition
+        friendly: "Reset filter replacement reminder"
+    statuses:
+      - attr: 0   # Condition
+        friendly: "Filter condition (0-100%)"
+      - attr: 1   # DegradationDirection
+        friendly: "Whether condition increases or decreases"
+      - attr: 2   # ChangeIndication
+        friendly: "Filter change needed indicator"
 
   # ============================================
   # SECURITY
@@ -633,6 +795,14 @@ capabilities:
       - id: 257  # Door Lock
         role: server
         features: ["PIN"]
+    actions:
+      - cmd: 26   # SetCredential
+        friendly: "Add or update a PIN code"
+      - cmd: 36   # ClearCredential
+        friendly: "Remove a PIN code"
+    statuses:
+      - attr: 18  # NumberOfPINUsersSupported
+        friendly: "Maximum PIN users supported"
 
   rfid_access:
     label: "RFID/card access"
@@ -644,6 +814,14 @@ capabilities:
       - id: 257  # Door Lock
         role: server
         features: ["RID"]
+    actions:
+      - cmd: 26   # SetCredential
+        friendly: "Register an RFID card/fob"
+      - cmd: 36   # ClearCredential
+        friendly: "Remove an RFID card/fob"
+    statuses:
+      - attr: 19  # NumberOfRFIDUsersSupported
+        friendly: "Maximum RFID users supported"
 
   user_management:
     label: "User management"
@@ -655,6 +833,18 @@ capabilities:
       - id: 257  # Door Lock
         role: server
         features: ["USR"]
+    actions:
+      - cmd: 26   # SetCredential
+        friendly: "Add or update user credentials"
+      - cmd: 36   # ClearCredential
+        friendly: "Remove user credentials"
+      - cmd: 29   # GetUser
+        friendly: "Get user information"
+    statuses:
+      - attr: 17  # NumberOfTotalUsersSupported
+        friendly: "Maximum total users supported"
+      - attr: 20  # NumberOfWeekDaySchedulesSupportedPerUser
+        friendly: "Schedules per user"
 
   alarm:
     label: "Alarm/siren"
@@ -665,6 +855,14 @@ capabilities:
     clusters:
       - id: 1282  # IAS WD (Warning Device)
         role: server
+    actions:
+      - cmd: 0    # StartWarning
+        friendly: "Start sounding the alarm"
+      - cmd: 1    # Squawk
+        friendly: "Play a short alert sound"
+    statuses:
+      - attr: 0   # MaxDuration
+        friendly: "Maximum alarm duration"
 
   # ============================================
   # MEDIA & ENTERTAINMENT
@@ -711,6 +909,16 @@ capabilities:
     clusters:
       - id: 1092  # Audio Output
         role: server
+    actions:
+      - cmd: 0    # SelectOutput
+        friendly: "Select audio output"
+      - cmd: 1    # RenameOutput
+        friendly: "Rename an audio output"
+    statuses:
+      - attr: 0   # OutputList
+        friendly: "Available audio outputs"
+      - attr: 1   # CurrentOutput
+        friendly: "Current audio output"
 
   channel_control:
     label: "Channel selection"
@@ -721,6 +929,20 @@ capabilities:
     clusters:
       - id: 1284  # Channel
         role: server
+    actions:
+      - cmd: 0    # ChangeChannel
+        friendly: "Change to a channel by name/number"
+      - cmd: 2    # ChangeChannelByNumber
+        friendly: "Change to a specific channel number"
+      - cmd: 3    # SkipChannel
+        friendly: "Skip up or down channels"
+    statuses:
+      - attr: 0   # ChannelList
+        friendly: "Available channels"
+      - attr: 1   # Lineup
+        friendly: "Channel lineup information"
+      - attr: 2   # CurrentChannel
+        friendly: "Currently tuned channel"
 
   input_selection:
     label: "Input selection"
@@ -731,6 +953,20 @@ capabilities:
     clusters:
       - id: 1287  # Media Input
         role: server
+    actions:
+      - cmd: 0    # SelectInput
+        friendly: "Switch to an input source"
+      - cmd: 1    # ShowInputStatus
+        friendly: "Show current input on screen"
+      - cmd: 2    # HideInputStatus
+        friendly: "Hide input status display"
+      - cmd: 3    # RenameInput
+        friendly: "Rename an input source"
+    statuses:
+      - attr: 0   # InputList
+        friendly: "Available input sources"
+      - attr: 1   # CurrentInput
+        friendly: "Currently selected input"
 
   casting:
     label: "Casting/streaming"
@@ -741,6 +977,16 @@ capabilities:
     clusters:
       - id: 1289  # Content Launcher
         role: server
+    actions:
+      - cmd: 0    # LaunchContent
+        friendly: "Launch content by search"
+      - cmd: 1    # LaunchURL
+        friendly: "Launch content from URL"
+    statuses:
+      - attr: 0   # AcceptHeader
+        friendly: "Supported content types"
+      - attr: 1   # SupportedStreamingProtocols
+        friendly: "Supported streaming protocols"
 
 # Device type to relevant capabilities mapping
 # Defines which capabilities are relevant for each device type category
