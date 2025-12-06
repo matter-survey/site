@@ -114,6 +114,8 @@ class DeviceRepository
                 product_name = COALESCE(products.product_name, excluded.product_name),
                 slug = COALESCE(products.slug, excluded.slug),
                 connectivity_types = excluded.connectivity_types,
+                -- Set first_seen only if not already set (for products imported from DCL fixtures)
+                first_seen = COALESCE(products.first_seen, CURRENT_TIMESTAMP),
                 last_seen = CURRENT_TIMESTAMP,
                 submission_count = products.submission_count + 1
             RETURNING id

@@ -37,14 +37,14 @@ class Product
     #[ORM\Column(name: 'product_name', type: Types::TEXT, nullable: true)]
     private ?string $productName = null;
 
-    #[ORM\Column(name: 'first_seen', type: Types::DATETIME_MUTABLE)]
-    private \DateTimeInterface $firstSeen;
+    #[ORM\Column(name: 'first_seen', type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $firstSeen = null;
 
-    #[ORM\Column(name: 'last_seen', type: Types::DATETIME_MUTABLE)]
-    private \DateTimeInterface $lastSeen;
+    #[ORM\Column(name: 'last_seen', type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $lastSeen = null;
 
     #[ORM\Column(name: 'submission_count')]
-    private int $submissionCount = 1;
+    private int $submissionCount = 0;
 
     #[ORM\ManyToOne(targetEntity: Vendor::class)]
     #[ORM\JoinColumn(name: 'vendor_fk', referencedColumnName: 'id', nullable: true)]
@@ -146,8 +146,9 @@ class Product
 
     public function __construct()
     {
-        $this->firstSeen = new \DateTime();
-        $this->lastSeen = new \DateTime();
+        // firstSeen, lastSeen, and submissionCount are intentionally not set here.
+        // They should only be populated when a device is seen through telemetry submissions,
+        // not when imported from DCL fixtures.
     }
 
     public function getId(): ?int
@@ -203,24 +204,24 @@ class Product
         return $this;
     }
 
-    public function getFirstSeen(): \DateTimeInterface
+    public function getFirstSeen(): ?\DateTimeInterface
     {
         return $this->firstSeen;
     }
 
-    public function setFirstSeen(\DateTimeInterface $firstSeen): static
+    public function setFirstSeen(?\DateTimeInterface $firstSeen): static
     {
         $this->firstSeen = $firstSeen;
 
         return $this;
     }
 
-    public function getLastSeen(): \DateTimeInterface
+    public function getLastSeen(): ?\DateTimeInterface
     {
         return $this->lastSeen;
     }
 
-    public function setLastSeen(\DateTimeInterface $lastSeen): static
+    public function setLastSeen(?\DateTimeInterface $lastSeen): static
     {
         $this->lastSeen = $lastSeen;
 
