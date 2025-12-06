@@ -140,6 +140,16 @@ capabilities:
     clusters:
       - id: 514  # Fan Control cluster
         role: server
+    actions:
+      - cmd: 0    # Step
+        friendly: "Adjust fan speed by one step"
+    statuses:
+      - attr: 0   # FanMode
+        friendly: "Current fan mode (off/low/medium/high/auto)"
+      - attr: 2   # PercentSetting
+        friendly: "Target speed percentage"
+      - attr: 3   # PercentCurrent
+        friendly: "Current speed percentage"
 
   window_covering:
     label: "Blinds/shades control"
@@ -150,6 +160,24 @@ capabilities:
     clusters:
       - id: 258  # Window Covering cluster
         role: server
+    actions:
+      - cmd: 0    # UpOrOpen
+        friendly: "Open or raise the covering"
+      - cmd: 1    # DownOrClose
+        friendly: "Close or lower the covering"
+      - cmd: 2    # StopMotion
+        friendly: "Stop current movement"
+      - cmd: 5    # GoToLiftPercentage
+        friendly: "Set to a specific open percentage"
+      - cmd: 8    # GoToTiltPercentage
+        friendly: "Tilt slats to a specific angle"
+    statuses:
+      - attr: 10  # CurrentPositionLiftPercent100ths
+        friendly: "Current open position"
+      - attr: 11  # CurrentPositionTiltPercent100ths
+        friendly: "Current tilt angle"
+      - attr: 7   # ConfigStatus
+        friendly: "Configuration status"
 
   lock_control:
     label: "Lock/unlock"
@@ -160,6 +188,20 @@ capabilities:
     clusters:
       - id: 257  # Door Lock cluster
         role: server
+    actions:
+      - cmd: 0    # LockDoor
+        friendly: "Lock the door"
+      - cmd: 1    # UnlockDoor
+        friendly: "Unlock the door"
+      - cmd: 3    # UnlockWithTimeout
+        friendly: "Unlock temporarily (auto-relocks)"
+    statuses:
+      - attr: 0   # LockState
+        friendly: "Current lock state (locked/unlocked)"
+      - attr: 3   # DoorState
+        friendly: "Door position (open/closed)"
+      - attr: 1   # LockType
+        friendly: "Type of lock mechanism"
 
   thermostat_control:
     label: "Temperature setpoint"
@@ -170,6 +212,18 @@ capabilities:
     clusters:
       - id: 513  # Thermostat cluster
         role: server
+    actions:
+      - cmd: 0    # SetpointRaiseLower
+        friendly: "Raise or lower the target temperature"
+    statuses:
+      - attr: 0   # LocalTemperature
+        friendly: "Current room temperature"
+      - attr: 17  # OccupiedCoolingSetpoint
+        friendly: "Target cooling temperature"
+      - attr: 18  # OccupiedHeatingSetpoint
+        friendly: "Target heating temperature"
+      - attr: 28  # SystemMode
+        friendly: "Current mode (heat/cool/auto/off)"
 
   pump_control:
     label: "Pump control"
@@ -204,6 +258,13 @@ capabilities:
     clusters:
       - id: 1026  # Temperature Measurement
         role: server
+    statuses:
+      - attr: 0   # MeasuredValue
+        friendly: "Current temperature reading"
+      - attr: 1   # MinMeasuredValue
+        friendly: "Minimum measurable temperature"
+      - attr: 2   # MaxMeasuredValue
+        friendly: "Maximum measurable temperature"
 
   humidity_sensing:
     label: "Humidity sensor"
@@ -214,6 +275,13 @@ capabilities:
     clusters:
       - id: 1029  # Relative Humidity Measurement
         role: server
+    statuses:
+      - attr: 0   # MeasuredValue
+        friendly: "Current humidity reading"
+      - attr: 1   # MinMeasuredValue
+        friendly: "Minimum measurable humidity"
+      - attr: 2   # MaxMeasuredValue
+        friendly: "Maximum measurable humidity"
 
   occupancy_sensing:
     label: "Occupancy/motion sensor"
@@ -224,6 +292,11 @@ capabilities:
     clusters:
       - id: 1030  # Occupancy Sensing
         role: server
+    statuses:
+      - attr: 0   # Occupancy
+        friendly: "Current occupancy state (detected/clear)"
+      - attr: 1   # OccupancySensorType
+        friendly: "Type of sensor (PIR/ultrasonic/etc)"
 
   illuminance_sensing:
     label: "Light level sensor"
@@ -234,6 +307,13 @@ capabilities:
     clusters:
       - id: 1024  # Illuminance Measurement
         role: server
+    statuses:
+      - attr: 0   # MeasuredValue
+        friendly: "Current light level (lux)"
+      - attr: 1   # MinMeasuredValue
+        friendly: "Minimum measurable lux"
+      - attr: 2   # MaxMeasuredValue
+        friendly: "Maximum measurable lux"
 
   contact_sensing:
     label: "Open/close sensor"
@@ -244,6 +324,9 @@ capabilities:
     clusters:
       - id: 69  # Boolean State
         role: server
+    statuses:
+      - attr: 0   # StateValue
+        friendly: "Current state (open/closed)"
 
   pressure_sensing:
     label: "Pressure sensor"
@@ -378,6 +461,14 @@ capabilities:
     clusters:
       - id: 80  # Mode Select
         role: server
+    actions:
+      - cmd: 0    # ChangeToMode
+        friendly: "Switch to a specific mode"
+    statuses:
+      - attr: 3   # CurrentMode
+        friendly: "Currently active mode"
+      - attr: 2   # SupportedModes
+        friendly: "List of available modes"
 
   scheduling:
     label: "Scheduling"
@@ -415,6 +506,11 @@ capabilities:
         role: server
       - id: 145  # Electrical Energy Measurement
         role: server
+    statuses:
+      - attr: 8   # ActivePower (cluster 144)
+        friendly: "Current power consumption (Watts)"
+      - attr: 0   # CumulativeEnergyImported (cluster 145)
+        friendly: "Total energy used (kWh)"
 
   battery_status:
     label: "Battery status"
@@ -425,6 +521,13 @@ capabilities:
     clusters:
       - id: 47  # Power Source
         role: server
+    statuses:
+      - attr: 0   # Status
+        friendly: "Power source status"
+      - attr: 12  # BatPercentRemaining
+        friendly: "Battery percentage remaining"
+      - attr: 14  # BatChargeLevel
+        friendly: "Battery charge level (ok/warning/critical)"
 
   diagnostics:
     label: "Device diagnostics"
@@ -576,6 +679,28 @@ capabilities:
     clusters:
       - id: 1286  # Media Playback
         role: server
+    actions:
+      - cmd: 0    # Play
+        friendly: "Start or resume playback"
+      - cmd: 1    # Pause
+        friendly: "Pause playback"
+      - cmd: 2    # Stop
+        friendly: "Stop playback"
+      - cmd: 4    # Rewind
+        friendly: "Rewind content"
+      - cmd: 5    # FastForward
+        friendly: "Fast forward content"
+      - cmd: 6    # SkipForward
+        friendly: "Skip forward"
+      - cmd: 7    # SkipBackward
+        friendly: "Skip backward"
+    statuses:
+      - attr: 0   # CurrentState
+        friendly: "Current playback state"
+      - attr: 3   # Duration
+        friendly: "Total duration"
+      - attr: 4   # SampledPosition
+        friendly: "Current position"
 
   volume_control:
     label: "Volume control"
