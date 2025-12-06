@@ -308,6 +308,11 @@
                     {% else %}
                         <a href="{{ path(current_route, route_params|merge({'_locale': 'en'})) }}" class="lang-switch">EN</a>
                     {% endif %}
+                    {% if is_granted('ROLE_ADMIN') %}
+                        <span class="nav-divider"></span>
+                        <a href="{{ path('admin_dashboard') }}">Admin</a>
+                        <a href="{{ path('app_logout') }}">Logout</a>
+                    {% endif %}
                 </nav>
             </div>
         </div>

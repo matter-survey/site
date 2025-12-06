@@ -4,6 +4,10 @@ doctrine:
         driver: pdo_sqlite
         profiling_collect_backtrace: '%kernel.debug%'
         use_savepoints: true
+        types:
+            json: Doctrine\DBAL\Types\JsonType
+        mapping_types:
+            json: json
     orm:
         auto_generate_proxy_classes: true
         enable_lazy_ghost_objects: true

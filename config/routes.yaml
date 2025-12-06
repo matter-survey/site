@@ -1,4 +1,4 @@
-# Non-localized routes (API, health, sitemap)
+# Non-localized routes (API, health, sitemap, security, admin)
 api_controllers:
     resource: ../src/Controller/ApiController.php
     type: attribute
@@ -9,6 +9,14 @@ health_controllers:
 
 sitemap_controllers:
     resource: ../src/Controller/SitemapController.php
+    type: attribute
+
+security_controllers:
+    resource: ../src/Controller/SecurityController.php
+    type: attribute
+
+admin_controllers:
+    resource: ../src/Controller/Admin/
     type: attribute
 
 # User-facing routes with locale prefix

@@ -14,6 +14,7 @@ class ApiControllerTest extends WebTestCase
         $client = static::createClient();
         $client->request('GET', '/api/');
 
+        // /api/ should redirect to docs
         $this->assertResponseRedirects('/api/docs.html');
     }
 

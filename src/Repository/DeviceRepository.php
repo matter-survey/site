@@ -1873,4 +1873,20 @@ class DeviceRepository
             'vendorUpdateFrequency' => $vendorUpdateFrequency,
         ];
     }
+
+    /**
+     * Count total number of devices.
+     */
+    public function countDevices(): int
+    {
+        return (int) $this->db->executeQuery('SELECT COUNT(*) FROM products')->fetchOne();
+    }
+
+    /**
+     * Count total number of vendors.
+     */
+    public function countVendors(): int
+    {
+        return (int) $this->db->executeQuery('SELECT COUNT(*) FROM vendors')->fetchOne();
+    }
 }

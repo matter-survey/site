@@ -1,0 +1,225 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin Dashboard - {{ parent() }}{% endblock %}
+
+{% block header_subtitle %}<p>Administration</p>{% endblock %}
+
+{% block extra_styles %}
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.admin-header h1 {
+    font-size: 1.75rem;
+    font-weight: 600;
+}
+
+.admin-user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: var(--gray-500);
+}
+
+.admin-user-info a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.admin-user-info a:hover {
+    text-decoration: underline;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card h3 {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-500);
+    margin-bottom: 0.5rem;
+}
+
+.stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.tokens-table {
+    width: 100%;
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.tokens-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tokens-table th,
+.tokens-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.tokens-table th {
+    background: var(--gray-50);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--gray-500);
+}
+
+.tokens-table td {
+    font-size: 0.875rem;
+}
+
+.tokens-table tr:last-child td {
+    border-bottom: none;
+}
+
+.token-name {
+    font-weight: 500;
+}
+
+.token-value {
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: var(--gray-500);
+}
+
+.token-date {
+    color: var(--gray-500);
+    font-size: 0.8125rem;
+}
+
+.empty-state {
+    padding: 2rem;
+    text-align: center;
+    color: var(--gray-500);
+}
+
+.admin-actions {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.admin-actions h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.admin-actions code {
+    display: block;
+    padding: 0.75rem 1rem;
+    background: var(--gray-50);
+    border-radius: 0.375rem;
+    font-family: monospace;
+    font-size: 0.8125rem;
+    margin-bottom: 0.5rem;
+    overflow-x: auto;
+}
+{% endblock %}
+
+{% block body %}
+<div class="admin-header">
+    <h1>Admin Dashboard</h1>
+    <div class="admin-user-info">
+        <span>Logged in as {{ app.user.email }}</span>
+        <a href="{{ path('app_logout') }}">Logout</a>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>Total Devices</h3>
+        <div class="stat-value">{{ stats.total_devices|number_format }}</div>
+    </div>
+    <div class="stat-card">
+        <h3>Total Vendors</h3>
+        <div class="stat-value">{{ stats.total_vendors|number_format }}</div>
+    </div>
+    <div class="stat-card">
+        <h3>Admin Users</h3>
+        <div class="stat-value">{{ stats.total_users|number_format }}</div>
+    </div>
+    <div class="stat-card">
+        <h3>API Tokens</h3>
+        <div class="stat-value">{{ stats.total_api_tokens|number_format }}</div>
+    </div>
+</div>
+
+<h2 class="section-title">Your API Tokens</h2>
+<div class="tokens-table">
+    {% if user_tokens is empty %}
+        <div class="empty-state">
+            <p>No API tokens yet. Use the CLI to create one.</p>
+        </div>
+    {% else %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Token</th>
+                    <th>Created</th>
+                    <th>Last Used</th>
+                    <th>Expires</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for token in user_tokens %}
+                    <tr>
+                        <td class="token-name">{{ token.name }}</td>
+                        <td class="token-value">{{ token.token[:12] }}...</td>
+                        <td class="token-date">{{ token.createdAt|date('Y-m-d H:i') }}</td>
+                        <td class="token-date">{{ token.lastUsedAt ? token.lastUsedAt|date('Y-m-d H:i') : 'Never' }}</td>
+                        <td class="token-date">{{ token.expiresAt ? token.expiresAt|date('Y-m-d H:i') : 'Never' }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+
+<div class="admin-actions">
+    <h3>CLI Commands</h3>
+    <p style="margin-bottom: 1rem; color: var(--gray-500); font-size: 0.875rem;">
+        Use these commands to manage users and API tokens:
+    </p>
+    <code>php bin/console app:user:create user@example.com --admin</code>
+    <code>php bin/console app:api-token:create user@example.com "Token Name"</code>
+    <code>php bin/console app:api-token:list user@example.com</code>
+    <code>php bin/console app:api-token:revoke &lt;token-id&gt;</code>
+</div>
+{% endblock %}
