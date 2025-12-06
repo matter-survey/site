@@ -115,11 +115,19 @@ class CapabilityService
                 'icon' => $capability['icon'] ?? '',
                 'description' => $capability['description'] ?? '',
                 'category' => $capability['category'] ?? 'other',
+                'details' => null,
             ];
 
             $category = $capability['category'] ?? 'other';
 
             if ($isSupported) {
+                // Enrich with cluster details for expandable view
+                $capInfo['details'] = $this->getCapabilityClusterDetails(
+                    $capability,
+                    $serverClusters,
+                    $clientClusters,
+                    $serverClusterDetails
+                );
                 $supported[$capKey] = $capInfo;
                 if (isset($byCategory[$category])) {
                     $byCategory[$category]['supported'][$capKey] = $capInfo;
@@ -226,6 +234,180 @@ class CapabilityService
         }
 
         return false;
+    }
+
+    /**
+     * Get detailed cluster information for a capability's expandable view.
+     *
+     * Returns user-friendly commands and attributes with technical names in tooltips.
+     *
+     * @param array<string, mixed>             $capability           The capability definition from YAML
+     * @param array<int, bool>                 $serverClusters       Map of available server cluster IDs
+     * @param array<int, bool>                 $clientClusters       Map of available client cluster IDs
+     * @param array<int, array<string, mixed>> $serverClusterDetails V3 telemetry with accepted_command_list, attribute_list
+     *
+     * @return array{
+     *     clusterId: int,
+     *     clusterName: string,
+     *     actions: array<int, array{id: int, technical: string, friendly: string}>,
+     *     statuses: array<int, array{id: int, technical: string, friendly: string}>,
+     *     features: array<int, array{name: string, enabled: bool}>
+     * }|null
+     */
+    private function getCapabilityClusterDetails(
+        array $capability,
+        array $serverClusters,
+        array $clientClusters,
+        array $serverClusterDetails,
+    ): ?array {
+        $clusters = $capability['clusters'] ?? [];
+
+        if (empty($clusters)) {
+            return null;
+        }
+
+        // Find the first matching cluster that is present
+        foreach ($clusters as $clusterDef) {
+            $clusterId = $clusterDef['id'] ?? null;
+            $role = $clusterDef['role'] ?? 'server';
+
+            if (null === $clusterId) {
+                continue;
+            }
+
+            $hasCluster = 'client' === $role
+                ? isset($clientClusters[$clusterId])
+                : isset($serverClusters[$clusterId]);
+
+            if (!$hasCluster) {
+                continue;
+            }
+
+            // Found a matching cluster - build the details
+            $clusterName = $this->matterRegistry->getClusterName($clusterId);
+            $actions = [];
+            $statuses = [];
+            $features = [];
+
+            // Get telemetry data if available (V3)
+            $telemetryDetails = $serverClusterDetails[$clusterId] ?? null;
+            $acceptedCommands = $telemetryDetails['accepted_command_list'] ?? [];
+            $attributeList = $telemetryDetails['attribute_list'] ?? [];
+            $featureMap = $telemetryDetails['feature_map'] ?? null;
+
+            // Build friendly action mappings from capability definition
+            $friendlyActions = [];
+            foreach ($capability['actions'] ?? [] as $actionDef) {
+                if (isset($actionDef['cmd'])) {
+                    $friendlyActions[(int) $actionDef['cmd']] = $actionDef['friendly'] ?? '';
+                }
+            }
+
+            // Build friendly status mappings from capability definition
+            $friendlyStatuses = [];
+            foreach ($capability['statuses'] ?? [] as $statusDef) {
+                if (isset($statusDef['attr'])) {
+                    $friendlyStatuses[(int) $statusDef['attr']] = $statusDef['friendly'] ?? '';
+                }
+            }
+
+            // Process commands
+            if (!empty($acceptedCommands)) {
+                // Use actual telemetry data
+                foreach ($acceptedCommands as $cmdId) {
+                    $cmdId = (int) $cmdId;
+                    $technicalName = $this->matterRegistry->getClusterCommandName($clusterId, $cmdId) ?? "Command {$cmdId}";
+                    $friendlyName = $friendlyActions[$cmdId] ?? $this->humanizeTechnicalName($technicalName);
+
+                    $actions[] = [
+                        'id' => $cmdId,
+                        'technical' => $technicalName,
+                        'friendly' => $friendlyName,
+                    ];
+                }
+            } elseif (!empty($friendlyActions)) {
+                // Fall back to capability definition (no V3 telemetry)
+                foreach ($friendlyActions as $cmdId => $friendly) {
+                    $technicalName = $this->matterRegistry->getClusterCommandName($clusterId, $cmdId) ?? "Command {$cmdId}";
+                    $actions[] = [
+                        'id' => $cmdId,
+                        'technical' => $technicalName,
+                        'friendly' => $friendly,
+                    ];
+                }
+            }
+
+            // Process attributes (filter out global attributes > 65000)
+            if (!empty($attributeList)) {
+                // Use actual telemetry data
+                foreach ($attributeList as $attrId) {
+                    $attrId = (int) $attrId;
+                    if ($attrId >= 65528) {
+                        continue; // Skip global attributes
+                    }
+
+                    $technicalName = $this->matterRegistry->getClusterAttributeName($clusterId, $attrId) ?? "Attribute {$attrId}";
+                    $friendlyName = $friendlyStatuses[$attrId] ?? $this->humanizeTechnicalName($technicalName);
+
+                    $statuses[] = [
+                        'id' => $attrId,
+                        'technical' => $technicalName,
+                        'friendly' => $friendlyName,
+                    ];
+                }
+            } elseif (!empty($friendlyStatuses)) {
+                // Fall back to capability definition (no V3 telemetry)
+                foreach ($friendlyStatuses as $attrId => $friendly) {
+                    $technicalName = $this->matterRegistry->getClusterAttributeName($clusterId, $attrId) ?? "Attribute {$attrId}";
+                    $statuses[] = [
+                        'id' => $attrId,
+                        'technical' => $technicalName,
+                        'friendly' => $friendly,
+                    ];
+                }
+            }
+
+            // Process features if available
+            if (null !== $featureMap && $featureMap > 0) {
+                $decodedFeatures = $this->matterRegistry->decodeFeatureMap($clusterId, $featureMap);
+                foreach ($decodedFeatures as $feature) {
+                    if ($feature['enabled']) {
+                        $features[] = [
+                            'name' => $feature['name'],
+                            'enabled' => true,
+                        ];
+                    }
+                }
+            }
+
+            // Only return details if we have meaningful content
+            if (empty($actions) && empty($statuses) && empty($features)) {
+                return null;
+            }
+
+            return [
+                'clusterId' => $clusterId,
+                'clusterName' => $clusterName,
+                'actions' => $actions,
+                'statuses' => $statuses,
+                'features' => $features,
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Convert a technical camelCase or PascalCase name to human-readable text.
+     */
+    private function humanizeTechnicalName(string $name): string
+    {
+        // Insert space before capital letters
+        $spaced = (string) preg_replace('/([a-z])([A-Z])/', '$1 $2', $name);
+        // Handle acronyms (e.g., "OnOff" -> "On Off")
+        $spaced = (string) preg_replace('/([A-Z]+)([A-Z][a-z])/', '$1 $2', $spaced);
+
+        return ucfirst(strtolower($spaced));
     }
 
     /**

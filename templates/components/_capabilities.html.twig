@@ -1,6 +1,7 @@
 {#
     Capabilities Component
     Displays human-friendly device capabilities in a visual grid layout.
+    Supported capabilities are expandable to show detailed commands and attributes.
 
     Parameters:
     - capabilities: The capabilities analysis result from CapabilityService
@@ -40,21 +41,77 @@
                 <div class="capability-category">
                     <h4 class="category-label">{{ category.label }}</h4>
                     <div class="capability-cards">
-                        {# Supported capabilities #}
+                        {# Supported capabilities - expandable if they have details #}
                         {% for cap in category.supported %}
-                            <div class="capability-card capability-supported" title="{{ cap.description }}">
-                                <span class="capability-emoji">{{ cap.emoji }}</span>
-                                <span class="capability-label">{{ cap.label }}</span>
-                                <span class="capability-status">&#10003;</span>
+                            {% set hasDetails = cap.details is defined and cap.details is not null and (cap.details.actions|length > 0 or cap.details.statuses|length > 0) %}
+                            <div class="capability-card capability-supported{% if hasDetails %} capability-expandable{% endif %}"
+                                 title="{{ cap.description }}"
+                                 {% if hasDetails %}data-expandable="true"{% endif %}>
+                                <div class="capability-summary"{% if hasDetails %} onclick="toggleCapabilityDetails(this)"{% endif %}>
+                                    <span class="capability-emoji">{{ cap.emoji }}</span>
+                                    <span class="capability-label">{{ cap.label }}</span>
+                                    <span class="capability-status">&#10003;</span>
+                                    {% if hasDetails %}
+                                        <span class="capability-expand-icon">&#9662;</span>
+                                    {% endif %}
+                                </div>
+                                {% if hasDetails %}
+                                    <div class="capability-details" style="display: none;">
+                                        <div class="capability-cluster-name" title="Matter cluster: {{ cap.details.clusterName }} (ID: {{ cap.details.clusterId }})">
+                                            <span class="cluster-badge">{{ cap.details.clusterName }}</span>
+                                        </div>
+
+                                        {% if cap.details.actions|length > 0 %}
+                                            <div class="capability-actions">
+                                                <h5>What you can do:</h5>
+                                                <ul>
+                                                    {% for action in cap.details.actions %}
+                                                        <li title="Command: {{ action.technical }}">
+                                                            <span class="action-bullet">&#8226;</span>
+                                                            <span class="action-friendly">{{ action.friendly }}</span>
+                                                        </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        {% endif %}
+
+                                        {% if cap.details.statuses|length > 0 %}
+                                            <div class="capability-statuses">
+                                                <h5>Information available:</h5>
+                                                <ul>
+                                                    {% for status in cap.details.statuses %}
+                                                        <li title="Attribute: {{ status.technical }}">
+                                                            <span class="status-bullet">&#8226;</span>
+                                                            <span class="status-friendly">{{ status.friendly }}</span>
+                                                        </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        {% endif %}
+
+                                        {% if cap.details.features|length > 0 %}
+                                            <div class="capability-features">
+                                                <h5>Enabled features:</h5>
+                                                <div class="feature-tags">
+                                                    {% for feature in cap.details.features %}
+                                                        <span class="feature-tag" title="Feature: {{ feature.name }}">{{ feature.name }}</span>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
                             </div>
                         {% endfor %}
 
                         {# Unsupported capabilities #}
                         {% for cap in category.unsupported %}
                             <div class="capability-card capability-unsupported" title="{{ cap.description }} (not available)">
-                                <span class="capability-emoji">{{ cap.emoji }}</span>
-                                <span class="capability-label">{{ cap.label }}</span>
-                                <span class="capability-status">&#10005;</span>
+                                <div class="capability-summary">
+                                    <span class="capability-emoji">{{ cap.emoji }}</span>
+                                    <span class="capability-label">{{ cap.label }}</span>
+                                    <span class="capability-status">&#10005;</span>
+                                </div>
                             </div>
                         {% endfor %}
                     </div>
@@ -82,4 +139,22 @@
         </div>
     {% endif %}
 </div>
+
+<script>
+function toggleCapabilityDetails(element) {
+    const card = element.closest('.capability-card');
+    const details = card.querySelector('.capability-details');
+    const icon = card.querySelector('.capability-expand-icon');
+
+    if (details.style.display === 'none') {
+        details.style.display = 'block';
+        card.classList.add('expanded');
+        if (icon) icon.innerHTML = '&#9652;'; // Up arrow
+    } else {
+        details.style.display = 'none';
+        card.classList.remove('expanded');
+        if (icon) icon.innerHTML = '&#9662;'; // Down arrow
+    }
+}
+</script>
 {% endif %}

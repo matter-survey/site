@@ -1291,6 +1291,107 @@
         color: var(--gray-400);
     }
 
+    /* Expandable capability cards */
+    .capability-card.capability-expandable {
+        flex-direction: column;
+        align-items: stretch;
+        cursor: pointer;
+    }
+
+    .capability-card.capability-expandable .capability-summary {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        width: 100%;
+    }
+
+    .capability-expand-icon {
+        margin-left: auto;
+        font-size: 0.75rem;
+        color: #166534;
+        opacity: 0.6;
+        transition: transform 0.2s;
+    }
+
+    .capability-card.expanded .capability-expand-icon {
+        transform: rotate(180deg);
+    }
+
+    .capability-details {
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid rgba(22, 101, 52, 0.2);
+    }
+
+    .capability-cluster-name {
+        margin-bottom: 0.5rem;
+    }
+
+    .cluster-badge {
+        display: inline-block;
+        padding: 0.125rem 0.375rem;
+        background: rgba(22, 101, 52, 0.15);
+        border-radius: 0.25rem;
+        font-size: 0.6875rem;
+        color: #166534;
+        font-weight: 500;
+    }
+
+    .capability-details h5 {
+        font-size: 0.6875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: rgba(22, 101, 52, 0.7);
+        margin: 0.5rem 0 0.25rem;
+        letter-spacing: 0.025em;
+    }
+
+    .capability-details ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .capability-details li {
+        font-size: 0.8125rem;
+        color: #166534;
+        padding: 0.125rem 0;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.375rem;
+        cursor: help;
+    }
+
+    .action-bullet, .status-bullet {
+        opacity: 0.5;
+        flex-shrink: 0;
+    }
+
+    .action-friendly, .status-friendly {
+        flex: 1;
+    }
+
+    .capability-features {
+        margin-top: 0.5rem;
+    }
+
+    .feature-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    .feature-tag {
+        display: inline-block;
+        padding: 0.125rem 0.375rem;
+        background: rgba(22, 101, 52, 0.1);
+        border: 1px solid rgba(22, 101, 52, 0.2);
+        border-radius: 0.25rem;
+        font-size: 0.6875rem;
+        color: #166534;
+        cursor: help;
+    }
+
     .capabilities-callouts {
         margin-top: 1rem;
         padding-top: 1rem;

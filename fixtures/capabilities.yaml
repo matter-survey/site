@@ -29,6 +29,23 @@ capabilities:
     clusters:
       - id: 6  # On/Off cluster
         role: server
+    # Human-friendly descriptions for this capability's commands and attributes
+    actions:
+      - cmd: 0    # Off command
+        friendly: "Turn off the device"
+      - cmd: 1    # On command
+        friendly: "Turn on the device"
+      - cmd: 2    # Toggle command
+        friendly: "Switch between on and off"
+      - cmd: 64   # OffWithEffect
+        friendly: "Turn off with visual effect"
+      - cmd: 66   # OnWithTimedOff
+        friendly: "Turn on for a set duration"
+    statuses:
+      - attr: 0   # OnOff attribute
+        friendly: "Current power state (on/off)"
+      - attr: 16387  # StartUpOnOff
+        friendly: "Power-on behavior setting"
 
   dimming:
     label: "Brightness dimming"
@@ -39,6 +56,24 @@ capabilities:
     clusters:
       - id: 8  # Level Control cluster
         role: server
+    actions:
+      - cmd: 0    # MoveToLevel
+        friendly: "Set brightness to a specific level"
+      - cmd: 1    # Move
+        friendly: "Gradually increase or decrease brightness"
+      - cmd: 2    # Step
+        friendly: "Adjust brightness by small increments"
+      - cmd: 3    # Stop
+        friendly: "Stop ongoing brightness change"
+      - cmd: 4    # MoveToLevelWithOnOff
+        friendly: "Set brightness (turns on if off)"
+    statuses:
+      - attr: 0   # CurrentLevel
+        friendly: "Current brightness level (0-254)"
+      - attr: 2   # MinLevel
+        friendly: "Minimum supported brightness"
+      - attr: 3   # MaxLevel
+        friendly: "Maximum supported brightness"
 
   color_temperature:
     label: "Color temperature"
@@ -50,6 +85,20 @@ capabilities:
       - id: 768  # Color Control cluster
         role: server
         features: ["CT"]  # Color Temperature feature
+    actions:
+      - cmd: 10   # MoveToColorTemperature
+        friendly: "Set color temperature (warm to cool)"
+      - cmd: 75   # MoveColorTemperature
+        friendly: "Gradually shift color temperature"
+      - cmd: 76   # StepColorTemperature
+        friendly: "Adjust temperature by small steps"
+    statuses:
+      - attr: 7   # ColorTemperatureMireds
+        friendly: "Current color temperature"
+      - attr: 16395  # ColorTempPhysicalMinMireds
+        friendly: "Warmest supported temperature"
+      - attr: 16396  # ColorTempPhysicalMaxMireds
+        friendly: "Coolest supported temperature"
 
   full_color:
     label: "Full color (RGB)"
@@ -61,6 +110,26 @@ capabilities:
       - id: 768  # Color Control cluster
         role: server
         features: ["HS", "EHUE", "XY"]  # Any of these = full color
+    actions:
+      - cmd: 0    # MoveToHue
+        friendly: "Set hue (color) to a specific value"
+      - cmd: 1    # MoveHue
+        friendly: "Gradually shift through colors"
+      - cmd: 3    # MoveToSaturation
+        friendly: "Set color intensity"
+      - cmd: 6    # MoveToHueAndSaturation
+        friendly: "Set exact color (hue + saturation)"
+      - cmd: 7    # MoveToColor
+        friendly: "Set color using XY coordinates"
+    statuses:
+      - attr: 0   # CurrentHue
+        friendly: "Current color hue"
+      - attr: 1   # CurrentSaturation
+        friendly: "Current color saturation"
+      - attr: 3   # CurrentX
+        friendly: "Current X color value"
+      - attr: 4   # CurrentY
+        friendly: "Current Y color value"
 
   fan_speed:
     label: "Fan speed control"
@@ -241,6 +310,22 @@ capabilities:
         role: server
       - id: 5    # Scenes (legacy)
         role: server
+    actions:
+      - cmd: 0    # AddScene
+        friendly: "Save current state as a scene"
+      - cmd: 1    # ViewScene
+        friendly: "View scene settings"
+      - cmd: 2    # RemoveScene
+        friendly: "Delete a saved scene"
+      - cmd: 4    # RecallScene
+        friendly: "Activate a saved scene"
+      - cmd: 6    # GetSceneMembership
+        friendly: "List available scenes"
+    statuses:
+      - attr: 0   # SceneCount
+        friendly: "Number of saved scenes"
+      - attr: 1   # CurrentScene
+        friendly: "Currently active scene"
 
   groups:
     label: "Group control"
@@ -251,6 +336,18 @@ capabilities:
     clusters:
       - id: 4  # Groups cluster
         role: server
+    actions:
+      - cmd: 0    # AddGroup
+        friendly: "Add device to a group"
+      - cmd: 1    # ViewGroup
+        friendly: "Check group membership"
+      - cmd: 3    # RemoveGroup
+        friendly: "Remove device from a group"
+      - cmd: 4    # RemoveAllGroups
+        friendly: "Remove from all groups"
+    statuses:
+      - attr: 0   # NameSupport
+        friendly: "Supports named groups"
 
   binding:
     label: "Device-to-device control"
