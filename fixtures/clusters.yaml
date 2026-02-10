@@ -1,7 +1,7 @@
 # Matter Cluster Definitions
 # Based on Matter 1.4 Specification
 # Attributes, commands, and features synced from connectedhomeip ZAP XML files
-# Last ZAP sync: 2026-02-09 07:16:00
+# Last ZAP sync: 2026-02-10 07:16:19
 
 -
   id: 3
@@ -3572,6 +3572,12 @@
       type: boolean
       writable: false
       optional: false
+  features:
+    -
+      bit: 0
+      code: CHGEVENT
+      name: ChangeEvent
+      summary: 'Supports reporting change events'
 -
   id: 80
   name: 'Mode Select'
@@ -3728,6 +3734,11 @@
       code: SENSLVL
       name: SensitivityLevel
       summary: 'Supports ability to set sensor sensitivity'
+    -
+      bit: 4
+      code: FAULTEV
+      name: FaultEvents
+      summary: 'Supports reporting fault events'
 -
   id: 81
   name: 'Temperature Control'
@@ -7943,6 +7954,12 @@
       writable: false
       optional: true
     -
+      code: 5
+      name: PredictedOccupancy
+      type: array
+      writable: false
+      optional: true
+    -
       code: 16
       name: PIROccupiedToUnoccupiedDelay
       type: int16u
@@ -8031,12 +8048,22 @@
       bit: 6
       code: RFS
       name: RFSensing
-      summary: 'Supports sensing based on RF signal analysis'
+      summary: 'Supports sensing using analysis of radio signals, e.g.: RSSI, CSI and/or any other metric from the signal'
     -
       bit: 7
       code: VIS
       name: Vision
       summary: 'Supports sensing based on analyzing images'
+    -
+      bit: 8
+      code: PRED
+      name: Prediction
+      summary: 'Supports sensing based on prediction of occupancy'
+    -
+      bit: 9
+      code: OCCEVENT
+      name: OccupancyEvent
+      summary: 'Supports generating OccupancyChanged events'
 -
   id: 91
   name: 'Air Quality'
