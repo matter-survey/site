@@ -1,7 +1,7 @@
 # Matter Cluster Definitions
 # Based on Matter 1.4 Specification
 # Attributes, commands, and features synced from connectedhomeip ZAP XML files
-# Last ZAP sync: 2026-02-13 07:07:16
+# Last ZAP sync: 2026-02-14 06:57:37
 
 -
   id: 3
@@ -2903,6 +2903,12 @@
       type: int16u
       writable: false
       optional: false
+    -
+      code: 4
+      name: GroupcastAdoption
+      type: array
+      writable: true
+      optional: true
   commands:
     -
       code: 0
@@ -2961,6 +2967,11 @@
       code: CS
       name: CacheAndSync
       summary: 'The ability to support CacheAndSync security policy and MCSP.'
+    -
+      bit: 1
+      code: GCAST
+      name: Groupcast
+      summary: 'The device supports groups using the Groupcast cluster.'
 -
   id: 64
   name: 'Fixed Label'
