@@ -1,7 +1,7 @@
 # Matter Cluster Definitions
 # Based on Matter 1.4 Specification
 # Attributes, commands, and features synced from connectedhomeip ZAP XML files
-# Last ZAP sync: 2026-02-18 07:11:51
+# Last ZAP sync: 2026-02-19 07:10:51
 
 -
   id: 3
@@ -1614,11 +1614,6 @@
       code: DMTEST
       name: DataModelTest
       summary: 'Support specific testing needs for extended Data Model features'
-    -
-      bit: 1
-      code: LOAD
-      name: DeviceLoad
-      summary: 'Support for reporting device load metrics (mandatory in revision 3 and above)'
 -
   id: 52
   name: 'Software Diagnostics'
