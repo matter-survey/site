@@ -1,7 +1,7 @@
 # Matter Cluster Definitions
 # Based on Matter 1.4 Specification
 # Attributes, commands, and features synced from connectedhomeip ZAP XML files
-# Last ZAP sync: 2026-02-26 07:10:24
+# Last ZAP sync: 2026-02-27 07:05:51
 
 -
   id: 3
