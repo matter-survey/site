@@ -1,7 +1,7 @@
 # Matter Cluster Definitions
 # Based on Matter 1.4 Specification
 # Attributes, commands, and features synced from connectedhomeip ZAP XML files
-# Last ZAP sync: 2026-03-02 07:08:54
+# Last ZAP sync: 2026-03-03 07:00:07
 
 -
   id: 3
@@ -2546,6 +2546,12 @@
       name: ProductAppearance
       type: ProductAppearanceStruct
       writable: false
+      optional: true
+    -
+      code: 23
+      name: DeviceLocation
+      type: LocationDescriptorStruct
+      writable: true
       optional: true
     -
       code: 24
