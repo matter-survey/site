@@ -1,7 +1,7 @@
 # Matter Cluster Definitions
 # Based on Matter 1.4 Specification
 # Attributes, commands, and features synced from connectedhomeip ZAP XML files
-# Last ZAP sync: 2026-03-05 07:02:33
+# Last ZAP sync: 2026-03-06 06:59:14
 
 -
   id: 3
@@ -2709,7 +2709,7 @@
       parameters:
         -
           name: AttestationElements
-          type: octet_string
+          type: long_octet_string
         -
           name: AttestationSignature
           type: octet_string
@@ -2730,7 +2730,7 @@
       parameters:
         -
           name: Certificate
-          type: octet_string
+          type: long_octet_string
     -
       code: 4
       name: CSRRequest
@@ -2751,7 +2751,7 @@
       parameters:
         -
           name: NOCSRElements
-          type: octet_string
+          type: long_octet_string
         -
           name: AttestationSignature
           type: octet_string
@@ -2763,10 +2763,10 @@
       parameters:
         -
           name: NOCValue
-          type: octet_string
+          type: long_octet_string
         -
           name: ICACValue
-          type: octet_string
+          type: long_octet_string
         -
           name: IPKValue
           type: octet_string
@@ -2784,10 +2784,10 @@
       parameters:
         -
           name: NOCValue
-          type: octet_string
+          type: long_octet_string
         -
           name: ICACValue
-          type: octet_string
+          type: long_octet_string
     -
       code: 8
       name: NOCResponse
@@ -2829,7 +2829,7 @@
       parameters:
         -
           name: RootCACertificate
-          type: octet_string
+          type: long_octet_string
     -
       code: 12
       name: SetVIDVerificationStatement
@@ -2844,7 +2844,7 @@
           type: octet_string
         -
           name: VVSC
-          type: octet_string
+          type: long_octet_string
     -
       code: 13
       name: SignVIDVerificationRequest
