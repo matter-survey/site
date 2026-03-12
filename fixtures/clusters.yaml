@@ -1,7 +1,7 @@
 # Matter Cluster Definitions
 # Based on Matter 1.4 Specification
 # Attributes, commands, and features synced from connectedhomeip ZAP XML files
-# Last ZAP sync: 2026-03-11 07:05:53
+# Last ZAP sync: 2026-03-12 07:03:40
 
 -
   id: 3
@@ -5400,6 +5400,66 @@
       writable: false
       optional: true
     -
+      code: 16384
+      name: EnhancedCurrentHue
+      type: int16u
+      writable: false
+      optional: true
+    -
+      code: 16385
+      name: EnhancedColorMode
+      type: EnhancedColorModeEnum
+      writable: false
+      optional: false
+    -
+      code: 16386
+      name: ColorLoopActive
+      type: int8u
+      writable: false
+      optional: true
+    -
+      code: 16387
+      name: ColorLoopDirection
+      type: int8u
+      writable: false
+      optional: true
+    -
+      code: 16388
+      name: ColorLoopTime
+      type: int16u
+      writable: false
+      optional: true
+    -
+      code: 16389
+      name: ColorLoopStartEnhancedHue
+      type: int16u
+      writable: false
+      optional: true
+    -
+      code: 16390
+      name: ColorLoopStoredEnhancedHue
+      type: int16u
+      writable: false
+      optional: true
+    -
+      code: 16394
+      name: ColorCapabilities
+      type: ColorCapabilitiesBitmap
+      writable: false
+      optional: false
+    -
+      code: 16395
+      name: ColorTempPhysicalMinMireds
+      type: int16u
+      writable: false
+      optional: true
+    -
+      code: 16396
+      name: ColorTempPhysicalMaxMireds
+      type: int16u
+      writable: false
+      optional: true
+    -
       code: 16397
       name: CoupleColorTempToLevelMinMireds
       type: int16u
@@ -5628,6 +5688,177 @@
         -
           name: OptionsOverride
           type: OptionsBitmap
+    -
+      code: 64
+      name: EnhancedMoveToHue
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: EnhancedHue
+          type: int16u
+        -
+          name: Direction
+          type: DirectionEnum
+        -
+          name: TransitionTime
+          type: int16u
+        -
+          name: OptionsMask
+          type: OptionsBitmap
+        -
+          name: OptionsOverride
+          type: OptionsBitmap
+    -
+      code: 65
+      name: EnhancedMoveHue
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: MoveMode
+          type: MoveModeEnum
+        -
+          name: Rate
+          type: int16u
+        -
+          name: OptionsMask
+          type: OptionsBitmap
+        -
+          name: OptionsOverride
+          type: OptionsBitmap
+    -
+      code: 66
+      name: EnhancedStepHue
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: StepMode
+          type: StepModeEnum
+        -
+          name: StepSize
+          type: int16u
+        -
+          name: TransitionTime
+          type: int16u
+        -
+          name: OptionsMask
+          type: OptionsBitmap
+        -
+          name: OptionsOverride
+          type: OptionsBitmap
+    -
+      code: 67
+      name: EnhancedMoveToHueAndSaturation
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: EnhancedHue
+          type: int16u
+        -
+          name: Saturation
+          type: int8u
+        -
+          name: TransitionTime
+          type: int16u
+        -
+          name: OptionsMask
+          type: OptionsBitmap
+        -
+          name: OptionsOverride
+          type: OptionsBitmap
+    -
+      code: 68
+      name: ColorLoopSet
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: UpdateFlags
+          type: UpdateFlagsBitmap
+        -
+          name: Action
+          type: ColorLoopActionEnum
+        -
+          name: Direction
+          type: ColorLoopDirectionEnum
+        -
+          name: Time
+          type: int16u
+        -
+          name: StartHue
+          type: int16u
+        -
+          name: OptionsMask
+          type: OptionsBitmap
+        -
+          name: OptionsOverride
+          type: OptionsBitmap
+    -
+      code: 71
+      name: StopMoveStep
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: OptionsMask
+          type: OptionsBitmap
+        -
+          name: OptionsOverride
+          type: OptionsBitmap
+    -
+      code: 75
+      name: MoveColorTemperature
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: MoveMode
+          type: MoveModeEnum
+        -
+          name: Rate
+          type: int16u
+        -
+          name: ColorTemperatureMinimumMireds
+          type: int16u
+        -
+          name: ColorTemperatureMaximumMireds
+          type: int16u
+        -
+          name: OptionsMask
+          type: OptionsBitmap
+        -
+          name: OptionsOverride
+          type: OptionsBitmap
+    -
+      code: 76
+      name: StepColorTemperature
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: StepMode
+          type: StepModeEnum
+        -
+          name: StepSize
+          type: int16u
+        -
+          name: TransitionTime
+          type: int16u
+        -
+          name: ColorTemperatureMinimumMireds
+          type: int16u
+        -
+          name: ColorTemperatureMaximumMireds
+          type: int16u
+        -
+          name: OptionsMask
+          type: OptionsBitmap
+        -
+          name: OptionsOverride
+          type: OptionsBitmap
   features:
     -
       bit: 0
@@ -5637,12 +5868,12 @@
     -
       bit: 1
       code: EHUE
-      name: 'Enhanced Hue'
+      name: EnhancedHue
       summary: 'Enhanced hue is supported.'
     -
       bit: 2
       code: CL
-      name: 'Color loop'
+      name: ColorLoop
       summary: 'Color loop is supported.'
     -
       bit: 3
@@ -5652,7 +5883,7 @@
     -
       bit: 4
       code: CT
-      name: 'Color temperature'
+      name: ColorTemperature
       summary: 'Supports specification of color temperature.'
 -
   id: 769
