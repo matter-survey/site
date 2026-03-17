@@ -1,7 +1,7 @@
 # Matter Cluster Definitions
 # Based on Matter 1.4 Specification
 # Attributes, commands, and features synced from connectedhomeip ZAP XML files
-# Last ZAP sync: 2026-03-16 07:26:06
+# Last ZAP sync: 2026-03-17 07:12:11
 
 -
   id: 3
@@ -661,6 +661,12 @@
       name: MaxPathsPerInvoke
       type: int16u
       writable: false
+      optional: true
+    -
+      code: 23
+      name: DeviceLocation
+      type: LocationDescriptorStruct
+      writable: true
       optional: true
     -
       code: 24
