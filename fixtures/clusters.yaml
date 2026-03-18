@@ -1,7 +1,7 @@
 # Matter Cluster Definitions
 # Based on Matter 1.4 Specification
 # Attributes, commands, and features synced from connectedhomeip ZAP XML files
-# Last ZAP sync: 2026-03-17 07:12:11
+# Last ZAP sync: 2026-03-18 07:08:35
 
 -
   id: 3
@@ -9779,7 +9779,7 @@
       name: AutoCloseTime
       type: epoch_us
       writable: false
-      optional: false
+      optional: true
     -
       code: 3
       name: RemainingDuration
@@ -9803,31 +9803,31 @@
       name: CurrentLevel
       type: percent
       writable: false
-      optional: false
+      optional: true
     -
       code: 7
       name: TargetLevel
       type: percent
       writable: false
-      optional: false
+      optional: true
     -
       code: 8
       name: DefaultOpenLevel
       type: percent
       writable: true
-      optional: false
+      optional: true
     -
       code: 9
       name: ValveFault
       type: ValveFaultBitmap
       writable: false
-      optional: false
+      optional: true
     -
       code: 10
       name: LevelStep
       type: int8u
       writable: false
-      optional: false
+      optional: true
   commands:
     -
       code: 0
