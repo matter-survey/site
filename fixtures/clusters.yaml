@@ -1,7 +1,7 @@
 # Matter Cluster Definitions
 # Based on Matter 1.4 Specification
 # Attributes, commands, and features synced from connectedhomeip ZAP XML files
-# Last ZAP sync: 2026-03-25 07:12:39
+# Last ZAP sync: 2026-03-26 07:20:19
 
 -
   id: 3
@@ -7503,7 +7503,7 @@
       bit: 4
       code: SB
       name: Setback
-      summary: 'Supports configurable setback (or span)'
+      summary: null
     -
       bit: 5
       code: AUTO
