@@ -1,7 +1,7 @@
 # Matter Cluster Definitions
 # Based on Matter 1.4 Specification
 # Attributes, commands, and features synced from connectedhomeip ZAP XML files
-# Last ZAP sync: 2026-04-10 07:50:22
+# Last ZAP sync: 2026-04-11 07:09:51
 
 -
   id: 3
@@ -7532,7 +7532,7 @@
     -
       bit: 10
       code: TSUGGEST
-      name: 'Thermostat Suggestions'
+      name: ThermostatSuggestions
       summary: 'Thermostat supports suggestions'
 -
   id: 514
