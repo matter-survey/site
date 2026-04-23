@@ -1,7 +1,7 @@
 # Matter Cluster Definitions
 # Based on Matter 1.4 Specification
 # Attributes, commands, and features synced from connectedhomeip ZAP XML files
-# Last ZAP sync: 2026-04-22 07:58:02
+# Last ZAP sync: 2026-04-23 08:08:23
 
 -
   id: 3
@@ -10747,7 +10747,7 @@
     -
       code: 0
       name: AnchorRootCA
-      type: octet_string
+      type: long_octet_string
       writable: false
       optional: false
     -
@@ -11123,6 +11123,9 @@
       direction: server→client
       optional: false
       parameters:
+        -
+          name: StatusCode
+          type: ICACCSRResponseStatusCodeEnum
         -
           name: ICACCSR
           type: long_octet_string
