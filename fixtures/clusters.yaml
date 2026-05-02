@@ -1,7 +1,7 @@
 # Matter Cluster Definitions
 # Based on Matter 1.4 Specification
 # Attributes, commands, and features synced from connectedhomeip ZAP XML files
-# Last ZAP sync: 2026-05-01 08:23:54
+# Last ZAP sync: 2026-05-02 07:51:25
 
 -
   id: 3
@@ -6257,6 +6257,15 @@
       optional: true
   commands:
     -
+      code: 0
+      name: LockDoor
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: PINCode
+          type: octet_string
+    -
       code: 1
       name: UnlockDoor
       direction: client→server
@@ -6573,7 +6582,7 @@
           type: CredentialStruct
         -
           name: CredentialData
-          type: long_octet_string
+          type: octet_string
         -
           name: UserIndex
           type: int16u
@@ -6693,7 +6702,7 @@
       bit: 3
       code: LOG
       name: Logging
-      summary: 'Lock supports local/on-lock logging when Events are not supported'
+      summary: 'TLLock supports local/on-lock logging when Events are not supportedGt'
     -
       bit: 4
       code: WDSCH
@@ -6723,7 +6732,7 @@
       bit: 9
       code: NOT
       name: Notification
-      summary: 'Operation and Programming Notifications'
+      summary: 'TOperation and Programming Notificationst'
     -
       bit: 10
       code: YDSCH
@@ -6743,12 +6752,12 @@
       bit: 13
       code: ALIRO
       name: AliroProvisioning
-      summary: AliroProvisioning
+      summary: 'Lock supports Aliro credential provisioning as defined in Aliro'
     -
       bit: 14
       code: ALBU
       name: AliroBLEUWB
-      summary: AliroBLEUWB
+      summary: 'Lock supports the Bluetooth LE + UWB Access Control Flow as defined in Aliro'
 -
   id: 258
   name: 'Window Covering'
