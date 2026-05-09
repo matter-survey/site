@@ -1,6 +1,7 @@
 {% extends 'base.html.twig' %}
 
 {% from 'components/_star_rating.html.twig' import starsBadge %}
+{% from 'components/_device_name.html.twig' import deviceName %}
 
 {% block title %}Matter Survey - Device Index{% endblock %}
 
@@ -277,6 +278,14 @@
 
     .device-info h3 a:hover {
         color: var(--primary);
+    }
+
+    .device-pid-suffix {
+        font-weight: 400;
+        font-size: 0.875em;
+        color: var(--gray-500);
+        font-variant-numeric: tabular-nums;
+        margin-left: 0.25rem;
     }
 
     .device-meta {
@@ -777,7 +786,7 @@
                             <div class="device-info">
                                 <h3>
                                     <a href="{{ path('device_show', {slug: device.slug}) }}" data-turbo-frame="_top">
-                                        {{ device.product_name ?? 'Unknown Product' }}
+                                        {{ deviceName(device) }}
                                     </a>
                                 </h3>
                                 <div class="device-meta">

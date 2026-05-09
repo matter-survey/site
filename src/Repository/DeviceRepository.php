@@ -231,7 +231,9 @@ class DeviceRepository
         $types['limit'] = \Doctrine\DBAL\ParameterType::INTEGER;
         $types['offset'] = \Doctrine\DBAL\ParameterType::INTEGER;
 
-        return $this->db->executeQuery($sql, $params, $types)->fetchAllAssociative();
+        return $this->attachNameAmbiguity(
+            $this->db->executeQuery($sql, $params, $types)->fetchAllAssociative()
+        );
     }
 
     /**
@@ -620,7 +622,11 @@ class DeviceRepository
             ['id' => $id]
         )->fetchAssociative();
 
-        return $result ?: null;
+        if (!$result) {
+            return null;
+        }
+
+        return $this->attachNameAmbiguity([$result])[0];
     }
 
     public function getDeviceBySlug(string $slug): ?array
@@ -630,7 +636,64 @@ class DeviceRepository
             ['slug' => $slug]
         )->fetchAssociative();
 
-        return $result ?: null;
+        if (!$result) {
+            return null;
+        }
+
+        return $this->attachNameAmbiguity([$result])[0];
+    }
+
+    /**
+     * Attach an `is_name_ambiguous` flag to each row, true when another product
+     * exists with the same vendor and product_name. Used by the UI to render a
+     * disambiguator (PID) next to otherwise identical device names.
+     *
+     * @param array<int, array<string, mixed>> $rows
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function attachNameAmbiguity(array $rows): array
+    {
+        if (empty($rows)) {
+            return $rows;
+        }
+
+        $pairs = [];
+        foreach ($rows as $row) {
+            $vendorFk = $row['vendor_fk'] ?? null;
+            $name = $row['product_name'] ?? null;
+            if (null === $vendorFk || null === $name || '' === $name) {
+                continue;
+            }
+            $pairs[$vendorFk.':'.$name] = [(int) $vendorFk, (string) $name];
+        }
+
+        $duplicates = [];
+        if (!empty($pairs)) {
+            $conditions = [];
+            $params = [];
+            foreach (array_values($pairs) as $i => [$fk, $name]) {
+                $conditions[] = "(vendor_fk = :nfk_$i AND product_name = :nname_$i)";
+                $params['nfk_'.$i] = $fk;
+                $params['nname_'.$i] = $name;
+            }
+            $sql = 'SELECT vendor_fk, product_name FROM products
+                    WHERE ('.implode(' OR ', $conditions).')
+                      AND product_name IS NOT NULL AND product_name != \'\'
+                    GROUP BY vendor_fk, product_name
+                    HAVING COUNT(*) > 1';
+            foreach ($this->db->executeQuery($sql, $params)->fetchAllAssociative() as $dup) {
+                $duplicates[$dup['vendor_fk'].':'.$dup['product_name']] = true;
+            }
+        }
+
+        foreach ($rows as &$row) {
+            $key = ($row['vendor_fk'] ?? '').':'.($row['product_name'] ?? '');
+            $row['is_name_ambiguous'] = isset($duplicates[$key]);
+        }
+        unset($row);
+
+        return $rows;
     }
 
     /**
@@ -727,7 +790,7 @@ class DeviceRepository
 
     public function searchDevices(string $query, int $limit = 50): array
     {
-        return $this->db->executeQuery('
+        return $this->attachNameAmbiguity($this->db->executeQuery('
             SELECT * FROM device_summary
             WHERE vendor_name LIKE :query
                OR product_name LIKE :query
@@ -740,7 +803,7 @@ class DeviceRepository
             'limit' => $limit,
         ], [
             'limit' => \Doctrine\DBAL\ParameterType::INTEGER,
-        ])->fetchAllAssociative();
+        ])->fetchAllAssociative());
     }
 
     /**
@@ -748,7 +811,7 @@ class DeviceRepository
      */
     public function getDevicesByVendor(int $vendorFk, int $limit = 100, int $offset = 0): array
     {
-        return $this->db->executeQuery('
+        return $this->attachNameAmbiguity($this->db->executeQuery('
             SELECT * FROM device_summary
             WHERE vendor_fk = :vendor_fk
             ORDER BY submission_count DESC, last_seen DESC
@@ -760,7 +823,7 @@ class DeviceRepository
         ], [
             'limit' => \Doctrine\DBAL\ParameterType::INTEGER,
             'offset' => \Doctrine\DBAL\ParameterType::INTEGER,
-        ])->fetchAllAssociative();
+        ])->fetchAllAssociative());
     }
 
     /**

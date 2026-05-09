@@ -179,11 +179,18 @@ class DeviceController extends AbstractController
         $devices = $this->deviceRepo->searchDevices($query, 8);
 
         return $this->json([
-            'results' => array_map(fn (array $d) => [
-                'name' => $d['product_name'],
-                'vendor' => $d['vendor_name'],
-                'url' => $this->generateUrl('device_show', ['slug' => $d['slug']]),
-            ], $devices),
+            'results' => array_map(function (array $d) {
+                $name = $d['product_name'];
+                if (!empty($d['is_name_ambiguous']) && isset($d['product_id'])) {
+                    $name .= sprintf(' (PID 0x%04X)', (int) $d['product_id']);
+                }
+
+                return [
+                    'name' => $name,
+                    'vendor' => $d['vendor_name'],
+                    'url' => $this->generateUrl('device_show', ['slug' => $d['slug']]),
+                ];
+            }, $devices),
         ]);
     }
 

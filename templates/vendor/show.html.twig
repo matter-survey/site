@@ -1,5 +1,7 @@
 {% extends 'base.html.twig' %}
 
+{% from 'components/_device_name.html.twig' import deviceName %}
+
 {% block title %}{{ vendor.name }} - Matter Survey{% endblock %}
 
 {% block og_title %}{{ vendor.name }} - Matter Device Manufacturer{% endblock %}
@@ -430,7 +432,7 @@
                     <div class="device-info">
                         <h3>
                             <a href="{{ path('device_show', {slug: device.slug}) }}">
-                                {{ device.product_name ?? 'Unknown Product' }}
+                                {{ deviceName(device) }}
                             </a>
                         </h3>
                         <div class="device-meta">
