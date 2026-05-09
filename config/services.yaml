@@ -1,3 +1,10 @@
+parameters:
+    # OpenTelemetry defaults applied when the env var is unset (e.g. on hosts
+    # whose .env isn't synced). Operators override via .env.local on prod.
+    env(OTEL_SDK_DISABLED): 'true'
+    env(OTEL_SERVICE_NAME): 'matter-survey'
+    env(OTEL_SERVICE_VERSION): 'dev'
+
 services:
     _defaults:
         autowire: true
@@ -12,8 +19,8 @@ services:
 
     App\Observability\Bootstrap\OtelBootstrap:
         arguments:
-            $serviceName: '%env(default::OTEL_SERVICE_NAME)%'
-            $serviceVersion: '%env(default::OTEL_SERVICE_VERSION)%'
+            $serviceName: '%env(OTEL_SERVICE_NAME)%'
+            $serviceVersion: '%env(OTEL_SERVICE_VERSION)%'
             $environment: '%kernel.environment%'
             $disabled: '%env(bool:OTEL_SDK_DISABLED)%'
 
