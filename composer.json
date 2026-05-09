@@ -20,7 +20,7 @@
         "symfony/framework-bundle": "7.4.*",
         "symfony/http-client": "7.4.*",
         "symfony/monolog-bundle": "^3.10",
-        "symfony/rate-limiter": "7.4.*",
+        "symfony/rate-limiter": "8.0.*",
         "symfony/runtime": "7.4.*",
         "symfony/security-bundle": "7.4.*",
         "symfony/stimulus-bundle": "^2.31",
