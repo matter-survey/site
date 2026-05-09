@@ -42,6 +42,24 @@ class DeviceScoreService
      */
     public function calculateDeviceScore(array $endpoints): DeviceScore
     {
+        $span = \App\Observability\Tracer::start('score.calculate', [
+            'score.endpoint_count' => \count($endpoints),
+        ]);
+        $scope = $span->activate();
+
+        try {
+            return $this->doCalculateDeviceScore($endpoints, $span);
+        } finally {
+            $scope->detach();
+            $span->end();
+        }
+    }
+
+    /**
+     * @param array<array<string, mixed>> $endpoints
+     */
+    private function doCalculateDeviceScore(array $endpoints, \OpenTelemetry\API\Trace\SpanInterface $span): DeviceScore
+    {
         $scoresByType = [];
         $overallCompliant = true;
         $bestScore = 0.0;
@@ -81,6 +99,8 @@ class DeviceScoreService
 
         // If no device types found, return a default score
         if (empty($scoresByType)) {
+            $span->setAttribute('score.value', 0.0);
+
             return new DeviceScore(
                 overallScore: 0.0,
                 starRating: 1.0,
@@ -90,6 +110,9 @@ class DeviceScoreService
         }
 
         $starRating = $this->scoreToStars($bestScore, $overallCompliant);
+
+        $span->setAttribute('score.value', round($bestScore, 1));
+        $span->setAttribute('score.is_compliant', $overallCompliant);
 
         return new DeviceScore(
             overallScore: round($bestScore, 1),

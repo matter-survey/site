@@ -36,38 +36,70 @@ class DclApiService
     {
         $this->logger->info('Fetching vendors from DCL API');
 
+        $syncSpan = \App\Observability\Tracer::start('dcl.sync');
+        $syncScope = $syncSpan->activate();
+        $runsCounter = \App\Observability\Metrics::counter('dcl.sync.runs_total', '1', 'DCL sync run count');
+
         $vendors = [];
         $offset = 0;
+        $pageCount = 0;
 
-        do {
-            $response = $this->httpClient->request('GET', self::BASE_URL.'/dcl/vendorinfo/vendors', [
-                'query' => [
-                    'pagination.limit' => self::PAGE_SIZE,
-                    'pagination.offset' => $offset,
-                    'pagination.count_total' => 'true',
-                ],
-            ]);
+        try {
+            do {
+                $pageSpan = \App\Observability\Tracer::start('dcl.fetch_page', [
+                    'dcl.page' => $pageCount,
+                    'dcl.page_size' => self::PAGE_SIZE,
+                ]);
+                $pageScope = $pageSpan->activate();
 
-            $data = $response->toArray();
-            $vendorInfos = $data['vendorInfo'] ?? [];
-            $total = (int) ($data['pagination']['total'] ?? 0);
+                try {
+                    $response = $this->httpClient->request('GET', self::BASE_URL.'/dcl/vendorinfo/vendors', [
+                        'query' => [
+                            'pagination.limit' => self::PAGE_SIZE,
+                            'pagination.offset' => $offset,
+                            'pagination.count_total' => 'true',
+                        ],
+                    ]);
 
-            foreach ($vendorInfos as $vendor) {
-                $vendors[] = $vendor;
-            }
+                    $data = $response->toArray();
+                    $vendorInfos = $data['vendorInfo'] ?? [];
+                    $total = (int) ($data['pagination']['total'] ?? 0);
 
-            $offset += self::PAGE_SIZE;
+                    foreach ($vendorInfos as $vendor) {
+                        $vendors[] = $vendor;
+                    }
 
-            $this->logger->debug('Fetched vendors', [
-                'count' => \count($vendorInfos),
-                'offset' => $offset,
-                'total' => $total,
-            ]);
-        } while ($offset < $total);
+                    $offset += self::PAGE_SIZE;
+                    ++$pageCount;
 
-        $this->logger->info('Finished fetching vendors', ['count' => \count($vendors)]);
+                    $this->logger->debug('Fetched vendors', [
+                        'count' => \count($vendorInfos),
+                        'offset' => $offset,
+                        'total' => $total,
+                    ]);
+                } finally {
+                    $pageScope->detach();
+                    $pageSpan->end();
+                }
+            } while ($offset < $total);
 
-        return $vendors;
+            $this->logger->info('Finished fetching vendors', ['count' => \count($vendors)]);
+
+            $syncSpan->setAttribute('dcl.vendor_count', \count($vendors));
+            $syncSpan->setAttribute('dcl.page_count', $pageCount);
+            $runsCounter->add(1, ['outcome' => 'success']);
+
+            return $vendors;
+        } catch (\Throwable $e) {
+            $runsCounter->add(1, ['outcome' => 'failure']);
+            $syncSpan->recordException($e);
+            $syncSpan->setStatus(\OpenTelemetry\API\Trace\StatusCode::STATUS_ERROR, $e->getMessage());
+
+            throw $e;
+        } finally {
+            $syncScope->detach();
+            $syncSpan->end();
+        }
     }
 
     /**

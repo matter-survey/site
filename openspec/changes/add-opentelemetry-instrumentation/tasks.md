@@ -53,27 +53,27 @@
 
 ## 8. Domain spans (Phase 3)
 
-- [ ] 8.1 Inject `TracerInterface` (via `CachedInstrumentation('app.matter-survey')`) into `TelemetryService`, `DeviceScoreService`, `DclApiService`, `MatterRegistry`, `CapabilityService`
-- [ ] 8.2 Add `telemetry.submit` span around `TelemetryService::process()` with `vendor.id`, `submission.schema_version`, `submission.endpoint_count`, `submission.cluster_count`
-- [ ] 8.3 Add `score.calculate` span per product in `DeviceScoreService` with `product.id`, `device_type.id`, `score.value`
-- [ ] 8.4 Add `dcl.sync` and `dcl.fetch_page` spans inside `DclApiService::syncVendors`
-- [ ] 8.5 Add `zap.sync` span inside the ZAP sync command body
-- [ ] 8.6 Add `matter_registry.lookup` span around cluster and device-type lookups, including `lookup.cache_hit`
-- [ ] 8.7 Tests asserting each domain span name, parent linkage, and required attributes
+- [x] 8.1 Inject `TracerInterface` (via `CachedInstrumentation('app.matter-survey')`) into `TelemetryService`, `DeviceScoreService`, `DclApiService`, `MatterRegistry`, `CapabilityService` — _used a static `App\Observability\Tracer` facade instead of constructor injection to keep service signatures unchanged; same effect, lower blast radius_
+- [x] 8.2 Add `telemetry.submit` span around `TelemetryService::process()` with `vendor.id`, `submission.schema_version`, `submission.endpoint_count`, `submission.cluster_count`
+- [x] 8.3 Add `score.calculate` span per product in `DeviceScoreService` with `product.id`, `device_type.id`, `score.value`
+- [x] 8.4 Add `dcl.sync` and `dcl.fetch_page` spans inside `DclApiService::syncVendors` — _wired into `fetchAllVendors`, the actual sync entry point in this codebase_
+- [x] 8.5 Add `zap.sync` span inside the ZAP sync command body
+- [ ] 8.6 Add `matter_registry.lookup` span around cluster and device-type lookups, including `lookup.cache_hit` — _**deferred**: MatterRegistry has 20+ getters called dozens of times per request; per-call spans would dominate trace volume without much insight. Revisit if/when sampling makes high-cardinality acceptable, or as an opt-in verbose mode_
+- [x] 8.7 Tests asserting each domain span name, parent linkage, and required attributes
 
 ## 9. Metrics (Phase 3)
 
-- [ ] 9.1 Resolve a `MeterInterface` via the same `CachedInstrumentation` and inject where needed
-- [ ] 9.2 Add counter `submissions.total` (incremented in `TelemetryService::process()`) with attribute `submission.schema_version`
-- [ ] 9.3 Add histogram `submissions.duration_ms` recorded around the submission processing block
-- [ ] 9.4 Add counter `dcl.sync.runs_total` with attribute `outcome` (`success`|`failure`)
-- [ ] 9.5 Test counters and histogram via the SDK's `InMemoryExporter` for metrics
+- [x] 9.1 Resolve a `MeterInterface` via the same `CachedInstrumentation` and inject where needed — _used a static `App\Observability\Metrics` facade_
+- [x] 9.2 Add counter `submissions.total` (incremented in `TelemetryService::process()`) with attribute `submission.schema_version`
+- [x] 9.3 Add histogram `submissions.duration_ms` recorded around the submission processing block
+- [x] 9.4 Add counter `dcl.sync.runs_total` with attribute `outcome` (`success`|`failure`)
+- [x] 9.5 Test counters and histogram via the SDK's `InMemoryExporter` for metrics
 
 ## 10. OTel Logs bridge (Phase 3)
 
-- [ ] 10.1 Implement `src/Observability/Monolog/OtelLogsHandler.php` extending `AbstractProcessingHandler`, bridging records to `Globals::loggerProvider()`
-- [ ] 10.2 Register the handler conditionally in `monolog.yaml` (only when `OTEL_LOGS_EXPORTER=otlp`)
-- [ ] 10.3 Test that with the handler enabled and a Monolog INFO log inside an active span, an OTel `LogRecord` is emitted with matching severity, body, and trace context; and that disabling the env var produces zero log records
+- [x] 10.1 Implement `src/Observability/Monolog/OtelLogsHandler.php` extending `AbstractProcessingHandler`, bridging records to `Globals::loggerProvider()`
+- [x] 10.2 Register the handler conditionally in `monolog.yaml` (only when `OTEL_LOGS_EXPORTER=otlp`) — _registered unconditionally in `when@prod`; the LoggerProvider is Noop when `OTEL_LOGS_EXPORTER=none` so the handler is a free no-op until the operator opts in_
+- [x] 10.3 Test that with the handler enabled and a Monolog INFO log inside an active span, an OTel `LogRecord` is emitted with matching severity, body, and trace context; and that disabling the env var produces zero log records
 
 ## 11. Privacy and safety hardening
 

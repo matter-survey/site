@@ -53,6 +53,19 @@ class TelemetryService
 
         $installationId = $payload['installation_id'];
         $devices = $payload['devices'];
+        $schemaVersionAttr = $payload['schema_version'] ?? 2;
+
+        $span = \App\Observability\Tracer::start('telemetry.submit', [
+            'submission.schema_version' => $schemaVersionAttr,
+            'submission.endpoint_count' => array_sum(array_map(static fn (array $d) => count($d['endpoints'] ?? []), $devices)),
+            'submission.device_count' => count($devices),
+        ]);
+        $scope = $span->activate();
+
+        \App\Observability\Metrics::counter('submissions.total', '1', 'Total telemetry submissions received')
+            ->add(1, ['submission.schema_version' => (int) $schemaVersionAttr]);
+
+        $startNs = hrtime(true);
 
         try {
             $this->db->beginTransaction();
@@ -96,6 +109,8 @@ class TelemetryService
                 'devices_processed' => $processedCount,
             ]);
 
+            $span->setAttribute('submission.devices_processed', $processedCount);
+
             return [
                 'success' => true,
                 'message' => "Processed $processedCount devices",
@@ -109,7 +124,15 @@ class TelemetryService
                 'exception' => $e,
             ]);
 
+            $span->recordException($e);
+            $span->setStatus(\OpenTelemetry\API\Trace\StatusCode::STATUS_ERROR, $e->getMessage());
+
             return ['success' => false, 'error' => 'Database error: '.$e->getMessage()];
+        } finally {
+            \App\Observability\Metrics::histogram('submissions.duration_ms', 'ms', 'Wall time spent processing a submission')
+                ->record((hrtime(true) - $startNs) / 1_000_000.0, ['submission.schema_version' => (int) $schemaVersionAttr]);
+            $scope->detach();
+            $span->end();
         }
     }
 

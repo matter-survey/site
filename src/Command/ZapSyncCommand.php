@@ -49,6 +49,19 @@ class ZapSyncCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $span = \App\Observability\Tracer::start('zap.sync');
+        $scope = $span->activate();
+
+        try {
+            return $this->doExecute($input, $output, $span);
+        } finally {
+            $scope->detach();
+            $span->end();
+        }
+    }
+
+    private function doExecute(InputInterface $input, OutputInterface $output, \OpenTelemetry\API\Trace\SpanInterface $span): int
+    {
         $io = new SymfonyStyle($input, $output);
         $dryRun = $input->getOption('dry-run');
         $singleClusterId = $input->getOption('cluster');
@@ -84,6 +97,7 @@ class ZapSyncCommand extends Command
             return Command::FAILURE;
         }
         $io->info(\sprintf('Found %d cluster XML files', \count($clusterFiles)));
+        $span->setAttribute('zap.cluster_count', \count($clusterFiles));
 
         // Process each XML file
         $updatedCount = 0;
