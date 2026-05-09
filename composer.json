@@ -30,7 +30,7 @@
         "symfony/ux-chartjs": "^2.31",
         "symfony/ux-turbo": "^2.31",
         "symfony/validator": "7.4.*",
-        "symfony/yaml": "7.4.*"
+        "symfony/yaml": "8.0.*"
     },
     "require-dev": {
         "dama/doctrine-test-bundle": "^8.4",
