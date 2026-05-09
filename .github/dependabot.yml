@@ -5,6 +5,51 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 15
+    # Stay on Symfony 7.4 LTS (see #175). These framework components are pinned
+    # to 7.4.* in composer.json and follow the framework's release cycle, so
+    # major bumps would force the whole framework off LTS. Standalone bundles
+    # (flex, monolog-bundle, stimulus-bundle, ux-*, maker-bundle) version
+    # independently and are intentionally left out so they can be reviewed
+    # case by case.
+    ignore:
+      - dependency-name: "symfony/asset-mapper"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "symfony/browser-kit"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "symfony/cache"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "symfony/console"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "symfony/css-selector"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "symfony/debug-bundle"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "symfony/dotenv"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "symfony/form"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "symfony/framework-bundle"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "symfony/http-client"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "symfony/rate-limiter"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "symfony/runtime"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "symfony/security-bundle"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "symfony/string"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "symfony/translation"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "symfony/twig-bundle"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "symfony/validator"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "symfony/web-profiler-bundle"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "symfony/yaml"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "docker"
     directory: "/"
