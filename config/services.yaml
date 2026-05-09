@@ -9,3 +9,14 @@ services:
         resource: '../src/'
         exclude:
             - '../src/Kernel.php'
+
+    App\Observability\Bootstrap\OtelBootstrap:
+        arguments:
+            $serviceName: '%env(default::OTEL_SERVICE_NAME)%'
+            $serviceVersion: '%env(default::OTEL_SERVICE_VERSION)%'
+            $environment: '%kernel.environment%'
+            $disabled: '%env(bool:OTEL_SDK_DISABLED)%'
+
+    App\Observability\Monolog\OtelMonologProcessor:
+        tags:
+            - { name: monolog.processor }

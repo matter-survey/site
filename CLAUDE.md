@@ -64,6 +64,7 @@ php bin/console doctrine:migrations:migrate
 - `app:dcl:sync` - Fetch vendor/product data from Matter DCL API and generate YAML fixtures
 - `app:zap:sync` - Fetch cluster details from Matter SDK ZAP XML files and update fixtures
 - `app:scores:rebuild` - Rebuild the device scores cache table (used in deployment)
+- `app:otel:doctor` - Print resolved OpenTelemetry configuration (env vars, providers, sampler) and exit non-zero on misconfiguration when the SDK is enabled
 
 ### Matter Registry Data
 
@@ -115,6 +116,21 @@ Database views: `product_summary` (aliased as `device_summary`), `cluster_stats`
 - **Rate limiting:** Sliding window, 10/min per IP (configured in `framework.yaml`)
 - **CORS:** Configured in `nelmio_cors.yaml` for API endpoints
 - **Logging:** Monolog configured in `monolog.yaml`, logs to `var/log/`
+
+## Observability (OpenTelemetry)
+
+Manual instrumentation via the pure-PHP OpenTelemetry SDK. No PHP extension required.
+
+- **Default state:** disabled. `.env` ships `OTEL_SDK_DISABLED=true`.
+- **Enable in prod:** set in `.env.local`:
+  ```
+  OTEL_SDK_DISABLED=false
+  OTEL_EXPORTER_OTLP_ENDPOINT=https://your-otlp-endpoint/
+  OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer <token>
+  ```
+- **Transport pinned to** `http/json` (avoids `ext-protobuf`/`ext-grpc`).
+- **Non-blocking export:** spans are batched and flushed via `fastcgi_finish_request()` after the response is sent (PHP-FPM only; falls back to synchronous shutdown export on other SAPIs).
+- **Verify config:** `php bin/console app:otel:doctor` prints resolved env, active providers, and exits non-zero on misconfiguration.
 
 ## Environment Files
 
