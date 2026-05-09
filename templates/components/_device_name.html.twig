@@ -1,0 +1,21 @@
+{#
+ # Device name with PID disambiguator.
+ #
+ # When two products share the same vendor and product_name, the repository
+ # marks rows with `is_name_ambiguous = true` so listings can append the hex
+ # PID to keep them distinguishable.
+ #
+ # Usage:
+ #   {% from 'components/_device_name.html.twig' import deviceName %}
+ #   {{ deviceName(device) }}
+ #}
+{% macro deviceName(device) %}
+    {%- set name = device.product_name|default('Unknown Product') -%}
+    {%- if name is empty or name == '-' -%}
+        {%- set name = 'Unknown Product' -%}
+    {%- endif -%}
+    {{- name -}}
+    {%- if device.is_name_ambiguous|default(false) and device.product_id is defined and device.product_id is not null -%}
+        {{- ' ' -}}<span class="device-pid-suffix" title="Distinguishes products with the same name">(PID 0x{{ '%04X'|format(device.product_id) }})</span>
+    {%- endif -%}
+{% endmacro %}

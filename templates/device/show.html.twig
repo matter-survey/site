@@ -1,6 +1,7 @@
 {% extends 'base.html.twig' %}
 
 {% from 'components/_star_rating.html.twig' import stars, starsCompact, starsBadge %}
+{% from 'components/_device_name.html.twig' import deviceName %}
 
 {# Macro for rendering cluster tag with tooltip showing spec info or actual telemetry data #}
 {% macro clusterTag(clusterId, matterRegistry, isClient, clusterDetails) %}
@@ -1584,7 +1585,7 @@
 
     <div class="device-header">
         <div class="device-header-title">
-            <h2>{{ device.product_name ?? 'Unknown Product' }}</h2>
+            <h2>{{ deviceName(device) }}</h2>
             {% if deviceScore and deviceScore.scoresByType|length > 0 %}
                 <div class="device-rating">
                     {{ stars(deviceScore.starRating, deviceScore.overallScore, true, deviceScore.isCompliant) }}

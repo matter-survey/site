@@ -1118,4 +1118,36 @@ class DeviceControllerTest extends WebTestCase
             $this->assertGreaterThan(0, $statusCell->count(), 'Unsupported capabilities should have status');
         }
     }
+
+    /**
+     * When two products share the same vendor and product_name (e.g. multiple
+     * generations of "Eve Thermo"), the index must render a PID-based
+     * disambiguator next to each so users can tell them apart at a glance.
+     */
+    public function testDeviceIndexShowsPidDisambiguatorForDuplicateNames(): void
+    {
+        $client = static::createClient();
+        $container = static::getContainer();
+
+        $em = $container->get(\Doctrine\ORM\EntityManagerInterface::class);
+        $vendor = $em->getRepository(\App\Entity\Vendor::class)->findOneBy(['specId' => 4874]);
+        $this->assertNotNull($vendor, 'Eve fixture vendor must exist');
+
+        $deviceRepo = $container->get(\App\Repository\DeviceRepository::class);
+        $isNew = false;
+        $deviceRepo->upsertDevice([
+            'vendor_id' => 4874,
+            'vendor_name' => $vendor->getName(),
+            'vendor_fk' => $vendor->getId(),
+            'product_id' => 9999,
+            'product_name' => 'Eve Motion',
+        ], $isNew);
+
+        $crawler = $client->request('GET', '/', ['q' => 'Eve Motion']);
+        $this->assertResponseIsSuccessful();
+
+        $suffixes = $crawler->filter('.device-list .device-pid-suffix');
+        $this->assertSame(2, $suffixes->count(), 'Both Eve Motion entries should render a PID suffix');
+        $this->assertStringContainsString('PID 0x', $suffixes->first()->text());
+    }
 }
