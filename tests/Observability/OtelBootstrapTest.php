@@ -6,7 +6,6 @@ namespace App\Tests\Observability;
 
 use App\Observability\Bootstrap\OtelBootstrap;
 use OpenTelemetry\API\Globals;
-use OpenTelemetry\API\Trace\NoopTracerProvider;
 use OpenTelemetry\SDK\Trace\TracerProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -67,11 +66,13 @@ final class OtelBootstrapTest extends TestCase
 
     public function testDisabledShortCircuits(): void
     {
+        $providerBefore = Globals::tracerProvider();
+
         $bootstrap = new OtelBootstrap('matter-survey', 'dev', 'test', disabled: true);
         $bootstrap->boot();
 
         $this->assertTrue($bootstrap->isBooted());
-        $this->assertInstanceOf(NoopTracerProvider::class, Globals::tracerProvider());
+        $this->assertSame($providerBefore, Globals::tracerProvider(), 'Disabled bootstrap must not register a new global provider');
     }
 
     public function testEnabledRegistersRealProvider(): void

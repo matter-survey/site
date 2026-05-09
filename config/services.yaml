@@ -27,3 +27,8 @@ services:
     App\Observability\Monolog\OtelMonologProcessor:
         tags:
             - { name: monolog.processor }
+
+    App\Observability\HttpClient\TracingHttpClient:
+        decorates: 'http_client'
+        arguments:
+            $inner: '@.inner'

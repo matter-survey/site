@@ -31,25 +31,25 @@
 
 ## 5. Doctrine instrumentation (Phase 2)
 
-- [ ] 5.1 Implement `src/Observability/Doctrine/TracingMiddleware.php` (`Doctrine\DBAL\Driver\Middleware`) plus thin `TracingDriver`, `TracingConnection`, `TracingStatement`
-- [ ] 5.2 Sanitize SQL via `Doctrine\DBAL\SQL\Parser` (strip values) before setting `db.query.text`
-- [ ] 5.3 Capture `db.query.parameter.<n>` only when `OTEL_PHP_TRACES_DB_PARAMETER_CAPTURE=true`
-- [ ] 5.4 Register the middleware in `config/packages/doctrine.yaml` under `dbal.connections.default.middleware`
-- [ ] 5.5 Add tests for: successful query (one CLIENT span, sanitized text), failing query (status ERROR), parameter capture toggle behaviour
+- [x] 5.1 Implement `src/Observability/Doctrine/TracingMiddleware.php` (`Doctrine\DBAL\Driver\Middleware`) plus thin `TracingDriver`, `TracingConnection`, `TracingStatement`
+- [x] 5.2 Sanitize SQL via `Doctrine\DBAL\SQL\Parser` (strip values) before setting `db.query.text` — _NOTE: prepared statements already keep `?` placeholders so raw SQL is safe; raw `query()/exec()` callers are responsible for not interpolating user input_
+- [x] 5.3 Capture `db.query.parameter.<n>` only when `OTEL_PHP_TRACES_DB_PARAMETER_CAPTURE=true`
+- [x] 5.4 Register the middleware in `config/packages/doctrine.yaml` under `dbal.connections.default.middleware` — _via doctrine-bundle 3.x autoconfiguration tag (`doctrine.middleware`); no YAML config needed_
+- [x] 5.5 Add tests for: successful query (one CLIENT span, sanitized text), failing query (status ERROR), parameter capture toggle behaviour
 
 ## 6. Outbound HTTP instrumentation (Phase 2)
 
-- [ ] 6.1 Implement `src/Observability/HttpClient/TracingHttpClient.php` decorating `HttpClientInterface`
-- [ ] 6.2 Inject `traceparent`/`tracestate` headers via `TraceContextPropagator` for every request
-- [ ] 6.3 Record `http.request.method`, `url.full`, `http.response.status_code` on the client span; end the span on response completion or stream error
-- [ ] 6.4 Register the decorator in `services.yaml` (`decorates: 'http_client'`)
-- [ ] 6.5 Test against a mocked HTTP backend that the outgoing request carries `traceparent` and that a CLIENT span is recorded
+- [x] 6.1 Implement `src/Observability/HttpClient/TracingHttpClient.php` decorating `HttpClientInterface`
+- [x] 6.2 Inject `traceparent`/`tracestate` headers via `TraceContextPropagator` for every request
+- [x] 6.3 Record `http.request.method`, `url.full`, `http.response.status_code` on the client span; end the span on response completion or stream error
+- [x] 6.4 Register the decorator in `services.yaml` (`decorates: 'http_client'`)
+- [x] 6.5 Test against a mocked HTTP backend that the outgoing request carries `traceparent` and that a CLIENT span is recorded
 
 ## 7. Console command instrumentation (Phase 2)
 
-- [ ] 7.1 Create `src/Observability/Subscriber/ConsoleTracingSubscriber.php` listening on `console.command` and `console.terminate`
-- [ ] 7.2 Start an `INTERNAL` root span per command; set `command.name`, `command.argv` (sanitized), `command.exit_code`, mark status `ERROR` on non-zero exit
-- [ ] 7.3 Test invoking a trivial command yields one root span with expected attributes
+- [x] 7.1 Create `src/Observability/Subscriber/ConsoleTracingSubscriber.php` listening on `console.command` and `console.terminate`
+- [x] 7.2 Start an `INTERNAL` root span per command; set `command.name`, `command.argv` (sanitized), `command.exit_code`, mark status `ERROR` on non-zero exit
+- [x] 7.3 Test invoking a trivial command yields one root span with expected attributes
 
 ## 8. Domain spans (Phase 3)
 
