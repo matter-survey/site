@@ -84,6 +84,9 @@ jobs:
       - name: Check for security vulnerabilities
         run: composer audit
 
+      - name: Check code style (php-cs-fixer)
+        run: vendor/bin/php-cs-fixer fix --dry-run --diff --no-interaction
+
       - name: Warm up Symfony cache for PHPStan
         run: php bin/console cache:warmup --env=dev
 
