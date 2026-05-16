@@ -10,6 +10,7 @@ nav:
     wizard: "Find Device"
     devices: "Devices"
     vendors: "Vendors"
+    matter: "Matter Spec"
     stats: "Stats"
     about: "About"
     faq: "FAQ"

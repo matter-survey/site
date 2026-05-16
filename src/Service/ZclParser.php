@@ -260,7 +260,10 @@ final readonly class ZclParser
     {
         foreach ($clusterNode->globalAttribute ?? [] as $ga) {
             $code = trim((string) ($ga['code'] ?? ''));
-            if ('' === $code || 65533 !== $this->parseHexOrDecimal($code)) {
+            if ('' === $code) {
+                continue;
+            }
+            if (65533 !== $this->parseHexOrDecimal($code)) {
                 continue;
             }
             $value = trim((string) ($ga['value'] ?? ''));
@@ -283,7 +286,10 @@ final readonly class ZclParser
         foreach ($node->access ?? [] as $entry) {
             $op = trim((string) ($entry['op'] ?? ''));
             $privilege = trim((string) ($entry['privilege'] ?? ''));
-            if ('' === $op || '' === $privilege) {
+            if ('' === $op) {
+                continue;
+            }
+            if ('' === $privilege) {
                 continue;
             }
             $access[] = ['op' => $op, 'privilege' => $privilege];

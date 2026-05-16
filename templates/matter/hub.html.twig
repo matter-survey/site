@@ -1,0 +1,373 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Matter — the smart-home spec - Matter Survey{% endblock %}
+
+{% block og_title %}Matter — the smart-home spec{% endblock %}
+{% block og_description %}Everything we know about the Matter specification: clusters, device types, releases, and what's coming in the next release. {{ latestReleasedCount }} clusters in Matter {{ latestReleased }}, {{ masterCount }} on master.{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    .hub-hero {
+        padding: 2rem 1.5rem;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        color: white;
+        border-radius: 0.5rem;
+    }
+
+    .hub-hero h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem;
+    }
+
+    .hub-hero p {
+        font-size: 0.9375rem;
+        line-height: 1.55;
+        margin: 0;
+        opacity: 0.92;
+        max-width: 60ch;
+    }
+
+    .hub-hero a {
+        color: #bfdbfe;
+    }
+
+    .glance-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 2rem;
+    }
+
+    .glance-card {
+        padding: 1rem 1.25rem;
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: 0.5rem;
+    }
+
+    .glance-card .value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        line-height: 1;
+        color: var(--gray-900);
+    }
+
+    .glance-card .label {
+        margin-top: 0.5rem;
+        font-size: 0.8125rem;
+        color: var(--gray-600);
+    }
+
+    .glance-card .delta {
+        margin-top: 0.5rem;
+        display: inline-block;
+        font-size: 0.75rem;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        background: #dcfce7;
+        color: #166534;
+        font-weight: 500;
+    }
+
+    .glance-card a {
+        margin-top: 0.5rem;
+        display: inline-block;
+        font-size: 0.8125rem;
+    }
+
+    .hub-section {
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .hub-section-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .hub-section-header h2 {
+        font-size: 1.0625rem;
+        font-weight: 600;
+        margin: 0 0 0.25rem;
+    }
+
+    .hub-section-header p {
+        margin: 0;
+        font-size: 0.8125rem;
+        color: var(--gray-500);
+    }
+
+    .release-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.75rem;
+        padding: 1.25rem;
+    }
+
+    .release-card {
+        padding: 0.875rem 1rem;
+        background: var(--gray-50);
+        border: 1px solid var(--gray-200);
+        border-radius: 0.375rem;
+    }
+
+    .release-card.is-master {
+        background: #eff6ff;
+        border-color: #93c5fd;
+    }
+
+    .release-card .version {
+        font-size: 1rem;
+        font-weight: 600;
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+    }
+
+    .release-card .version .clusters {
+        font-size: 0.75rem;
+        font-weight: 400;
+        color: var(--gray-500);
+    }
+
+    .release-card .added {
+        margin-top: 0.5rem;
+        font-size: 0.75rem;
+        color: var(--gray-500);
+    }
+
+    .release-card .added strong {
+        color: var(--gray-700);
+        font-weight: 600;
+    }
+
+    .release-card .sample-list {
+        margin-top: 0.375rem;
+        font-size: 0.75rem;
+        line-height: 1.4;
+        color: var(--gray-600);
+    }
+
+    .release-card .sample-list code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: var(--gray-500);
+        font-size: 0.6875rem;
+    }
+
+    .release-card .sample-list a {
+        color: inherit;
+        text-decoration: none;
+    }
+    .release-card .sample-list a:hover {
+        text-decoration: underline;
+    }
+
+    .concept-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.75rem;
+        padding: 1.25rem;
+    }
+
+    .concept-card {
+        padding: 0.875rem 1rem;
+        background: var(--gray-50);
+        border-radius: 0.375rem;
+    }
+
+    .concept-card h3 {
+        margin: 0 0 0.375rem;
+        font-size: 0.9375rem;
+        font-weight: 600;
+    }
+
+    .concept-card p {
+        margin: 0 0 0.5rem;
+        font-size: 0.8125rem;
+        line-height: 1.45;
+        color: var(--gray-600);
+    }
+
+    .concept-card a {
+        font-size: 0.8125rem;
+    }
+
+    .explore-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.5rem;
+        padding: 1.25rem;
+    }
+
+    .explore-tile {
+        padding: 0.875rem 1rem;
+        background: var(--gray-50);
+        border: 1px solid var(--gray-200);
+        border-radius: 0.375rem;
+        text-decoration: none;
+        color: inherit;
+        transition: background-color 0.15s;
+    }
+
+    .explore-tile:hover {
+        background: var(--gray-100);
+    }
+
+    .explore-tile .label {
+        font-weight: 500;
+        font-size: 0.9375rem;
+    }
+
+    .explore-tile .summary {
+        margin-top: 0.25rem;
+        font-size: 0.75rem;
+        color: var(--gray-500);
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="hub-hero">
+        <h1>Matter — the smart-home spec</h1>
+        <p>
+            Matter is an open, royalty-free smart-home protocol from the Connectivity Standards Alliance.
+            This page indexes everything we know about the spec from
+            <a href="https://github.com/project-chip/connectedhomeip">connectedhomeip</a>:
+            clusters and their revisions, device types, and which clusters ship in each Matter release.
+        </p>
+    </div>
+
+    <div class="glance-grid">
+        <div class="glance-card">
+            <div class="value">Matter {{ latestReleased ?? '—' }}</div>
+            <div class="label">Latest released spec</div>
+            <div>
+                <a href="{{ path('stats_clusters') }}">{{ latestReleasedCount }} clusters &rarr;</a>
+            </div>
+        </div>
+        <div class="glance-card">
+            <div class="value">master</div>
+            <div class="label">In development</div>
+            {% if pendingClustersDelta > 0 %}
+                <span class="delta">+{{ pendingClustersDelta }} new clusters</span>
+            {% endif %}
+            <div>
+                <a href="{{ path('stats_clusters_next') }}">What's coming &rarr;</a>
+            </div>
+        </div>
+        <div class="glance-card">
+            <div class="value">{{ totalDeviceTypes }}</div>
+            <div class="label">Device types</div>
+            <div>
+                <a href="{{ path('stats_device_types') }}">Browse &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="hub-section">
+        <div class="hub-section-header">
+            <h2>Releases</h2>
+            <p>One card per Matter release we have a frozen snapshot of. Click a sample cluster to inspect it at that version, or jump to the cluster's own history page.</p>
+        </div>
+        <div class="release-grid">
+            {% for r in releases %}
+                <div class="release-card">
+                    <div class="version">
+                        Matter {{ r.version }}
+                        <span class="clusters">{{ r.totalClusters }} clusters</span>
+                    </div>
+                    {% if r.newCount > 0 %}
+                        <div class="added"><strong>+{{ r.newCount }}</strong> introduced in this release</div>
+                        {% if r.newSample|length > 0 %}
+                            <div class="sample-list">
+                                {% for s in r.newSample %}
+                                    <a href="{{ path('stats_cluster_version_show', {hexId: s.hexId, matterVersion: r.version}) }}">{{ s.name }}</a> <code>{{ s.hexId }}</code>{% if not loop.last %}<br>{% endif %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="added">No new clusters (existing clusters may have revision bumps)</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <div class="release-card is-master">
+                <div class="version">
+                    master
+                    <span class="clusters">{{ masterCount }} clusters</span>
+                </div>
+                <div class="added">In development upstream — not a released spec yet</div>
+                <div class="sample-list" style="margin-top: 0.5rem;">
+                    <a href="{{ path('stats_clusters_next') }}">See the diff vs Matter {{ latestReleased }} &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hub-section">
+        <div class="hub-section-header">
+            <h2>Concepts</h2>
+            <p>The pieces of a Matter device. Click through for the corresponding index page.</p>
+        </div>
+        <div class="concept-grid">
+            <div class="concept-card">
+                <h3>Cluster</h3>
+                <p>A self-contained capability — On/Off, Temperature Measurement, Door Lock. Devices expose one or more clusters on each endpoint.</p>
+                <a href="{{ path('stats_clusters') }}">Browse clusters &rarr;</a>
+            </div>
+            <div class="concept-card">
+                <h3>Device Type</h3>
+                <p>A named combination of mandatory and optional clusters that defines what a device can do — e.g. "On/Off Light", "Door Lock", "Thermostat".</p>
+                <a href="{{ path('stats_device_types') }}">Browse device types &rarr;</a>
+            </div>
+            <div class="concept-card">
+                <h3>Endpoint</h3>
+                <p>A logical sub-unit of a device. A power strip might expose one endpoint per outlet, each acting as its own On/Off device type.</p>
+            </div>
+            <div class="concept-card">
+                <h3>Binding</h3>
+                <p>A direct device-to-device link, so a switch can control a light without round-tripping through a hub.</p>
+                <a href="{{ path('stats_binding') }}">Binding stats &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="hub-section">
+        <div class="hub-section-header">
+            <h2>Explore</h2>
+            <p>Every page on the site that maps to Matter spec data.</p>
+        </div>
+        <div class="explore-grid">
+            <a class="explore-tile" href="{{ path('stats_clusters') }}">
+                <div class="label">Cluster index</div>
+                <div class="summary">All clusters, filterable by category</div>
+            </a>
+            <a class="explore-tile" href="{{ path('stats_clusters_next') }}">
+                <div class="label">Coming next</div>
+                <div class="summary">Master vs. latest released — what's queued for the next release</div>
+            </a>
+            <a class="explore-tile" href="{{ path('stats_device_types') }}">
+                <div class="label">Device types</div>
+                <div class="summary">Device-type catalog with cluster requirements</div>
+            </a>
+            <a class="explore-tile" href="{{ path('stats_versions') }}">
+                <div class="label">Versions</div>
+                <div class="summary">How devices in the survey are distributed across Matter versions</div>
+            </a>
+            <a class="explore-tile" href="{{ path('stats_binding') }}">
+                <div class="label">Binding</div>
+                <div class="summary">How often devices use direct binding</div>
+            </a>
+            <a class="explore-tile" href="{{ path('stats_commissioning') }}">
+                <div class="label">Commissioning</div>
+                <div class="summary">Commissioning flows in the wild</div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

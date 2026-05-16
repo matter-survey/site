@@ -10,6 +10,7 @@ nav:
     wizard: "Gerät finden"
     devices: "Geräte"
     vendors: "Hersteller"
+    matter: "Matter-Spec"
     stats: "Statistiken"
     about: "Über uns"
     faq: "FAQ"

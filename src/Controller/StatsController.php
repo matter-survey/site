@@ -446,6 +446,94 @@ class StatsController extends AbstractController
         ]);
     }
 
+    #[Route('/matter', name: 'matter_hub', methods: ['GET'])]
+    public function matterHub(): Response
+    {
+        // Bulk-load every ClusterVersion row once and aggregate in PHP — way
+        // cheaper than one query per version.
+        $allRows = $this->clusterVersionRepo->findAll();
+
+        $clustersByVersion = [];      // matter_version => list<int clusterId>
+        $clustersByVersionDetailed = []; // matter_version => list<ClusterVersion>
+        foreach ($allRows as $row) {
+            $clustersByVersion[$row->getMatterVersion()][] = $row->getClusterId();
+            $clustersByVersionDetailed[$row->getMatterVersion()][] = $row;
+        }
+        ksort($clustersByVersion);
+
+        // Build the timeline: each released version + a "new clusters since
+        // the prior version" delta. Skip "master" — it's surfaced separately
+        // as "in development".
+        $releasedVersions = array_values(array_filter(
+            array_keys($clustersByVersion),
+            fn (string $v): bool => 'master' !== $v,
+        ));
+        sort($releasedVersions);
+
+        $releases = [];
+        $prevIds = [];
+        foreach ($releasedVersions as $version) {
+            $currentIds = $clustersByVersion[$version] ?? [];
+            $added = array_values(array_diff($currentIds, $prevIds));
+
+            $releases[] = [
+                'version' => $version,
+                'totalClusters' => \count($currentIds),
+                'newCount' => \count($added),
+                'newSample' => $this->pickClusterSample($clustersByVersionDetailed[$version] ?? [], $added, 3),
+            ];
+
+            $prevIds = $currentIds;
+        }
+
+        $latestReleased = [] !== $releasedVersions ? end($releasedVersions) : null;
+        $masterRows = $clustersByVersionDetailed['master'] ?? [];
+        $masterCount = \count($masterRows);
+        $latestReleasedCount = null !== $latestReleased ? \count($clustersByVersion[$latestReleased] ?? []) : 0;
+
+        return $this->render('matter/hub.html.twig', [
+            'releases' => $releases,
+            'latestReleased' => $latestReleased,
+            'latestReleasedCount' => $latestReleasedCount,
+            'masterCount' => $masterCount,
+            'pendingClustersDelta' => $masterCount - $latestReleasedCount,
+            'totalDeviceTypes' => \count($this->deviceTypeRepo->findAll()),
+        ]);
+    }
+
+    /**
+     * Picks up to $limit named samples from $clusterRows whose id is in $ids.
+     *
+     * @param list<\App\Entity\ClusterVersion> $clusterRows
+     * @param list<int>                        $ids
+     *
+     * @return list<array{id: int, hexId: string, name: string}>
+     */
+    private function pickClusterSample(array $clusterRows, array $ids, int $limit): array
+    {
+        $byId = [];
+        foreach ($clusterRows as $row) {
+            $byId[$row->getClusterId()] = $row;
+        }
+
+        $sample = [];
+        foreach ($ids as $id) {
+            if (!isset($byId[$id])) {
+                continue;
+            }
+            $sample[] = [
+                'id' => $id,
+                'hexId' => \sprintf('0x%04X', $id),
+                'name' => $byId[$id]->getName(),
+            ];
+            if (\count($sample) >= $limit) {
+                break;
+            }
+        }
+
+        return $sample;
+    }
+
     #[Route('/clusters/next', name: 'stats_clusters_next', methods: ['GET'])]
     public function clustersNext(): Response
     {
@@ -491,7 +579,7 @@ class StatsController extends AbstractController
         }
 
         usort($newClusters, fn ($a, $b): int => $a->getClusterId() <=> $b->getClusterId());
-        usort($revisionBumps, fn ($a, $b): int => $a['clusterId'] <=> $b['clusterId']);
+        usort($revisionBumps, fn (array $a, array $b): int => $a['clusterId'] <=> $b['clusterId']);
 
         return $this->render('stats/clusters_next.html.twig', [
             'releasedVersion' => $releasedVersion,

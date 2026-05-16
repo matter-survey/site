@@ -760,12 +760,49 @@ final class StatsControllerTest extends WebTestCase
         $this->assertSelectorExists('#tab-attributes');
     }
 
+    // === Matter spec hub ===
+
+    public function testMatterHubPageRenders(): void
+    {
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/matter');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('.hub-hero h1', 'Matter — the smart-home spec');
+    }
+
+    public function testMatterHubRendersOneReleaseCardPerVersion(): void
+    {
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/matter');
+
+        $this->assertResponseIsSuccessful();
+
+        // 6 released versions (1.0..1.5) + 1 master card
+        $cards = $crawler->filter('.release-card');
+        $this->assertCount(7, $cards, 'Expected one release card per Matter version plus master');
+    }
+
+    public function testMatterHubLinksToConceptIndexes(): void
+    {
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/matter');
+
+        $this->assertResponseIsSuccessful();
+
+        // The explore grid should link to the canonical concept pages
+        $exploreLinks = $crawler->filter('.explore-tile')->each(fn ($node): string => $node->attr('href'));
+        $this->assertContains('/clusters', $exploreLinks);
+        $this->assertContains('/clusters/next', $exploreLinks);
+        $this->assertContains('/device-types', $exploreLinks);
+    }
+
     // === Coming-in-next-Matter view ===
 
     public function testClustersNextPageRenders(): void
     {
         $client = self::createClient();
-        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/clusters/next');
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/clusters/next');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('.page-header h1', 'Coming in the next Matter release');
