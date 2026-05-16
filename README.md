@@ -8,6 +8,7 @@ A community-driven database of Matter device capabilities, powered by anonymized
 - **Capability Database**: See which clusters and device types each product supports
 - **Binding Compatibility**: Identify devices that support Matter binding
 - **Version Tracking**: Track hardware and software versions across devices
+- **AEO-optimized**: Every public entity page emits a definitional lede sentence, `dateModified`, `BreadcrumbList`, and (for stats pages) `Dataset` JSON-LD via a central `StructuredDataService`, so AI agents (ChatGPT, Claude, Perplexity, Google AI Overviews) can cite the registry directly. `robots.txt` lists AI crawler user-agents with explicit allow rules.
 
 ## Privacy
 
