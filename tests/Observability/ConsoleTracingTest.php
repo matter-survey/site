@@ -76,6 +76,78 @@ final class ConsoleTracingTest extends TestCase
         $this->assertSame(StatusCode::STATUS_ERROR, $spans[0]->getStatus()->getCode());
     }
 
+    public function testThrowingCommandRecordsExceptionOnSpan(): void
+    {
+        $tester = $this->makeTester(new ThrowingCommand());
+        $tester->run(['command' => 'test:throws'], ['capture_stderr_separately' => true]);
+
+        $this->tracerProvider->forceFlush();
+        $spans = iterator_to_array($this->storage->getIterator());
+
+        $this->assertCount(1, $spans);
+        /** @var ImmutableSpan $span */
+        $span = $spans[0];
+
+        // Both onError (records exception + sets ERROR with message) and
+        // onTerminate (sets ERROR without description, because exit code != 0)
+        // run; the second setStatus call clears the description. What we can
+        // reliably assert is the final ERROR code and the recorded exception
+        // event from onError.
+        $this->assertSame(StatusCode::STATUS_ERROR, $span->getStatus()->getCode());
+
+        $events = $span->getEvents();
+        $this->assertNotEmpty($events, 'exception event should be recorded on the span');
+        $this->assertSame('exception', $events[0]->getName());
+        $this->assertSame('kaboom', $events[0]->getAttributes()->toArray()['exception.message'] ?? null);
+    }
+
+    public function testOnCommandWithNullCommandIsNoOp(): void
+    {
+        $subscriber = new ConsoleTracingSubscriber();
+        $event = new \Symfony\Component\Console\Event\ConsoleCommandEvent(
+            null,
+            new \Symfony\Component\Console\Input\StringInput(''),
+            new \Symfony\Component\Console\Output\NullOutput(),
+        );
+
+        $subscriber->onCommand($event);
+
+        $this->tracerProvider->forceFlush();
+        $this->assertCount(0, iterator_to_array($this->storage->getIterator()));
+    }
+
+    public function testOnErrorWithoutActiveSpanIsNoOp(): void
+    {
+        $subscriber = new ConsoleTracingSubscriber();
+        $event = new \Symfony\Component\Console\Event\ConsoleErrorEvent(
+            new \Symfony\Component\Console\Input\StringInput(''),
+            new \Symfony\Component\Console\Output\NullOutput(),
+            new \RuntimeException('orphan'),
+        );
+
+        // Calling onError before onCommand → no active span; must be a no-op.
+        $subscriber->onError($event);
+
+        $this->tracerProvider->forceFlush();
+        $this->assertCount(0, iterator_to_array($this->storage->getIterator()));
+    }
+
+    public function testOnTerminateWithoutActiveSpanIsNoOp(): void
+    {
+        $subscriber = new ConsoleTracingSubscriber();
+        $event = new \Symfony\Component\Console\Event\ConsoleTerminateEvent(
+            new SuccessCommand(),
+            new \Symfony\Component\Console\Input\StringInput(''),
+            new \Symfony\Component\Console\Output\NullOutput(),
+            0,
+        );
+
+        $subscriber->onTerminate($event);
+
+        $this->tracerProvider->forceFlush();
+        $this->assertCount(0, iterator_to_array($this->storage->getIterator()));
+    }
+
     private function makeTester(Command $command): ApplicationTester
     {
         $dispatcher = new EventDispatcher();
@@ -106,5 +178,14 @@ final class FailingCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         return 2;
+    }
+}
+
+#[AsCommand(name: 'test:throws')]
+final class ThrowingCommand extends Command
+{
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        throw new \RuntimeException('kaboom');
     }
 }
