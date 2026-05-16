@@ -34,6 +34,14 @@ class Cluster
     private bool $isGlobal = false;
 
     /**
+     * Matter spec lifecycle stage from the upstream ZAP XML — typically
+     * "provisional", occasionally "deprecated". Null means stable/production
+     * (the default for established clusters).
+     */
+    #[ORM\Column(name: 'api_maturity', length: 20, nullable: true)]
+    private ?string $apiMaturity = null;
+
+    /**
      * Cluster attributes from the Matter specification.
      * Structure: [{ code: int, name: string, type: string, writable: bool, optional: bool }].
      */
@@ -142,6 +150,18 @@ class Cluster
     public function setIsGlobal(bool $isGlobal): static
     {
         $this->isGlobal = $isGlobal;
+
+        return $this;
+    }
+
+    public function getApiMaturity(): ?string
+    {
+        return $this->apiMaturity;
+    }
+
+    public function setApiMaturity(?string $apiMaturity): static
+    {
+        $this->apiMaturity = $apiMaturity;
 
         return $this;
     }

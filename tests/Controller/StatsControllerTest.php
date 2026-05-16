@@ -707,6 +707,19 @@ final class StatsControllerTest extends WebTestCase
         $this->assertStringContainsString('On receipt of this command', $cmdPanel);
     }
 
+    public function testClusterShowRendersClusterLevelProvisionalBadge(): void
+    {
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/cluster/0x0104');
+
+        $this->assertResponseIsSuccessful();
+
+        // Closure Control (0x0104) is flagged apiMaturity="provisional" upstream.
+        // Badge sits in the cluster header next to the category/global badges.
+        $headerBadges = $crawler->filter('.cluster-header .badge-provisional');
+        $this->assertGreaterThan(0, $headerBadges->count(), 'Expected provisional badge in Closure Control header');
+    }
+
     public function testClusterShowRendersFeatureProvisionalBadge(): void
     {
         $client = self::createClient();

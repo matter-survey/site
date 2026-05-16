@@ -477,6 +477,11 @@
                 <span class="badge badge-category">{{ cluster.category|capitalize }}</span>
             </div>
             {% endif %}
+            {% if cluster.apiMaturity %}
+            <div class="meta-item">
+                <span class="badge badge-{{ cluster.apiMaturity }}">{{ cluster.apiMaturity|capitalize }}</span>
+            </div>
+            {% endif %}
             {% if cluster.specVersion %}
             <div class="meta-item">
                 <span class="meta-label">Spec:</span> Matter {{ cluster.specVersion }}
