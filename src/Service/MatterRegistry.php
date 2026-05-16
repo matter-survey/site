@@ -9,6 +9,7 @@ use App\Entity\DeviceType;
 use App\Observability\RegistryLookupTracing;
 use App\Observability\Tracer;
 use App\Repository\ClusterRepository;
+use App\Repository\ClusterVersionRepository;
 use App\Repository\DeviceTypeRepository;
 
 /**
@@ -44,6 +45,7 @@ class MatterRegistry
     public function __construct(
         private readonly ?DeviceTypeRepository $deviceTypeRepository = null,
         private readonly ?ClusterRepository $clusterRepository = null,
+        private readonly ?ClusterVersionRepository $clusterVersionRepository = null,
     ) {
     }
 
@@ -402,6 +404,13 @@ class MatterRegistry
     /**
      * Load cluster data from database.
      *
+     * Hand-curated metadata (name, description, category, isGlobal) comes from
+     * the Cluster entity. Spec data (attributes, commands, features, apiMaturity,
+     * clusterRevision) is preferred from the latest ClusterVersion row when
+     * available — that's the upstream-authoritative source. Cluster's JSON
+     * columns remain a fallback for clusters that don't yet have a tagged
+     * snapshot (master-only drafts, or pre-backfill data).
+     *
      * @return array<int, array>
      */
     private function loadClusters(): array
@@ -417,18 +426,45 @@ class MatterRegistry
         }
 
         $clusterEntities = $this->clusterRepository->findAll();
+        $latestSnapshots = $this->loadLatestClusterSnapshots();
 
         foreach ($clusterEntities as $cluster) {
-            $this->clusters[$cluster->getId()] = $this->clusterEntityToArray($cluster);
+            $this->clusters[$cluster->getId()] = $this->clusterEntityToArray(
+                $cluster,
+                $latestSnapshots[$cluster->getId()] ?? null,
+            );
         }
 
         return $this->clusters;
     }
 
     /**
-     * Convert a Cluster entity to array format.
+     * @return array<int, \App\Entity\ClusterVersion>
      */
-    private function clusterEntityToArray(Cluster $cluster): array
+    private function loadLatestClusterSnapshots(): array
+    {
+        if (!$this->clusterVersionRepository instanceof ClusterVersionRepository) {
+            return [];
+        }
+
+        $latestVersion = $this->clusterVersionRepository->findLatestMatterVersion();
+        if (null === $latestVersion) {
+            return [];
+        }
+
+        $byId = [];
+        foreach ($this->clusterVersionRepository->findByMatterVersion($latestVersion) as $snapshot) {
+            $byId[$snapshot->getClusterId()] = $snapshot;
+        }
+
+        return $byId;
+    }
+
+    /**
+     * Convert a Cluster entity to array format, preferring snapshot spec data
+     * when present.
+     */
+    private function clusterEntityToArray(Cluster $cluster, ?\App\Entity\ClusterVersion $snapshot = null): array
     {
         return [
             'id' => $cluster->getId(),
@@ -438,9 +474,11 @@ class MatterRegistry
             'specVersion' => $cluster->getSpecVersion(),
             'category' => $cluster->getCategory(),
             'isGlobal' => $cluster->isGlobal(),
-            'attributes' => $cluster->getAttributes(),
-            'commands' => $cluster->getCommands(),
-            'features' => $cluster->getFeatures(),
+            'attributes' => $snapshot?->getAttributes() ?? $cluster->getAttributes(),
+            'commands' => $snapshot?->getCommands() ?? $cluster->getCommands(),
+            'features' => $snapshot?->getFeatures() ?? $cluster->getFeatures(),
+            'apiMaturity' => $snapshot?->getApiMaturity() ?? $cluster->getApiMaturity(),
+            'clusterRevision' => $snapshot?->getClusterRevision(),
         ];
     }
 

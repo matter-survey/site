@@ -43,4 +43,22 @@ class ClusterVersionRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * Returns the highest Matter version string present in the table, or null
+     * if no snapshots exist yet. Compares lexicographically (works for "1.0"
+     * through "1.9"; if/when we hit double-digit minors a natural-sort here
+     * will be needed).
+     */
+    public function findLatestMatterVersion(): ?string
+    {
+        $result = $this->createQueryBuilder('cv')
+            ->select('DISTINCT cv.matterVersion')
+            ->orderBy('cv.matterVersion', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return $result['matterVersion'] ?? null;
+    }
 }
