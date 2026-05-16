@@ -1,7 +1,7 @@
 # Matter Cluster Definitions
 # Based on Matter 1.4 Specification
 # Attributes, commands, and features synced from connectedhomeip ZAP XML files
-# Last ZAP sync: 2026-05-16 08:12:20
+# Last ZAP sync: 2026-05-16 14:12:23
 
 -
   id: 3
@@ -174,13 +174,6 @@
       code: GN
       name: GroupNames
       summary: 'The ability to store a name for a group.'
--
-  id: 5
-  name: Scenes
-  description: 'Stores and recalls pre-configured device states, enabling complex automations with a single command (deprecated in favor of Scenes Management).'
-  specVersion: '1.0'
-  category: utility
-  isGlobal: true
 -
   id: 29
   name: Descriptor
@@ -531,6 +524,12 @@
   isGlobal: true
   attributes:
     -
+      code: 0
+      name: DataModelRevision
+      type: int16u
+      writable: false
+      optional: false
+    -
       code: 1
       name: VendorName
       type: char_string
@@ -681,6 +680,103 @@
   specVersion: '1.0'
   category: utility
   isGlobal: true
+  commands:
+    -
+      code: 0
+      name: QueryImage
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: VendorID
+          type: vendor_id
+        -
+          name: ProductID
+          type: int16u
+        -
+          name: SoftwareVersion
+          type: int32u
+        -
+          name: ProtocolsSupported
+          type: DownloadProtocolEnum
+        -
+          name: HardwareVersion
+          type: int16u
+        -
+          name: Location
+          type: char_string
+        -
+          name: RequestorCanConsent
+          type: boolean
+        -
+          name: MetadataForProvider
+          type: octet_string
+    -
+      code: 1
+      name: QueryImageResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: Status
+          type: StatusEnum
+        -
+          name: DelayedActionTime
+          type: int32u
+        -
+          name: ImageURI
+          type: char_string
+        -
+          name: SoftwareVersion
+          type: int32u
+        -
+          name: SoftwareVersionString
+          type: char_string
+        -
+          name: UpdateToken
+          type: octet_string
+        -
+          name: UserConsentNeeded
+          type: boolean
+        -
+          name: MetadataForRequestor
+          type: octet_string
+    -
+      code: 2
+      name: ApplyUpdateRequest
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: UpdateToken
+          type: octet_string
+        -
+          name: NewVersion
+          type: int32u
+    -
+      code: 3
+      name: ApplyUpdateResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: Action
+          type: ApplyUpdateActionEnum
+        -
+          name: DelayedActionTime
+          type: int32u
+    -
+      code: 4
+      name: NotifyUpdateApplied
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: UpdateToken
+          type: octet_string
+        -
+          name: SoftwareVersion
+          type: int32u
 -
   id: 42
   name: 'OTA Software Update Requestor'
@@ -688,6 +784,53 @@
   specVersion: '1.0'
   category: utility
   isGlobal: true
+  attributes:
+    -
+      code: 0
+      name: DefaultOTAProviders
+      type: array
+      writable: true
+      optional: false
+    -
+      code: 1
+      name: ''
+      type: boolean
+      writable: false
+      optional: false
+    -
+      code: 2
+      name: ''
+      type: UpdateStateEnum
+      writable: false
+      optional: false
+    -
+      code: 3
+      name: ''
+      type: int8u
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: AnnounceOTAProvider
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: ProviderNodeID
+          type: node_id
+        -
+          name: VendorID
+          type: vendor_id
+        -
+          name: AnnouncementReason
+          type: AnnouncementReasonEnum
+        -
+          name: MetadataForNode
+          type: octet_string
+        -
+          name: Endpoint
+          type: endpoint_no
 -
   id: 43
   name: 'Localization Configuration'
@@ -2093,7 +2236,7 @@
       summary: 'Server supports the counts for various MAC layer happenings.'
 -
   id: 54
-  name: 'WiFi Network Diagnostics'
+  name: 'Wi-Fi Network Diagnostics'
   description: 'Reports WiFi network statistics including signal strength and connection quality.'
   specVersion: '1.0'
   category: utility
@@ -2655,7 +2798,7 @@
       summary: 'Node supports Basic Commissioning Method.'
 -
   id: 62
-  name: 'Node Operational Credentials'
+  name: 'Operational Credentials'
   description: "Manages the device's operational certificates for secure fabric communication."
   specVersion: '1.0'
   category: utility
@@ -3759,8 +3902,8 @@
       summary: 'Supports reporting fault events'
 -
   id: 81
-  name: 'Temperature Control'
-  description: 'Provides an interface for controlling the temperature setting of appliances like ovens, refrigerators, and water heaters.'
+  name: 'Laundry Washer Mode'
+  description: 'Controls operating modes for laundry washers, such as normal, delicate, heavy duty, and whites cycles.'
   specVersion: '1.2'
   category: appliance
   isGlobal: false
@@ -3801,8 +3944,8 @@
           type: char_string
 -
   id: 83
-  name: 'RVC Run Mode'
-  description: 'Controls operating modes for robotic vacuum cleaners, such as mapping, cleaning, or idle modes.'
+  name: 'Laundry Washer Controls'
+  description: 'Controls specific settings for laundry washers including spin speed, rinse options, and water temperature.'
   specVersion: '1.2'
   category: appliance
   isGlobal: false
@@ -3844,8 +3987,8 @@
       summary: 'Multiple rinse cycles supported'
 -
   id: 84
-  name: 'RVC Clean Mode'
-  description: 'Controls cleaning modes for robotic vacuum cleaners, such as vacuum only, mop only, or vacuum and mop.'
+  name: 'RVC Run Mode'
+  description: 'Controls operating modes for robotic vacuum cleaners, such as mapping, cleaning, or idle modes.'
   specVersion: '1.2'
   category: appliance
   isGlobal: false
@@ -3892,18 +4035,30 @@
       summary: 'Cluster supports changing run modes from non-Idle states'
 -
   id: 87
-  name: 'Laundry Washer Mode'
-  description: 'Controls operating modes for laundry washers, such as normal, delicate, heavy duty, and whites cycles.'
+  name: 'Refrigerator Alarm'
+  description: 'Provides alarm functionality for refrigerators, alerting users to conditions like door open, temperature out of range, or power loss.'
   specVersion: '1.2'
   category: appliance
   isGlobal: false
--
-  id: 88
-  name: 'Laundry Washer Controls'
-  description: 'Controls specific settings for laundry washers including spin speed, rinse options, and water temperature.'
-  specVersion: '1.2'
-  category: appliance
-  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: Mask
+      type: AlarmBitmap
+      writable: false
+      optional: false
+    -
+      code: 2
+      name: State
+      type: AlarmBitmap
+      writable: false
+      optional: false
+    -
+      code: 3
+      name: Supported
+      type: AlarmBitmap
+      writable: false
+      optional: false
 -
   id: 89
   name: 'Dishwasher Mode'
@@ -4081,20 +4236,6 @@
         -
           name: CommandResponseState
           type: ErrorStateStruct
--
-  id: 115
-  name: 'Refrigerator Alarm'
-  description: 'Provides alarm functionality for refrigerators, alerting users to conditions like door left open or temperature excursions.'
-  specVersion: '1.2'
-  category: appliance
-  isGlobal: false
--
-  id: 116
-  name: 'RVC Operational State'
-  description: 'Reports operational state for robotic vacuum cleaners including running, paused, stopped, charging, docked, and error states.'
-  specVersion: '1.2'
-  category: appliance
-  isGlobal: false
 -
   id: 71
   name: Timer
@@ -4411,12 +4552,257 @@
   specVersion: '1.4'
   category: utility
   isGlobal: false
+  attributes:
+    -
+      code: 1
+      name: SceneTableSize
+      type: int16u
+      writable: false
+      optional: false
+    -
+      code: 2
+      name: FabricSceneInfo
+      type: array
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: AddScene
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: GroupID
+          type: group_id
+        -
+          name: SceneID
+          type: int8u
+        -
+          name: TransitionTime
+          type: int32u
+        -
+          name: SceneName
+          type: char_string
+        -
+          name: ExtensionFieldSetStructs
+          type: ExtensionFieldSetStruct
+    -
+      code: 0
+      name: AddSceneResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: Status
+          type: status
+        -
+          name: GroupID
+          type: group_id
+        -
+          name: SceneID
+          type: int8u
+    -
+      code: 1
+      name: ViewScene
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: GroupID
+          type: group_id
+        -
+          name: SceneID
+          type: int8u
+    -
+      code: 1
+      name: ViewSceneResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: Status
+          type: status
+        -
+          name: GroupID
+          type: group_id
+        -
+          name: SceneID
+          type: int8u
+        -
+          name: TransitionTime
+          type: int32u
+        -
+          name: SceneName
+          type: char_string
+        -
+          name: ExtensionFieldSetStructs
+          type: ExtensionFieldSetStruct
+    -
+      code: 2
+      name: RemoveScene
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: GroupID
+          type: group_id
+        -
+          name: SceneID
+          type: int8u
+    -
+      code: 2
+      name: RemoveSceneResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: Status
+          type: status
+        -
+          name: GroupID
+          type: group_id
+        -
+          name: SceneID
+          type: int8u
+    -
+      code: 3
+      name: RemoveAllScenes
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: GroupID
+          type: group_id
+    -
+      code: 3
+      name: RemoveAllScenesResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: Status
+          type: status
+        -
+          name: GroupID
+          type: group_id
+    -
+      code: 4
+      name: StoreScene
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: GroupID
+          type: group_id
+        -
+          name: SceneID
+          type: int8u
+    -
+      code: 4
+      name: StoreSceneResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: Status
+          type: status
+        -
+          name: GroupID
+          type: group_id
+        -
+          name: SceneID
+          type: int8u
+    -
+      code: 5
+      name: RecallScene
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: GroupID
+          type: group_id
+        -
+          name: SceneID
+          type: int8u
+        -
+          name: TransitionTime
+          type: int32u
+    -
+      code: 6
+      name: GetSceneMembership
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: GroupID
+          type: group_id
+    -
+      code: 6
+      name: GetSceneMembershipResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: Status
+          type: status
+        -
+          name: Capacity
+          type: int8u
+        -
+          name: GroupID
+          type: group_id
+        -
+          name: SceneList
+          type: int8u
+    -
+      code: 64
+      name: CopyScene
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: Mode
+          type: CopyModeBitmap
+        -
+          name: GroupIdentifierFrom
+          type: group_id
+        -
+          name: SceneIdentifierFrom
+          type: int8u
+        -
+          name: GroupIdentifierTo
+          type: group_id
+        -
+          name: SceneIdentifierTo
+          type: int8u
+    -
+      code: 64
+      name: CopySceneResponse
+      direction: server→client
+      optional: true
+      parameters:
+        -
+          name: Status
+          type: status
+        -
+          name: GroupIdentifierFrom
+          type: group_id
+        -
+          name: SceneIdentifierFrom
+          type: int8u
+  features:
+    -
+      bit: 0
+      code: SN
+      name: SceneNames
+      summary: 'The ability to store a name for a scene.'
 -
   id: 151
-  name: 'Energy EVSE'
-  description: 'Controls Electric Vehicle Supply Equipment (EVSE) for EV charging, including charging state, power limits, and session management.'
+  name: Messages
+  description: 'Allows sending text messages to a device for presentation to the user, with acknowledgement and confirmation responses.'
   specVersion: '1.3'
-  category: energy
+  category: media
   isGlobal: false
   attributes:
     -
@@ -4491,8 +4877,8 @@
       summary: null
 -
   id: 152
-  name: 'Energy Preference'
-  description: 'Allows devices to report and configure energy usage preferences and constraints for energy management.'
+  name: 'Device Energy Management'
+  description: 'Reports Energy Smart Appliance state and allows energy management systems to control device energy consumption (forecasts, constraints, opt-outs).'
   specVersion: '1.3'
   category: energy
   isGlobal: false
@@ -4668,8 +5054,8 @@
       summary: "Allows an EMS to request constraints to an ESA's planned operation."
 -
   id: 153
-  name: 'Energy EVSE Mode'
-  description: 'Controls operating modes for EV chargers, such as manual or automatic charging schedules.'
+  name: 'Energy EVSE'
+  description: 'Controls Electric Vehicle Supply Equipment (EVSE) for EV charging, including charging state, power limits, and session management.'
   specVersion: '1.3'
   category: energy
   isGlobal: false
@@ -4910,8 +5296,8 @@
       summary: 'EVSE supports bi-directional charging / discharging'
 -
   id: 157
-  name: 'Device Energy Management'
-  description: 'Provides a standard interface for devices to report energy consumption forecasts and accept power adjustment requests from energy management systems.'
+  name: 'Energy EVSE Mode'
+  description: 'Controls operating modes for EV chargers, such as manual or automatic charging schedules.'
   specVersion: '1.3'
   category: energy
   isGlobal: false
@@ -5006,10 +5392,10 @@
       summary: 'Dependency with the OnOff cluster'
 -
   id: 148
-  name: 'Valve Configuration and Control'
-  description: 'Controls motorized valves for water, gas, and other fluids including open/close states and flow monitoring.'
+  name: 'Water Heater Management'
+  description: 'Manages water heater operation including heat sources, demand signals, and tank temperature.'
   specVersion: '1.3'
-  category: closures
+  category: appliance
   isGlobal: false
   attributes:
     -
@@ -5077,10 +5463,10 @@
       summary: 'Supports monitoring the percentage of hot water in the tank'
 -
   id: 149
-  name: 'Water Heater Management'
-  description: 'Controls water heater operations including temperature setpoints, modes, and boost heating.'
+  name: 'Commodity Price'
+  description: 'Exposes current and forecast commodity prices (e.g. electricity, gas) for energy-aware applications.'
   specVersion: '1.4'
-  category: appliance
+  category: energy
   isGlobal: false
   attributes:
     -
@@ -5150,13 +5536,6 @@
       code: FORE
       name: Forecasting
       summary: 'Forecasts upcoming pricing'
--
-  id: 150
-  name: 'Water Heater Mode'
-  description: 'Controls operating modes for water heaters such as off, manual, and auto scheduling modes.'
-  specVersion: '1.4'
-  category: appliance
-  isGlobal: false
 -
   id: 768
   name: 'Color Control'
@@ -5992,6 +6371,12 @@
   isGlobal: false
   attributes:
     -
+      code: 0
+      name: LockState
+      type: DlLockState
+      writable: false
+      optional: false
+    -
       code: 1
       name: LockType
       type: DlLockType
@@ -6765,6 +7150,220 @@
   specVersion: '1.0'
   category: closures
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: Type
+      type: Type
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: PhysicalClosedLimitLift
+      type: int16u
+      writable: false
+      optional: true
+    -
+      code: 2
+      name: PhysicalClosedLimitTilt
+      type: int16u
+      writable: false
+      optional: true
+    -
+      code: 3
+      name: CurrentPositionLift
+      type: int16u
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: CurrentPositionTilt
+      type: int16u
+      writable: false
+      optional: true
+    -
+      code: 5
+      name: NumberOfActuationsLift
+      type: int16u
+      writable: false
+      optional: true
+    -
+      code: 6
+      name: NumberOfActuationsTilt
+      type: int16u
+      writable: false
+      optional: true
+    -
+      code: 7
+      name: ConfigStatus
+      type: ConfigStatus
+      writable: false
+      optional: false
+    -
+      code: 8
+      name: CurrentPositionLiftPercentage
+      type: percent
+      writable: false
+      optional: true
+    -
+      code: 9
+      name: CurrentPositionTiltPercentage
+      type: percent
+      writable: false
+      optional: true
+    -
+      code: 10
+      name: OperationalStatus
+      type: OperationalStatus
+      writable: false
+      optional: false
+    -
+      code: 11
+      name: TargetPositionLiftPercent100ths
+      type: percent100ths
+      writable: false
+      optional: true
+    -
+      code: 12
+      name: TargetPositionTiltPercent100ths
+      type: percent100ths
+      writable: false
+      optional: true
+    -
+      code: 13
+      name: EndProductType
+      type: EndProductType
+      writable: false
+      optional: false
+    -
+      code: 14
+      name: CurrentPositionLiftPercent100ths
+      type: percent100ths
+      writable: false
+      optional: true
+    -
+      code: 15
+      name: CurrentPositionTiltPercent100ths
+      type: percent100ths
+      writable: false
+      optional: true
+    -
+      code: 16
+      name: InstalledOpenLimitLift
+      type: int16u
+      writable: false
+      optional: true
+    -
+      code: 17
+      name: InstalledClosedLimitLift
+      type: int16u
+      writable: false
+      optional: true
+    -
+      code: 18
+      name: InstalledOpenLimitTilt
+      type: int16u
+      writable: false
+      optional: true
+    -
+      code: 19
+      name: InstalledClosedLimitTilt
+      type: int16u
+      writable: false
+      optional: true
+    -
+      code: 23
+      name: Mode
+      type: Mode
+      writable: true
+      optional: false
+    -
+      code: 26
+      name: SafetyStatus
+      type: SafetyStatus
+      writable: false
+      optional: true
+  commands:
+    -
+      code: 0
+      name: UpOrOpen
+      direction: client→server
+      optional: false
+      parameters: {  }
+    -
+      code: 1
+      name: DownOrClose
+      direction: client→server
+      optional: false
+      parameters: {  }
+    -
+      code: 2
+      name: StopMotion
+      direction: client→server
+      optional: false
+      parameters: {  }
+    -
+      code: 4
+      name: GoToLiftValue
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: LiftValue
+          type: int16u
+    -
+      code: 5
+      name: GoToLiftPercentage
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: LiftPercent100thsValue
+          type: percent100ths
+    -
+      code: 7
+      name: GoToTiltValue
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: TiltValue
+          type: int16u
+    -
+      code: 8
+      name: GoToTiltPercentage
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: TiltPercent100thsValue
+          type: percent100ths
+  features:
+    -
+      bit: 0
+      code: LF
+      name: Lift
+      summary: 'Lift control and behavior for lifting/sliding window coverings'
+    -
+      bit: 1
+      code: TL
+      name: Tilt
+      summary: 'Tilt control and behavior for tilting window coverings'
+    -
+      bit: 2
+      code: PA_LF
+      name: PositionAwareLift
+      summary: 'Position aware lift control is supported.'
+    -
+      bit: 3
+      code: ABS
+      name: AbsolutePosition
+      summary: 'Absolute positioning is supported.'
+    -
+      bit: 4
+      code: PA_TL
+      name: PositionAwareTilt
+      summary: 'Position aware tilt control is supported.'
 -
   id: 512
   name: 'Pump Configuration and Control'
@@ -8359,18 +8958,109 @@
       summary: 'Cluster supports the Extremely poor air quality level'
 -
   id: 1037
-  name: 'Carbon Monoxide Concentration Measurement'
-  description: 'Reports carbon monoxide concentration in parts per million (PPM).'
-  specVersion: '1.2'
-  category: measurement
-  isGlobal: false
--
-  id: 1038
   name: 'Carbon Dioxide Concentration Measurement'
   description: 'Reports carbon dioxide concentration in parts per million (PPM).'
   specVersion: '1.2'
   category: measurement
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: MeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 1
+      name: MinMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 2
+      name: MaxMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 3
+      name: PeakMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: PeakMeasuredValueWindow
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 5
+      name: AverageMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 6
+      name: AverageMeasuredValueWindow
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 7
+      name: Uncertainty
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 8
+      name: MeasurementUnit
+      type: MeasurementUnitEnum
+      writable: false
+      optional: true
+    -
+      code: 9
+      name: MeasurementMedium
+      type: MeasurementMediumEnum
+      writable: false
+      optional: false
+    -
+      code: 10
+      name: LevelValue
+      type: LevelValueEnum
+      writable: false
+      optional: true
+  features:
+    -
+      bit: 0
+      code: MEA
+      name: NumericMeasurement
+      summary: 'Cluster supports numeric measurement of substance'
+    -
+      bit: 1
+      code: LEV
+      name: LevelIndication
+      summary: 'Cluster supports basic level indication for substance using the ConcentrationLevel enum'
+    -
+      bit: 2
+      code: MED
+      name: MediumLevel
+      summary: 'Cluster supports the Medium Concentration Level'
+    -
+      bit: 3
+      code: CRI
+      name: CriticalLevel
+      summary: 'Cluster supports the Critical Concentration Level'
+    -
+      bit: 4
+      code: PEA
+      name: PeakMeasurement
+      summary: 'Cluster supports peak numeric measurement of substance'
+    -
+      bit: 5
+      code: AVG
+      name: AverageMeasurement
+      summary: 'Cluster supports average numeric measurement of substance'
 -
   id: 1043
   name: 'Nitrogen Dioxide Concentration Measurement'
@@ -8378,6 +9068,104 @@
   specVersion: '1.2'
   category: measurement
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: MeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 1
+      name: MinMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 2
+      name: MaxMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 3
+      name: PeakMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: PeakMeasuredValueWindow
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 5
+      name: AverageMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 6
+      name: AverageMeasuredValueWindow
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 7
+      name: Uncertainty
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 8
+      name: MeasurementUnit
+      type: MeasurementUnitEnum
+      writable: false
+      optional: true
+    -
+      code: 9
+      name: MeasurementMedium
+      type: MeasurementMediumEnum
+      writable: false
+      optional: false
+    -
+      code: 10
+      name: LevelValue
+      type: LevelValueEnum
+      writable: false
+      optional: true
+  features:
+    -
+      bit: 0
+      code: MEA
+      name: NumericMeasurement
+      summary: 'Cluster supports numeric measurement of substance'
+    -
+      bit: 1
+      code: LEV
+      name: LevelIndication
+      summary: 'Cluster supports basic level indication for substance using the ConcentrationLevel enum'
+    -
+      bit: 2
+      code: MED
+      name: MediumLevel
+      summary: 'Cluster supports the Medium Concentration Level'
+    -
+      bit: 3
+      code: CRI
+      name: CriticalLevel
+      summary: 'Cluster supports the Critical Concentration Level'
+    -
+      bit: 4
+      code: PEA
+      name: PeakMeasurement
+      summary: 'Cluster supports peak numeric measurement of substance'
+    -
+      bit: 5
+      code: AVG
+      name: AverageMeasurement
+      summary: 'Cluster supports average numeric measurement of substance'
 -
   id: 1045
   name: 'Ozone Concentration Measurement'
@@ -8385,6 +9173,104 @@
   specVersion: '1.2'
   category: measurement
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: MeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 1
+      name: MinMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 2
+      name: MaxMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 3
+      name: PeakMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: PeakMeasuredValueWindow
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 5
+      name: AverageMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 6
+      name: AverageMeasuredValueWindow
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 7
+      name: Uncertainty
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 8
+      name: MeasurementUnit
+      type: MeasurementUnitEnum
+      writable: false
+      optional: true
+    -
+      code: 9
+      name: MeasurementMedium
+      type: MeasurementMediumEnum
+      writable: false
+      optional: false
+    -
+      code: 10
+      name: LevelValue
+      type: LevelValueEnum
+      writable: false
+      optional: true
+  features:
+    -
+      bit: 0
+      code: MEA
+      name: NumericMeasurement
+      summary: 'Cluster supports numeric measurement of substance'
+    -
+      bit: 1
+      code: LEV
+      name: LevelIndication
+      summary: 'Cluster supports basic level indication for substance using the ConcentrationLevel enum'
+    -
+      bit: 2
+      code: MED
+      name: MediumLevel
+      summary: 'Cluster supports the Medium Concentration Level'
+    -
+      bit: 3
+      code: CRI
+      name: CriticalLevel
+      summary: 'Cluster supports the Critical Concentration Level'
+    -
+      bit: 4
+      code: PEA
+      name: PeakMeasurement
+      summary: 'Cluster supports peak numeric measurement of substance'
+    -
+      bit: 5
+      code: AVG
+      name: AverageMeasurement
+      summary: 'Cluster supports average numeric measurement of substance'
 -
   id: 1066
   name: 'PM2.5 Concentration Measurement'
@@ -8392,6 +9278,104 @@
   specVersion: '1.2'
   category: measurement
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: MeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 1
+      name: MinMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 2
+      name: MaxMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 3
+      name: PeakMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: PeakMeasuredValueWindow
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 5
+      name: AverageMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 6
+      name: AverageMeasuredValueWindow
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 7
+      name: Uncertainty
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 8
+      name: MeasurementUnit
+      type: MeasurementUnitEnum
+      writable: false
+      optional: true
+    -
+      code: 9
+      name: MeasurementMedium
+      type: MeasurementMediumEnum
+      writable: false
+      optional: false
+    -
+      code: 10
+      name: LevelValue
+      type: LevelValueEnum
+      writable: false
+      optional: true
+  features:
+    -
+      bit: 0
+      code: MEA
+      name: NumericMeasurement
+      summary: 'Cluster supports numeric measurement of substance'
+    -
+      bit: 1
+      code: LEV
+      name: LevelIndication
+      summary: 'Cluster supports basic level indication for substance using the ConcentrationLevel enum'
+    -
+      bit: 2
+      code: MED
+      name: MediumLevel
+      summary: 'Cluster supports the Medium Concentration Level'
+    -
+      bit: 3
+      code: CRI
+      name: CriticalLevel
+      summary: 'Cluster supports the Critical Concentration Level'
+    -
+      bit: 4
+      code: PEA
+      name: PeakMeasurement
+      summary: 'Cluster supports peak numeric measurement of substance'
+    -
+      bit: 5
+      code: AVG
+      name: AverageMeasurement
+      summary: 'Cluster supports average numeric measurement of substance'
 -
   id: 1067
   name: 'Formaldehyde Concentration Measurement'
@@ -8399,6 +9383,104 @@
   specVersion: '1.2'
   category: measurement
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: MeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 1
+      name: MinMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 2
+      name: MaxMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 3
+      name: PeakMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: PeakMeasuredValueWindow
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 5
+      name: AverageMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 6
+      name: AverageMeasuredValueWindow
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 7
+      name: Uncertainty
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 8
+      name: MeasurementUnit
+      type: MeasurementUnitEnum
+      writable: false
+      optional: true
+    -
+      code: 9
+      name: MeasurementMedium
+      type: MeasurementMediumEnum
+      writable: false
+      optional: false
+    -
+      code: 10
+      name: LevelValue
+      type: LevelValueEnum
+      writable: false
+      optional: true
+  features:
+    -
+      bit: 0
+      code: MEA
+      name: NumericMeasurement
+      summary: 'Cluster supports numeric measurement of substance'
+    -
+      bit: 1
+      code: LEV
+      name: LevelIndication
+      summary: 'Cluster supports basic level indication for substance using the ConcentrationLevel enum'
+    -
+      bit: 2
+      code: MED
+      name: MediumLevel
+      summary: 'Cluster supports the Medium Concentration Level'
+    -
+      bit: 3
+      code: CRI
+      name: CriticalLevel
+      summary: 'Cluster supports the Critical Concentration Level'
+    -
+      bit: 4
+      code: PEA
+      name: PeakMeasurement
+      summary: 'Cluster supports peak numeric measurement of substance'
+    -
+      bit: 5
+      code: AVG
+      name: AverageMeasurement
+      summary: 'Cluster supports average numeric measurement of substance'
 -
   id: 1068
   name: 'PM1 Concentration Measurement'
@@ -8406,6 +9488,104 @@
   specVersion: '1.2'
   category: measurement
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: MeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 1
+      name: MinMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 2
+      name: MaxMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 3
+      name: PeakMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: PeakMeasuredValueWindow
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 5
+      name: AverageMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 6
+      name: AverageMeasuredValueWindow
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 7
+      name: Uncertainty
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 8
+      name: MeasurementUnit
+      type: MeasurementUnitEnum
+      writable: false
+      optional: true
+    -
+      code: 9
+      name: MeasurementMedium
+      type: MeasurementMediumEnum
+      writable: false
+      optional: false
+    -
+      code: 10
+      name: LevelValue
+      type: LevelValueEnum
+      writable: false
+      optional: true
+  features:
+    -
+      bit: 0
+      code: MEA
+      name: NumericMeasurement
+      summary: 'Cluster supports numeric measurement of substance'
+    -
+      bit: 1
+      code: LEV
+      name: LevelIndication
+      summary: 'Cluster supports basic level indication for substance using the ConcentrationLevel enum'
+    -
+      bit: 2
+      code: MED
+      name: MediumLevel
+      summary: 'Cluster supports the Medium Concentration Level'
+    -
+      bit: 3
+      code: CRI
+      name: CriticalLevel
+      summary: 'Cluster supports the Critical Concentration Level'
+    -
+      bit: 4
+      code: PEA
+      name: PeakMeasurement
+      summary: 'Cluster supports peak numeric measurement of substance'
+    -
+      bit: 5
+      code: AVG
+      name: AverageMeasurement
+      summary: 'Cluster supports average numeric measurement of substance'
 -
   id: 1069
   name: 'PM10 Concentration Measurement'
@@ -8413,6 +9593,104 @@
   specVersion: '1.2'
   category: measurement
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: MeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 1
+      name: MinMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 2
+      name: MaxMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 3
+      name: PeakMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: PeakMeasuredValueWindow
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 5
+      name: AverageMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 6
+      name: AverageMeasuredValueWindow
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 7
+      name: Uncertainty
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 8
+      name: MeasurementUnit
+      type: MeasurementUnitEnum
+      writable: false
+      optional: true
+    -
+      code: 9
+      name: MeasurementMedium
+      type: MeasurementMediumEnum
+      writable: false
+      optional: false
+    -
+      code: 10
+      name: LevelValue
+      type: LevelValueEnum
+      writable: false
+      optional: true
+  features:
+    -
+      bit: 0
+      code: MEA
+      name: NumericMeasurement
+      summary: 'Cluster supports numeric measurement of substance'
+    -
+      bit: 1
+      code: LEV
+      name: LevelIndication
+      summary: 'Cluster supports basic level indication for substance using the ConcentrationLevel enum'
+    -
+      bit: 2
+      code: MED
+      name: MediumLevel
+      summary: 'Cluster supports the Medium Concentration Level'
+    -
+      bit: 3
+      code: CRI
+      name: CriticalLevel
+      summary: 'Cluster supports the Critical Concentration Level'
+    -
+      bit: 4
+      code: PEA
+      name: PeakMeasurement
+      summary: 'Cluster supports peak numeric measurement of substance'
+    -
+      bit: 5
+      code: AVG
+      name: AverageMeasurement
+      summary: 'Cluster supports average numeric measurement of substance'
 -
   id: 1070
   name: 'Total Volatile Organic Compounds Concentration Measurement'
@@ -8420,6 +9698,104 @@
   specVersion: '1.2'
   category: measurement
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: MeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 1
+      name: MinMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 2
+      name: MaxMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 3
+      name: PeakMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: PeakMeasuredValueWindow
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 5
+      name: AverageMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 6
+      name: AverageMeasuredValueWindow
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 7
+      name: Uncertainty
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 8
+      name: MeasurementUnit
+      type: MeasurementUnitEnum
+      writable: false
+      optional: true
+    -
+      code: 9
+      name: MeasurementMedium
+      type: MeasurementMediumEnum
+      writable: false
+      optional: false
+    -
+      code: 10
+      name: LevelValue
+      type: LevelValueEnum
+      writable: false
+      optional: true
+  features:
+    -
+      bit: 0
+      code: MEA
+      name: NumericMeasurement
+      summary: 'Cluster supports numeric measurement of substance'
+    -
+      bit: 1
+      code: LEV
+      name: LevelIndication
+      summary: 'Cluster supports basic level indication for substance using the ConcentrationLevel enum'
+    -
+      bit: 2
+      code: MED
+      name: MediumLevel
+      summary: 'Cluster supports the Medium Concentration Level'
+    -
+      bit: 3
+      code: CRI
+      name: CriticalLevel
+      summary: 'Cluster supports the Critical Concentration Level'
+    -
+      bit: 4
+      code: PEA
+      name: PeakMeasurement
+      summary: 'Cluster supports peak numeric measurement of substance'
+    -
+      bit: 5
+      code: AVG
+      name: AverageMeasurement
+      summary: 'Cluster supports average numeric measurement of substance'
 -
   id: 1071
   name: 'Radon Concentration Measurement'
@@ -8427,6 +9803,104 @@
   specVersion: '1.2'
   category: measurement
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: MeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 1
+      name: MinMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 2
+      name: MaxMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 3
+      name: PeakMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: PeakMeasuredValueWindow
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 5
+      name: AverageMeasuredValue
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 6
+      name: AverageMeasuredValueWindow
+      type: elapsed_s
+      writable: false
+      optional: true
+    -
+      code: 7
+      name: Uncertainty
+      type: single
+      writable: false
+      optional: true
+    -
+      code: 8
+      name: MeasurementUnit
+      type: MeasurementUnitEnum
+      writable: false
+      optional: true
+    -
+      code: 9
+      name: MeasurementMedium
+      type: MeasurementMediumEnum
+      writable: false
+      optional: false
+    -
+      code: 10
+      name: LevelValue
+      type: LevelValueEnum
+      writable: false
+      optional: true
+  features:
+    -
+      bit: 0
+      code: MEA
+      name: NumericMeasurement
+      summary: 'Cluster supports numeric measurement of substance'
+    -
+      bit: 1
+      code: LEV
+      name: LevelIndication
+      summary: 'Cluster supports basic level indication for substance using the ConcentrationLevel enum'
+    -
+      bit: 2
+      code: MED
+      name: MediumLevel
+      summary: 'Cluster supports the Medium Concentration Level'
+    -
+      bit: 3
+      code: CRI
+      name: CriticalLevel
+      summary: 'Cluster supports the Critical Concentration Level'
+    -
+      bit: 4
+      code: PEA
+      name: PeakMeasurement
+      summary: 'Cluster supports peak numeric measurement of substance'
+    -
+      bit: 5
+      code: AVG
+      name: AverageMeasurement
+      summary: 'Cluster supports average numeric measurement of substance'
 -
   id: 92
   name: 'Smoke CO Alarm'
@@ -8537,13 +10011,6 @@
       code: CO
       name: 'CO Alarm'
       summary: 'Supports CO alarm'
--
-  id: 1280
-  name: 'IAS Zone'
-  description: 'Reports security zone status for intrusion detection and alarm systems.'
-  specVersion: '1.0'
-  category: security
-  isGlobal: false
 -
   id: 1283
   name: 'Wake on LAN'
@@ -9763,6 +11230,66 @@
   specVersion: '1.2'
   category: hvac
   isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: Condition
+      type: percent
+      writable: false
+      optional: true
+    -
+      code: 1
+      name: DegradationDirection
+      type: DegradationDirectionEnum
+      writable: false
+      optional: true
+    -
+      code: 2
+      name: ChangeIndication
+      type: ChangeIndicationEnum
+      writable: false
+      optional: false
+    -
+      code: 3
+      name: InPlaceIndicator
+      type: boolean
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: LastChangedTime
+      type: epoch_s
+      writable: true
+      optional: true
+    -
+      code: 5
+      name: ReplacementProductList
+      type: array
+      writable: false
+      optional: true
+  commands:
+    -
+      code: 0
+      name: ResetCondition
+      direction: client→server
+      optional: true
+      parameters: {  }
+  features:
+    -
+      bit: 0
+      code: CON
+      name: Condition
+      summary: 'Supports monitoring the condition of the resource in percentage'
+    -
+      bit: 1
+      code: WRN
+      name: Warning
+      summary: 'Supports warning indication'
+    -
+      bit: 2
+      code: REP
+      name: ReplacementProductList
+      summary: 'Supports specifying the list of replacement products'
 -
   id: 129
   name: 'Valve Configuration and Control'
@@ -11107,8 +12634,8 @@
           type: node_id
 -
   id: 1875
-  name: 'Joint Fabric PKI'
-  description: 'Handles PKI operations for joint fabric administration.'
+  name: 'Joint Fabric Administrator'
+  description: 'Joint Fabric administrator interface for cross-fabric commissioning, including ICAC CSR and cross-signing.'
   specVersion: '1.4'
   category: utility
   isGlobal: false
@@ -11207,3 +12734,2867 @@
         -
           name: EndpointID
           type: endpoint_no
+-
+  id: 28
+  name: 'Pulse Width Modulation'
+  description: 'Provides a PWM control interface, similar to Level Control but driving a duty cycle rather than a level.'
+  specVersion: '1.0'
+  category: general
+  isGlobal: false
+-
+  id: 66
+  name: 'Proxy Configuration'
+  description: 'Configures the proxy behavior for a node that proxies subscriptions on behalf of other nodes.'
+  specVersion: '1.0'
+  category: utility
+  isGlobal: false
+-
+  id: 67
+  name: 'Proxy Discovery'
+  description: 'Advertises the availability of a proxy and supports proxy discovery by clients.'
+  specVersion: '1.0'
+  category: utility
+  isGlobal: false
+-
+  id: 68
+  name: 'Proxy Valid'
+  description: 'Provides validation that a node can act as a proxy for a given fabric.'
+  specVersion: '1.0'
+  category: utility
+  isGlobal: false
+-
+  id: 101
+  name: Groupcast
+  description: 'Provides multicast/groupcast delivery primitives for sending commands to groups of devices.'
+  specVersion: '1.4'
+  category: utility
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: Membership
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: MaxMembershipCount
+      type: int16u
+      writable: false
+      optional: false
+    -
+      code: 2
+      name: MaxMcastAddrCount
+      type: int16u
+      writable: false
+      optional: false
+    -
+      code: 3
+      name: UsedMcastAddrCount
+      type: int16u
+      writable: false
+      optional: false
+    -
+      code: 4
+      name: FabricUnderTest
+      type: fabric_idx
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: JoinGroup
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: GroupID
+          type: group_id
+        -
+          name: Endpoints
+          type: endpoint_no
+        -
+          name: KeySetID
+          type: int16u
+        -
+          name: Key
+          type: octet_string
+        -
+          name: UseAuxiliaryACL
+          type: boolean
+        -
+          name: ReplaceEndpoints
+          type: boolean
+        -
+          name: McastAddrPolicy
+          type: MulticastAddrPolicyEnum
+    -
+      code: 1
+      name: LeaveGroup
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: GroupID
+          type: group_id
+        -
+          name: Endpoints
+          type: endpoint_no
+    -
+      code: 2
+      name: LeaveGroupResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: GroupID
+          type: group_id
+        -
+          name: Endpoints
+          type: endpoint_no
+    -
+      code: 3
+      name: UpdateGroupKey
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: GroupID
+          type: group_id
+        -
+          name: KeySetID
+          type: int16u
+        -
+          name: Key
+          type: octet_string
+    -
+      code: 4
+      name: ConfigureAuxiliaryACL
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: GroupID
+          type: group_id
+        -
+          name: UseAuxiliaryACL
+          type: boolean
+    -
+      code: 5
+      name: GroupcastTesting
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: TestOperation
+          type: GroupcastTestingEnum
+        -
+          name: DurationSeconds
+          type: int16u
+  features:
+    -
+      bit: 0
+      code: LN
+      name: Listener
+      summary: 'Supports joining a multicast group of nodes as a listener.'
+    -
+      bit: 1
+      code: SD
+      name: Sender
+      summary: 'Supports sending multicast message to a targeted group of nodes.'
+    -
+      bit: 2
+      code: PGA
+      name: PerGroup
+      summary: 'Supports PerGroup multicast addresses.'
+-
+  id: 121
+  name: 'Water Tank Level Monitoring'
+  description: 'Reports the level of a consumable water tank (e.g. cleaning solution) and warns when refill is required.'
+  specVersion: '1.3'
+  category: appliance
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: Condition
+      type: percent
+      writable: false
+      optional: true
+    -
+      code: 1
+      name: DegradationDirection
+      type: DegradationDirectionEnum
+      writable: false
+      optional: true
+    -
+      code: 2
+      name: ChangeIndication
+      type: ChangeIndicationEnum
+      writable: false
+      optional: false
+    -
+      code: 3
+      name: InPlaceIndicator
+      type: boolean
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: LastChangedTime
+      type: epoch_s
+      writable: true
+      optional: true
+    -
+      code: 5
+      name: ReplacementProductList
+      type: array
+      writable: false
+      optional: true
+  commands:
+    -
+      code: 0
+      name: ResetCondition
+      direction: client→server
+      optional: true
+      parameters: {  }
+  features:
+    -
+      bit: 0
+      code: CON
+      name: Condition
+      summary: 'Supports monitoring the condition of the resource in percentage'
+    -
+      bit: 1
+      code: WRN
+      name: Warning
+      summary: 'Supports warning indication'
+    -
+      bit: 2
+      code: REP
+      name: ReplacementProductList
+      summary: 'Supports specifying the list of replacement products'
+-
+  id: 160
+  name: 'Electrical Grid Conditions'
+  description: 'Reports grid conditions such as carbon intensity and grid stress signals to support carbon-aware energy management.'
+  specVersion: '1.4'
+  category: energy
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: LocalGenerationAvailable
+      type: boolean
+      writable: true
+      optional: false
+    -
+      code: 1
+      name: CurrentConditions
+      type: ElectricalGridConditionsStruct
+      writable: false
+      optional: false
+    -
+      code: 2
+      name: ForecastConditions
+      type: array
+      writable: false
+      optional: true
+  features:
+    -
+      bit: 0
+      code: FORE
+      name: Forecasting
+      summary: 'Forecasts upcoming'
+-
+  id: 260
+  name: 'Closure Control'
+  description: 'Top-level control of motorised closures (doors, windows, shades) including position, latch state, and safety interlocks.'
+  specVersion: '1.4'
+  category: closures
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: CountdownTime
+      type: elapsed_s
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: MainState
+      type: MainStateEnum
+      writable: false
+      optional: false
+    -
+      code: 2
+      name: CurrentErrorList
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 3
+      name: OverallCurrentState
+      type: OverallCurrentStateStruct
+      writable: false
+      optional: false
+    -
+      code: 4
+      name: OverallTargetState
+      type: OverallTargetStateStruct
+      writable: false
+      optional: false
+    -
+      code: 5
+      name: LatchControlModes
+      type: LatchControlModesBitmap
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: Stop
+      direction: client→server
+      optional: false
+      parameters: {  }
+    -
+      code: 1
+      name: MoveTo
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: Position
+          type: TargetPositionEnum
+        -
+          name: Latch
+          type: boolean
+        -
+          name: Speed
+          type: ThreeLevelAutoEnum
+    -
+      code: 2
+      name: Calibrate
+      direction: client→server
+      optional: false
+      parameters: {  }
+  features:
+    -
+      bit: 0
+      code: PS
+      name: Positioning
+      summary: 'Supports Positioning with at least Fully Opened (0%) and Fully Closed (100%) discrete positions'
+    -
+      bit: 1
+      code: LT
+      name: MotionLatching
+      summary: 'Supports a latch (securing a position, or a state)'
+    -
+      bit: 2
+      code: IS
+      name: Instantaneous
+      summary: 'Supports the Instantaneous feature'
+    -
+      bit: 3
+      code: SP
+      name: Speed
+      summary: 'Supports Speed motion throttling'
+    -
+      bit: 4
+      code: VT
+      name: Ventilation
+      summary: 'Supports Ventilation discrete state'
+    -
+      bit: 5
+      code: PD
+      name: Pedestrian
+      summary: 'Supports Pedestrian discrete state'
+    -
+      bit: 6
+      code: CL
+      name: Calibration
+      summary: 'Supports the Calibration feature'
+    -
+      bit: 7
+      code: PT
+      name: Protection
+      summary: 'Supports the Protection feature'
+    -
+      bit: 8
+      code: MO
+      name: ManuallyOperable
+      summary: 'Supports the manual operation feature'
+-
+  id: 261
+  name: 'Closure Dimension'
+  description: 'Controls a single dimension of a multi-axis closure (e.g. lift vs tilt) for compound closure systems.'
+  specVersion: '1.4'
+  category: closures
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: CurrentState
+      type: DimensionStateStruct
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: TargetState
+      type: DimensionStateStruct
+      writable: false
+      optional: false
+    -
+      code: 2
+      name: Resolution
+      type: percent100ths
+      writable: false
+      optional: false
+    -
+      code: 3
+      name: StepValue
+      type: percent100ths
+      writable: false
+      optional: false
+    -
+      code: 4
+      name: Unit
+      type: ClosureUnitEnum
+      writable: false
+      optional: false
+    -
+      code: 5
+      name: UnitRange
+      type: UnitRangeStruct
+      writable: false
+      optional: false
+    -
+      code: 6
+      name: LimitRange
+      type: RangePercent100thsStruct
+      writable: false
+      optional: false
+    -
+      code: 7
+      name: TranslationDirection
+      type: TranslationDirectionEnum
+      writable: false
+      optional: false
+    -
+      code: 8
+      name: RotationAxis
+      type: RotationAxisEnum
+      writable: false
+      optional: false
+    -
+      code: 9
+      name: Overflow
+      type: OverflowEnum
+      writable: false
+      optional: false
+    -
+      code: 10
+      name: ModulationType
+      type: ModulationTypeEnum
+      writable: false
+      optional: false
+    -
+      code: 11
+      name: LatchControlModes
+      type: LatchControlModesBitmap
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: SetTarget
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: Position
+          type: percent100ths
+        -
+          name: Latch
+          type: boolean
+        -
+          name: Speed
+          type: ThreeLevelAutoEnum
+    -
+      code: 1
+      name: Step
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: Direction
+          type: StepDirectionEnum
+        -
+          name: NumberOfSteps
+          type: int16u
+        -
+          name: Speed
+          type: ThreeLevelAutoEnum
+  features:
+    -
+      bit: 0
+      code: PS
+      name: Positioning
+      summary: 'Supports Positioning in the range from 0.00% to 100.00%'
+    -
+      bit: 1
+      code: LT
+      name: MotionLatching
+      summary: 'Supports a latch to secure the closure to a position or state'
+    -
+      bit: 2
+      code: UT
+      name: Unit
+      summary: 'Specifies the relevant unit and range for this dimension (mm, degrees etc.)'
+    -
+      bit: 3
+      code: LM
+      name: Limitation
+      summary: 'Supports limitation of the operating range'
+    -
+      bit: 4
+      code: SP
+      name: Speed
+      summary: 'Supports speed motion throttling.'
+    -
+      bit: 5
+      code: TR
+      name: Translation
+      summary: 'Drives a translation motion'
+    -
+      bit: 6
+      code: RO
+      name: Rotation
+      summary: 'Drives a rotation motion'
+    -
+      bit: 7
+      code: MD
+      name: Modulation
+      summary: 'Modulates a particular flow level (light, air, privacy ...)'
+-
+  id: 517
+  name: Humidistat
+  description: 'Setpoint and humidification/dehumidification control for devices that regulate ambient humidity.'
+  specVersion: '1.4'
+  category: comfort
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: Mode
+      type: ModeEnum
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: SystemState
+      type: SystemStateEnum
+      writable: false
+      optional: false
+    -
+      code: 2
+      name: UserSetpoint
+      type: percent
+      writable: false
+      optional: true
+    -
+      code: 3
+      name: MinSetpoint
+      type: percent
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: MaxSetpoint
+      type: percent
+      writable: false
+      optional: true
+    -
+      code: 5
+      name: Step
+      type: percent
+      writable: false
+      optional: true
+    -
+      code: 6
+      name: TargetSetpoint
+      type: percent
+      writable: false
+      optional: true
+    -
+      code: 7
+      name: MistType
+      type: MistTypeBitmap
+      writable: false
+      optional: true
+    -
+      code: 8
+      name: Continuous
+      type: boolean
+      writable: false
+      optional: true
+    -
+      code: 9
+      name: Sleep
+      type: boolean
+      writable: false
+      optional: true
+    -
+      code: 10
+      name: Optimal
+      type: boolean
+      writable: false
+      optional: true
+  commands:
+    -
+      code: 0
+      name: SetSettings
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: UserSetpoint
+          type: percent
+        -
+          name: Mode
+          type: ModeEnum
+        -
+          name: MistType
+          type: MistTypeBitmap
+        -
+          name: Continuous
+          type: boolean
+        -
+          name: Sleep
+          type: boolean
+        -
+          name: Optimal
+          type: boolean
+  features:
+    -
+      bit: 0
+      code: HUM
+      name: Humidifier
+      summary: 'Supports increasing the humidity in a space'
+    -
+      bit: 1
+      code: DEHUM
+      name: Dehumidifier
+      summary: 'Supports decreasing the humidity in a space'
+    -
+      bit: 2
+      code: CONT
+      name: Continuous
+      summary: 'Supports continuous humidity operation'
+    -
+      bit: 3
+      code: SENSOR
+      name: Sensor
+      summary: 'Supports humidity control to a setpoint via an humidity sensor'
+    -
+      bit: 4
+      code: AUTO
+      name: Auto
+      summary: 'Supports automatically switching operating states to maintain a set humidity'
+    -
+      bit: 5
+      code: FAN
+      name: FanOnly
+      summary: 'Supports running the fan alone without humidity control'
+    -
+      bit: 6
+      code: OPT
+      name: Optimal
+      summary: 'Supports controlling to an optimal humidity'
+    -
+      bit: 7
+      code: WARM
+      name: WarmMist
+      summary: 'Supports warm mist operation'
+    -
+      bit: 8
+      code: COLD
+      name: ColdMist
+      summary: 'Supports cold mist operation'
+-
+  id: 773
+  name: 'Dynamic Lighting'
+  description: 'Coordinated control of lighting effects across multiple endpoints (scenes, transitions, group behaviour).'
+  specVersion: '1.4'
+  category: lighting
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: AvailableEffects
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: CurrentEffectID
+      type: int16u
+      writable: false
+      optional: false
+    -
+      code: 2
+      name: CurrentSpeed
+      type: int16u
+      writable: true
+      optional: false
+  commands:
+    -
+      code: 0
+      name: StartEffect
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: EffectID
+          type: int16u
+        -
+          name: Speed
+          type: int16u
+        -
+          name: ColorMode
+          type: EffectColorModeEnum
+        -
+          name: ColorPalette
+          type: EffectColorStruct
+    -
+      code: 1
+      name: StopEffect
+      direction: client→server
+      optional: false
+      parameters: {  }
+-
+  id: 1072
+  name: 'Soil Measurement'
+  description: 'Reports soil moisture and related measurements for irrigation and gardening devices.'
+  specVersion: '1.4'
+  category: measurement
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: SoilMoistureMeasurementLimits
+      type: MeasurementAccuracyStruct
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: SoilMoistureMeasuredValue
+      type: percent
+      writable: false
+      optional: false
+-
+  id: 1073
+  name: 'Ambient Context Sensing'
+  description: 'Reports ambient context signals (e.g. activity, occupancy modality) for context-aware automation.'
+  specVersion: '1.4'
+  category: sensor
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: HumanActivityDetected
+      type: boolean
+      writable: false
+      optional: true
+    -
+      code: 1
+      name: ObjectIdentified
+      type: boolean
+      writable: false
+      optional: true
+    -
+      code: 2
+      name: AudioContextDetected
+      type: boolean
+      writable: false
+      optional: true
+    -
+      code: 3
+      name: AmbientContextType
+      type: array
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: AmbientContextTypeSupported
+      type: array
+      writable: false
+      optional: true
+    -
+      code: 5
+      name: ObjectCountReached
+      type: boolean
+      writable: false
+      optional: true
+    -
+      code: 6
+      name: ObjectCountConfig
+      type: ObjectCountConfigStruct
+      writable: true
+      optional: true
+    -
+      code: 7
+      name: ObjectCount
+      type: int16u
+      writable: false
+      optional: true
+    -
+      code: 8
+      name: SimultaneousDetectionLimit
+      type: int8u
+      writable: true
+      optional: false
+    -
+      code: 9
+      name: HoldTime
+      type: int16u
+      writable: true
+      optional: false
+    -
+      code: 10
+      name: HoldTimeLimits
+      type: HoldTimeLimitsStruct
+      writable: false
+      optional: false
+    -
+      code: 11
+      name: PredictedActivity
+      type: array
+      writable: false
+      optional: true
+  features:
+    -
+      bit: 0
+      code: HA
+      name: HumanActivity
+      summary: 'Supports various human actions and activities classification'
+    -
+      bit: 1
+      code: OC
+      name: ObjectCounting
+      summary: 'Supports object counting'
+    -
+      bit: 2
+      code: OI
+      name: ObjectIdentification
+      summary: 'Supports object identification'
+    -
+      bit: 3
+      code: AUD
+      name: SoundIdentification
+      summary: 'Supports sound identification'
+    -
+      bit: 4
+      code: PRED
+      name: PredictedActivity
+      summary: 'Supports predicting various human actions and activities.'
+-
+  id: 1075
+  name: 'Proximity Ranging'
+  description: 'Reports distance/proximity measurements between two devices (e.g. UWB, BLE ranging).'
+  specVersion: '1.4'
+  category: sensor
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: RangingCapabilities
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: WiFiDevIK
+      type: octet_string
+      writable: false
+      optional: true
+    -
+      code: 2
+      name: BLEDeviceID
+      type: int64u
+      writable: false
+      optional: true
+    -
+      code: 3
+      name: BLTDevIK
+      type: octet_string
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: BLTCSSecurityLevel
+      type: BLTCSSecurityLevelEnum
+      writable: false
+      optional: true
+    -
+      code: 5
+      name: BLTCSModeCapability
+      type: BLTCSModeEnum
+      writable: false
+      optional: true
+    -
+      code: 6
+      name: SessionIDList
+      type: array
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: StartRangingRequest
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: Technology
+          type: RangingTechEnum
+        -
+          name: WiFiRangingDeviceRoleConfig
+          type: WiFiRangingDeviceRoleConfigStruct
+        -
+          name: BLERangingDeviceRoleConfig
+          type: BLERangingDeviceRoleConfigStruct
+        -
+          name: BLTChannelSoundingDeviceRoleConfig
+          type: BLTChannelSoundingDeviceRoleConfigStruct
+        -
+          name: FrequencyBand
+          type: RadioBandBitmap
+        -
+          name: Bandwidth
+          type: RangingBandwidthBitmap
+        -
+          name: SecurityMode
+          type: RangingSecurityEnum
+        -
+          name: Trigger
+          type: RangingTriggerConditionStruct
+        -
+          name: ReportingCondition
+          type: ReportingConditionStruct
+    -
+      code: 1
+      name: StartRangingResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: ResultCode
+          type: ResultCodeEnum
+        -
+          name: SessionID
+          type: int8u
+    -
+      code: 2
+      name: StopRangingRequest
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: SessionID
+          type: int8u
+  features:
+    -
+      bit: 0
+      code: WFUSDPD
+      name: 'Wi-Fi USD Proximity Detection'
+      summary: 'Supports proximity ranging based on Wi-Fi'
+    -
+      bit: 1
+      code: BLTCS
+      name: 'Bluetooth Channel Sounding'
+      summary: 'Supports proximity ranging based on Bluetooth Channel Sounding'
+    -
+      bit: 2
+      code: BLERBC
+      name: 'BLE Beacon RSSI'
+      summary: 'Supports proximity ranging based on BLE Beacon RSSI'
+    -
+      bit: 3
+      code: UWBRNG
+      name: 'UWB Ranging'
+      summary: 'Supports proximity ranging based on UWB ranging'
+-
+  id: 1104
+  name: 'Network Identity Management'
+  description: 'Manages persistent network identity credentials (e.g. Thread/Wi-Fi credentials) shared across fabrics.'
+  specVersion: '1.4'
+  category: utility
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: ActiveNetworkIdentities
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: Clients
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 2
+      name: ClientTableSize
+      type: int16u
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: AddClient
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: ClientIdentity
+          type: octet_string
+    -
+      code: 1
+      name: AddClientResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: ClientIndex
+          type: int16u
+    -
+      code: 2
+      name: RemoveClient
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: ClientIndex
+          type: int16u
+        -
+          name: ClientIdentifier
+          type: octet_string
+    -
+      code: 3
+      name: QueryIdentity
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: NetworkIdentityIndex
+          type: int16u
+        -
+          name: NetworkIdentityType
+          type: IdentityTypeEnum
+        -
+          name: Identifier
+          type: octet_string
+    -
+      code: 4
+      name: QueryIdentityResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: Identity
+          type: octet_string
+    -
+      code: 64
+      name: ImportAdminSecret
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: NetworkAdministratorSharedSecret
+          type: octet_string
+    -
+      code: 65
+      name: ExportAdminSecret
+      direction: client→server
+      optional: false
+      parameters: {  }
+    -
+      code: 66
+      name: ExportAdminSecretResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: NetworkAdministratorSharedSecret
+          type: octet_string
+-
+  id: 1360
+  name: 'Zone Management'
+  description: 'Defines and manages spatial zones (e.g. motion / detection zones) for cameras and presence sensors.'
+  specVersion: '1.4'
+  category: security
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: MaxUserDefinedZones
+      type: int8u
+      writable: false
+      optional: true
+    -
+      code: 1
+      name: MaxZones
+      type: int8u
+      writable: false
+      optional: false
+    -
+      code: 2
+      name: Zones
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 3
+      name: Triggers
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 4
+      name: SensitivityMax
+      type: int8u
+      writable: false
+      optional: false
+    -
+      code: 5
+      name: Sensitivity
+      type: int8u
+      writable: true
+      optional: true
+    -
+      code: 6
+      name: TwoDCartesianMax
+      type: TwoDCartesianVertexStruct
+      writable: false
+      optional: true
+  commands:
+    -
+      code: 0
+      name: CreateTwoDCartesianZone
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: Zone
+          type: TwoDCartesianZoneStruct
+    -
+      code: 1
+      name: CreateTwoDCartesianZoneResponse
+      direction: server→client
+      optional: true
+      parameters:
+        -
+          name: ZoneID
+          type: int16u
+    -
+      code: 2
+      name: UpdateTwoDCartesianZone
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: ZoneID
+          type: int16u
+        -
+          name: Zone
+          type: TwoDCartesianZoneStruct
+    -
+      code: 3
+      name: RemoveZone
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: ZoneID
+          type: int16u
+    -
+      code: 4
+      name: CreateOrUpdateTrigger
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: Trigger
+          type: ZoneTriggerControlStruct
+    -
+      code: 5
+      name: RemoveTrigger
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: ZoneID
+          type: int16u
+  features:
+    -
+      bit: 0
+      code: TWODCART
+      name: TwoDimensionalCartesianZone
+      summary: 'Supports Two Dimensional Cartesian Zones'
+    -
+      bit: 1
+      code: PERZONESENS
+      name: PerZoneSensitivity
+      summary: 'Supports a sensitivity value per Zone'
+    -
+      bit: 2
+      code: USERDEFINED
+      name: UserDefined
+      summary: 'Supports user defined zones'
+    -
+      bit: 3
+      code: FOCUSZONES
+      name: FocusZones
+      summary: 'Supports user defined focus zones'
+-
+  id: 1361
+  name: 'Camera AV Stream Management'
+  description: 'Manages camera audio/video stream allocation, codec selection, and lifecycle for live and recorded streams.'
+  specVersion: '1.4'
+  category: media
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: MaxConcurrentEncoders
+      type: int8u
+      writable: false
+      optional: true
+    -
+      code: 1
+      name: MaxEncodedPixelRate
+      type: int32u
+      writable: false
+      optional: true
+    -
+      code: 2
+      name: VideoSensorParams
+      type: VideoSensorParamsStruct
+      writable: false
+      optional: true
+    -
+      code: 3
+      name: NightVisionUsesInfrared
+      type: boolean
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: MinViewportResolution
+      type: VideoResolutionStruct
+      writable: false
+      optional: true
+    -
+      code: 5
+      name: RateDistortionTradeOffPoints
+      type: array
+      writable: false
+      optional: true
+    -
+      code: 6
+      name: MaxContentBufferSize
+      type: int32u
+      writable: false
+      optional: false
+    -
+      code: 7
+      name: MicrophoneCapabilities
+      type: AudioCapabilitiesStruct
+      writable: false
+      optional: true
+    -
+      code: 8
+      name: SpeakerCapabilities
+      type: AudioCapabilitiesStruct
+      writable: false
+      optional: true
+    -
+      code: 9
+      name: TwoWayTalkSupport
+      type: TwoWayTalkSupportTypeEnum
+      writable: false
+      optional: true
+    -
+      code: 10
+      name: SnapshotCapabilities
+      type: array
+      writable: false
+      optional: true
+    -
+      code: 11
+      name: MaxNetworkBandwidth
+      type: int32u
+      writable: false
+      optional: false
+    -
+      code: 12
+      name: CurrentFrameRate
+      type: int16u
+      writable: false
+      optional: true
+    -
+      code: 13
+      name: HDRModeEnabled
+      type: boolean
+      writable: true
+      optional: true
+    -
+      code: 14
+      name: SupportedStreamUsages
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 15
+      name: AllocatedVideoStreams
+      type: array
+      writable: false
+      optional: true
+    -
+      code: 16
+      name: AllocatedAudioStreams
+      type: array
+      writable: false
+      optional: true
+    -
+      code: 17
+      name: AllocatedSnapshotStreams
+      type: array
+      writable: false
+      optional: true
+    -
+      code: 18
+      name: StreamUsagePriorities
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 19
+      name: SoftRecordingPrivacyModeEnabled
+      type: boolean
+      writable: true
+      optional: true
+    -
+      code: 20
+      name: SoftLivestreamPrivacyModeEnabled
+      type: boolean
+      writable: true
+      optional: true
+    -
+      code: 21
+      name: HardPrivacyModeOn
+      type: boolean
+      writable: false
+      optional: true
+    -
+      code: 22
+      name: NightVision
+      type: TriStateAutoEnum
+      writable: true
+      optional: true
+    -
+      code: 23
+      name: NightVisionIllum
+      type: TriStateAutoEnum
+      writable: true
+      optional: true
+    -
+      code: 24
+      name: Viewport
+      type: ViewportStruct
+      writable: true
+      optional: true
+    -
+      code: 25
+      name: SpeakerMuted
+      type: boolean
+      writable: true
+      optional: true
+    -
+      code: 26
+      name: SpeakerVolumeLevel
+      type: int8u
+      writable: true
+      optional: true
+    -
+      code: 27
+      name: SpeakerMaxLevel
+      type: int8u
+      writable: false
+      optional: true
+    -
+      code: 28
+      name: SpeakerMinLevel
+      type: int8u
+      writable: false
+      optional: true
+    -
+      code: 29
+      name: MicrophoneMuted
+      type: boolean
+      writable: true
+      optional: true
+    -
+      code: 30
+      name: MicrophoneVolumeLevel
+      type: int8u
+      writable: true
+      optional: true
+    -
+      code: 31
+      name: MicrophoneMaxLevel
+      type: int8u
+      writable: false
+      optional: true
+    -
+      code: 32
+      name: MicrophoneMinLevel
+      type: int8u
+      writable: false
+      optional: true
+    -
+      code: 33
+      name: MicrophoneAGCEnabled
+      type: boolean
+      writable: true
+      optional: true
+    -
+      code: 34
+      name: ImageRotation
+      type: int16u
+      writable: true
+      optional: true
+    -
+      code: 35
+      name: ImageFlipHorizontal
+      type: boolean
+      writable: true
+      optional: true
+    -
+      code: 36
+      name: ImageFlipVertical
+      type: boolean
+      writable: true
+      optional: true
+    -
+      code: 37
+      name: LocalVideoRecordingEnabled
+      type: boolean
+      writable: true
+      optional: true
+    -
+      code: 38
+      name: LocalSnapshotRecordingEnabled
+      type: boolean
+      writable: true
+      optional: true
+    -
+      code: 39
+      name: StatusLightEnabled
+      type: boolean
+      writable: true
+      optional: true
+    -
+      code: 40
+      name: StatusLightBrightness
+      type: ThreeLevelAutoEnum
+      writable: true
+      optional: true
+    -
+      code: 41
+      name: ImageRotationDiscreteAngles
+      type: int16u
+      writable: true
+      optional: true
+  commands:
+    -
+      code: 0
+      name: AudioStreamAllocate
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: StreamUsage
+          type: StreamUsageEnum
+        -
+          name: AudioCodec
+          type: AudioCodecEnum
+        -
+          name: ChannelCount
+          type: int8u
+        -
+          name: SampleRate
+          type: int32u
+        -
+          name: BitRate
+          type: int32u
+        -
+          name: BitDepth
+          type: int8u
+    -
+      code: 1
+      name: AudioStreamAllocateResponse
+      direction: server→client
+      optional: true
+      parameters:
+        -
+          name: AudioStreamID
+          type: int16u
+    -
+      code: 2
+      name: AudioStreamDeallocate
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: AudioStreamID
+          type: int16u
+    -
+      code: 3
+      name: VideoStreamAllocate
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: StreamUsage
+          type: StreamUsageEnum
+        -
+          name: VideoCodec
+          type: VideoCodecEnum
+        -
+          name: MinFrameRate
+          type: int16u
+        -
+          name: MaxFrameRate
+          type: int16u
+        -
+          name: MinResolution
+          type: VideoResolutionStruct
+        -
+          name: MaxResolution
+          type: VideoResolutionStruct
+        -
+          name: MinBitRate
+          type: int32u
+        -
+          name: MaxBitRate
+          type: int32u
+        -
+          name: KeyFrameInterval
+          type: int16u
+        -
+          name: WatermarkEnabled
+          type: boolean
+        -
+          name: OSDEnabled
+          type: boolean
+    -
+      code: 4
+      name: VideoStreamAllocateResponse
+      direction: server→client
+      optional: true
+      parameters:
+        -
+          name: VideoStreamID
+          type: int16u
+    -
+      code: 5
+      name: VideoStreamModify
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: VideoStreamID
+          type: int16u
+        -
+          name: WatermarkEnabled
+          type: boolean
+        -
+          name: OSDEnabled
+          type: boolean
+    -
+      code: 6
+      name: VideoStreamDeallocate
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: VideoStreamID
+          type: int16u
+    -
+      code: 7
+      name: SnapshotStreamAllocate
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: ImageCodec
+          type: ImageCodecEnum
+        -
+          name: MaxFrameRate
+          type: int16u
+        -
+          name: MinResolution
+          type: VideoResolutionStruct
+        -
+          name: MaxResolution
+          type: VideoResolutionStruct
+        -
+          name: Quality
+          type: int8u
+        -
+          name: WatermarkEnabled
+          type: boolean
+        -
+          name: OSDEnabled
+          type: boolean
+    -
+      code: 8
+      name: SnapshotStreamAllocateResponse
+      direction: server→client
+      optional: true
+      parameters:
+        -
+          name: SnapshotStreamID
+          type: int16u
+    -
+      code: 9
+      name: SnapshotStreamModify
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: SnapshotStreamID
+          type: int16u
+        -
+          name: WatermarkEnabled
+          type: boolean
+        -
+          name: OSDEnabled
+          type: boolean
+    -
+      code: 10
+      name: SnapshotStreamDeallocate
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: SnapshotStreamID
+          type: int16u
+    -
+      code: 11
+      name: SetStreamPriorities
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: StreamPriorities
+          type: StreamUsageEnum
+    -
+      code: 12
+      name: CaptureSnapshot
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: SnapshotStreamID
+          type: int16u
+        -
+          name: RequestedResolution
+          type: VideoResolutionStruct
+    -
+      code: 13
+      name: CaptureSnapshotResponse
+      direction: server→client
+      optional: true
+      parameters:
+        -
+          name: Data
+          type: octet_string
+        -
+          name: ImageCodec
+          type: ImageCodecEnum
+        -
+          name: Resolution
+          type: VideoResolutionStruct
+  features:
+    -
+      bit: 0
+      code: ADO
+      name: Audio
+      summary: 'Audio Streams supported'
+    -
+      bit: 1
+      code: VDO
+      name: Video
+      summary: 'Video Streams supported'
+    -
+      bit: 2
+      code: SNP
+      name: Snapshot
+      summary: 'Snapshot Streams supported'
+    -
+      bit: 3
+      code: PRIV
+      name: Privacy
+      summary: 'Privacy supported'
+    -
+      bit: 4
+      code: SPKR
+      name: Speaker
+      summary: 'Speaker supported'
+    -
+      bit: 5
+      code: ICTL
+      name: ImageControl
+      summary: 'Image control supported'
+    -
+      bit: 6
+      code: WMARK
+      name: Watermark
+      summary: 'Watermark supported'
+    -
+      bit: 7
+      code: OSD
+      name: OnScreenDisplay
+      summary: 'OSD supported'
+    -
+      bit: 8
+      code: STOR
+      name: LocalStorage
+      summary: 'Local Storage available'
+    -
+      bit: 9
+      code: HDR
+      name: HighDynamicRange
+      summary: 'High Dynamic Range supported'
+    -
+      bit: 10
+      code: NV
+      name: NightVision
+      summary: 'Night Vision mode supported'
+-
+  id: 1362
+  name: 'Camera AV Settings User Level Management'
+  description: 'User-facing camera settings (image, audio, privacy) exposed independently of low-level stream management.'
+  specVersion: '1.4'
+  category: media
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: MPTZPosition
+      type: MPTZStruct
+      writable: false
+      optional: true
+    -
+      code: 1
+      name: MaxPresets
+      type: int8u
+      writable: false
+      optional: true
+    -
+      code: 2
+      name: MPTZPresets
+      type: array
+      writable: false
+      optional: true
+    -
+      code: 3
+      name: DPTZStreams
+      type: array
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: ZoomMax
+      type: int8u
+      writable: false
+      optional: true
+    -
+      code: 5
+      name: TiltMin
+      type: int16s
+      writable: false
+      optional: true
+    -
+      code: 6
+      name: TiltMax
+      type: int16s
+      writable: false
+      optional: true
+    -
+      code: 7
+      name: PanMin
+      type: int16s
+      writable: false
+      optional: true
+    -
+      code: 8
+      name: PanMax
+      type: int16s
+      writable: false
+      optional: true
+    -
+      code: 9
+      name: MovementState
+      type: PhysicalMovementEnum
+      writable: false
+      optional: true
+  commands:
+    -
+      code: 0
+      name: MPTZSetPosition
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: Pan
+          type: int16s
+        -
+          name: Tilt
+          type: int16s
+        -
+          name: Zoom
+          type: int8u
+    -
+      code: 1
+      name: MPTZRelativeMove
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: PanDelta
+          type: int16s
+        -
+          name: TiltDelta
+          type: int16s
+        -
+          name: ZoomDelta
+          type: int8s
+    -
+      code: 2
+      name: MPTZMoveToPreset
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: PresetID
+          type: int8u
+    -
+      code: 3
+      name: MPTZSavePreset
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: PresetID
+          type: int8u
+        -
+          name: Name
+          type: char_string
+    -
+      code: 4
+      name: MPTZRemovePreset
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: PresetID
+          type: int8u
+    -
+      code: 5
+      name: DPTZSetViewport
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: VideoStreamID
+          type: int16u
+        -
+          name: Viewport
+          type: ViewportStruct
+    -
+      code: 6
+      name: DPTZRelativeMove
+      direction: client→server
+      optional: true
+      parameters:
+        -
+          name: VideoStreamID
+          type: int16u
+        -
+          name: DeltaX
+          type: int16s
+        -
+          name: DeltaY
+          type: int16s
+        -
+          name: ZoomDelta
+          type: int8s
+  features:
+    -
+      bit: 0
+      code: DPTZ
+      name: DigitalPTZ
+      summary: 'Digital PTZ support'
+    -
+      bit: 1
+      code: MPAN
+      name: MechanicalPan
+      summary: 'Mechanical Pan support'
+    -
+      bit: 2
+      code: MTILT
+      name: MechanicalTilt
+      summary: 'Mechanical Tilt support'
+    -
+      bit: 3
+      code: MZOOM
+      name: MechanicalZoom
+      summary: 'Mechanical Zoom support'
+    -
+      bit: 4
+      code: MPRESETS
+      name: MechanicalPresets
+      summary: 'Mechanical saved presets support'
+-
+  id: 1363
+  name: 'WebRTC Transport Provider'
+  description: 'Provider side of a WebRTC transport for camera streams; advertises offers and ICE candidates.'
+  specVersion: '1.4'
+  category: media
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: CurrentSessions
+      type: array
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: SolicitOffer
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: StreamUsage
+          type: StreamUsageEnum
+        -
+          name: OriginatingEndpointID
+          type: endpoint_no
+        -
+          name: VideoStreamID
+          type: int16u
+        -
+          name: AudioStreamID
+          type: int16u
+        -
+          name: ICEServers
+          type: ICEServerStruct
+        -
+          name: ICETransportPolicy
+          type: char_string
+        -
+          name: MetadataEnabled
+          type: boolean
+        -
+          name: SFrameConfig
+          type: SFrameStruct
+        -
+          name: VideoStreams
+          type: int16u
+        -
+          name: AudioStreams
+          type: int16u
+    -
+      code: 1
+      name: SolicitOfferResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: WebRTCSessionID
+          type: int16u
+        -
+          name: DeferredOffer
+          type: boolean
+        -
+          name: VideoStreamID
+          type: int16u
+        -
+          name: AudioStreamID
+          type: int16u
+    -
+      code: 2
+      name: ProvideOffer
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: WebRTCSessionID
+          type: int16u
+        -
+          name: SDP
+          type: char_string
+        -
+          name: StreamUsage
+          type: StreamUsageEnum
+        -
+          name: OriginatingEndpointID
+          type: endpoint_no
+        -
+          name: VideoStreamID
+          type: int16u
+        -
+          name: AudioStreamID
+          type: int16u
+        -
+          name: ICEServers
+          type: ICEServerStruct
+        -
+          name: ICETransportPolicy
+          type: char_string
+        -
+          name: MetadataEnabled
+          type: boolean
+        -
+          name: SFrameConfig
+          type: SFrameStruct
+        -
+          name: VideoStreams
+          type: int16u
+        -
+          name: AudioStreams
+          type: int16u
+    -
+      code: 3
+      name: ProvideOfferResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: WebRTCSessionID
+          type: int16u
+        -
+          name: VideoStreamID
+          type: int16u
+        -
+          name: AudioStreamID
+          type: int16u
+    -
+      code: 4
+      name: ProvideAnswer
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: WebRTCSessionID
+          type: int16u
+        -
+          name: SDP
+          type: char_string
+    -
+      code: 5
+      name: ProvideICECandidates
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: WebRTCSessionID
+          type: int16u
+        -
+          name: ICECandidates
+          type: ICECandidateStruct
+    -
+      code: 6
+      name: EndSession
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: WebRTCSessionID
+          type: int16u
+        -
+          name: Reason
+          type: WebRTCEndReasonEnum
+  features:
+    -
+      bit: 0
+      code: METADATA
+      name: Metadata
+      summary: 'Supports metadata transmission in WebRTC sessions'
+-
+  id: 1364
+  name: 'WebRTC Transport Requestor'
+  description: 'Requestor side of a WebRTC transport; consumes offers and exchanges ICE candidates with a provider.'
+  specVersion: '1.4'
+  category: media
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: CurrentSessions
+      type: array
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: Offer
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: WebRTCSessionID
+          type: int16u
+        -
+          name: SDP
+          type: char_string
+        -
+          name: ICEServers
+          type: ICEServerStruct
+        -
+          name: ICETransportPolicy
+          type: char_string
+    -
+      code: 1
+      name: Answer
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: WebRTCSessionID
+          type: int16u
+        -
+          name: SDP
+          type: char_string
+    -
+      code: 2
+      name: ICECandidates
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: WebRTCSessionID
+          type: int16u
+        -
+          name: ICECandidates
+          type: ICECandidateStruct
+    -
+      code: 3
+      name: End
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: WebRTCSessionID
+          type: int16u
+        -
+          name: Reason
+          type: WebRTCEndReasonEnum
+-
+  id: 1365
+  name: 'Push AV Stream Transport'
+  description: 'Pushes recorded or live AV stream segments from a camera to a server-side ingestion endpoint.'
+  specVersion: '1.4'
+  category: media
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: SupportedFormats
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: CurrentConnections
+      type: array
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: AllocatePushTransport
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: TransportOptions
+          type: TransportOptionsStruct
+    -
+      code: 1
+      name: AllocatePushTransportResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: TransportConfiguration
+          type: TransportConfigurationStruct
+    -
+      code: 2
+      name: DeallocatePushTransport
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: ConnectionID
+          type: int16u
+    -
+      code: 3
+      name: ModifyPushTransport
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: ConnectionID
+          type: int16u
+        -
+          name: TransportOptions
+          type: TransportOptionsStruct
+    -
+      code: 4
+      name: SetTransportStatus
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: ConnectionID
+          type: int16u
+        -
+          name: TransportStatus
+          type: TransportStatusEnum
+    -
+      code: 5
+      name: ManuallyTriggerTransport
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: ConnectionID
+          type: int16u
+        -
+          name: ActivationReason
+          type: TriggerActivationReasonEnum
+        -
+          name: TimeControl
+          type: TransportMotionTriggerTimeControlStruct
+        -
+          name: UserDefined
+          type: long_octet_string
+    -
+      code: 6
+      name: FindTransport
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: ConnectionID
+          type: int16u
+    -
+      code: 7
+      name: FindTransportResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: TransportConfigurations
+          type: TransportConfigurationStruct
+  features:
+    -
+      bit: 0
+      code: PERZONESENS
+      name: PerZoneSensitivity
+      summary: 'Supports a sensitivity value per Zone'
+    -
+      bit: 1
+      code: METADATA
+      name: Metadata
+      summary: 'Supports metadata transmission in Push transports'
+-
+  id: 1366
+  name: Chime
+  description: 'Plays a chime/notification sound on a device (e.g. doorbell chime, indoor camera notification).'
+  specVersion: '1.4'
+  category: media
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: InstalledChimeSounds
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: SelectedChime
+      type: int8u
+      writable: true
+      optional: false
+    -
+      code: 2
+      name: Enabled
+      type: boolean
+      writable: true
+      optional: false
+  commands:
+    -
+      code: 0
+      name: PlayChimeSound
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: ChimeID
+          type: int8u
+-
+  id: 1792
+  name: 'Commodity Tariff'
+  description: 'Reports the active commodity tariff and time-of-use blocks for energy-aware scheduling.'
+  specVersion: '1.4'
+  category: energy
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: TariffInfo
+      type: TariffInformationStruct
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: TariffUnit
+      type: TariffUnitEnum
+      writable: false
+      optional: false
+    -
+      code: 2
+      name: StartDate
+      type: epoch_s
+      writable: false
+      optional: false
+    -
+      code: 3
+      name: DayEntries
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 4
+      name: DayPatterns
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 5
+      name: CalendarPeriods
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 6
+      name: IndividualDays
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 7
+      name: CurrentDay
+      type: DayStruct
+      writable: false
+      optional: false
+    -
+      code: 8
+      name: NextDay
+      type: DayStruct
+      writable: false
+      optional: false
+    -
+      code: 9
+      name: CurrentDayEntry
+      type: DayEntryStruct
+      writable: false
+      optional: false
+    -
+      code: 10
+      name: CurrentDayEntryDate
+      type: epoch_s
+      writable: false
+      optional: false
+    -
+      code: 11
+      name: NextDayEntry
+      type: DayEntryStruct
+      writable: false
+      optional: false
+    -
+      code: 12
+      name: NextDayEntryDate
+      type: epoch_s
+      writable: false
+      optional: false
+    -
+      code: 13
+      name: TariffComponents
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 14
+      name: TariffPeriods
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 15
+      name: CurrentTariffComponents
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 16
+      name: NextTariffComponents
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 17
+      name: DefaultRandomizationOffset
+      type: int16s
+      writable: false
+      optional: true
+    -
+      code: 18
+      name: DefaultRandomizationType
+      type: DayEntryRandomizationTypeEnum
+      writable: false
+      optional: true
+  commands:
+    -
+      code: 0
+      name: GetTariffComponent
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: TariffComponentID
+          type: int32u
+    -
+      code: 0
+      name: GetTariffComponentResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: Label
+          type: char_string
+        -
+          name: DayEntryIDs
+          type: int32u
+        -
+          name: TariffComponent
+          type: TariffComponentStruct
+    -
+      code: 1
+      name: GetDayEntry
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: DayEntryID
+          type: int32u
+    -
+      code: 1
+      name: GetDayEntryResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: DayEntry
+          type: DayEntryStruct
+  features:
+    -
+      bit: 0
+      code: PRICE
+      name: Pricing
+      summary: 'Supports information about commodity pricing'
+    -
+      bit: 1
+      code: FCRED
+      name: FriendlyCredit
+      summary: 'Supports information about when friendly credit periods begin and end'
+    -
+      bit: 2
+      code: AUXLD
+      name: AuxiliaryLoad
+      summary: 'Supports information about when auxiliary loads should be enabled or disabled'
+    -
+      bit: 3
+      code: PEAKP
+      name: PeakPeriod
+      summary: 'Supports information about peak periods'
+    -
+      bit: 4
+      code: PWRTHLD
+      name: PowerThreshold
+      summary: 'Supports information about power threshold'
+    -
+      bit: 5
+      code: RNDM
+      name: Randomization
+      summary: 'Supports information about randomization of calendar day entries'
+-
+  id: 2049
+  name: 'TLS Certificate Management'
+  description: 'Manages X.509 trust anchors and device certificates used for TLS outside the Matter fabric (e.g. cloud connectors).'
+  specVersion: '1.4'
+  category: utility
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: MaxRootCertificates
+      type: int8u
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: ProvisionedRootCertificates
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 2
+      name: MaxClientCertificates
+      type: int8u
+      writable: false
+      optional: false
+    -
+      code: 3
+      name: ProvisionedClientCertificates
+      type: array
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: ProvisionRootCertificate
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: Certificate
+          type: long_octet_string
+        -
+          name: CAID
+          type: int16u
+    -
+      code: 1
+      name: ProvisionRootCertificateResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: CAID
+          type: int16u
+    -
+      code: 2
+      name: FindRootCertificate
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: CAID
+          type: int16u
+    -
+      code: 3
+      name: FindRootCertificateResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: CertificateDetails
+          type: TLSCertStruct
+    -
+      code: 4
+      name: LookupRootCertificate
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: Fingerprint
+          type: octet_string
+    -
+      code: 5
+      name: LookupRootCertificateResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: CAID
+          type: int16u
+    -
+      code: 6
+      name: RemoveRootCertificate
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: CAID
+          type: int16u
+    -
+      code: 7
+      name: ClientCSR
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: Nonce
+          type: octet_string
+        -
+          name: CCDID
+          type: int16u
+    -
+      code: 8
+      name: ClientCSRResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: CCDID
+          type: int16u
+        -
+          name: CSR
+          type: long_octet_string
+        -
+          name: NonceSignature
+          type: octet_string
+    -
+      code: 9
+      name: ProvisionClientCertificate
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: CCDID
+          type: int16u
+        -
+          name: ClientCertificate
+          type: long_octet_string
+        -
+          name: IntermediateCertificates
+          type: octet_string
+    -
+      code: 10
+      name: FindClientCertificate
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: CCDID
+          type: int16u
+    -
+      code: 11
+      name: FindClientCertificateResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: CertificateDetails
+          type: TLSClientCertificateDetailStruct
+    -
+      code: 12
+      name: LookupClientCertificate
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: Fingerprint
+          type: octet_string
+    -
+      code: 13
+      name: LookupClientCertificateResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: CCDID
+          type: int16u
+    -
+      code: 14
+      name: RemoveClientCertificate
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: CCDID
+          type: int16u
+-
+  id: 2050
+  name: 'TLS Client Management'
+  description: 'Manages outbound TLS client connections — endpoints, credentials, and connection state.'
+  specVersion: '1.4'
+  category: utility
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: MaxProvisioned
+      type: int8u
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: ProvisionedEndpoints
+      type: array
+      writable: false
+      optional: false
+  commands:
+    -
+      code: 0
+      name: ProvisionEndpoint
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: Hostname
+          type: octet_string
+        -
+          name: Port
+          type: int16u
+        -
+          name: CAID
+          type: int16u
+        -
+          name: CCDID
+          type: int16u
+        -
+          name: EndpointID
+          type: int16u
+    -
+      code: 1
+      name: ProvisionEndpointResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: EndpointID
+          type: int16u
+    -
+      code: 2
+      name: FindEndpoint
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: EndpointID
+          type: int16u
+    -
+      code: 3
+      name: FindEndpointResponse
+      direction: server→client
+      optional: false
+      parameters:
+        -
+          name: Endpoint
+          type: TLSEndpointStruct
+    -
+      code: 4
+      name: RemoveEndpoint
+      direction: client→server
+      optional: false
+      parameters:
+        -
+          name: EndpointID
+          type: int16u
+-
+  id: 2822
+  name: 'Meter Identification'
+  description: 'Reports the identity and type of a metering device (utility, sub-meter) for energy/commodity tracking.'
+  specVersion: '1.4'
+  category: energy
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: MeterType
+      type: MeterTypeEnum
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: PointOfDelivery
+      type: char_string
+      writable: false
+      optional: false
+    -
+      code: 2
+      name: MeterSerialNumber
+      type: char_string
+      writable: false
+      optional: false
+    -
+      code: 3
+      name: ProtocolVersion
+      type: char_string
+      writable: false
+      optional: true
+    -
+      code: 4
+      name: PowerThreshold
+      type: PowerThresholdStruct
+      writable: false
+      optional: true
+  features:
+    -
+      bit: 0
+      code: PWRTHLD
+      name: PowerThreshold
+      summary: 'Supports information about power threshold'
+-
+  id: 2823
+  name: 'Commodity Metering'
+  description: 'Reports cumulative and instantaneous commodity consumption (electricity, gas, water) for utility metering.'
+  specVersion: '1.4'
+  category: energy
+  isGlobal: false
+  attributes:
+    -
+      code: 0
+      name: MeteredQuantity
+      type: array
+      writable: false
+      optional: false
+    -
+      code: 1
+      name: MeteredQuantityTimestamp
+      type: epoch_s
+      writable: false
+      optional: false
+    -
+      code: 2
+      name: TariffUnit
+      type: TariffUnitEnum
+      writable: false
+      optional: false
+    -
+      code: 3
+      name: MaximumMeteredQuantities
+      type: int16u
+      writable: false
+      optional: false
