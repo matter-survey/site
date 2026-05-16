@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Matter Survey{% endblock %}</title>
+    {% block favicon %}{% endblock %}
 
     {# OpenGraph meta tags #}
     <meta property="og:site_name" content="Matter Survey">
@@ -272,6 +273,9 @@
 
         {% block extra_styles %}{% endblock %}
     </style>
+
+    {% block stylesheets %}{% endblock %}
+    {% block javascripts %}{% endblock %}
 
     {% set frankenphpHotReload = app.request.server.get('FRANKENPHP_HOT_RELOAD') %}
     {% if frankenphpHotReload %}
