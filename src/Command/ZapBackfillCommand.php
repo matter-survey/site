@@ -126,9 +126,105 @@ final class ZapBackfillCommand extends Command
             $io->info(\sprintf('Wrote %d clusters to %s', \count($clusters), $outputFile));
         }
 
+        $this->reconcileAnnotations($outputDir, $io);
+
         $io->newLine();
         $io->success('Backfill complete.');
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Append stub annotation rows to fixtures/clusters.yaml for any standard
+     * cluster (id < 0x10000) that appears in a per-version snapshot but isn't
+     * yet annotated. Manufacturer-specific clusters (id >= 0x10000) are
+     * deliberately skipped — they're indexed only at their per-version
+     * snapshot and aren't surfaced from the main catalog.
+     *
+     * Run after every backfill so freshly-added Matter clusters automatically
+     * gain an annotation row instead of producing 404s when devices link to
+     * them.
+     */
+    private function reconcileAnnotations(string $snapshotDir, SymfonyStyle $io): void
+    {
+        $annotationsPath = $this->projectDir.'/fixtures/clusters.yaml';
+        if (!file_exists($annotationsPath)) {
+            $io->warning(\sprintf('Annotations file not found at %s — skipping reconciliation', $annotationsPath));
+
+            return;
+        }
+
+        $annotations = Yaml::parseFile($annotationsPath);
+        if (!\is_array($annotations)) {
+            $io->warning('Annotations file is not a YAML list — skipping reconciliation');
+
+            return;
+        }
+
+        $knownIds = [];
+        foreach ($annotations as $entry) {
+            if (isset($entry['id'])) {
+                $knownIds[(int) $entry['id']] = true;
+            }
+        }
+
+        // Walk every per-version snapshot to gather the universe of standard clusters.
+        $newestByClusterId = [];
+        foreach (glob($snapshotDir.'/*.yaml') ?: [] as $path) {
+            $rows = Yaml::parseFile($path);
+            if (!\is_array($rows)) {
+                continue;
+            }
+            foreach ($rows as $row) {
+                if (!isset($row['id'])) {
+                    continue;
+                }
+                $id = (int) $row['id'];
+                if ($id >= 0x10000) {
+                    // Manufacturer-specific cluster — not tracked at the annotation level.
+                    continue;
+                }
+                if (isset($knownIds[$id])) {
+                    continue;
+                }
+                // Last-write-wins; "master" sorts last lexicographically in glob() on most FS
+                // so it tends to overwrite, but anything that produces a description is fine.
+                $newestByClusterId[$id] = $row;
+            }
+        }
+
+        if ([] === $newestByClusterId) {
+            $io->info('No new standard clusters to add to fixtures/clusters.yaml.');
+
+            return;
+        }
+
+        foreach ($newestByClusterId as $row) {
+            $annotations[] = [
+                'id' => (int) $row['id'],
+                'name' => (string) ($row['name'] ?? \sprintf('Cluster 0x%04X', (int) $row['id'])),
+                'description' => $row['description'] ?? null,
+                'category' => null,
+                'isGlobal' => false,
+            ];
+        }
+
+        usort($annotations, fn (array $a, array $b): int => ((int) $a['id']) <=> ((int) $b['id']));
+
+        $header = "# Matter Cluster Annotations\n";
+        $header .= "# Hand-curated metadata only: id, name, description, category, isGlobal.\n";
+        $header .= "# Spec data (attributes, commands, features, apiMaturity, ClusterRevision)\n";
+        $header .= "# is sourced from fixtures/clusters/{matter_version}.yaml via ClusterVersion.\n\n";
+
+        file_put_contents(
+            $annotationsPath,
+            $header.Yaml::dump($annotations, 4, 2, Yaml::DUMP_MULTI_LINE_LITERAL_BLOCK),
+        );
+
+        $added = array_map(
+            fn (array $row): string => \sprintf('  0x%04X %s', (int) $row['id'], $row['name'] ?? '?'),
+            $newestByClusterId,
+        );
+        $io->info(\sprintf("Added %d new cluster annotations:\n%s", \count($newestByClusterId), implode("\n", $added)));
     }
 }

@@ -19,10 +19,19 @@
     {% endif %}
     {% set hasActualData = actualDetails is not null and (actualDetails.feature_map is defined or actualDetails.attribute_list is defined or actualDetails.accepted_command_list is defined) %}
     <span class="cluster-tooltip">
-        <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(clusterId)}) }}" class="tag{{ isClient ? ' tag-client' : '' }}{{ isProprietary ? ' tag-proprietary' : '' }}{{ hasActualData ? ' tag-has-details' : '' }}">
-            {{ meta.name ?? ('Cluster ' ~ clusterId) }}
-            {% if hasActualData %}<span style="font-size: 0.625rem; opacity: 0.7;">✓</span>{% endif %}
-        </a>
+        {% set tagClasses = 'tag' ~ (isClient ? ' tag-client' : '') ~ (isProprietary ? ' tag-proprietary' : '') ~ (hasActualData ? ' tag-has-details' : '') %}
+        {% if isProprietary %}
+            {# Proprietary clusters don't have a catalog page — render as plain text, no broken link #}
+            <span class="{{ tagClasses }}" title="Manufacturer-specific (proprietary) cluster — not part of the Matter spec">
+                {{ meta.name ?? ('Cluster ' ~ clusterId) }}
+                {% if hasActualData %}<span style="font-size: 0.625rem; opacity: 0.7;">✓</span>{% endif %}
+            </span>
+        {% else %}
+            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(clusterId)}) }}" class="{{ tagClasses }}">
+                {{ meta.name ?? ('Cluster ' ~ clusterId) }}
+                {% if hasActualData %}<span style="font-size: 0.625rem; opacity: 0.7;">✓</span>{% endif %}
+            </a>
+        {% endif %}
         <span class="cluster-details">
             <h5>{{ meta.name ?? ('Cluster ' ~ clusterId) }}</h5>
             {% if hasActualData %}
@@ -1771,7 +1780,11 @@
                 {% for clusterId, data in compatibleDevices %}
                     <div class="compatibility-group">
                         <h4>
-                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(clusterId)}) }}" class="cluster-name" style="text-decoration: none;">{{ data.name }}</a>
+                            {% if matterRegistry.isProprietaryCluster(clusterId) %}
+                                <span class="cluster-name" title="Manufacturer-specific (proprietary) cluster">{{ data.name }}</span>
+                            {% else %}
+                                <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(clusterId)}) }}" class="cluster-name" style="text-decoration: none;">{{ data.name }}</a>
+                            {% endif %}
                             <span style="color: var(--gray-400);">({{ data.total }} device{{ data.total != 1 ? 's' : '' }})</span>
                         </h4>
                         <div class="compatible-devices">
@@ -1799,7 +1812,11 @@
                 {% for clusterId, data in canProvideToDevices %}
                     <div class="compatibility-group">
                         <h4>
-                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(clusterId)}) }}" class="cluster-name" style="text-decoration: none;">{{ data.name }}</a>
+                            {% if matterRegistry.isProprietaryCluster(clusterId) %}
+                                <span class="cluster-name" title="Manufacturer-specific (proprietary) cluster">{{ data.name }}</span>
+                            {% else %}
+                                <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(clusterId)}) }}" class="cluster-name" style="text-decoration: none;">{{ data.name }}</a>
+                            {% endif %}
                             <span style="color: var(--gray-400);">({{ data.total }} device{{ data.total != 1 ? 's' : '' }})</span>
                         </h4>
                         <div class="compatible-devices">
@@ -1968,18 +1985,32 @@
                                     </div>
                                     <div class="gap-cluster-list">
                                         {% for cluster in analysis.extraServer %}
-                                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.id)}) }}"
-                                               class="gap-cluster-tag gap-cluster-extra"
-                                               title="Server cluster not in device type spec">
-                                                {{ cluster.name }}
-                                            </a>
+                                            {% if matterRegistry.isProprietaryCluster(cluster.id) %}
+                                                <span class="gap-cluster-tag gap-cluster-extra"
+                                                      title="Manufacturer-specific (proprietary) server cluster">
+                                                    {{ cluster.name }}
+                                                </span>
+                                            {% else %}
+                                                <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.id)}) }}"
+                                                   class="gap-cluster-tag gap-cluster-extra"
+                                                   title="Server cluster not in device type spec">
+                                                    {{ cluster.name }}
+                                                </a>
+                                            {% endif %}
                                         {% endfor %}
                                         {% for cluster in analysis.extraClient %}
-                                            <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.id)}) }}"
-                                               class="gap-cluster-tag gap-cluster-extra"
-                                               title="Client cluster not in device type spec">
-                                                {{ cluster.name }} (client)
-                                            </a>
+                                            {% if matterRegistry.isProprietaryCluster(cluster.id) %}
+                                                <span class="gap-cluster-tag gap-cluster-extra"
+                                                      title="Manufacturer-specific (proprietary) client cluster">
+                                                    {{ cluster.name }} (client)
+                                                </span>
+                                            {% else %}
+                                                <a href="{{ path('stats_cluster_show', {hexId: '0x%04X'|format(cluster.id)}) }}"
+                                                   class="gap-cluster-tag gap-cluster-extra"
+                                                   title="Client cluster not in device type spec">
+                                                    {{ cluster.name }} (client)
+                                                </a>
+                                            {% endif %}
                                         {% endfor %}
                                     </div>
                                 </div>
