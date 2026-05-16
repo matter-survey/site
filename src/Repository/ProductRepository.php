@@ -167,22 +167,28 @@ class ProductRepository extends ServiceEntityRepository
     }
 
     /**
-     * Search products by name or ID.
+     * Search products by vendor name, product name, or numeric ID.
      *
      * @return Product[]
      */
     public function search(string $query, int $limit = 50): array
     {
-        return $this->createQueryBuilder('p')
-            ->where('p.vendorName LIKE :query')
-            ->orWhere('p.productName LIKE :query')
-            ->orWhere('CAST(p.vendorId AS string) LIKE :query')
-            ->orWhere('CAST(p.productId AS string) LIKE :query')
-            ->setParameter('query', "%$query%")
+        $qb = $this->createQueryBuilder('p')
+            ->where('p.vendorName LIKE :like')
+            ->orWhere('p.productName LIKE :like')
+            ->setParameter('like', "%$query%")
             ->orderBy('p.submissionCount', 'DESC')
-            ->setMaxResults($limit)
-            ->getQuery()
-            ->getResult();
+            ->setMaxResults($limit);
+
+        // DQL has no portable CAST; for numeric search terms, match the
+        // integer ID columns directly via equality.
+        if (ctype_digit($query)) {
+            $qb->orWhere('p.vendorId = :numeric')
+                ->orWhere('p.productId = :numeric')
+                ->setParameter('numeric', (int) $query);
+        }
+
+        return $qb->getQuery()->getResult();
     }
 
     /**
