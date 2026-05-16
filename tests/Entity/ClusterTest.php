@@ -108,8 +108,39 @@ class ClusterTest extends TestCase
             ->setIsGlobal(false)
             ->setAttributes([])
             ->setCommands([])
-            ->setFeatures([]);
+            ->setFeatures([])
+            ->setSpecVersion('1.4')
+            ->setHexId('0x0006')
+            ->setCreatedAt(new \DateTime())
+            ->setUpdatedAt(new \DateTime());
 
         $this->assertSame($cluster, $result);
+    }
+
+    public function testHexIdRoundTrip(): void
+    {
+        $cluster = (new Cluster(6))->setHexId('0x00FF');
+
+        $this->assertSame('0x00FF', $cluster->getHexId());
+    }
+
+    public function testSpecVersionRoundTrip(): void
+    {
+        $cluster = (new Cluster(6))->setSpecVersion('1.4');
+
+        $this->assertSame('1.4', $cluster->getSpecVersion());
+    }
+
+    public function testTimestampsRoundTrip(): void
+    {
+        $created = new \DateTime('2025-01-01');
+        $updated = new \DateTime('2025-02-01');
+
+        $cluster = (new Cluster(6))
+            ->setCreatedAt($created)
+            ->setUpdatedAt($updated);
+
+        $this->assertSame($created, $cluster->getCreatedAt());
+        $this->assertSame($updated, $cluster->getUpdatedAt());
     }
 }
