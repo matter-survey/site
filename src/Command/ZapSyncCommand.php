@@ -139,6 +139,11 @@ class ZapSyncCommand extends Command
                 } else {
                     unset($existingClusters[$index]['apiMaturity']);
                 }
+                if (isset($clusterData['clusterRevision'])) {
+                    $existingClusters[$index]['clusterRevision'] = $clusterData['clusterRevision'];
+                } else {
+                    unset($existingClusters[$index]['clusterRevision']);
+                }
 
                 ++$updatedCount;
             }
@@ -196,7 +201,7 @@ class ZapSyncCommand extends Command
      * define multiple sibling clusters. Files without any primary cluster definition
      * (types-only, extensions, etc.) return an empty list.
      *
-     * @return list<array{id: int, name: string, attributes: array, commands: array, features: array, apiMaturity?: string}>
+     * @return list<array{id: int, name: string, attributes: array, commands: array, features: array, apiMaturity?: string, clusterRevision?: int}>
      */
     private function fetchAndParseClusterXml(string $filename, SymfonyStyle $io): array
     {
@@ -233,6 +238,11 @@ class ZapSyncCommand extends Command
                 $apiMaturity = trim((string) ($candidate['apiMaturity'] ?? ''));
                 if ('' !== $apiMaturity) {
                     $entry['apiMaturity'] = $apiMaturity;
+                }
+
+                $clusterRevision = $this->parseClusterRevision($candidate);
+                if (null !== $clusterRevision) {
+                    $entry['clusterRevision'] = $clusterRevision;
                 }
 
                 $results[] = $entry;
@@ -404,6 +414,30 @@ class ZapSyncCommand extends Command
         usort($commands, fn (array $a, array $b): int => $a['code'] <=> $b['code']);
 
         return $commands;
+    }
+
+    /**
+     * Read the ClusterRevision (global attribute 0xFFFD) from the cluster node.
+     * Matter clusters carry their revision number as
+     * <globalAttribute code="0xFFFD" side="either" value="N"/>. The attribute
+     * order varies across the SDK history, so match strictly by parsed code.
+     */
+    private function parseClusterRevision(\SimpleXMLElement $clusterNode): ?int
+    {
+        foreach ($clusterNode->globalAttribute ?? [] as $ga) {
+            $code = trim((string) ($ga['code'] ?? ''));
+            if ('' === $code || 65533 !== $this->parseHexOrDecimal($code)) {
+                continue;
+            }
+            $value = trim((string) ($ga['value'] ?? ''));
+            if ('' === $value) {
+                continue;
+            }
+
+            return $this->parseHexOrDecimal($value);
+        }
+
+        return null;
     }
 
     /**
