@@ -8,7 +8,7 @@
         "doctrine/dbal": "^4.4",
         "doctrine/doctrine-bundle": "^3.2",
         "doctrine/doctrine-fixtures-bundle": "^4.3",
-        "doctrine/doctrine-migrations-bundle": "^3.7",
+        "doctrine/doctrine-migrations-bundle": "^4.0",
         "doctrine/orm": "^3.5",
         "nelmio/cors-bundle": "^2.4",
         "nyholm/psr7": "^1.8",
