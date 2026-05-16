@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Service\ZclParser;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -11,7 +12,6 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Yaml\Yaml;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * Sync cluster attributes, commands, and features from Matter SDK ZAP XML files.
@@ -27,12 +27,11 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 )]
 class ZapSyncCommand extends Command
 {
-    private const string REPO_BASE = 'https://raw.githubusercontent.com/project-chip/connectedhomeip';
     private const string DEFAULT_REF = 'master';
     private const string DEFAULT_OUTPUT_FILE = 'fixtures/clusters.yaml';
 
     public function __construct(
-        private readonly HttpClientInterface $httpClient,
+        private readonly ZclParser $parser,
         private readonly string $projectDir,
     ) {
         parent::__construct();
@@ -76,7 +75,6 @@ class ZapSyncCommand extends Command
             $io->warning('DRY RUN - No changes will be made to fixtures');
         }
 
-        // Load existing clusters from YAML
         $io->section('Loading existing clusters from fixtures...');
         if (!file_exists($outputFile)) {
             $io->error(\sprintf('Clusters YAML file not found: %s', $outputFile));
@@ -91,18 +89,23 @@ class ZapSyncCommand extends Command
         }
         $io->info(\sprintf('Found %d existing clusters in fixtures', \count($clusterMap)));
 
-        // Fetch list of XML files from zcl.json
         $io->section('Fetching cluster file list from GitHub...');
-        $clusterFiles = $this->fetchClusterFileList($io, $ref);
+        try {
+            $clusterFiles = $this->parser->fetchClusterFileList($ref);
+        } catch (\Throwable $e) {
+            $io->error('Failed to fetch zcl.json: '.$e->getMessage());
+
+            return Command::FAILURE;
+        }
+
         if ([] === $clusterFiles) {
-            $io->error('Failed to fetch cluster file list');
+            $io->error('No cluster XML files listed in zcl.json');
 
             return Command::FAILURE;
         }
         $io->info(\sprintf('Found %d cluster XML files', \count($clusterFiles)));
         $span->setAttribute('zap.cluster_count', \count($clusterFiles));
 
-        // Process each XML file
         $updatedCount = 0;
         $skippedCount = 0;
 
@@ -110,7 +113,7 @@ class ZapSyncCommand extends Command
         $io->progressStart(\count($clusterFiles));
 
         foreach ($clusterFiles as $file) {
-            $clustersInFile = $this->fetchAndParseClusterXml($file, $io, $ref);
+            $clustersInFile = $this->parser->fetchAndParseClusterXml($file, $ref);
             if ([] === $clustersInFile) {
                 $io->progressAdvance();
                 continue;
@@ -156,7 +159,6 @@ class ZapSyncCommand extends Command
 
         $io->progressFinish();
 
-        // Write updated YAML
         if (!$dryRun) {
             $io->section('Writing updated fixtures...');
 
@@ -178,311 +180,5 @@ class ZapSyncCommand extends Command
         ));
 
         return Command::SUCCESS;
-    }
-
-    private function zclBaseUrl(string $ref): string
-    {
-        return \sprintf('%s/%s/src/app/zap-templates/zcl', self::REPO_BASE, $ref);
-    }
-
-    /**
-     * @return array<string>
-     */
-    private function fetchClusterFileList(SymfonyStyle $io, string $ref): array
-    {
-        try {
-            $response = $this->httpClient->request('GET', $this->zclBaseUrl($ref).'/zcl.json');
-            $data = json_decode($response->getContent(), true);
-
-            return $data['xmlFile'] ?? [];
-        } catch (\Exception $e) {
-            $io->error('Failed to fetch zcl.json: '.$e->getMessage());
-
-            return [];
-        }
-    }
-
-    /**
-     * Parse all primary cluster definitions from a ZAP XML file.
-     *
-     * Some files (e.g. concentration-measurement-cluster.xml, resource-monitoring-cluster.xml)
-     * define multiple sibling clusters. Files without any primary cluster definition
-     * (types-only, extensions, etc.) return an empty list.
-     *
-     * @return list<array{id: int, name: string, attributes: array, commands: array, features: array, apiMaturity?: string, clusterRevision?: int}>
-     */
-    private function fetchAndParseClusterXml(string $filename, SymfonyStyle $io, string $ref): array
-    {
-        $url = $this->zclBaseUrl($ref).'/data-model/chip/'.$filename;
-
-        try {
-            $response = $this->httpClient->request('GET', $url);
-            $xml = simplexml_load_string($response->getContent());
-            if (false === $xml) {
-                return [];
-            }
-
-            $results = [];
-            // Primary cluster definitions have <code> and <name> as child elements.
-            // Self-closing references like <cluster code="0x0006"/> inside enums/bitmaps are skipped.
-            foreach ($xml->xpath('//cluster') ?: [] as $candidate) {
-                if ((!property_exists($candidate, 'code') || null === $candidate->code) && (!property_exists($candidate, 'name') || null === $candidate->name)) {
-                    continue;
-                }
-
-                $codeValue = trim((string) $candidate->code);
-                if ('' === $codeValue) {
-                    continue;
-                }
-
-                $entry = [
-                    'id' => $this->parseHexOrDecimal($codeValue),
-                    'name' => trim((string) $candidate->name),
-                    'features' => $this->parseFeatures($candidate),
-                    'attributes' => $this->parseAttributes($candidate),
-                    'commands' => $this->parseCommands($candidate),
-                ];
-
-                $apiMaturity = trim((string) ($candidate['apiMaturity'] ?? ''));
-                if ('' !== $apiMaturity) {
-                    $entry['apiMaturity'] = $apiMaturity;
-                }
-
-                $clusterRevision = $this->parseClusterRevision($candidate);
-                if (null !== $clusterRevision) {
-                    $entry['clusterRevision'] = $clusterRevision;
-                }
-
-                $results[] = $entry;
-            }
-
-            return $results;
-        } catch (\Exception $e) {
-            $io->warning(\sprintf('Failed to fetch/parse %s: %s', $filename, $e->getMessage()));
-
-            return [];
-        }
-    }
-
-    /**
-     * @return array<array{bit: int, code: string, name: string, summary: string|null, apiMaturity?: string}>
-     */
-    private function parseFeatures(\SimpleXMLElement $clusterNode): array
-    {
-        // Only read from the <features> block. A previous `.//feature` xpath fallback
-        // leaked <feature name="X"/> references inside <mandatoryConform>/<optionalConform>
-        // trees (which carry only a name) as garbage features.
-        if (!property_exists($clusterNode->features, 'feature') || null === $clusterNode->features->feature) {
-            return [];
-        }
-
-        $features = [];
-        foreach ($clusterNode->features->feature as $feature) {
-            $summary = (string) ($feature['summary'] ?? '');
-            if ('' === $summary) {
-                $summary = trim((string) ($feature->description ?? ''));
-            }
-
-            $entry = [
-                'bit' => (int) ($feature['bit'] ?? 0),
-                'code' => (string) ($feature['code'] ?? ''),
-                'name' => (string) ($feature['name'] ?? ''),
-                'summary' => '' !== $summary ? $summary : null,
-            ];
-
-            $apiMaturity = trim((string) ($feature['apiMaturity'] ?? ''));
-            if ('' !== $apiMaturity) {
-                $entry['apiMaturity'] = $apiMaturity;
-            }
-
-            $features[] = $entry;
-        }
-
-        usort($features, fn (array $a, array $b): int => $a['bit'] <=> $b['bit']);
-
-        return $features;
-    }
-
-    /**
-     * @return array<array{
-     *     code: int, name: string, type: string, writable: bool, optional: bool,
-     *     isNullable?: bool, default?: string, min?: string, max?: string,
-     *     apiMaturity?: string, description?: string, access?: list<array{op: string, privilege: string}>
-     * }>
-     */
-    private function parseAttributes(\SimpleXMLElement $clusterNode): array
-    {
-        $attributes = [];
-
-        // Attributes can be direct children or under attributes element
-        $attrNodes = $clusterNode->attribute ?? $clusterNode->attributes->attribute ?? [];
-
-        foreach ($attrNodes as $attr) {
-            $side = (string) ($attr['side'] ?? 'server');
-            if ('server' !== $side) {
-                continue;
-            }
-
-            $code = (string) ($attr['code'] ?? $attr['id'] ?? '');
-            if ('' === $code) {
-                continue;
-            }
-
-            $entry = [
-                'code' => $this->parseHexOrDecimal($code),
-                'name' => (string) ($attr['name'] ?? $attr->name ?? ''),
-                'type' => (string) ($attr['type'] ?? $attr->type ?? 'unknown'),
-                'writable' => $this->parseBoolean($attr['writable'] ?? 'false'),
-                'optional' => $this->parseBoolean($attr['optional'] ?? 'false'),
-            ];
-
-            if ($this->parseBoolean($attr['isNullable'] ?? 'false')) {
-                $entry['isNullable'] = true;
-            }
-            foreach (['default', 'min', 'max'] as $key) {
-                $value = trim((string) ($attr[$key] ?? ''));
-                if ('' !== $value) {
-                    $entry[$key] = $value;
-                }
-            }
-            $apiMaturity = trim((string) ($attr['apiMaturity'] ?? ''));
-            if ('' !== $apiMaturity) {
-                $entry['apiMaturity'] = $apiMaturity;
-            }
-            $description = trim((string) ($attr->description ?? ''));
-            if ('' !== $description) {
-                $entry['description'] = $description;
-            }
-            $access = $this->parseAccess($attr);
-            if ([] !== $access) {
-                $entry['access'] = $access;
-            }
-
-            $attributes[] = $entry;
-        }
-
-        usort($attributes, fn (array $a, array $b): int => $a['code'] <=> $b['code']);
-
-        return $attributes;
-    }
-
-    /**
-     * @return array<array{code: int, name: string, direction: string, optional: bool, parameters: array}>
-     */
-    private function parseCommands(\SimpleXMLElement $clusterNode): array
-    {
-        $commands = [];
-
-        // Commands can be direct children or under commands element
-        $cmdNodes = $clusterNode->command ?? $clusterNode->commands->command ?? [];
-
-        foreach ($cmdNodes as $cmd) {
-            $code = (string) ($cmd['code'] ?? $cmd['id'] ?? '');
-            if ('' === $code) {
-                continue;
-            }
-
-            // Determine direction from source attribute or default to client→server
-            $source = (string) ($cmd['source'] ?? 'client');
-            $direction = 'client' === $source ? 'client→server' : 'server→client';
-
-            // Parse command parameters
-            $parameters = [];
-            foreach ($cmd->arg ?? $cmd->field ?? [] as $param) {
-                $parameters[] = [
-                    'name' => (string) ($param['name'] ?? $param->name ?? ''),
-                    'type' => (string) ($param['type'] ?? $param->type ?? 'unknown'),
-                ];
-            }
-
-            $entry = [
-                'code' => $this->parseHexOrDecimal($code),
-                'name' => (string) ($cmd['name'] ?? $cmd->name ?? ''),
-                'direction' => $direction,
-                'optional' => $this->parseBoolean($cmd['optional'] ?? 'false'),
-                'parameters' => $parameters,
-            ];
-
-            $apiMaturity = trim((string) ($cmd['apiMaturity'] ?? ''));
-            if ('' !== $apiMaturity) {
-                $entry['apiMaturity'] = $apiMaturity;
-            }
-            $description = trim((string) ($cmd->description ?? ''));
-            if ('' !== $description) {
-                $entry['description'] = $description;
-            }
-            $access = $this->parseAccess($cmd);
-            if ([] !== $access) {
-                $entry['access'] = $access;
-            }
-
-            $commands[] = $entry;
-        }
-
-        usort($commands, fn (array $a, array $b): int => $a['code'] <=> $b['code']);
-
-        return $commands;
-    }
-
-    /**
-     * Read the ClusterRevision (global attribute 0xFFFD) from the cluster node.
-     * Matter clusters carry their revision number as
-     * <globalAttribute code="0xFFFD" side="either" value="N"/>. The attribute
-     * order varies across the SDK history, so match strictly by parsed code.
-     */
-    private function parseClusterRevision(\SimpleXMLElement $clusterNode): ?int
-    {
-        foreach ($clusterNode->globalAttribute ?? [] as $ga) {
-            $code = trim((string) ($ga['code'] ?? ''));
-            if ('' === $code || 65533 !== $this->parseHexOrDecimal($code)) {
-                continue;
-            }
-            $value = trim((string) ($ga['value'] ?? ''));
-            if ('' === $value) {
-                continue;
-            }
-
-            return $this->parseHexOrDecimal($value);
-        }
-
-        return null;
-    }
-
-    /**
-     * @return list<array{op: string, privilege: string}>
-     */
-    private function parseAccess(\SimpleXMLElement $node): array
-    {
-        $access = [];
-        foreach ($node->access ?? [] as $entry) {
-            $op = trim((string) ($entry['op'] ?? ''));
-            $privilege = trim((string) ($entry['privilege'] ?? ''));
-            if ('' === $op || '' === $privilege) {
-                continue;
-            }
-            $access[] = ['op' => $op, 'privilege' => $privilege];
-        }
-
-        return $access;
-    }
-
-    private function parseHexOrDecimal(string $value): int
-    {
-        $value = trim($value);
-        if (str_starts_with(strtolower($value), '0x')) {
-            return (int) hexdec($value);
-        }
-
-        return (int) $value;
-    }
-
-    private function parseBoolean(mixed $value): bool
-    {
-        if (\is_bool($value)) {
-            return $value;
-        }
-        $str = strtolower(trim((string) $value));
-
-        return \in_array($str, ['true', '1', 'yes'], true);
     }
 }
