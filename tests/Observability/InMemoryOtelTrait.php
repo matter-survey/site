@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Observability;
 
+use App\Observability\RegistryLookupTracing;
 use OpenTelemetry\API\Globals;
 use OpenTelemetry\API\Trace\Propagation\TraceContextPropagator;
 use OpenTelemetry\SDK\Logs\Exporter\InMemoryExporter as LogsInMemoryExporter;
@@ -49,6 +50,10 @@ trait InMemoryOtelTrait
         putenv('OTEL_SDK_DISABLED=false');
         $_ENV['OTEL_SDK_DISABLED'] = 'false';
         $_SERVER['OTEL_SDK_DISABLED'] = 'false';
+
+        // Drop any cached OTEL_PHP_TRACES_REGISTRY_LOOKUPS_ENABLED read so tests
+        // can toggle the flag without leaking static state across cases.
+        RegistryLookupTracing::reset();
 
         $this->otelSpanStorage = new \ArrayObject();
         $this->otelTracerProvider = new TracerProvider(new SimpleSpanProcessor(new SpanInMemoryExporter($this->otelSpanStorage)));

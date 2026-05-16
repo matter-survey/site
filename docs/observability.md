@@ -86,6 +86,7 @@ All standard `OTEL_*` env vars work. The defaults shipped in `.env` are:
 | `OTEL_TRACES_SAMPLER`             | `parentbased_traceidratio`    |                                                               |
 | `OTEL_TRACES_SAMPLER_ARG`         | `1.0`                         | 0.0–1.0. Lower this if volume gets high.                      |
 | `OTEL_PHP_TRACES_DB_PARAMETER_CAPTURE` | _unset_ (off)            | When `true`, captures bound query parameters as span attrs. _Off by default for privacy._ |
+| `OTEL_PHP_TRACES_REGISTRY_LOOKUPS_ENABLED` | _unset_ (off)        | When `true`, emits one `matter_registry.lookup` span per public `MatterRegistry` getter call. _Off by default — see "Debugging registry latency"._ |
 
 ## How export works (and why it doesn't slow user requests)
 
@@ -97,6 +98,49 @@ All standard `OTEL_*` env vars work. The defaults shipped in `.env` are:
 Net effect: user-visible latency is unchanged. Export adds tens of ms _after_ the user has the response.
 
 If FPM is unavailable (CLI, dev server, mod_php), the SDK falls back to synchronous shutdown export — still correct, just adds a small tail to perceived latency.
+
+## Debugging registry latency
+
+`MatterRegistry` is hit dozens to hundreds of times per request (capability analysis, device scoring, page rendering all consult cluster/device-type lookups). Wrapping every call in a span by default would dominate trace volume and make request trees unreadable, so registry-lookup spans are **opt-in**.
+
+When you need to investigate something specific — a suspected cache miss, a regression after a fixture change, a slow capability analysis path — flip the flag on, reproduce, then flip it back off:
+
+1. **Flip on** in `.env.local` on the host:
+
+   ```dotenv
+   OTEL_PHP_TRACES_REGISTRY_LOOKUPS_ENABLED=true
+   ```
+
+2. **Clear the cache** so the new env value is picked up:
+
+   ```bash
+   php bin/console cache:clear --env=prod
+   ```
+
+3. **Confirm via doctor** that the flag is on:
+
+   ```bash
+   php bin/console app:otel:doctor
+   # OTEL_PHP_TRACES_REGISTRY_LOOKUPS_ENABLED  true
+   ```
+
+4. **Reproduce** the issue (hit the slow endpoint, run the slow command, etc.).
+
+5. **Flip it back off** by removing the line (or setting `=false`) and clearing the cache again. Leaving it on in steady state will flood your backend.
+
+What the spans look like:
+
+```
+matter_registry.lookup  INTERNAL
+  lookup.kind       cluster        # or "device_type"
+  lookup.method     getClusterName # the public getter that was called
+  cluster.hex_id    0x0006         # or device_type.hex_id for device-type lookups
+  lookup.cache_hit  true           # false when the ID isn't in the registry's in-memory map
+```
+
+Only the public **entry-point** getters are wrapped (`getClusterName`, `getClusterMetadata`, `getClusterDescription`, `getClusterCategory`, `getClusterHexId`, `getClusterCommandName`, `getClusterAttributeName`, and the analogous device-type getters). Internal helpers don't double-span; you get one span per public call.
+
+Hot-path cost when the flag is **off** is one boolean read per lookup — within noise.
 
 ## Disabling
 

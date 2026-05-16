@@ -40,6 +40,13 @@ final class AttributeAllowlist
             'zap.sync' => [
                 'zap.cluster_count',
             ],
+            'matter_registry.lookup' => [
+                'lookup.kind',
+                'lookup.method',
+                'cluster.hex_id',
+                'device_type.hex_id',
+                'lookup.cache_hit',
+            ],
         ];
     }
 }

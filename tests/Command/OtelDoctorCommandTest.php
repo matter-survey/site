@@ -20,6 +20,7 @@ final class OtelDoctorCommandTest extends TestCase
         'OTEL_EXPORTER_OTLP_PROTOCOL',
         'OTEL_TRACES_SAMPLER',
         'OTEL_TRACES_SAMPLER_ARG',
+        'OTEL_PHP_TRACES_REGISTRY_LOOKUPS_ENABLED',
     ];
 
     /** @var array<string, array{getenv: string|false, env: ?string, server: ?string}> */
@@ -96,6 +97,36 @@ final class OtelDoctorCommandTest extends TestCase
 
         $this->assertSame(0, $tester->getStatusCode());
         $this->assertStringContainsString('Configuration looks healthy', $tester->getDisplay());
+    }
+
+    public function testRegistryLookupsFlagAppearsInEnvironmentTable(): void
+    {
+        putenv('OTEL_SDK_DISABLED=true');
+        putenv('OTEL_PHP_TRACES_REGISTRY_LOOKUPS_ENABLED=true');
+
+        $tester = $this->makeTester();
+        $tester->execute([]);
+
+        $display = $tester->getDisplay();
+        $this->assertStringContainsString('OTEL_PHP_TRACES_REGISTRY_LOOKUPS_ENABLED', $display);
+        $this->assertMatchesRegularExpression(
+            '/OTEL_PHP_TRACES_REGISTRY_LOOKUPS_ENABLED\s+true/',
+            $display,
+        );
+    }
+
+    public function testRegistryLookupsFlagUnsetRendersAsUnset(): void
+    {
+        putenv('OTEL_SDK_DISABLED=true');
+
+        $tester = $this->makeTester();
+        $tester->execute([]);
+
+        $display = $tester->getDisplay();
+        $this->assertMatchesRegularExpression(
+            '/OTEL_PHP_TRACES_REGISTRY_LOOKUPS_ENABLED\s+<unset>/',
+            $display,
+        );
     }
 
     public function testInvalidSamplerArgFails(): void

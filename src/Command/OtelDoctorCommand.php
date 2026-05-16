@@ -36,6 +36,7 @@ final class OtelDoctorCommand extends Command
         'OTEL_TRACES_SAMPLER_ARG',
         'OTEL_PROPAGATORS',
         'OTEL_LOG_LEVEL',
+        'OTEL_PHP_TRACES_REGISTRY_LOOKUPS_ENABLED',
     ];
 
     protected function execute(InputInterface $input, OutputInterface $output): int

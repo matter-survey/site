@@ -6,6 +6,8 @@ namespace App\Service;
 
 use App\Entity\Cluster;
 use App\Entity\DeviceType;
+use App\Observability\RegistryLookupTracing;
+use App\Observability\Tracer;
 use App\Repository\ClusterRepository;
 use App\Repository\DeviceTypeRepository;
 
@@ -31,6 +33,14 @@ class MatterRegistry
      */
     private ?array $clusters = null;
 
+    /**
+     * Cache-hit signal for the most recent lookup, set by `do*` methods that
+     * consult the in-memory map directly. Read by `trace*Lookup` to populate
+     * the `lookup.cache_hit` span attribute. Only meaningful when registry
+     * lookup tracing is enabled.
+     */
+    private bool $lastLookupHitCache = false;
+
     public function __construct(
         private ?DeviceTypeRepository $deviceTypeRepository = null,
         private ?ClusterRepository $clusterRepository = null,
@@ -46,7 +56,17 @@ class MatterRegistry
      */
     public function getClusterName(int $id): string
     {
+        if (!RegistryLookupTracing::enabled()) {
+            return $this->doGetClusterName($id);
+        }
+
+        return $this->traceClusterLookup('getClusterName', $id, fn (): string => $this->doGetClusterName($id));
+    }
+
+    private function doGetClusterName(int $id): string
+    {
         $clusters = $this->loadClusters();
+        $this->lastLookupHitCache = isset($clusters[$id]);
         if (isset($clusters[$id])) {
             return $clusters[$id]['name'];
         }
@@ -62,7 +82,20 @@ class MatterRegistry
      */
     public function getClusterMetadata(int $id): ?array
     {
+        if (!RegistryLookupTracing::enabled()) {
+            return $this->doGetClusterMetadata($id);
+        }
+
+        return $this->traceClusterLookup('getClusterMetadata', $id, fn (): ?array => $this->doGetClusterMetadata($id));
+    }
+
+    /**
+     * @return array{id: int, hexId: string, name: string, description: ?string, specVersion: ?string, category: ?string, isGlobal: bool, attributes?: array<int, mixed>, commands?: array<int, mixed>, features?: array<int, array{bit: int, code: string, name: string, summary?: string}>}|null
+     */
+    private function doGetClusterMetadata(int $id): ?array
+    {
         $clusters = $this->loadClusters();
+        $this->lastLookupHitCache = isset($clusters[$id]);
 
         return $clusters[$id] ?? null;
     }
@@ -72,7 +105,16 @@ class MatterRegistry
      */
     public function getClusterDescription(int $id): ?string
     {
-        $cluster = $this->getClusterMetadata($id);
+        if (!RegistryLookupTracing::enabled()) {
+            return $this->doGetClusterDescription($id);
+        }
+
+        return $this->traceClusterLookup('getClusterDescription', $id, fn (): ?string => $this->doGetClusterDescription($id));
+    }
+
+    private function doGetClusterDescription(int $id): ?string
+    {
+        $cluster = $this->doGetClusterMetadata($id);
 
         return $cluster['description'] ?? null;
     }
@@ -82,7 +124,16 @@ class MatterRegistry
      */
     public function getClusterCategory(int $id): ?string
     {
-        $cluster = $this->getClusterMetadata($id);
+        if (!RegistryLookupTracing::enabled()) {
+            return $this->doGetClusterCategory($id);
+        }
+
+        return $this->traceClusterLookup('getClusterCategory', $id, fn (): ?string => $this->doGetClusterCategory($id));
+    }
+
+    private function doGetClusterCategory(int $id): ?string
+    {
+        $cluster = $this->doGetClusterMetadata($id);
 
         return $cluster['category'] ?? null;
     }
@@ -111,7 +162,16 @@ class MatterRegistry
      */
     public function getClusterHexId(int $id): string
     {
-        $cluster = $this->getClusterMetadata($id);
+        if (!RegistryLookupTracing::enabled()) {
+            return $this->doGetClusterHexId($id);
+        }
+
+        return $this->traceClusterLookup('getClusterHexId', $id, fn (): string => $this->doGetClusterHexId($id));
+    }
+
+    private function doGetClusterHexId(int $id): string
+    {
+        $cluster = $this->doGetClusterMetadata($id);
 
         return $cluster['hexId'] ?? \sprintf('0x%04X', $id);
     }
@@ -133,8 +193,22 @@ class MatterRegistry
      */
     public function getClusterCommandName(int $clusterId, int $commandId): ?string
     {
+        if (!RegistryLookupTracing::enabled()) {
+            return $this->doGetClusterCommandName($clusterId, $commandId);
+        }
+
+        return $this->traceClusterLookup(
+            'getClusterCommandName',
+            $clusterId,
+            fn (): ?string => $this->doGetClusterCommandName($clusterId, $commandId),
+        );
+    }
+
+    private function doGetClusterCommandName(int $clusterId, int $commandId): ?string
+    {
         $clusters = $this->loadClusters();
         $cluster = $clusters[$clusterId] ?? null;
+        $this->lastLookupHitCache = null !== $cluster;
 
         if (!$cluster) {
             return null;
@@ -155,8 +229,22 @@ class MatterRegistry
      */
     public function getClusterAttributeName(int $clusterId, int $attributeId): ?string
     {
+        if (!RegistryLookupTracing::enabled()) {
+            return $this->doGetClusterAttributeName($clusterId, $attributeId);
+        }
+
+        return $this->traceClusterLookup(
+            'getClusterAttributeName',
+            $clusterId,
+            fn (): ?string => $this->doGetClusterAttributeName($clusterId, $attributeId),
+        );
+    }
+
+    private function doGetClusterAttributeName(int $clusterId, int $attributeId): ?string
+    {
         $clusters = $this->loadClusters();
         $cluster = $clusters[$clusterId] ?? null;
+        $this->lastLookupHitCache = null !== $cluster;
 
         if (!$cluster) {
             return null;
@@ -365,7 +453,17 @@ class MatterRegistry
      */
     public function getDeviceTypeName(int $id): string
     {
+        if (!RegistryLookupTracing::enabled()) {
+            return $this->doGetDeviceTypeName($id);
+        }
+
+        return $this->traceDeviceTypeLookup('getDeviceTypeName', $id, fn (): string => $this->doGetDeviceTypeName($id));
+    }
+
+    private function doGetDeviceTypeName(int $id): string
+    {
         $deviceTypes = $this->loadDeviceTypes();
+        $this->lastLookupHitCache = isset($deviceTypes[$id]);
         if (isset($deviceTypes[$id])) {
             return $deviceTypes[$id]['name'];
         }
@@ -380,7 +478,20 @@ class MatterRegistry
      */
     public function getDeviceTypeMetadata(int $id): ?array
     {
+        if (!RegistryLookupTracing::enabled()) {
+            return $this->doGetDeviceTypeMetadata($id);
+        }
+
+        return $this->traceDeviceTypeLookup('getDeviceTypeMetadata', $id, fn (): ?array => $this->doGetDeviceTypeMetadata($id));
+    }
+
+    /**
+     * @return array{name: string, specVersion: ?string, category: ?string, displayCategory: ?string, icon: ?string, description: ?string, id?: int, hexId?: string, class?: string, scope?: string, superset?: string, mandatoryServerClusters?: array, optionalServerClusters?: array, mandatoryClientClusters?: array, optionalClientClusters?: array, scoringWeights?: array{mandatoryServerWeight: float, mandatoryClientWeight: float, optionalServerWeight: float, optionalClientWeight: float, keyClientClusters: int[], keyClientBonus: float}}|null
+     */
+    private function doGetDeviceTypeMetadata(int $id): ?array
+    {
         $deviceTypes = $this->loadDeviceTypes();
+        $this->lastLookupHitCache = isset($deviceTypes[$id]);
 
         return $deviceTypes[$id] ?? null;
     }
@@ -410,7 +521,16 @@ class MatterRegistry
      */
     public function getDeviceTypeDescription(int $id): ?string
     {
-        $deviceType = $this->getDeviceTypeMetadata($id);
+        if (!RegistryLookupTracing::enabled()) {
+            return $this->doGetDeviceTypeDescription($id);
+        }
+
+        return $this->traceDeviceTypeLookup('getDeviceTypeDescription', $id, fn (): ?string => $this->doGetDeviceTypeDescription($id));
+    }
+
+    private function doGetDeviceTypeDescription(int $id): ?string
+    {
+        $deviceType = $this->doGetDeviceTypeMetadata($id);
 
         return $deviceType['description'] ?? null;
     }
@@ -420,7 +540,16 @@ class MatterRegistry
      */
     public function getDeviceTypeCategory(int $id): ?string
     {
-        $deviceType = $this->getDeviceTypeMetadata($id);
+        if (!RegistryLookupTracing::enabled()) {
+            return $this->doGetDeviceTypeCategory($id);
+        }
+
+        return $this->traceDeviceTypeLookup('getDeviceTypeCategory', $id, fn (): ?string => $this->doGetDeviceTypeCategory($id));
+    }
+
+    private function doGetDeviceTypeCategory(int $id): ?string
+    {
+        $deviceType = $this->doGetDeviceTypeMetadata($id);
 
         return $deviceType['category'] ?? null;
     }
@@ -732,7 +861,16 @@ class MatterRegistry
      */
     public function getDeviceTypeHexId(int $id): string
     {
-        $deviceType = $this->getDeviceTypeMetadata($id);
+        if (!RegistryLookupTracing::enabled()) {
+            return $this->doGetDeviceTypeHexId($id);
+        }
+
+        return $this->traceDeviceTypeLookup('getDeviceTypeHexId', $id, fn (): string => $this->doGetDeviceTypeHexId($id));
+    }
+
+    private function doGetDeviceTypeHexId(int $id): string
+    {
+        $deviceType = $this->doGetDeviceTypeMetadata($id);
 
         return $deviceType['hexId'] ?? sprintf('0x%04X', $id);
     }
@@ -995,5 +1133,63 @@ class MatterRegistry
         }
 
         return $analyses;
+    }
+
+    // ========================================================================
+    // REGISTRY LOOKUP TRACING (opt-in via OTEL_PHP_TRACES_REGISTRY_LOOKUPS_ENABLED)
+    // ========================================================================
+
+    /**
+     * @template T
+     *
+     * @param callable(): T $fn
+     *
+     * @return T
+     */
+    private function traceClusterLookup(string $method, int $clusterId, callable $fn): mixed
+    {
+        $clusters = $this->loadClusters();
+        $hexId = $clusters[$clusterId]['hexId'] ?? \sprintf('0x%04X', $clusterId);
+
+        $span = Tracer::start('matter_registry.lookup', [
+            'lookup.kind' => 'cluster',
+            'lookup.method' => $method,
+            'cluster.hex_id' => $hexId,
+        ]);
+        try {
+            $result = $fn();
+            $span->setAttribute('lookup.cache_hit', $this->lastLookupHitCache);
+
+            return $result;
+        } finally {
+            $span->end();
+        }
+    }
+
+    /**
+     * @template T
+     *
+     * @param callable(): T $fn
+     *
+     * @return T
+     */
+    private function traceDeviceTypeLookup(string $method, int $deviceTypeId, callable $fn): mixed
+    {
+        $deviceTypes = $this->loadDeviceTypes();
+        $hexId = $deviceTypes[$deviceTypeId]['hexId'] ?? \sprintf('0x%04X', $deviceTypeId);
+
+        $span = Tracer::start('matter_registry.lookup', [
+            'lookup.kind' => 'device_type',
+            'lookup.method' => $method,
+            'device_type.hex_id' => $hexId,
+        ]);
+        try {
+            $result = $fn();
+            $span->setAttribute('lookup.cache_hit', $this->lastLookupHitCache);
+
+            return $result;
+        } finally {
+            $span->end();
+        }
     }
 }
