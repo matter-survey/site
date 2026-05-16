@@ -173,4 +173,20 @@ class Vendor
 
         return $slug ?: 'vendor-'.($specId ?? 'unknown');
     }
+
+    /**
+     * Canonical vendor slug — always suffixed with specId so that renames or
+     * different vendors slugifying to the same base remain unique.
+     */
+    public static function canonicalSlug(string $name, int $specId): string
+    {
+        $base = self::generateSlug($name, $specId);
+
+        // Avoid 'vendor-42-42' when name slugifies to the specId fallback.
+        if ('vendor-'.$specId === $base) {
+            return $base;
+        }
+
+        return $base.'-'.$specId;
+    }
 }

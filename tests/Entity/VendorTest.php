@@ -83,6 +83,16 @@ final class VendorTest extends TestCase
         $this->assertSame('vendor-99', Vendor::generateSlug('', 99));
     }
 
+    public function testCanonicalSlugAppendsSpecId(): void
+    {
+        $this->assertSame('tasmota-5181', Vendor::canonicalSlug('Tasmota', 5181));
+    }
+
+    public function testCanonicalSlugAvoidsDoubleSuffixWhenNameSlugifiesToEmpty(): void
+    {
+        $this->assertSame('vendor-42', Vendor::canonicalSlug('!!!', 42));
+    }
+
     public function testFluentInterface(): void
     {
         $vendor = new Vendor();

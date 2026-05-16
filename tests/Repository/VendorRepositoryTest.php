@@ -78,7 +78,16 @@ final class VendorRepositoryTest extends KernelTestCase
 
         $this->assertSame($vendor->getId(), $updated->getId());
         $this->assertSame('RenamedCo', $updated->getName());
+        $this->assertSame('renamedco-3100', $updated->getSlug());
         $this->assertGreaterThan($created->getTimestamp(), $updated->getUpdatedAt()->getTimestamp());
+    }
+
+    public function testFindOrCreateBySpecIdUsesCanonicalSlugOnCreate(): void
+    {
+        $vendor = $this->repository->findOrCreateBySpecId(3150, 'Tasmota');
+        $this->entityManager->flush();
+
+        $this->assertSame('tasmota-3150', $vendor->getSlug());
     }
 
     public function testFindOrCreateBySpecIdFallsBackToDefaultName(): void

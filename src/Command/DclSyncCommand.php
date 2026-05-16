@@ -207,8 +207,7 @@ class DclSyncCommand extends Command
             $specId = $vendor['vendorID'];
 
             // Generate unique slug with specId suffix (e.g., 'govee-4947')
-            $baseSlug = Vendor::generateSlug($name, $specId);
-            $slug = $baseSlug.'-'.$specId;
+            $slug = Vendor::canonicalSlug($name, $specId);
 
             $fixtures[] = [
                 'specId' => $specId,

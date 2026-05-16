@@ -45,9 +45,11 @@ class VendorRepository extends ServiceEntityRepository
         $vendor = $this->findBySpecId($specId);
 
         if ($vendor instanceof Vendor) {
-            // Update name if provided and different
+            // Update name if provided and different. Regenerate slug too —
+            // otherwise a rename leaves the URL pointing at the old name.
             if (null !== $name && $name !== $vendor->getName()) {
                 $vendor->setName($name);
+                $vendor->setSlug(Vendor::canonicalSlug($name, $specId));
                 $vendor->setUpdatedAt(new \DateTime());
             }
 
@@ -58,7 +60,7 @@ class VendorRepository extends ServiceEntityRepository
         $vendor = new Vendor();
         $vendor->setSpecId($specId);
         $vendor->setName($name ?? "Vendor $specId");
-        $vendor->setSlug(Vendor::generateSlug($name ?? '', $specId));
+        $vendor->setSlug(Vendor::canonicalSlug($name ?? '', $specId));
         $vendor->setDeviceCount(0);
 
         $this->save($vendor);
