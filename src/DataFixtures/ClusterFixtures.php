@@ -48,7 +48,6 @@ class ClusterFixtures extends Fixture implements FixtureGroupInterface
             $cluster->setHexId($data['hexId'] ?? \sprintf('0x%04X', $id));
             $cluster->setName($data['name']);
             $cluster->setDescription($data['description'] ?? null);
-            $cluster->setSpecVersion($data['specVersion'] ?? null);
             $cluster->setCategory($data['category'] ?? null);
             $cluster->setIsGlobal($data['isGlobal'] ?? false);
             $cluster->setUpdatedAt(new \DateTime());

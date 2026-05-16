@@ -58,7 +58,6 @@ final class ClusterTest extends TestCase
             ->setDescription('Test')
             ->setCategory('lighting')
             ->setIsGlobal(false)
-            ->setSpecVersion('1.4')
             ->setHexId('0x0006')
             ->setCreatedAt(new \DateTime())
             ->setUpdatedAt(new \DateTime());
@@ -71,13 +70,6 @@ final class ClusterTest extends TestCase
         $cluster = new Cluster(6)->setHexId('0x00FF');
 
         $this->assertSame('0x00FF', $cluster->getHexId());
-    }
-
-    public function testSpecVersionRoundTrip(): void
-    {
-        $cluster = new Cluster(6)->setSpecVersion('1.4');
-
-        $this->assertSame('1.4', $cluster->getSpecVersion());
     }
 
     public function testTimestampsRoundTrip(): void

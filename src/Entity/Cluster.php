@@ -12,7 +12,6 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'clusters')]
 #[ORM\Index(name: 'idx_clusters_hex_id', columns: ['hex_id'])]
 #[ORM\Index(name: 'idx_clusters_category', columns: ['category'])]
-#[ORM\Index(name: 'idx_clusters_spec_version', columns: ['spec_version'])]
 class Cluster
 {
     #[ORM\Column(name: 'hex_id', length: 10, unique: true)]
@@ -23,9 +22,6 @@ class Cluster
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
-
-    #[ORM\Column(name: 'spec_version', length: 10, nullable: true)]
-    private ?string $specVersion = null;
 
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $category = null;
@@ -85,18 +81,6 @@ class Cluster
     public function setDescription(?string $description): static
     {
         $this->description = $description;
-
-        return $this;
-    }
-
-    public function getSpecVersion(): ?string
-    {
-        return $this->specVersion;
-    }
-
-    public function setSpecVersion(?string $specVersion): static
-    {
-        $this->specVersion = $specVersion;
 
         return $this;
     }

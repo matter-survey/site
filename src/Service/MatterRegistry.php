@@ -501,7 +501,7 @@ class MatterRegistry
             'hexId' => $cluster->getHexId(),
             'name' => $cluster->getName(),
             'description' => $cluster->getDescription(),
-            'specVersion' => $earliestMatterVersion ?? $cluster->getSpecVersion(),
+            'specVersion' => $earliestMatterVersion,
             'category' => $cluster->getCategory(),
             'isGlobal' => $cluster->isGlobal(),
             'attributes' => $snapshot?->getAttributes(),
