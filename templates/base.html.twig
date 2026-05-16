@@ -27,13 +27,17 @@
     {# JSON-LD Structured Data #}
     {% block structured_data %}{% endblock %}
 
-    {# Hreflang tags for SEO #}
+    {# Canonical + hreflang. Generated off canonical_base_url so www/apex
+       variants and pagination query strings collapse to one canonical URL. #}
     {% set current_route = app.request.attributes.get('_route') %}
     {% set route_params = app.request.attributes.get('_route_params', {}) %}
     {% if current_route %}
-    <link rel="alternate" hreflang="en" href="{{ url(current_route, route_params|merge({'_locale': 'en'})) }}" />
-    <link rel="alternate" hreflang="de" href="{{ url(current_route, route_params|merge({'_locale': 'de'})) }}" />
-    <link rel="alternate" hreflang="x-default" href="{{ url(current_route, route_params|merge({'_locale': 'en'})) }}" />
+    {% block canonical %}
+    <link rel="canonical" href="{{ canonical_base_url ~ path(current_route, route_params) }}" />
+    {% endblock %}
+    <link rel="alternate" hreflang="en" href="{{ canonical_base_url ~ path(current_route, route_params|merge({'_locale': 'en'})) }}" />
+    <link rel="alternate" hreflang="de" href="{{ canonical_base_url ~ path(current_route, route_params|merge({'_locale': 'de'})) }}" />
+    <link rel="alternate" hreflang="x-default" href="{{ canonical_base_url ~ path(current_route, route_params|merge({'_locale': 'en'})) }}" />
     {% endif %}
 
     <style>
