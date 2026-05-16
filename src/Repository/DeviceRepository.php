@@ -1361,18 +1361,27 @@ class DeviceRepository
     /**
      * Get device type distribution for a specific vendor.
      * Returns device type IDs with product counts for analytics display.
+     *
+     * System/utility types (id < 256, e.g. Root Node, OTA Requestor) are
+     * excluded — every device has them, so they crowd out the actual mix.
+     *
+     * NOTE: GROUP BY uses the full json_extract expression rather than the
+     * column alias. SQLite collapses to a single row per outer query group
+     * when the alias is used with a json_each cross-join, which produced
+     * per-endpoint rows with the same name repeated.
      */
     public function getDeviceTypeDistributionByVendor(int $vendorFk): array
     {
         return $this->db->executeQuery('
             SELECT
-                json_extract(json_each.value, "$.id") as device_type_id,
+                CAST(json_extract(json_each.value, "$.id") AS INTEGER) as device_type_id,
                 COUNT(DISTINCT pe.device_id) as product_count
             FROM product_endpoints pe
             JOIN products p ON pe.device_id = p.id, json_each(pe.device_types)
             WHERE p.vendor_fk = :vendor_fk
               AND json_extract(json_each.value, "$.id") IS NOT NULL
-            GROUP BY device_type_id
+              AND CAST(json_extract(json_each.value, "$.id") AS INTEGER) >= 256
+            GROUP BY CAST(json_extract(json_each.value, "$.id") AS INTEGER)
             ORDER BY product_count DESC
         ', ['vendor_fk' => $vendorFk])->fetchAllAssociative();
     }
@@ -1380,21 +1389,32 @@ class DeviceRepository
     /**
      * Get cluster capabilities for a specific vendor.
      * Returns top clusters (both server and client) with product counts.
+     *
+     * Utility clusters (Basic Information, Network Commissioning, Operational
+     * Credentials, etc.) are excluded — they are mandatory on every Matter
+     * device and reveal nothing about the vendor's product line. We want the
+     * application clusters that differentiate the products.
      */
     public function getClusterCapabilitiesByVendor(int $vendorFk): array
     {
         return $this->db->executeQuery('
-            SELECT json_each.value as cluster_id, "server" as type, COUNT(DISTINCT pe.device_id) as count
-            FROM product_endpoints pe
-            JOIN products p ON pe.device_id = p.id, json_each(pe.server_clusters)
-            WHERE p.vendor_fk = :vendor_fk
-            GROUP BY cluster_id
-            UNION ALL
-            SELECT json_each.value as cluster_id, "client" as type, COUNT(DISTINCT pe.device_id) as count
-            FROM product_endpoints pe
-            JOIN products p ON pe.device_id = p.id, json_each(pe.client_clusters)
-            WHERE p.vendor_fk = :vendor_fk
-            GROUP BY cluster_id
+            SELECT cluster_id, type, count FROM (
+                SELECT CAST(json_each.value AS INTEGER) as cluster_id, "server" as type, COUNT(DISTINCT pe.device_id) as count
+                FROM product_endpoints pe
+                JOIN products p ON pe.device_id = p.id, json_each(pe.server_clusters)
+                LEFT JOIN clusters c ON c.id = CAST(json_each.value AS INTEGER)
+                WHERE p.vendor_fk = :vendor_fk
+                  AND (c.category IS NULL OR c.category != "utility")
+                GROUP BY CAST(json_each.value AS INTEGER)
+                UNION ALL
+                SELECT CAST(json_each.value AS INTEGER) as cluster_id, "client" as type, COUNT(DISTINCT pe.device_id) as count
+                FROM product_endpoints pe
+                JOIN products p ON pe.device_id = p.id, json_each(pe.client_clusters)
+                LEFT JOIN clusters c ON c.id = CAST(json_each.value AS INTEGER)
+                WHERE p.vendor_fk = :vendor_fk
+                  AND (c.category IS NULL OR c.category != "utility")
+                GROUP BY CAST(json_each.value AS INTEGER)
+            )
             ORDER BY count DESC
             LIMIT 20
         ', ['vendor_fk' => $vendorFk])->fetchAllAssociative();

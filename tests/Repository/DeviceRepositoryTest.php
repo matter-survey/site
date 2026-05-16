@@ -59,6 +59,85 @@ final class DeviceRepositoryTest extends KernelTestCase
         );
     }
 
+    public function testGetDeviceTypeDistributionByVendorGroupsByTypeAndExcludesSystem(): void
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $vendor = $em->getRepository(Vendor::class)->findOneBy(['specId' => 4874]);
+        $this->assertNotNull($vendor);
+
+        $isNew = false;
+        $deviceA = $this->repository->upsertDevice([
+            'vendor_id' => 4874,
+            'vendor_name' => $vendor->getName(),
+            'vendor_fk' => $vendor->getId(),
+            'product_id' => 31410,
+            'product_name' => 'Eve A',
+        ], $isNew);
+        $deviceB = $this->repository->upsertDevice([
+            'vendor_id' => 4874,
+            'vendor_name' => $vendor->getName(),
+            'vendor_fk' => $vendor->getId(),
+            'product_id' => 31411,
+            'product_name' => 'Eve B',
+        ], $isNew);
+
+        // Both devices get Root Node on ep0 and an On/Off Light on ep1.
+        foreach ([$deviceA, $deviceB] as $id) {
+            $this->repository->upsertEndpoint($id, [
+                'endpoint_id' => 0,
+                'device_types' => [['id' => 22, 'revision' => 1]],
+                'server_clusters' => [],
+                'client_clusters' => [],
+            ]);
+            $this->repository->upsertEndpoint($id, [
+                'endpoint_id' => 1,
+                'device_types' => [['id' => 256, 'revision' => 1]],
+                'server_clusters' => [6],
+                'client_clusters' => [],
+            ]);
+        }
+
+        $rows = $this->repository->getDeviceTypeDistributionByVendor($vendor->getId());
+        $byType = [];
+        foreach ($rows as $r) {
+            $byType[(int) $r['device_type_id']] = (int) $r['product_count'];
+        }
+
+        $this->assertArrayNotHasKey(22, $byType, 'Root Node should be excluded');
+        $this->assertArrayHasKey(256, $byType, 'On/Off Light should be present');
+        $this->assertGreaterThanOrEqual(2, $byType[256], 'Should count both Eve A and Eve B once each');
+    }
+
+    public function testGetClusterCapabilitiesByVendorExcludesUtilityClusters(): void
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $vendor = $em->getRepository(Vendor::class)->findOneBy(['specId' => 4874]);
+        $this->assertNotNull($vendor);
+
+        $isNew = false;
+        $deviceId = $this->repository->upsertDevice([
+            'vendor_id' => 4874,
+            'vendor_name' => $vendor->getName(),
+            'vendor_fk' => $vendor->getId(),
+            'product_id' => 31420,
+            'product_name' => 'Eve Test Light',
+        ], $isNew);
+
+        // ep1: On/Off (6, application) + Basic Information (40, utility)
+        $this->repository->upsertEndpoint($deviceId, [
+            'endpoint_id' => 1,
+            'device_types' => [['id' => 256, 'revision' => 1]],
+            'server_clusters' => [6, 40],
+            'client_clusters' => [],
+        ]);
+
+        $rows = $this->repository->getClusterCapabilitiesByVendor($vendor->getId());
+        $clusterIds = array_map(static fn (array $r): int => (int) $r['cluster_id'], $rows);
+
+        $this->assertContains(6, $clusterIds, 'On/Off (6) is an application cluster and should appear');
+        $this->assertNotContains(40, $clusterIds, 'Basic Information (40) is utility and should be excluded');
+    }
+
     public function testGetTopDeviceTypesByVendorExcludesSystemTypes(): void
     {
         $em = self::getContainer()->get(EntityManagerInterface::class);
