@@ -1,3 +1,9 @@
+# yaml-language-server: $schema=../vendor/symfony/dependency-injection/Loader/schema/services.schema.json
+
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+# See also https://symfony.com/doc/current/service_container/import.html
+
 parameters:
     # OpenTelemetry defaults applied when the env var is unset (e.g. on hosts
     # whose .env isn't synced). Operators override via .env.local on prod.
