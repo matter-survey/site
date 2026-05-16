@@ -140,4 +140,150 @@ class ProductRepositoryTest extends KernelTestCase
         $this->assertEquals('Vendor A Updated', $product2->getVendorName());
         $this->assertEquals('Product A Updated', $product2->getProductName());
     }
+
+    public function testFindOrCreateUpdatesVendorRelation(): void
+    {
+        // Create product without vendor first
+        $first = $this->repository->findOrCreate(2222, 1, 'V', 'P');
+        $this->entityManager->flush();
+        $this->assertNull($first->getVendor());
+
+        // Pull a fixture vendor and pass it in
+        $vendor = $this->entityManager->getRepository(\App\Entity\Vendor::class)->findOneBy([]);
+        $this->assertNotNull($vendor);
+
+        $second = $this->repository->findOrCreate(2222, 1, 'V', 'P', $vendor);
+        $this->entityManager->flush();
+
+        $this->assertSame($first->getId(), $second->getId());
+        $this->assertSame($vendor, $second->getVendor());
+        $this->assertNotNull($second->getLastSeen()); // updated path bumps lastSeen
+    }
+
+    public function testFindOrCreateIsIdempotentWhenNothingChanges(): void
+    {
+        $first = $this->repository->findOrCreate(3333, 1, 'V', 'P');
+        $this->entityManager->flush();
+        $firstSeen = $first->getLastSeen();
+
+        $second = $this->repository->findOrCreate(3333, 1, 'V', 'P');
+        $this->entityManager->flush();
+
+        $this->assertSame($first->getId(), $second->getId());
+        // No update path → lastSeen unchanged
+        $this->assertSame($firstSeen, $second->getLastSeen());
+    }
+
+    public function testFindAllOrderedBySubmissionCount(): void
+    {
+        $hot = $this->repository->findOrCreate(4001, 1, 'V', 'Hot');
+        $hot->setSubmissionCount(500);
+        $cold = $this->repository->findOrCreate(4001, 2, 'V', 'Cold');
+        $cold->setSubmissionCount(1);
+        $this->entityManager->flush();
+
+        $top = $this->repository->findAllOrderedBySubmissionCount(2);
+
+        $this->assertGreaterThanOrEqual(1, count($top));
+        $this->assertGreaterThanOrEqual(
+            $top[count($top) - 1]->getSubmissionCount(),
+            $top[0]->getSubmissionCount(),
+        );
+    }
+
+    public function testFindByVendorAndCountByVendor(): void
+    {
+        $vendor = $this->entityManager->getRepository(\App\Entity\Vendor::class)->findOneBy([]);
+        $this->assertNotNull($vendor);
+
+        // attach two products to this vendor
+        for ($i = 1; $i <= 2; ++$i) {
+            $p = $this->repository->findOrCreate(5500 + $i, 1, 'V', "P{$i}", $vendor);
+        }
+        $this->entityManager->flush();
+
+        $found = $this->repository->findByVendor($vendor);
+        $count = $this->repository->countByVendor($vendor);
+
+        $this->assertGreaterThanOrEqual(2, count($found));
+        $this->assertSame(count($found), $count);
+    }
+
+    public function testSearchMatchesNameOrVendorOrIds(): void
+    {
+        $this->repository->findOrCreate(7001, 1, 'AcmeCo', 'WidgetMaker');
+        $this->entityManager->flush();
+
+        // by product name
+        $byName = $this->repository->search('WidgetMaker');
+        $this->assertNotEmpty($byName);
+
+        // by vendor name
+        $byVendor = $this->repository->search('AcmeCo');
+        $this->assertNotEmpty($byVendor);
+
+        // by vendor id (digits)
+        $byVendorId = $this->repository->search('7001');
+        $this->assertNotEmpty($byVendorId);
+
+        // no match
+        $this->assertSame([], $this->repository->search('ZZZ_NO_MATCH_PLEASE'));
+    }
+
+    public function testSearchRespectsLimit(): void
+    {
+        for ($i = 1; $i <= 5; ++$i) {
+            $this->repository->findOrCreate(7100, $i, 'V', "Multi{$i}");
+        }
+        $this->entityManager->flush();
+
+        $results = $this->repository->search('Multi', 3);
+        $this->assertLessThanOrEqual(3, count($results));
+    }
+
+    public function testCountAllReflectsAllProducts(): void
+    {
+        $before = $this->repository->countAll();
+        $this->repository->findOrCreate(9001, 1, 'V', 'P');
+        $this->entityManager->flush();
+
+        $this->assertSame($before + 1, $this->repository->countAll());
+    }
+
+    public function testCommissioningHelpers(): void
+    {
+        $withInstructions = $this->repository->findOrCreate(8001, 1, 'V', 'WithInstructions');
+        $withInstructions->setCommissioningInitialStepsInstruction('Long-press button');
+        $withInstructions->setCommissioningInitialStepsHint(2);
+        $withInstructions->setCommissioningCustomFlow(1);
+        $withInstructions->setIcdUserActiveModeTriggerInstruction('Wake');
+        $withInstructions->setFactoryResetStepsInstruction('Hold 10s');
+        $withInstructions->setCommissioningCustomFlowUrl('https://example.com/flow');
+
+        $withoutAnything = $this->repository->findOrCreate(8002, 1, 'V', 'Plain');
+        $this->entityManager->flush();
+
+        $withCommissioning = $this->repository->findWithCommissioningData();
+        $this->assertNotEmpty($withCommissioning);
+        $names = array_map(fn (\App\Entity\Product $p) => $p->getProductName(), $withCommissioning);
+        $this->assertContains('WithInstructions', $names);
+        $this->assertNotContains('Plain', $names);
+
+        $this->assertGreaterThanOrEqual(1, $this->repository->countWithCommissioningData());
+        $this->assertNotEmpty($this->repository->findWithIcdData());
+
+        $grouped = $this->repository->findGroupedByComplexity();
+        $this->assertArrayHasKey(2, $grouped);
+        $this->assertNotEmpty($grouped[2]);
+
+        $stats = $this->repository->getCommissioningStats();
+        $this->assertArrayHasKey('total', $stats);
+        $this->assertArrayHasKey('withInstructions', $stats);
+        $this->assertArrayHasKey('withFactoryReset', $stats);
+        $this->assertArrayHasKey('withCustomFlow', $stats);
+        $this->assertArrayHasKey('withIcd', $stats);
+        $this->assertArrayHasKey('byComplexity', $stats);
+        $this->assertGreaterThanOrEqual(1, $stats['withInstructions']);
+        $this->assertGreaterThanOrEqual(1, $stats['byComplexity'][2] ?? 0);
+    }
 }
