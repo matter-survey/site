@@ -1,0 +1,333 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ cluster.name }} (Matter {{ matterVersion }}) - Matter Survey{% endblock %}
+
+{% block og_title %}{{ cluster.name }} in Matter {{ matterVersion }}{% endblock %}
+{% block og_description %}{{ cluster.name }} cluster specification as it shipped in Matter {{ matterVersion }}{% if snapshot.clusterRevision is not null %} (ClusterRevision {{ snapshot.clusterRevision }}){% endif %}.{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    .cluster-header {
+        padding: 1rem 1.25rem 1.5rem;
+        margin-bottom: 1.5rem;
+        background: white;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+    }
+
+    .cluster-header h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .cluster-header .hex-id {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.875rem;
+        color: var(--gray-500);
+        font-weight: 400;
+    }
+
+    .cluster-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        margin-bottom: 0.75rem;
+    }
+
+    .cluster-meta .meta-label {
+        font-weight: 500;
+        color: var(--gray-700);
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .badge-version {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .badge-revision {
+        background: var(--gray-100);
+        color: var(--gray-700);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .badge-provisional {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-deprecated {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .section {
+        background: white;
+        border-radius: 0.5rem;
+        border: 1px solid var(--gray-200);
+        margin-bottom: 1.5rem;
+    }
+
+    .section-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .section-header h2 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .version-timeline {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 1rem 1.25rem;
+    }
+
+    .version-timeline a,
+    .version-timeline .current {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.375rem;
+        text-decoration: none;
+        font-size: 0.8125rem;
+        background: var(--gray-50);
+        border: 1px solid var(--gray-200);
+        color: inherit;
+        transition: background-color 0.15s;
+    }
+
+    .version-timeline a:hover {
+        background: var(--gray-100);
+    }
+
+    .version-timeline .current {
+        background: #dbeafe;
+        border-color: #93c5fd;
+        color: #1e40af;
+        font-weight: 500;
+    }
+
+    .version-timeline .version-label {
+        font-weight: 600;
+    }
+
+    .version-timeline .rev-label {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: var(--gray-500);
+        font-size: 0.75rem;
+    }
+
+    .version-timeline .current .rev-label {
+        color: #1e40af;
+    }
+
+    .spec-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+    }
+
+    .spec-table thead {
+        background: var(--gray-50);
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .spec-table th {
+        padding: 0.625rem 1rem;
+        text-align: left;
+        font-weight: 500;
+        color: var(--gray-700);
+    }
+
+    .spec-table td {
+        padding: 0.625rem 1rem;
+        border-bottom: 1px solid var(--gray-100);
+        vertical-align: top;
+    }
+
+    .code-cell {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.8125rem;
+        color: var(--gray-500);
+    }
+
+    .type-cell {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.8125rem;
+    }
+
+    .compare-link {
+        margin-top: 0.5rem;
+        font-size: 0.8125rem;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <p class="breadcrumbs">
+        <a href="{{ path('stats_clusters') }}">Clusters</a> &raquo;
+        <a href="{{ path('stats_cluster_show', {hexId: cluster.hexId}) }}">{{ cluster.name }}</a> &raquo;
+        Matter {{ matterVersion }}
+    </p>
+
+    <div class="cluster-header">
+        <h1>
+            {{ cluster.name }}
+            <span class="hex-id">{{ cluster.hexId }}</span>
+        </h1>
+
+        <div class="cluster-meta">
+            <div class="meta-item">
+                <span class="badge badge-version">Matter {{ matterVersion }}</span>
+            </div>
+            {% if snapshot.clusterRevision is not null %}
+            <div class="meta-item">
+                <span class="badge badge-revision">ClusterRevision {{ snapshot.clusterRevision }}</span>
+            </div>
+            {% endif %}
+            {% if snapshot.apiMaturity %}
+            <div class="meta-item">
+                <span class="badge badge-{{ snapshot.apiMaturity }}">{{ snapshot.apiMaturity|capitalize }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if snapshot.description %}
+        <div class="cluster-description">{{ snapshot.description }}</div>
+        {% endif %}
+
+        <div class="compare-link">
+            <a href="{{ path('stats_cluster_show', {hexId: cluster.hexId}) }}">&laquo; Back to current spec</a>
+        </div>
+    </div>
+
+    {% if versionHistory|length > 0 %}
+    <div class="section">
+        <div class="section-header">
+            <h2>Spec History</h2>
+        </div>
+        <div class="version-timeline">
+            {% for v in versionHistory %}
+                {% if v.matterVersion == matterVersion %}
+                    <span class="current">
+                        <span class="version-label">Matter {{ v.matterVersion }}</span>
+                        {% if v.clusterRevision is not null %}
+                            <span class="rev-label">rev {{ v.clusterRevision }}</span>
+                        {% endif %}
+                    </span>
+                {% else %}
+                    <a href="{{ path('stats_cluster_version_show', {hexId: cluster.hexId, matterVersion: v.matterVersion}) }}">
+                        <span class="version-label">Matter {{ v.matterVersion }}</span>
+                        {% if v.clusterRevision is not null %}
+                            <span class="rev-label">rev {{ v.clusterRevision }}</span>
+                        {% endif %}
+                    </a>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% set features = snapshot.features ?? [] %}
+    {% set attributes = snapshot.attributes ?? [] %}
+    {% set commands = snapshot.commands ?? [] %}
+
+    {% if attributes|length > 0 %}
+    <div class="section">
+        <div class="section-header">
+            <h2>Attributes ({{ attributes|length }})</h2>
+        </div>
+        <table class="spec-table">
+            <thead>
+                <tr>
+                    <th style="width: 90px;">Code</th>
+                    <th>Name</th>
+                    <th style="width: 140px;">Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for attr in attributes %}
+                <tr>
+                    <td class="code-cell">0x{{ '%04X'|format(attr.code) }}</td>
+                    <td>{{ attr.name }}</td>
+                    <td class="type-cell">{{ attr.type }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if commands|length > 0 %}
+    <div class="section">
+        <div class="section-header">
+            <h2>Commands ({{ commands|length }})</h2>
+        </div>
+        <table class="spec-table">
+            <thead>
+                <tr>
+                    <th style="width: 90px;">Code</th>
+                    <th>Name</th>
+                    <th style="width: 160px;">Direction</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cmd in commands %}
+                <tr>
+                    <td class="code-cell">0x{{ '%02X'|format(cmd.code) }}</td>
+                    <td>{{ cmd.name }}</td>
+                    <td>{{ cmd.direction }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if features|length > 0 %}
+    <div class="section">
+        <div class="section-header">
+            <h2>Features ({{ features|length }})</h2>
+        </div>
+        <table class="spec-table">
+            <thead>
+                <tr>
+                    <th style="width: 80px;">Bit</th>
+                    <th style="width: 120px;">Code</th>
+                    <th>Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for feature in features %}
+                <tr>
+                    <td class="code-cell">{{ feature.bit }}</td>
+                    <td class="code-cell">{{ feature.code }}</td>
+                    <td>{{ feature.name }}{% if feature.summary %} <span style="color: var(--gray-500); font-size: 0.8125rem;">— {{ feature.summary }}</span>{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

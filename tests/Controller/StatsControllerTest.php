@@ -760,6 +760,54 @@ final class StatsControllerTest extends WebTestCase
         $this->assertSelectorExists('#tab-attributes');
     }
 
+    // === Cluster Version History Tests ===
+
+    public function testClusterShowRendersSpecHistoryPanel(): void
+    {
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/cluster/0x0006');
+
+        $this->assertResponseIsSuccessful();
+
+        // On/Off has shipped in every Matter release (1.0..1.5) — timeline should render.
+        $this->assertSelectorExists('.version-timeline');
+        $timeline = $crawler->filter('.version-timeline')->text();
+        $this->assertStringContainsString('Matter 1.0', $timeline);
+        $this->assertStringContainsString('Matter 1.5', $timeline);
+
+        // "Introduced in Matter X" line in the header
+        $this->assertStringContainsString('Introduced in', $crawler->filter('.cluster-meta')->text());
+    }
+
+    public function testClusterVersionShowRendersHistoricSnapshot(): void
+    {
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/cluster/0x0006/version/1.2');
+
+        $this->assertResponseIsSuccessful();
+        // ClusterRevision 5 in Matter 1.2 for On/Off (frozen upstream value)
+        $this->assertStringContainsString('ClusterRevision 5', $crawler->html());
+        // Current version chip in the timeline
+        $this->assertSelectorExists('.version-timeline .current');
+    }
+
+    public function testClusterVersionShow404sForUnknownVersion(): void
+    {
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/cluster/0x0006/version/0.9');
+
+        $this->assertResponseStatusCodeSame(404);
+    }
+
+    public function testClusterVersionShow404sForClusterNotInVersion(): void
+    {
+        $client = self::createClient();
+        // Closure Control (0x0104) is Matter 1.4+, did not exist in 1.0
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/cluster/0x0104/version/1.0');
+
+        $this->assertResponseStatusCodeSame(404);
+    }
+
     // === Market Page Tests ===
 
     public function testMarketPageLoads(): void

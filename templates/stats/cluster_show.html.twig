@@ -378,6 +378,53 @@
         margin-top: 0.25rem;
     }
 
+    .version-timeline {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 1rem 1.25rem;
+    }
+
+    .version-timeline a,
+    .version-timeline .current {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.375rem;
+        text-decoration: none;
+        font-size: 0.8125rem;
+        background: var(--gray-50);
+        border: 1px solid var(--gray-200);
+        color: inherit;
+        transition: background-color 0.15s;
+    }
+
+    .version-timeline a:hover {
+        background: var(--gray-100);
+    }
+
+    .version-timeline .current {
+        background: #dbeafe;
+        border-color: #93c5fd;
+        color: #1e40af;
+        font-weight: 500;
+    }
+
+    .version-timeline .version-label {
+        font-weight: 600;
+    }
+
+    .version-timeline .rev-label {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: var(--gray-500);
+        font-size: 0.75rem;
+    }
+
+    .version-timeline .current .rev-label {
+        color: #1e40af;
+    }
+
     .section-tabs {
         display: flex;
         border-bottom: 1px solid var(--gray-200);
@@ -482,7 +529,11 @@
                 <span class="badge badge-{{ cluster.apiMaturity }}">{{ cluster.apiMaturity|capitalize }}</span>
             </div>
             {% endif %}
-            {% if cluster.specVersion %}
+            {% if versionHistory|default([])|length > 0 %}
+            <div class="meta-item">
+                <span class="meta-label">Introduced in:</span> Matter {{ versionHistory|first.matterVersion }}
+            </div>
+            {% elseif cluster.specVersion %}
             <div class="meta-item">
                 <span class="meta-label">Spec:</span> Matter {{ cluster.specVersion }}
             </div>
@@ -498,6 +549,25 @@
         </div>
         {% endif %}
     </div>
+
+    {% if versionHistory|default([])|length > 0 %}
+    <div class="section">
+        <div class="section-header">
+            <h2>Spec History</h2>
+            <p>This cluster's ClusterRevision across the Matter releases it has shipped in. Click a version to inspect the cluster as it existed in that release.</p>
+        </div>
+        <div class="version-timeline">
+            {% for v in versionHistory %}
+                <a href="{{ path('stats_cluster_version_show', {hexId: cluster.hexId, matterVersion: v.matterVersion}) }}">
+                    <span class="version-label">Matter {{ v.matterVersion }}</span>
+                    {% if v.clusterRevision is not null %}
+                        <span class="rev-label">rev {{ v.clusterRevision }}</span>
+                    {% endif %}
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 
     {# Specification Data Section - Features, Attributes, Commands #}
     {% set features = cluster.features ?? [] %}

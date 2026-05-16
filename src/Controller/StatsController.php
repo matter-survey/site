@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Repository\ClusterRepository;
+use App\Repository\ClusterVersionRepository;
 use App\Repository\DeviceRepository;
 use App\Repository\DeviceTypeRepository;
 use App\Repository\ProductRepository;
@@ -25,6 +26,7 @@ class StatsController extends AbstractController
         private readonly TelemetryService $telemetryService,
         private readonly MatterRegistry $matterRegistry,
         private readonly ClusterRepository $clusterRepo,
+        private readonly ClusterVersionRepository $clusterVersionRepo,
         private readonly ProductRepository $productRepo,
         private readonly ChartFactory $chartFactory,
         private readonly DeviceScoreService $deviceScoreService,
@@ -375,6 +377,9 @@ class StatsController extends AbstractController
         // Get device types that require this cluster
         $deviceTypesRequiring = $this->deviceRepo->getDeviceTypesRequiringCluster($cluster->getId());
 
+        // Per-Matter-version history (one row per release the cluster appears in)
+        $versionHistory = $this->clusterVersionRepo->findByClusterId($cluster->getId());
+
         $aeoBreadcrumbs = [
             ['name' => 'Home', 'url' => $this->generateUrl('device_index', [], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL)],
             ['name' => 'Clusters', 'url' => $this->generateUrl('stats_clusters', [], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL)],
@@ -388,8 +393,53 @@ class StatsController extends AbstractController
             'currentPage' => $page,
             'totalPages' => $totalPages,
             'deviceTypesRequiring' => $deviceTypesRequiring,
+            'versionHistory' => $versionHistory,
             'matterRegistry' => $this->matterRegistry,
             'aeoMandatoryForCount' => \count($deviceTypesRequiring),
+            'aeoDateModified' => $cluster->getUpdatedAt(),
+            'aeoBreadcrumbs' => $aeoBreadcrumbs,
+        ]);
+    }
+
+    #[Route(
+        '/cluster/{hexId}/version/{matterVersion}',
+        name: 'stats_cluster_version_show',
+        requirements: ['hexId' => '0x[0-9A-Fa-f]+', 'matterVersion' => '\d+\.\d+'],
+        methods: ['GET'],
+    )]
+    public function clusterVersionShow(string $hexId, string $matterVersion): Response
+    {
+        $cluster = $this->clusterRepo->findByHexId($hexId);
+        if (!$cluster instanceof \App\Entity\Cluster) {
+            throw new NotFoundHttpException(\sprintf('Cluster %s not found', $hexId));
+        }
+
+        $snapshot = $this->clusterVersionRepo->find([
+            'clusterId' => $cluster->getId(),
+            'matterVersion' => $matterVersion,
+        ]);
+        if (!$snapshot instanceof \App\Entity\ClusterVersion) {
+            throw new NotFoundHttpException(\sprintf(
+                'Cluster %s did not exist in Matter %s',
+                $hexId,
+                $matterVersion,
+            ));
+        }
+
+        $versionHistory = $this->clusterVersionRepo->findByClusterId($cluster->getId());
+
+        $aeoBreadcrumbs = [
+            ['name' => 'Home', 'url' => $this->generateUrl('device_index', [], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL)],
+            ['name' => 'Clusters', 'url' => $this->generateUrl('stats_clusters', [], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL)],
+            ['name' => $cluster->getName(), 'url' => $this->generateUrl('stats_cluster_show', ['hexId' => $cluster->getHexId()], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL)],
+            ['name' => \sprintf('Matter %s', $matterVersion), 'url' => $this->generateUrl('stats_cluster_version_show', ['hexId' => $cluster->getHexId(), 'matterVersion' => $matterVersion], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL)],
+        ];
+
+        return $this->render('stats/cluster_version_show.html.twig', [
+            'cluster' => $cluster,
+            'snapshot' => $snapshot,
+            'versionHistory' => $versionHistory,
+            'matterVersion' => $matterVersion,
             'aeoDateModified' => $cluster->getUpdatedAt(),
             'aeoBreadcrumbs' => $aeoBreadcrumbs,
         ]);
