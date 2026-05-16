@@ -4,7 +4,7 @@
 -include .env.local
 export
 
-.PHONY: help install dev prod clean lint lint-fix analyse phpstan rector rector-fix test db-init db-reset db-migrate db-fixtures test-reset deploy
+.PHONY: help install install-hooks dev prod clean lint lint-fix analyse phpstan rector rector-fix test db-init db-reset db-migrate db-fixtures test-reset deploy
 
 # Default target
 help:
@@ -13,13 +13,14 @@ help:
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Development:"
-	@echo "  install     Install PHP dependencies"
-	@echo "  dev         Start development server (localhost:8000)"
-	@echo "  lint        Run code style checks (php-cs-fixer)"
-	@echo "  analyse     Run static analysis (PHPStan)"
-	@echo "  rector      Run Rector in dry-run mode (no changes written)"
-	@echo "  rector-fix  Apply Rector refactors to src/ and tests/"
-	@echo "  test        Run tests"
+	@echo "  install        Install PHP dependencies"
+	@echo "  install-hooks  Enable .githooks/pre-commit (runs lint/PHPStan/Rector before each commit)"
+	@echo "  dev            Start development server (localhost:8000)"
+	@echo "  lint           Run code style checks (php-cs-fixer)"
+	@echo "  analyse        Run static analysis (PHPStan)"
+	@echo "  rector         Run Rector in dry-run mode (no changes written)"
+	@echo "  rector-fix     Apply Rector refactors to src/ and tests/"
+	@echo "  test           Run tests"
 	@echo ""
 	@echo "Database:"
 	@echo "  db-migrate  Run database migrations"
@@ -46,6 +47,10 @@ help:
 # Development
 install:
 	composer install
+
+install-hooks:
+	git config core.hooksPath .githooks
+	@echo "Git hooks enabled — pre-commit will run lint, PHPStan, and Rector."
 
 dev:
 	php -S localhost:8000 -t public public/router.php

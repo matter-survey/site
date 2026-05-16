@@ -34,6 +34,8 @@ make deploy
 
 **Important:** Always run `make lint`, `make analyse`, and `make rector` before committing.
 
+A pre-commit hook script lives at `.githooks/pre-commit`. Enable it once per clone with `make install-hooks` (sets `core.hooksPath` to the committed directory). It runs the same quality gates CI does — lint, PHPStan, Rector dry-run — and blocks the commit if any fail. Skip with `git commit --no-verify` if you must, but the CI check will then fail.
+
 ### Dev tooling layout
 
 Dev-only tools that would pollute the main app's `composer.json` (and its lockfile resolution) with transitive dependencies are installed under `tools/<tool>/` with their own composer manifest and committed lockfile:

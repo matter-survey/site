@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+#
+# Pre-commit hook: runs the same quality gates CI does.
+# Enable once per clone with `make install-hooks` (sets core.hooksPath here).
+# Skip a specific commit with `git commit --no-verify` (not recommended).
+
+set -e
+
+# Only consider PHP changes. If nothing relevant is staged, exit early.
+STAGED_PHP=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(php)$' || true)
+if [ -z "$STAGED_PHP" ]; then
+    exit 0
+fi
+
+echo "── pre-commit: php-cs-fixer (lint) ───────────────────────────"
+make lint > /tmp/precommit-lint.log 2>&1
+if grep -q '"files":\[{' /tmp/precommit-lint.log; then
+    echo "✗ php-cs-fixer found violations. Run \`make lint-fix\` and re-stage."
+    cat /tmp/precommit-lint.log
+    exit 1
+fi
+echo "✓ lint clean"
+
+echo "── pre-commit: PHPStan ───────────────────────────────────────"
+if ! make analyse > /tmp/precommit-stan.log 2>&1; then
+    echo "✗ PHPStan errors:"
+    cat /tmp/precommit-stan.log
+    exit 1
+fi
+echo "✓ PHPStan clean"
+
+echo "── pre-commit: Rector (dry-run) ──────────────────────────────"
+if ! make rector > /tmp/precommit-rector.log 2>&1; then
+    echo "✗ Rector wants to refactor — run \`make rector-fix\` and re-stage."
+    grep -E 'would have been changed|begin diff|end diff' /tmp/precommit-rector.log | head -40
+    exit 1
+fi
+echo "✓ Rector clean"
+
+echo "── pre-commit: all gates green"
