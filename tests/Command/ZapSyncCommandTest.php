@@ -54,4 +54,22 @@ final class ZapSyncCommandTest extends KernelTestCase
 
         $this->assertTrue($application->has('app:zap:sync'));
     }
+
+    public function testExecuteAcceptsRefOption(): void
+    {
+        // Pinned Matter release tag — frozen in upstream, safe as a fixture for the
+        // ref-plumbing path. Asserts the ref appears in the output header so a typo
+        // in URL construction would be caught.
+        $this->commandTester->execute([
+            '--dry-run' => true,
+            '--cluster' => '6',
+            '--ref' => 'v1.4.2.0',
+        ]);
+
+        $output = $this->commandTester->getDisplay();
+
+        $this->assertSame(0, $this->commandTester->getStatusCode());
+        $this->assertStringContainsString('v1.4.2.0', $output);
+        $this->assertStringContainsString('ZAP sync complete', $output);
+    }
 }

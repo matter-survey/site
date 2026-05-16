@@ -27,9 +27,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 )]
 class ZapSyncCommand extends Command
 {
-    private const string ZCL_BASE_URL = 'https://raw.githubusercontent.com/project-chip/connectedhomeip/master/src/app/zap-templates/zcl';
-    private const string ZCL_JSON_URL = self::ZCL_BASE_URL.'/zcl.json';
-    private const string ZCL_XML_BASE = self::ZCL_BASE_URL.'/data-model/chip/';
+    private const string REPO_BASE = 'https://raw.githubusercontent.com/project-chip/connectedhomeip';
+    private const string DEFAULT_REF = 'master';
     private const string DEFAULT_OUTPUT_FILE = 'fixtures/clusters.yaml';
 
     public function __construct(
@@ -44,7 +43,8 @@ class ZapSyncCommand extends Command
         $this
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Show what would be updated without making changes')
             ->addOption('cluster', 'c', InputOption::VALUE_REQUIRED, 'Sync only a specific cluster by ID (decimal)')
-            ->addOption('output', 'o', InputOption::VALUE_REQUIRED, 'Output file path', self::DEFAULT_OUTPUT_FILE);
+            ->addOption('output', 'o', InputOption::VALUE_REQUIRED, 'Output file path', self::DEFAULT_OUTPUT_FILE)
+            ->addOption('ref', 'r', InputOption::VALUE_REQUIRED, 'Git ref (tag, branch, or SHA) to sync from', self::DEFAULT_REF);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -66,8 +66,11 @@ class ZapSyncCommand extends Command
         $dryRun = $input->getOption('dry-run');
         $singleClusterId = $input->getOption('cluster');
         $outputFile = $this->projectDir.'/'.$input->getOption('output');
+        $ref = $input->getOption('ref') ?: self::DEFAULT_REF;
+        $span->setAttribute('zap.ref', $ref);
 
         $io->title('Matter ZAP Cluster Data Sync');
+        $io->info(\sprintf('Source ref: %s', $ref));
 
         if ($dryRun) {
             $io->warning('DRY RUN - No changes will be made to fixtures');
@@ -90,7 +93,7 @@ class ZapSyncCommand extends Command
 
         // Fetch list of XML files from zcl.json
         $io->section('Fetching cluster file list from GitHub...');
-        $clusterFiles = $this->fetchClusterFileList($io);
+        $clusterFiles = $this->fetchClusterFileList($io, $ref);
         if ([] === $clusterFiles) {
             $io->error('Failed to fetch cluster file list');
 
@@ -107,7 +110,7 @@ class ZapSyncCommand extends Command
         $io->progressStart(\count($clusterFiles));
 
         foreach ($clusterFiles as $file) {
-            $clustersInFile = $this->fetchAndParseClusterXml($file, $io);
+            $clustersInFile = $this->fetchAndParseClusterXml($file, $io, $ref);
             if ([] === $clustersInFile) {
                 $io->progressAdvance();
                 continue;
@@ -158,8 +161,8 @@ class ZapSyncCommand extends Command
             $io->section('Writing updated fixtures...');
 
             $yamlContent = "# Matter Cluster Definitions\n";
-            $yamlContent .= "# Based on Matter 1.4 Specification\n";
             $yamlContent .= "# Attributes, commands, and features synced from connectedhomeip ZAP XML files\n";
+            $yamlContent .= \sprintf("# Source ref: %s\n", $ref);
             $yamlContent .= '# Last ZAP sync: '.date('Y-m-d H:i:s')."\n\n";
             $yamlContent .= Yaml::dump($existingClusters, 6, 2, Yaml::DUMP_MULTI_LINE_LITERAL_BLOCK);
 
@@ -177,13 +180,18 @@ class ZapSyncCommand extends Command
         return Command::SUCCESS;
     }
 
+    private function zclBaseUrl(string $ref): string
+    {
+        return \sprintf('%s/%s/src/app/zap-templates/zcl', self::REPO_BASE, $ref);
+    }
+
     /**
      * @return array<string>
      */
-    private function fetchClusterFileList(SymfonyStyle $io): array
+    private function fetchClusterFileList(SymfonyStyle $io, string $ref): array
     {
         try {
-            $response = $this->httpClient->request('GET', self::ZCL_JSON_URL);
+            $response = $this->httpClient->request('GET', $this->zclBaseUrl($ref).'/zcl.json');
             $data = json_decode($response->getContent(), true);
 
             return $data['xmlFile'] ?? [];
@@ -203,9 +211,9 @@ class ZapSyncCommand extends Command
      *
      * @return list<array{id: int, name: string, attributes: array, commands: array, features: array, apiMaturity?: string, clusterRevision?: int}>
      */
-    private function fetchAndParseClusterXml(string $filename, SymfonyStyle $io): array
+    private function fetchAndParseClusterXml(string $filename, SymfonyStyle $io, string $ref): array
     {
-        $url = self::ZCL_XML_BASE.$filename;
+        $url = $this->zclBaseUrl($ref).'/data-model/chip/'.$filename;
 
         try {
             $response = $this->httpClient->request('GET', $url);
