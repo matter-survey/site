@@ -19,9 +19,23 @@ use Symfony\Component\HttpKernel\KernelEvents;
 
 final class RequestTracingSubscriber implements EventSubscriberInterface
 {
-    private const SPAN_ATTR = '_otel_span';
-    private const SCOPE_ATTR = '_otel_scope';
     private const TRACER_NAME = 'app.matter-survey';
+
+    /**
+     * Per-request OTel state, keyed by Request object. Stored off-Request because
+     * anything placed in `$request->attributes` is walked by Symfony Security's
+     * HttpUtils::generateUri() when building redirects — and OTel Span/Scope
+     * objects carry circular references that explode `UrlGenerator`'s recursive
+     * `get_object_vars` walk on PHP 8.4's tighter `zend.max_allowed_stack_size`.
+     *
+     * @var \SplObjectStorage<\Symfony\Component\HttpFoundation\Request, array{span: SpanInterface, scope: ScopeInterface}>
+     */
+    private \SplObjectStorage $state;
+
+    public function __construct()
+    {
+        $this->state = new \SplObjectStorage();
+    }
 
     public static function getSubscribedEvents(): array
     {
@@ -57,8 +71,7 @@ final class RequestTracingSubscriber implements EventSubscriberInterface
             ->setAttribute('server.address', $request->getHost())
             ->startSpan();
 
-        $request->attributes->set(self::SPAN_ATTR, $span);
-        $request->attributes->set(self::SCOPE_ATTR, $span->activate());
+        $this->state[$request] = ['span' => $span, 'scope' => $span->activate()];
     }
 
     public function onKernelController(ControllerEvent $event): void
@@ -68,11 +81,10 @@ final class RequestTracingSubscriber implements EventSubscriberInterface
         }
 
         $request = $event->getRequest();
-        $span = $request->attributes->get(self::SPAN_ATTR);
-
-        if (!$span instanceof SpanInterface) {
+        if (!isset($this->state[$request])) {
             return;
         }
+        $span = $this->state[$request]['span'];
 
         $route = $request->attributes->get('_route');
         if (\is_string($route) && '' !== $route) {
@@ -87,10 +99,11 @@ final class RequestTracingSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $span = $event->getRequest()->attributes->get(self::SPAN_ATTR);
-        if (!$span instanceof SpanInterface) {
+        $request = $event->getRequest();
+        if (!isset($this->state[$request])) {
             return;
         }
+        $span = $this->state[$request]['span'];
 
         $span->recordException($event->getThrowable());
         $span->setStatus(StatusCode::STATUS_ERROR, $event->getThrowable()->getMessage());
@@ -99,17 +112,13 @@ final class RequestTracingSubscriber implements EventSubscriberInterface
     public function onKernelTerminate(TerminateEvent $event): void
     {
         $request = $event->getRequest();
-        $span = $request->attributes->get(self::SPAN_ATTR);
-        $scope = $request->attributes->get(self::SCOPE_ATTR);
 
-        if ($span instanceof SpanInterface) {
-            $span->setAttribute('http.response.status_code', $event->getResponse()->getStatusCode());
-            $span->end();
-            $request->attributes->remove(self::SPAN_ATTR);
-        }
-        if ($scope instanceof ScopeInterface) {
-            $scope->detach();
-            $request->attributes->remove(self::SCOPE_ATTR);
+        if (isset($this->state[$request])) {
+            $entry = $this->state[$request];
+            $entry['span']->setAttribute('http.response.status_code', $event->getResponse()->getStatusCode());
+            $entry['span']->end();
+            $entry['scope']->detach();
+            unset($this->state[$request]);
         }
 
         if (\function_exists('fastcgi_finish_request')) {

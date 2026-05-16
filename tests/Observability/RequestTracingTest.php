@@ -65,6 +65,32 @@ final class RequestTracingTest extends WebTestCase
         $this->assertSame(200, $attrs['http.response.status_code'] ?? null);
     }
 
+    public function testRequestAttributesAreNotPollutedWithOtelObjects(): void
+    {
+        // Regression: storing Span/Scope objects in $request->attributes broke
+        // Symfony Security redirects because HttpUtils::generateUri() passes
+        // attributes wholesale to the UrlGenerator, which walks objects via
+        // get_object_vars; the Span's circular internals then exploded the
+        // recursion under PHP 8.4's default zend.max_allowed_stack_size.
+        $client = static::createClient();
+        $client->request('GET', '/health');
+        $this->assertResponseIsSuccessful();
+
+        $attrs = $client->getRequest()->attributes->all();
+        foreach ($attrs as $key => $value) {
+            $this->assertNotInstanceOf(
+                \OpenTelemetry\API\Trace\SpanInterface::class,
+                $value,
+                sprintf('Request attribute "%s" must not be an OTel Span.', $key),
+            );
+            $this->assertNotInstanceOf(
+                \OpenTelemetry\Context\ScopeInterface::class,
+                $value,
+                sprintf('Request attribute "%s" must not be an OTel Scope.', $key),
+            );
+        }
+    }
+
     public function testIncomingTraceparentIsHonored(): void
     {
         $traceId = '0af7651916cd43dd8448eb211c80319c';
