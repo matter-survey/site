@@ -107,46 +107,37 @@ class ZapSyncCommand extends Command
         $io->progressStart(\count($clusterFiles));
 
         foreach ($clusterFiles as $file) {
-            // Skip non-cluster files
-            if (!str_ends_with($file, '-cluster.xml')) {
+            $clustersInFile = $this->fetchAndParseClusterXml($file, $io);
+            if ([] === $clustersInFile) {
                 $io->progressAdvance();
                 continue;
             }
 
-            $clusterData = $this->fetchAndParseClusterXml($file);
-            if (null === $clusterData) {
-                ++$skippedCount;
-                $io->progressAdvance();
-                continue;
+            foreach ($clustersInFile as $clusterData) {
+                if (null !== $singleClusterId && $clusterData['id'] !== (int) $singleClusterId) {
+                    continue;
+                }
+
+                if (!isset($clusterMap[$clusterData['id']])) {
+                    ++$skippedCount;
+                    continue;
+                }
+
+                $index = $clusterMap[$clusterData['id']];
+
+                if (!empty($clusterData['attributes'])) {
+                    $existingClusters[$index]['attributes'] = $clusterData['attributes'];
+                }
+                if (!empty($clusterData['commands'])) {
+                    $existingClusters[$index]['commands'] = $clusterData['commands'];
+                }
+                if (!empty($clusterData['features'])) {
+                    $existingClusters[$index]['features'] = $clusterData['features'];
+                }
+
+                ++$updatedCount;
             }
 
-            // Filter by single cluster if specified
-            if (null !== $singleClusterId && $clusterData['id'] !== (int) $singleClusterId) {
-                $io->progressAdvance();
-                continue;
-            }
-
-            // Check if cluster exists in our fixtures
-            if (!isset($clusterMap[$clusterData['id']])) {
-                ++$skippedCount;
-                $io->progressAdvance();
-                continue;
-            }
-
-            // Update the cluster in the array
-            $index = $clusterMap[$clusterData['id']];
-
-            if (!empty($clusterData['attributes'])) {
-                $existingClusters[$index]['attributes'] = $clusterData['attributes'];
-            }
-            if (!empty($clusterData['commands'])) {
-                $existingClusters[$index]['commands'] = $clusterData['commands'];
-            }
-            if (!empty($clusterData['features'])) {
-                $existingClusters[$index]['features'] = $clusterData['features'];
-            }
-
-            ++$updatedCount;
             $io->progressAdvance();
         }
 
@@ -194,9 +185,15 @@ class ZapSyncCommand extends Command
     }
 
     /**
-     * @return array{id: int, name: string, attributes: array, commands: array, features: array}|null
+     * Parse all primary cluster definitions from a ZAP XML file.
+     *
+     * Some files (e.g. concentration-measurement-cluster.xml, resource-monitoring-cluster.xml)
+     * define multiple sibling clusters. Files without any primary cluster definition
+     * (types-only, extensions, etc.) return an empty list.
+     *
+     * @return list<array{id: int, name: string, attributes: array, commands: array, features: array}>
      */
-    private function fetchAndParseClusterXml(string $filename): ?array
+    private function fetchAndParseClusterXml(string $filename, SymfonyStyle $io): array
     {
         $url = self::ZCL_XML_BASE.$filename;
 
@@ -204,52 +201,36 @@ class ZapSyncCommand extends Command
             $response = $this->httpClient->request('GET', $url);
             $xml = simplexml_load_string($response->getContent());
             if (false === $xml) {
-                return null;
+                return [];
             }
 
-            // Find the cluster element - look for cluster element with children (the actual definition)
-            // Skip cluster elements that are just references (have only 'code' attribute)
-            $clusterNode = null;
-            $clusters = $xml->xpath('//cluster');
-            foreach ($clusters as $candidate) {
-                // The actual cluster definition has a <code> child element, not just a 'code' attribute
-                if (property_exists($candidate, 'code') && null !== $candidate->code || property_exists($candidate, 'name') && null !== $candidate->name) {
-                    $clusterNode = $candidate;
-                    break;
+            $results = [];
+            // Primary cluster definitions have <code> and <name> as child elements.
+            // Self-closing references like <cluster code="0x0006"/> inside enums/bitmaps are skipped.
+            foreach ($xml->xpath('//cluster') ?: [] as $candidate) {
+                if ((!property_exists($candidate, 'code') || null === $candidate->code) && (!property_exists($candidate, 'name') || null === $candidate->name)) {
+                    continue;
                 }
+
+                $codeValue = trim((string) $candidate->code);
+                if ('' === $codeValue) {
+                    continue;
+                }
+
+                $results[] = [
+                    'id' => $this->parseHexOrDecimal($codeValue),
+                    'name' => trim((string) $candidate->name),
+                    'features' => $this->parseFeatures($candidate),
+                    'attributes' => $this->parseAttributes($candidate),
+                    'commands' => $this->parseCommands($candidate),
+                ];
             }
 
-            if (null === $clusterNode) {
-                return null;
-            }
+            return $results;
+        } catch (\Exception $e) {
+            $io->warning(\sprintf('Failed to fetch/parse %s: %s', $filename, $e->getMessage()));
 
-            // Get cluster ID from <code> child element or 'code' attribute
-            $codeValue = (string) ($clusterNode->code ?? $clusterNode['code'] ?? '');
-            if ('' === $codeValue || '0' === $codeValue) {
-                return null;
-            }
-
-            $clusterId = $this->parseHexOrDecimal($codeValue);
-            $clusterName = (string) ($clusterNode->name ?? $clusterNode['name'] ?? '');
-
-            // Parse features
-            $features = $this->parseFeatures($clusterNode);
-
-            // Parse attributes
-            $attributes = $this->parseAttributes($clusterNode);
-
-            // Parse commands
-            $commands = $this->parseCommands($clusterNode);
-
-            return [
-                'id' => $clusterId,
-                'name' => $clusterName,
-                'features' => $features,
-                'attributes' => $attributes,
-                'commands' => $commands,
-            ];
-        } catch (\Exception) {
-            return null;
+            return [];
         }
     }
 
@@ -258,21 +239,28 @@ class ZapSyncCommand extends Command
      */
     private function parseFeatures(\SimpleXMLElement $clusterNode): array
     {
+        // Only read from the <features> block. A previous `.//feature` xpath fallback
+        // leaked <feature name="X"/> references inside <mandatoryConform>/<optionalConform>
+        // trees (which carry only a name) as garbage features.
+        if (!property_exists($clusterNode->features, 'feature') || null === $clusterNode->features->feature) {
+            return [];
+        }
+
         $features = [];
+        foreach ($clusterNode->features->feature as $feature) {
+            $summary = (string) ($feature['summary'] ?? '');
+            if ('' === $summary) {
+                $summary = trim((string) ($feature->description ?? ''));
+            }
 
-        // Features can be in different locations
-        $featureNodes = $clusterNode->features->feature ?? $clusterNode->xpath('.//feature') ?? [];
-
-        foreach ($featureNodes as $feature) {
             $features[] = [
                 'bit' => (int) ($feature['bit'] ?? 0),
                 'code' => (string) ($feature['code'] ?? ''),
                 'name' => (string) ($feature['name'] ?? ''),
-                'summary' => (string) ($feature['summary'] ?? $feature->description ?? null) ?: null,
+                'summary' => '' !== $summary ? $summary : null,
             ];
         }
 
-        // Sort by bit position
         usort($features, fn (array $a, array $b): int => $a['bit'] <=> $b['bit']);
 
         return $features;
@@ -289,11 +277,13 @@ class ZapSyncCommand extends Command
         $attrNodes = $clusterNode->attribute ?? $clusterNode->attributes->attribute ?? [];
 
         foreach ($attrNodes as $attr) {
-            $code = (string) ($attr['code'] ?? $attr['id'] ?? '');
-            if ('' === $code) {
+            $side = (string) ($attr['side'] ?? 'server');
+            if ('server' !== $side) {
                 continue;
             }
-            if ('0' === $code) {
+
+            $code = (string) ($attr['code'] ?? $attr['id'] ?? '');
+            if ('' === $code) {
                 continue;
             }
 
@@ -306,7 +296,6 @@ class ZapSyncCommand extends Command
             ];
         }
 
-        // Sort by code
         usort($attributes, fn (array $a, array $b): int => $a['code'] <=> $b['code']);
 
         return $attributes;
@@ -325,9 +314,6 @@ class ZapSyncCommand extends Command
         foreach ($cmdNodes as $cmd) {
             $code = (string) ($cmd['code'] ?? $cmd['id'] ?? '');
             if ('' === $code) {
-                continue;
-            }
-            if ('0' === $code) {
                 continue;
             }
 
