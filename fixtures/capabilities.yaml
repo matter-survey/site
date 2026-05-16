@@ -451,9 +451,7 @@ capabilities:
     category: automation
     description: "Save and recall device presets"
     clusters:
-      - id: 98   # Scenes Management (new)
-        role: server
-      - id: 5    # Scenes (legacy)
+      - id: 98   # Scenes Management
         role: server
     actions:
       - cmd: 0    # AddScene
@@ -846,24 +844,6 @@ capabilities:
       - attr: 20  # NumberOfWeekDaySchedulesSupportedPerUser
         friendly: "Schedules per user"
 
-  alarm:
-    label: "Alarm/siren"
-    icon: "bell"
-    emoji: "🔔"
-    category: security
-    description: "Can sound an alarm"
-    clusters:
-      - id: 1282  # IAS WD (Warning Device)
-        role: server
-    actions:
-      - cmd: 0    # StartWarning
-        friendly: "Start sounding the alarm"
-      - cmd: 1    # Squawk
-        friendly: "Play a short alert sound"
-    statuses:
-      - attr: 0   # MaxDuration
-        friendly: "Maximum alarm duration"
-
   # ============================================
   # MEDIA & ENTERTAINMENT
   # ============================================
@@ -907,7 +887,7 @@ capabilities:
     category: media
     description: "Adjust audio volume"
     clusters:
-      - id: 1092  # Audio Output
+      - id: 1291  # Audio Output
         role: server
     actions:
       - cmd: 0    # SelectOutput
