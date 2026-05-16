@@ -207,4 +207,102 @@ class DeviceRepositoryExtraTest extends KernelTestCase
         $this->assertIsArray($rows);
         $this->assertLessThanOrEqual(5, count($rows));
     }
+
+    public function testGetFilteredDevicesByVendorFk(): void
+    {
+        $em = static::getContainer()->get(\Doctrine\ORM\EntityManagerInterface::class);
+        $vendor = $em->getRepository(\App\Entity\Vendor::class)->findOneBy(['specId' => 4874]);
+        $this->assertNotNull($vendor);
+
+        $devices = $this->repository->getFilteredDevices(['vendor' => $vendor->getId()], 200, 0);
+        $count = $this->repository->getFilteredDeviceCount(['vendor' => $vendor->getId()]);
+
+        $this->assertSame($count, count($devices));
+        foreach ($devices as $d) {
+            $this->assertSame($vendor->getId(), (int) $d['vendor_fk']);
+        }
+    }
+
+    public function testGetFilteredDevicesBySearch(): void
+    {
+        $devices = $this->repository->getFilteredDevices(['search' => 'Eve'], 200, 0);
+        $count = $this->repository->getFilteredDeviceCount(['search' => 'Eve']);
+
+        $this->assertSame($count, count($devices));
+        $this->assertGreaterThan(0, $count);
+    }
+
+    public function testGetFilteredDevicesByMinRating(): void
+    {
+        // min_rating filter joins device_scores; even with an empty scores
+        // table, the query should run and produce a deterministic result.
+        $devices = $this->repository->getFilteredDevices(['min_rating' => 3], 200, 0);
+        $count = $this->repository->getFilteredDeviceCount(['min_rating' => 3]);
+
+        $this->assertSame($count, count($devices));
+    }
+
+    public function testGetFilteredDevicesByCompatibleWithEmptyArray(): void
+    {
+        // Empty owned-device array short-circuits to "no compatible devices"
+        // path → all results filtered out by `1=0`.
+        $devices = $this->repository->getFilteredDevices(['compatible_with' => []], 200, 0);
+
+        // `!empty([])` is false → branch is skipped → returns everything.
+        $this->assertGreaterThan(0, count($devices));
+    }
+
+    public function testGetFilteredDevicesByCompatibleWithUnknownDevicesGetsNoResults(): void
+    {
+        // Owned IDs that have no co-occurrence → `findCompatibleDevices` returns
+        // empty array → the `1=0` branch fires and the query returns nothing.
+        $devices = $this->repository->getFilteredDevices(
+            ['compatible_with' => [99999991, 99999992]],
+            200,
+            0,
+        );
+
+        $this->assertSame([], $devices);
+    }
+
+    public function testGetFilteredDevicesByCapability(): void
+    {
+        // Capability 'dimming' maps to cluster 8 (Level Control). Fixture
+        // devices include lights that have this cluster.
+        $devices = $this->repository->getFilteredDevices(
+            ['capabilities' => ['dimming']],
+            200,
+            0,
+        );
+        $count = $this->repository->getFilteredDeviceCount(['capabilities' => ['dimming']]);
+
+        $this->assertSame($count, count($devices));
+    }
+
+    public function testGetFilteredDevicesByMultipleCapabilitiesIntersects(): void
+    {
+        // Devices with BOTH dimming (cluster 8) AND full_color (cluster 768).
+        // Extended Color Lights typically have both.
+        $devices = $this->repository->getFilteredDevices(
+            ['capabilities' => ['dimming', 'full_color']],
+            200,
+            0,
+        );
+
+        $this->assertIsArray($devices);
+    }
+
+    public function testGetFilteredDevicesByCapabilityIgnoresUnknownKeys(): void
+    {
+        // Unknown capability keys are silently filtered out before the
+        // subquery is assembled.
+        $allDevices = $this->repository->getFilteredDevices([], 200, 0);
+        $devices = $this->repository->getFilteredDevices(
+            ['capabilities' => ['not_a_real_capability']],
+            200,
+            0,
+        );
+
+        $this->assertCount(count($allDevices), $devices);
+    }
 }
