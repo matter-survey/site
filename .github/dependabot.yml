@@ -76,6 +76,12 @@ updates:
       interval: "daily"
     open-pull-requests-limit: 5
 
+  - package-ecosystem: "composer"
+    directory: "/tools/php-cs-fixer"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 5
+
   - package-ecosystem: "docker"
     directory: "/"
     schedule:

@@ -45,7 +45,6 @@ Thumbs.db
 /assets/vendor/
 ###< symfony/asset-mapper ###
 
-###> friendsofphp/php-cs-fixer ###
-/.php-cs-fixer.php
+# php-cs-fixer cache (the binary lives in tools/php-cs-fixer/ but the
+# cache is still written at the project root, where the config lives).
 /.php-cs-fixer.cache
-###< friendsofphp/php-cs-fixer ###

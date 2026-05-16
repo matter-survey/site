@@ -84,8 +84,11 @@ jobs:
       - name: Check for security vulnerabilities
         run: composer audit
 
+      - name: Install php-cs-fixer (isolated)
+        run: composer install -d tools/php-cs-fixer --no-interaction --no-progress
+
       - name: Check code style (php-cs-fixer)
-        run: vendor/bin/php-cs-fixer fix --dry-run --diff --no-interaction
+        run: tools/php-cs-fixer/vendor/bin/php-cs-fixer fix --dry-run --diff --no-interaction
 
       - name: Install Rector (isolated)
         run: composer install -d tools/rector --no-interaction --no-progress

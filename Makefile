@@ -59,10 +59,12 @@ clear-cache:
 
 # Linting & Static Analysis
 lint:
-	vendor/bin/php-cs-fixer fix --dry-run --diff || true
+	@composer install -d tools/php-cs-fixer --no-interaction --quiet
+	tools/php-cs-fixer/vendor/bin/php-cs-fixer fix --dry-run --diff || true
 
 lint-fix:
-	vendor/bin/php-cs-fixer fix
+	@composer install -d tools/php-cs-fixer --no-interaction --quiet
+	tools/php-cs-fixer/vendor/bin/php-cs-fixer fix
 
 analyse:
 	@composer install -d tools/phpstan --no-interaction --quiet
