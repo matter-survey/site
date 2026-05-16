@@ -144,23 +144,18 @@ final class DeviceControllerTest extends WebTestCase
     {
         $client = self::createClient();
 
-        // First get a device ID from the database
-        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
-        $this->assertResponseIsSuccessful();
+        // Pick a real product id from the DB rather than hard-coding "1". SQLite's
+        // AUTOINCREMENT counter persists across fixture reloads, so the lowest id
+        // is only 1 on a freshly-seeded test DB. Querying the actual lowest id
+        // makes the test robust to dev workflows that reload fixtures repeatedly.
+        $product = self::getContainer()->get(\Doctrine\ORM\EntityManagerInterface::class)
+            ->getRepository(\App\Entity\Product::class)
+            ->findOneBy([], ['id' => 'ASC']);
 
-        // Get the first device's slug-based link
-        $deviceLink = $crawler->filter('.device-info h3 a')->first();
-        $deviceLink->attr('href');
+        $this->assertNotNull($product, 'Expected at least one fixture product');
 
-        // Extract device ID by going to the page and checking what we find
-        // Since we're using slugs now, we need to test the redirect from ID to slug
-        // Get an ID from fixtures - Eve Motion has vendor_id=4874, product_id=100
-        // The slug would be eve-motion-4874-100
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device/'.$product->getId());
 
-        // Request with ID should redirect to slug
-        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device/1');
-
-        // Should redirect (301) to slug URL
         $this->assertResponseRedirects();
         $this->assertResponseStatusCodeSame(Response::HTTP_MOVED_PERMANENTLY);
     }
