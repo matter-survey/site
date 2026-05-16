@@ -241,19 +241,19 @@
   id: 71
   name: Timer
   description: 'Provides countdown timer functionality for appliances, allowing users to set time-limited operations.'
-  category: appliance
+  category: appliances
   isGlobal: false
 -
   id: 72
   name: 'Oven Cavity Operational State'
   description: 'Reports operational state for oven cavities including preheating, cooking, and cooling states.'
-  category: appliance
+  category: appliances
   isGlobal: false
 -
   id: 73
   name: 'Oven Mode'
   description: 'Controls operating modes for ovens, such as bake, broil, convection, and self-clean.'
-  category: appliance
+  category: appliances
   isGlobal: false
 -
   id: 74
@@ -271,7 +271,7 @@
   id: 81
   name: 'Laundry Washer Mode'
   description: 'Controls operating modes for laundry washers, such as normal, delicate, heavy duty, and whites cycles.'
-  category: appliance
+  category: appliances
   isGlobal: false
 -
   id: 82
@@ -283,13 +283,13 @@
   id: 83
   name: 'Laundry Washer Controls'
   description: 'Controls specific settings for laundry washers including spin speed, rinse options, and water temperature.'
-  category: appliance
+  category: appliances
   isGlobal: false
 -
   id: 84
   name: 'RVC Run Mode'
   description: 'Controls operating modes for robotic vacuum cleaners, such as mapping, cleaning, or idle modes.'
-  category: appliance
+  category: appliances
   isGlobal: false
 -
   id: 85
@@ -307,13 +307,13 @@
   id: 87
   name: 'Refrigerator Alarm'
   description: 'Provides alarm functionality for refrigerators, alerting users to conditions like door open, temperature out of range, or power loss.'
-  category: appliance
+  category: appliances
   isGlobal: false
 -
   id: 89
   name: 'Dishwasher Mode'
   description: 'Controls operating modes for dishwashers, such as normal, heavy, light, and quick wash cycles.'
-  category: appliance
+  category: appliances
   isGlobal: false
 -
   id: 91
@@ -331,25 +331,25 @@
   id: 93
   name: 'Dishwasher Alarm'
   description: 'Provides alarm functionality for dishwashers, alerting users to conditions like door open, water leak, or cycle complete.'
-  category: appliance
+  category: appliances
   isGlobal: false
 -
   id: 94
   name: 'Microwave Oven Mode'
   description: 'Controls operating modes for microwave ovens including defrost, reheat, and cooking power levels.'
-  category: appliance
+  category: appliances
   isGlobal: false
 -
   id: 95
   name: 'Microwave Oven Control'
   description: 'Controls microwave oven settings including cooking time, power level, and watt settings.'
-  category: appliance
+  category: appliances
   isGlobal: false
 -
   id: 96
   name: 'Operational State'
   description: 'Provides a generic interface for reporting and controlling operational state of devices. Used as a base for appliance-specific operational states.'
-  category: appliance
+  category: appliances
   isGlobal: false
 -
   id: 97
@@ -385,7 +385,7 @@
   id: 121
   name: 'Water Tank Level Monitoring'
   description: 'Reports the level of a consumable water tank (e.g. cleaning solution) and warns when refill is required.'
-  category: appliance
+  category: appliances
   isGlobal: false
 -
   id: 128
@@ -415,7 +415,7 @@
   id: 148
   name: 'Water Heater Management'
   description: 'Manages water heater operation including heat sources, demand signals, and tank temperature.'
-  category: appliance
+  category: appliances
   isGlobal: false
 -
   id: 149
@@ -667,13 +667,13 @@
   id: 1073
   name: 'Ambient Context Sensing'
   description: 'Reports ambient context signals (e.g. activity, occupancy modality) for context-aware automation.'
-  category: sensor
+  category: sensors
   isGlobal: false
 -
   id: 1075
   name: 'Proximity Ranging'
   description: 'Reports distance/proximity measurements between two devices (e.g. UWB, BLE ranging).'
-  category: sensor
+  category: sensors
   isGlobal: false
 -
   id: 1104
