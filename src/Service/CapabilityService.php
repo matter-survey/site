@@ -618,7 +618,7 @@ class CapabilityService
         ];
 
         $missing = [];
-        $toCheck = $notableMissing[$category] ?? ['binding', 'energy_monitoring'];
+        $toCheck = $notableMissing[$category ?? ''] ?? ['binding', 'energy_monitoring'];
 
         foreach ($toCheck as $key) {
             if (isset($unsupported[$key])) {
