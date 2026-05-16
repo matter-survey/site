@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=../vendor/symfony/routing/Loader/schema/routing.schema.json
+
 # Non-localized routes (API, health, sitemap, security, admin)
 api_controllers:
     resource: ../src/Controller/ApiController.php
