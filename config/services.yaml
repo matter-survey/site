@@ -17,6 +17,7 @@ services:
         autoconfigure: true
         bind:
             $projectDir: '%kernel.project_dir%'
+            $canonicalBaseUrl: '%env(CANONICAL_BASE_URL)%'
 
     App\:
         resource: '../src/'

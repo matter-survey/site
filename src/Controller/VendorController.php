@@ -122,6 +122,14 @@ class VendorController extends AbstractController
             'count' => $c['count'],
         ], $clusterCapabilities);
 
+        // AEO: dateModified is the vendor row updated_at. Breadcrumbs mirror
+        // the visual breadcrumb path Home -> Vendors -> <vendor name>.
+        $aeoBreadcrumbs = [
+            ['name' => 'Home', 'url' => $this->generateUrl('device_index', [], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL)],
+            ['name' => 'Vendors', 'url' => $this->generateUrl('vendor_index', [], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL)],
+            ['name' => $vendor->getName(), 'url' => $this->generateUrl('vendor_show', ['slug' => $vendor->getSlug()], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL)],
+        ];
+
         return $this->render('vendor/show.html.twig', [
             'vendor' => $vendor,
             'devices' => $devices,
@@ -133,6 +141,8 @@ class VendorController extends AbstractController
             'deviceTypeDistribution' => $enrichedDeviceTypes,
             'clusterCapabilities' => $enrichedClusters,
             'bindingStats' => $bindingStats,
+            'aeoDateModified' => $vendor->getUpdatedAt(),
+            'aeoBreadcrumbs' => $aeoBreadcrumbs,
         ]);
     }
 }

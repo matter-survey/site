@@ -4,6 +4,8 @@
 
 {% block header_subtitle %}<p>Real-world Matter device adoption data contributed by Home Assistant users</p>{% endblock %}
 
+{% block structured_data %}{{ include('stats/_dataset_jsonld.html.twig') }}{% endblock %}
+
 {% block extra_styles %}
     .dashboard-nav {
         display: flex;

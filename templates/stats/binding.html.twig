@@ -1,5 +1,7 @@
 {% extends 'base.html.twig' %}
 
+{% block structured_data %}{{ include('stats/_dataset_jsonld.html.twig') }}{% endblock %}
+
 {% block title %}Matter Survey - Binding Compatibility{% endblock %}
 
 {% block header_subtitle %}<p>Devices that support direct device-to-device control via binding</p>{% endblock %}

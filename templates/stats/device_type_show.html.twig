@@ -6,48 +6,14 @@
 {% block og_description %}{{ deviceType.description ?? deviceType.name ~ ' is a Matter device type' }}. {{ totalDevices }} device{{ totalDevices != 1 ? 's' : '' }} implement{{ totalDevices == 1 ? 's' : '' }} this type. Spec version: {{ deviceType.specVersion ?? '1.0' }}.{% endblock %}
 
 {% block structured_data %}
+{% if deviceTypeEntity %}
 <script type="application/ld+json">
-{
-    "@context": "https://schema.org",
-    "@type": "DefinedTerm",
-    "name": {{ deviceType.name|json_encode|raw }},
-    "description": {{ (deviceType.description ?? deviceType.name ~ ' device type from the Matter specification')|json_encode|raw }},
-    "termCode": "{{ deviceType.id }}",
-    "url": "{{ url('stats_device_type_show', {type: deviceType.id}) }}",
-    "inDefinedTermSet": {
-        "@type": "DefinedTermSet",
-        "name": "Matter Device Types",
-        "description": "Device types defined in the Matter smart home specification"
-    },
-    "additionalProperty": [
-        {
-            "@type": "PropertyValue",
-            "name": "Device Type ID",
-            "value": "{{ deviceType.id }}"
-        },
-        {
-            "@type": "PropertyValue",
-            "name": "Hex ID",
-            "value": "{{ deviceType.hexId|default('0x' ~ '%04X'|format(deviceType.id)) }}"
-        },
-        {
-            "@type": "PropertyValue",
-            "name": "Spec Version",
-            "value": "{{ deviceType.specVersion ?? '1.0' }}"
-        },
-        {
-            "@type": "PropertyValue",
-            "name": "Category",
-            "value": "{{ deviceType.displayCategory ?? 'Unknown' }}"
-        },
-        {
-            "@type": "PropertyValue",
-            "name": "Devices Implementing",
-            "value": "{{ totalDevices }}"
-        }
-    ]
-}
+{{ structured_data_device_type(deviceTypeEntity, totalDevices, aeoDateModified)|json_encode(constant('JSON_UNESCAPED_SLASHES'))|raw }}
 </script>
+<script type="application/ld+json">
+{{ structured_data_breadcrumb(aeoBreadcrumbs)|json_encode(constant('JSON_UNESCAPED_SLASHES'))|raw }}
+</script>
+{% endif %}
 {% endblock %}
 
 {% block extra_styles %}
@@ -534,6 +500,15 @@
         &rarr;
         {{ deviceType.name }}
     </div>
+
+    {% if deviceTypeEntity %}
+        <p class="aeo-lede">{{ aeo_lede_device_type(deviceTypeEntity, totalDevices) }}</p>
+        {% if aeoDateModified %}
+            <p class="aeo-meta">
+                <time datetime="{{ aeoDateModified.format('Y-m-d') }}">Last updated {{ aeoDateModified.format('j M Y') }}</time>
+            </p>
+        {% endif %}
+    {% endif %}
 
     <div class="device-type-header">
         <div class="device-type-header-content">

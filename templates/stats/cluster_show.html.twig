@@ -7,46 +7,10 @@
 
 {% block structured_data %}
 <script type="application/ld+json">
-{
-    "@context": "https://schema.org",
-    "@type": "DefinedTerm",
-    "name": {{ cluster.name|json_encode|raw }},
-    "description": {{ (cluster.description ?? cluster.name ~ ' cluster from the Matter specification')|json_encode|raw }},
-    "termCode": "{{ cluster.hexId }}",
-    "url": "{{ url('stats_cluster_show', {hexId: cluster.hexId}) }}",
-    "inDefinedTermSet": {
-        "@type": "DefinedTermSet",
-        "name": "Matter Clusters",
-        "description": "Clusters defined in the Matter smart home specification"
-    },
-    "additionalProperty": [
-        {
-            "@type": "PropertyValue",
-            "name": "Cluster ID",
-            "value": "{{ cluster.id }}"
-        },
-        {
-            "@type": "PropertyValue",
-            "name": "Hex ID",
-            "value": "{{ cluster.hexId }}"
-        },
-        {
-            "@type": "PropertyValue",
-            "name": "Category",
-            "value": "{{ cluster.category ?? 'Unknown' }}"
-        },
-        {
-            "@type": "PropertyValue",
-            "name": "Type",
-            "value": "{{ cluster.global ? 'Global' : 'Application' }}"
-        },
-        {
-            "@type": "PropertyValue",
-            "name": "Devices Implementing",
-            "value": "{{ totalDevices }}"
-        }
-    ]
-}
+{{ structured_data_cluster(cluster, totalDevices, aeoMandatoryForCount, aeoDateModified)|json_encode(constant('JSON_UNESCAPED_SLASHES'))|raw }}
+</script>
+<script type="application/ld+json">
+{{ structured_data_breadcrumb(aeoBreadcrumbs)|json_encode(constant('JSON_UNESCAPED_SLASHES'))|raw }}
 </script>
 {% endblock %}
 
@@ -454,6 +418,13 @@
     <div class="breadcrumb">
         <a href="{{ path('stats_clusters') }}">Clusters</a> &raquo; {{ cluster.name }}
     </div>
+
+    <p class="aeo-lede">{{ aeo_lede_cluster(cluster, aeoMandatoryForCount) }}</p>
+    {% if aeoDateModified %}
+        <p class="aeo-meta">
+            <time datetime="{{ aeoDateModified.format('Y-m-d') }}">Last updated {{ aeoDateModified.format('j M Y') }}</time>
+        </p>
+    {% endif %}
 
     <div class="cluster-header">
         <h1>

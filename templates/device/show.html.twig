@@ -166,40 +166,10 @@
 
 {% block structured_data %}
 <script type="application/ld+json">
-{
-    "@context": "https://schema.org",
-    "@type": "Product",
-    "name": {{ (device.product_name ?? 'Unknown Device')|json_encode|raw }},
-    "description": {{ ("Matter smart home device with " ~ (endpoints|length) ~ " endpoint(s)")|json_encode|raw }},
-    "productID": "{{ device.vendor_id }}:{{ device.product_id }}",
-    "sku": "{{ device.vendor_id }}-{{ device.product_id }}",
-    "category": "Smart Home Device",
-    "manufacturer": {
-        "@type": "Organization",
-        "name": {{ (device.vendor_name ?? 'Unknown Vendor')|json_encode|raw }}
-        {%- if device.vendor_slug %},
-        "url": "{{ url('vendor_show', {slug: device.vendor_slug}) }}"
-        {%- endif %}
-
-    },
-    "additionalProperty": [
-        {
-            "@type": "PropertyValue",
-            "name": "Vendor ID",
-            "value": "{{ device.vendor_id }}"
-        },
-        {
-            "@type": "PropertyValue",
-            "name": "Product ID",
-            "value": "{{ device.product_id }}"
-        },
-        {
-            "@type": "PropertyValue",
-            "name": "Supports Binding",
-            "value": "{{ device.supports_binding ? 'Yes' : 'No' }}"
-        }
-    ]
-}
+{{ structured_data_device(aeoProduct, aeoEndpointCount, aeoDateModified)|json_encode(constant('JSON_UNESCAPED_SLASHES'))|raw }}
+</script>
+<script type="application/ld+json">
+{{ structured_data_breadcrumb(aeoBreadcrumbs)|json_encode(constant('JSON_UNESCAPED_SLASHES'))|raw }}
 </script>
 {% endblock %}
 
@@ -1582,6 +1552,13 @@
             {{ device.vendor_name ?? 'Unknown Vendor' }}
         {% endif %}
     </div>
+
+    <p class="aeo-lede">{{ aeo_lede_device(aeoProduct, aeoEndpointCount) }}</p>
+    {% if aeoDateModified %}
+        <p class="aeo-meta">
+            <time datetime="{{ aeoDateModified.format('Y-m-d') }}">Last updated {{ aeoDateModified.format('j M Y') }}</time>
+        </p>
+    {% endif %}
 
     <div class="device-header">
         <div class="device-header-title">

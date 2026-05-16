@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Repository\ClusterRepository;
 use App\Repository\DeviceRepository;
+use App\Repository\DeviceTypeRepository;
 use App\Repository\ProductRepository;
 use App\Service\ChartFactory;
 use App\Service\DeviceScoreService;
@@ -27,6 +28,7 @@ class StatsController extends AbstractController
         private readonly ProductRepository $productRepo,
         private readonly ChartFactory $chartFactory,
         private readonly DeviceScoreService $deviceScoreService,
+        private readonly DeviceTypeRepository $deviceTypeRepo,
     ) {
     }
 
@@ -51,7 +53,27 @@ class StatsController extends AbstractController
             'categoryChart' => $this->chartFactory->createCategoryChart($categoryDistribution),
             'vendorChart' => $this->chartFactory->createVendorChart($topVendors),
             'specChart' => $this->chartFactory->createSpecVersionChart($specVersionDistribution),
+            'aeoDataset' => $this->datasetDescriptor(
+                'Matter Smart Home Device Adoption Statistics',
+                'Aggregate statistics on Matter device adoption, vendor distribution, supported spec versions, and category coverage from the Matter Survey public registry.',
+            ),
         ]);
+    }
+
+    /**
+     * Descriptor block for the Dataset JSON-LD on aggregate stats pages.
+     *
+     * @return array{name: string, description: string, dateModified: \DateTimeImmutable, coverageStart: \DateTimeImmutable, coverageEnd: null}
+     */
+    private function datasetDescriptor(string $name, string $description): array
+    {
+        return [
+            'name' => $name,
+            'description' => $description,
+            'dateModified' => new \DateTimeImmutable('today'),
+            'coverageStart' => new \DateTimeImmutable('2024-01-01'),
+            'coverageEnd' => null,
+        ];
     }
 
     #[Route('/clusters', name: 'stats_clusters', methods: ['GET'])]
@@ -160,6 +182,10 @@ class StatsController extends AbstractController
             'clusterCoOccurrence' => $enrichedCoOccurrence,
             'filterCategory' => $filterCategory,
             'matterRegistry' => $this->matterRegistry,
+            'aeoDataset' => $this->datasetDescriptor(
+                'Matter Cluster Implementation Statistics',
+                'Aggregate usage statistics for every Matter cluster across submitted devices, including server/client splits and cluster co-occurrence pairs.',
+            ),
         ]);
     }
 
@@ -224,6 +250,10 @@ class StatsController extends AbstractController
             'groupedMissingDeviceTypes' => $groupedMissingDeviceTypes,
             'displayCategories' => $displayCategories,
             'specVersions' => $allSpecVersions,
+            'aeoDataset' => $this->datasetDescriptor(
+                'Matter Device Type Coverage Statistics',
+                'Device-type coverage statistics across submitted Matter devices, grouped by display category and spec version, including which device types are not yet observed in the field.',
+            ),
         ]);
     }
 
@@ -263,6 +293,17 @@ class StatsController extends AbstractController
         // Get extended data from YAML fixture
         $extendedData = $this->matterRegistry->getExtendedDeviceType($type);
 
+        // Fetch the actual DeviceType entity for AEO lede/JSON-LD generation.
+        // The existing $deviceType array continues to drive the rest of the
+        // template; the entity is only used by aeo_* / structured_data_*.
+        $deviceTypeEntity = $this->deviceTypeRepo->find($type);
+
+        $aeoBreadcrumbs = [
+            ['name' => 'Home', 'url' => $this->generateUrl('device_index', [], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL)],
+            ['name' => 'Device Types', 'url' => $this->generateUrl('stats_device_types', [], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL)],
+            ['name' => $metadata['name'], 'url' => $this->generateUrl('stats_device_type_show', ['type' => $type], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL)],
+        ];
+
         return $this->render('stats/device_type_show.html.twig', [
             'deviceType' => [
                 'id' => $type,
@@ -277,6 +318,7 @@ class StatsController extends AbstractController
                 'scope' => $extendedData['scope'] ?? null,
                 'superset' => $extendedData['superset'] ?? null,
             ],
+            'deviceTypeEntity' => $deviceTypeEntity,
             'mandatoryServerClusters' => $this->matterRegistry->getMandatoryServerClusters($type),
             'optionalServerClusters' => $this->matterRegistry->getOptionalServerClusters($type),
             'mandatoryClientClusters' => $this->matterRegistry->getMandatoryClientClusters($type),
@@ -288,6 +330,8 @@ class StatsController extends AbstractController
             'totalPages' => $totalPages,
             'currentSort' => $sort,
             'matterRegistry' => $this->matterRegistry,
+            'aeoDateModified' => $deviceTypeEntity?->getUpdatedAt(),
+            'aeoBreadcrumbs' => $aeoBreadcrumbs,
         ]);
     }
 
@@ -303,6 +347,10 @@ class StatsController extends AbstractController
             'bindingDevices' => $bindingDevices,
             'bindingByCategory' => $bindingByCategory,
             'matterRegistry' => $this->matterRegistry,
+            'aeoDataset' => $this->datasetDescriptor(
+                'Matter Binding Cluster Support Statistics',
+                'Aggregate statistics on Matter device support for the Binding cluster, broken down by device category.',
+            ),
         ]);
     }
 
@@ -327,6 +375,12 @@ class StatsController extends AbstractController
         // Get device types that require this cluster
         $deviceTypesRequiring = $this->deviceRepo->getDeviceTypesRequiringCluster($cluster->getId());
 
+        $aeoBreadcrumbs = [
+            ['name' => 'Home', 'url' => $this->generateUrl('device_index', [], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL)],
+            ['name' => 'Clusters', 'url' => $this->generateUrl('stats_clusters', [], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL)],
+            ['name' => $cluster->getName(), 'url' => $this->generateUrl('stats_cluster_show', ['hexId' => $cluster->getHexId()], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL)],
+        ];
+
         return $this->render('stats/cluster_show.html.twig', [
             'cluster' => $cluster,
             'devices' => $devices,
@@ -335,6 +389,9 @@ class StatsController extends AbstractController
             'totalPages' => $totalPages,
             'deviceTypesRequiring' => $deviceTypesRequiring,
             'matterRegistry' => $this->matterRegistry,
+            'aeoMandatoryForCount' => \count($deviceTypesRequiring),
+            'aeoDateModified' => $cluster->getUpdatedAt(),
+            'aeoBreadcrumbs' => $aeoBreadcrumbs,
         ]);
     }
 
@@ -353,6 +410,10 @@ class StatsController extends AbstractController
             'topPairings' => $topPairings,
             'mostConnectedProducts' => $mostConnectedProducts,
             'vendorPairings' => $vendorPairings,
+            'aeoDataset' => $this->datasetDescriptor(
+                'Matter Device Pairing Statistics',
+                'Statistics on how Matter devices are paired in real-world installations, including top product pairings, most-connected products, and vendor pairing patterns.',
+            ),
         ]);
     }
 
@@ -378,6 +439,10 @@ class StatsController extends AbstractController
             'productsByComplexity' => $productsByComplexity,
             'icdProducts' => $icdProducts,
             'complexityLabels' => $complexityLabels,
+            'aeoDataset' => $this->datasetDescriptor(
+                'Matter Device Commissioning Statistics',
+                'Aggregate statistics on Matter device commissioning complexity, custom-flow URLs, ICD support, and setup-instruction coverage from the DCL registry.',
+            ),
         ]);
     }
 
@@ -392,6 +457,10 @@ class StatsController extends AbstractController
             'stats' => $stats,
             'marketData' => $marketData,
             'vendorInsights' => $vendorInsights,
+            'aeoDataset' => $this->datasetDescriptor(
+                'Matter Market Analysis Statistics',
+                'Market-share statistics for Matter device vendors and product categories, including vendor concentration, category coverage, and adoption trends.',
+            ),
         ]);
     }
 
@@ -406,6 +475,10 @@ class StatsController extends AbstractController
             'stats' => $stats,
             'versionData' => $versionData,
             'versionStats' => $versionStats,
+            'aeoDataset' => $this->datasetDescriptor(
+                'Matter Spec Version Adoption Statistics',
+                'Time-series statistics on which Matter specification versions are observed in submitted devices, including hardware and software version timelines.',
+            ),
         ]);
     }
 }

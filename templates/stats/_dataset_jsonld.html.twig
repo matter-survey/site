@@ -1,0 +1,14 @@
+{# Reusable Dataset JSON-LD partial — included in the structured_data block of
+   every aggregate stats template. Expects an `aeoDataset` variable shaped as:
+     { name: string, description: string, dateModified: DateTime,
+       coverageStart: DateTime, coverageEnd: DateTime|null }
+#}
+<script type="application/ld+json">
+{{ structured_data_dataset(
+    aeoDataset.name,
+    aeoDataset.description,
+    aeoDataset.dateModified,
+    aeoDataset.coverageStart,
+    aeoDataset.coverageEnd
+)|json_encode(constant('JSON_UNESCAPED_SLASHES'))|raw }}
+</script>

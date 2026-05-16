@@ -275,6 +275,22 @@
             color: white !important;
         }
 
+        /* AEO: definitional lede sentence rendered at the top of every
+           entity page. Visible to humans, lifted by AI retrieval crawlers
+           that read prose, and emitted as JSON-LD `description`. */
+        .aeo-lede {
+            font-size: 1.0625rem;
+            line-height: 1.55;
+            color: var(--gray-700);
+            margin: 0 0 0.5rem;
+        }
+
+        .aeo-meta {
+            font-size: 0.8125rem;
+            color: var(--gray-500);
+            margin: 0 0 1.25rem;
+        }
+
         {% block extra_styles %}{% endblock %}
     </style>
 

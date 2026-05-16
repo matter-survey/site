@@ -10,30 +10,10 @@
 
 {% block structured_data %}
 <script type="application/ld+json">
-{
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": {{ vendor.name|json_encode|raw }},
-    "description": {{ ("Matter smart home device manufacturer with " ~ totalProducts ~ " certified product(s)")|json_encode|raw }},
-    "url": "{{ url('vendor_show', {slug: vendor.slug}) }}",
-    "additionalProperty": [
-        {
-            "@type": "PropertyValue",
-            "name": "Matter Vendor ID",
-            "value": "{{ vendor.specId ?? 'N/A' }}"
-        },
-        {
-            "@type": "PropertyValue",
-            "name": "Certified Products",
-            "value": "{{ totalProducts }}"
-        },
-        {
-            "@type": "PropertyValue",
-            "name": "Devices Seen",
-            "value": "{{ totalDevices }}"
-        }
-    ]
-}
+{{ structured_data_vendor(vendor, totalProducts, aeoDateModified)|json_encode(constant('JSON_UNESCAPED_SLASHES'))|raw }}
+</script>
+<script type="application/ld+json">
+{{ structured_data_breadcrumb(aeoBreadcrumbs)|json_encode(constant('JSON_UNESCAPED_SLASHES'))|raw }}
 </script>
 {% endblock %}
 
@@ -323,6 +303,13 @@
         &rarr;
         {{ vendor.name }}
     </div>
+
+    <p class="aeo-lede">{{ aeo_lede_vendor(vendor, totalProducts) }}</p>
+    {% if aeoDateModified %}
+        <p class="aeo-meta">
+            <time datetime="{{ aeoDateModified.format('Y-m-d') }}">Last updated {{ aeoDateModified.format('j M Y') }}</time>
+        </p>
+    {% endif %}
 
     <div class="vendor-header">
         <h1>{{ vendor.name }}</h1>

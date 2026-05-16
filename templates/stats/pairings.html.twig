@@ -1,5 +1,7 @@
 {% extends 'base.html.twig' %}
 
+{% block structured_data %}{{ include('stats/_dataset_jsonld.html.twig') }}{% endblock %}
+
 {% block title %}Matter Survey - Device Pairings{% endblock %}
 
 {% block header_subtitle %}<p>Discover which devices are commonly used together in smart home setups</p>{% endblock %}

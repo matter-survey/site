@@ -1,5 +1,7 @@
 {% extends 'base.html.twig' %}
 
+{% block structured_data %}{{ include('stats/_dataset_jsonld.html.twig') }}{% endblock %}
+
 {% block title %}Matter Survey - Device Types{% endblock %}
 
 {% block header_subtitle %}<p>Matter device types seen in the wild</p>{% endblock %}

@@ -270,6 +270,25 @@ class DeviceController extends AbstractController
             [] === $latestEndpoints ? $endpoints : $latestEndpoints
         );
 
+        // AEO: synthesize a Product entity from the telemetry row for JSON-LD
+        // and lede generation. We always have device-row facts (vendor_id,
+        // product_id, names) even when the DCL Product entity is absent.
+        $aeoProduct = $this->buildAeoProduct($device, $product);
+        $aeoDateModified = $this->parseSqliteDate($device['last_seen'] ?? null);
+        $aeoBreadcrumbs = [
+            ['name' => 'Home', 'url' => $this->generateUrl('device_index', [], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL)],
+        ];
+        if (!empty($device['vendor_slug'])) {
+            $aeoBreadcrumbs[] = [
+                'name' => $device['vendor_name'] ?? 'Vendor',
+                'url' => $this->generateUrl('vendor_show', ['slug' => $device['vendor_slug']], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL),
+            ];
+        }
+        $aeoBreadcrumbs[] = [
+            'name' => $device['product_name'] ?? 'Device',
+            'url' => $this->generateUrl('device_show', ['slug' => $device['slug']], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL),
+        ];
+
         return $this->render('device/show.html.twig', [
             'device' => $device,
             'product' => $product,
@@ -283,7 +302,47 @@ class DeviceController extends AbstractController
             'matterRegistry' => $this->matterRegistry,
             'deviceScore' => $deviceScore,
             'capabilities' => $capabilities,
+            'aeoProduct' => $aeoProduct,
+            'aeoEndpointCount' => \count($endpoints),
+            'aeoDateModified' => $aeoDateModified,
+            'aeoBreadcrumbs' => $aeoBreadcrumbs,
         ]);
+    }
+
+    /**
+     * Materialize a Product entity for AEO services. Prefers the DCL Product
+     * but falls back to a synthetic entity populated from the telemetry row,
+     * so JSON-LD always has structured data even for products absent from DCL.
+     *
+     * @param array<string, mixed> $device device_summary row
+     */
+    private function buildAeoProduct(array $device, ?\App\Entity\Product $dclProduct): \App\Entity\Product
+    {
+        $product = $dclProduct ?? new \App\Entity\Product();
+        $product->setVendorId((int) $device['vendor_id']);
+        $product->setProductId((int) $device['product_id']);
+        if (null !== ($device['vendor_name'] ?? null)) {
+            $product->setVendorName((string) $device['vendor_name']);
+        }
+        if (null !== ($device['product_name'] ?? null) && '' !== $device['product_name']) {
+            $product->setProductName((string) $device['product_name']);
+        }
+        if (null !== ($device['slug'] ?? null)) {
+            $product->setSlug((string) $device['slug']);
+        }
+
+        return $product;
+    }
+
+    private function parseSqliteDate(?string $value): ?\DateTimeImmutable
+    {
+        if (null === $value || '' === $value) {
+            return null;
+        }
+        $dt = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $value)
+            ?: \DateTimeImmutable::createFromFormat(\DateTimeInterface::ATOM, $value);
+
+        return false === $dt ? null : $dt;
     }
 
     /**
