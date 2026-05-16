@@ -78,7 +78,7 @@ php bin/console doctrine:migrations:migrate
 ### Console Commands
 
 - `app:dcl:sync` - Fetch vendor/product data from Matter DCL API and generate YAML fixtures
-- `app:zap:sync` - Fetch cluster details from Matter SDK ZAP XML files and update fixtures
+- `app:zap:backfill` - Snapshot Matter cluster spec per release tag into `fixtures/clusters/{1.0..1.5,master}.yaml`. Run `--matter-version=master` daily (scheduled in CI) to keep master fresh; the released-version tags are frozen.
 - `app:scores:rebuild` - Rebuild the device scores cache table (used in deployment)
 - `app:otel:doctor` - Print resolved OpenTelemetry configuration (env vars, providers, sampler) and exit non-zero on misconfiguration when the SDK is enabled
 
@@ -91,7 +91,8 @@ All Matter specification data (clusters, device types) is stored in the database
 - `fixtures/capabilities.yaml` - Human-friendly capability definitions mapping clusters to user-facing features
 
 **Entities:**
-- `Cluster` - id, hexId, name, description, specVersion, category, isGlobal, attributes (JSON), commands (JSON), features (JSON)
+- `Cluster` - id, hexId, name, description, category, isGlobal. Hand-curated annotation layer only — spec data (attributes/commands/features/apiMaturity/ClusterRevision) lives on `ClusterVersion`.
+- `ClusterVersion` - (clusterId, matterVersion) → name, description, clusterRevision, apiMaturity, attributes (JSON), commands (JSON), features (JSON). One row per Matter release (1.0..1.5 + master) the cluster appeared in.
 - `DeviceType` - id, hexId, name, description, specVersion, category, displayCategory, deviceClass, scope, superset, icon, mandatoryServerClusters (JSON), optionalServerClusters (JSON), mandatoryClientClusters (JSON), optionalClientClusters (JSON), scoringWeights (JSON)
 
 **Fixture Groups:**
@@ -113,7 +114,8 @@ API submissions are validated using Symfony Validator with DTOs:
 **Doctrine Entities:**
 - `Product` - Main device entity (vendor_id, product_id, slug, vendor_name, product_name)
 - `Vendor` - Vendor information and device counts
-- `Cluster` - Matter cluster definitions with attributes, commands, features (JSON)
+- `Cluster` - Hand-curated annotation layer (name, description, category, isGlobal)
+- `ClusterVersion` - Per-Matter-version spec snapshots (attributes/commands/features JSON)
 - `DeviceType` - Matter device type definitions with cluster requirements (JSON)
 
 **Raw SQL Tables (accessed via DeviceRepository):**
