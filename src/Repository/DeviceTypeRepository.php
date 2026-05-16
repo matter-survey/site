@@ -200,7 +200,13 @@ class DeviceTypeRepository extends ServiceEntityRepository
             )
         ";
 
-        $ids = $conn->executeQuery($sql, ['clusterId' => $clusterId])->fetchFirstColumn();
+        // SQLite's json_extract returns an INTEGER; without an explicit INT parameter
+        // type, Doctrine binds as string and the strict-equality comparison never matches.
+        $ids = $conn->executeQuery(
+            $sql,
+            ['clusterId' => $clusterId],
+            ['clusterId' => \Doctrine\DBAL\ParameterType::INTEGER],
+        )->fetchFirstColumn();
 
         if (empty($ids)) {
             return [];

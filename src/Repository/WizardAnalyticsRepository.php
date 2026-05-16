@@ -96,19 +96,21 @@ class WizardAnalyticsRepository extends ServiceEntityRepository
      */
     public function getCompletionStats(?\DateTimeInterface $since = null): array
     {
-        $qb = $this->createQueryBuilder('w')
-            ->select('COUNT(DISTINCT w.sessionId) as total_sessions')
-            ->addSelect('COUNT(DISTINCT CASE WHEN w.completed = true THEN w.sessionId END) as completed_sessions');
+        // Two scalar queries — Doctrine DQL CASE expressions can't be used inside
+        // COUNT(DISTINCT ...) because ELSE is mandatory and DQL doesn't accept NULL
+        // as a CASE result, which forces a non-null sentinel that pollutes the count.
+        $totalQb = $this->createQueryBuilder('w')->select('COUNT(DISTINCT w.sessionId)');
+        $completedQb = $this->createQueryBuilder('w')
+            ->select('COUNT(DISTINCT w.sessionId)')
+            ->where('w.completed = true');
 
         if (null !== $since) {
-            $qb->where('w.createdAt >= :since')
-                ->setParameter('since', $since);
+            $totalQb->andWhere('w.createdAt >= :since')->setParameter('since', $since);
+            $completedQb->andWhere('w.createdAt >= :since')->setParameter('since', $since);
         }
 
-        $result = $qb->getQuery()->getSingleResult();
-
-        $total = (int) $result['total_sessions'];
-        $completed = (int) $result['completed_sessions'];
+        $total = (int) $totalQb->getQuery()->getSingleScalarResult();
+        $completed = (int) $completedQb->getQuery()->getSingleScalarResult();
 
         return [
             'total_sessions' => $total,
