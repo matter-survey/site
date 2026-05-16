@@ -22,4 +22,4 @@
 
 - [x] 4.1 Run `make lint` and `make analyse`; resolve any new findings (no baseline additions allowed)
 - [x] 4.2 Run the full PHPUnit suite; verify no pre-existing test regresses and the new span path is covered
-- [ ] 4.3 Commit, deploy, and verify the doctor command reports the new flag on prod
+- [x] 4.3 Commit, deploy, and verify the doctor command reports the new flag on prod
