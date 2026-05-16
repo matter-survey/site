@@ -22,6 +22,8 @@ php bin/phpunit --filter testMethodName  # Run specific test method
 make lint                    # Check code style (php-cs-fixer dry-run)
 make lint-fix                # Fix code style issues
 make analyse                 # Run PHPStan (level 6)
+make rector                  # Check for pending Rector refactors (dry-run)
+make rector-fix              # Apply Rector refactors
 
 # Clear cache
 php bin/console cache:clear
@@ -30,7 +32,21 @@ php bin/console cache:clear
 make deploy
 ```
 
-**Important:** Always run `make lint` and `make analyse` before committing.
+**Important:** Always run `make lint`, `make analyse`, and `make rector` before committing.
+
+### Dev tooling layout
+
+Dev-only tools that would pollute the main app's `composer.json` (and its lockfile resolution) with transitive dependencies are installed under `tools/<tool>/` with their own composer manifest and committed lockfile:
+
+```
+tools/
+  rector/
+    composer.json   # require-dev: rector/rector
+    composer.lock   # committed
+    .gitignore      # vendor/ (not committed)
+```
+
+The `make rector` and `make rector-fix` targets run `composer install -d tools/rector` before invoking the binary at `tools/rector/vendor/bin/rector`. PHPStan and php-cs-fixer remain in the root `require-dev` for now and can migrate independently if conflicts or upgrade friction emerge.
 
 The SQLite database schema is managed via Doctrine Migrations. Run migrations with:
 
@@ -40,7 +56,7 @@ php bin/console doctrine:migrations:migrate
 
 ## Architecture
 
-**Framework:** Symfony 7.3 with MicroKernel (PHP 8.4)
+**Framework:** Symfony 7.4 with MicroKernel (PHP 8.5)
 
 **Request Flow:** `public/index.php` → `Kernel` → Controllers (attribute-based routing)
 
@@ -142,8 +158,8 @@ Manual instrumentation via the pure-PHP OpenTelemetry SDK. No PHP extension requ
 
 Single workflow in `.github/workflows/ci.yml`:
 
-- `test` job: PHPUnit on PHP 8.4
-- `code-quality` job: composer validate, security audit, PHPStan analysis
+- `test` job: PHPUnit on PHP 8.5
+- `code-quality` job: composer validate, security audit, php-cs-fixer, Rector (dry-run), PHPStan analysis
 - `deploy` job: runs after test/code-quality pass, only on main branch push
 
 PHPStan is configured at level 6 with a baseline (`phpstan-baseline.neon`) for existing issues.

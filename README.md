@@ -63,7 +63,7 @@ Receive telemetry submissions from Home Assistant integrations.
 
 ### Requirements
 
-- PHP 8.1+
+- PHP 8.5+
 - SQLite 3
 - Composer
 

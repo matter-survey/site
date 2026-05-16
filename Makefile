@@ -4,7 +4,7 @@
 -include .env.local
 export
 
-.PHONY: help install dev prod clean lint lint-fix analyse phpstan test db-init db-reset db-migrate db-fixtures test-reset deploy
+.PHONY: help install dev prod clean lint lint-fix analyse phpstan rector rector-fix test db-init db-reset db-migrate db-fixtures test-reset deploy
 
 # Default target
 help:
@@ -17,6 +17,8 @@ help:
 	@echo "  dev         Start development server (localhost:8000)"
 	@echo "  lint        Run code style checks (php-cs-fixer)"
 	@echo "  analyse     Run static analysis (PHPStan)"
+	@echo "  rector      Run Rector in dry-run mode (no changes written)"
+	@echo "  rector-fix  Apply Rector refactors to src/ and tests/"
 	@echo "  test        Run tests"
 	@echo ""
 	@echo "Database:"
@@ -66,6 +68,14 @@ analyse:
 	vendor/bin/phpstan analyse --memory-limit=512M
 
 phpstan: analyse
+
+rector:
+	@composer install -d tools/rector --no-interaction --quiet
+	tools/rector/vendor/bin/rector process --dry-run --config=rector.php
+
+rector-fix:
+	@composer install -d tools/rector --no-interaction --quiet
+	tools/rector/vendor/bin/rector process --config=rector.php
 
 # Database
 db-migrate:
