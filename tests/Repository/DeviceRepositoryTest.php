@@ -59,6 +59,43 @@ final class DeviceRepositoryTest extends KernelTestCase
         );
     }
 
+    public function testGetTopDeviceTypesByVendorExcludesSystemTypes(): void
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $vendor = $em->getRepository(Vendor::class)->findOneBy(['specId' => 4874]);
+        $this->assertNotNull($vendor);
+
+        $isNew = false;
+        $deviceId = $this->repository->upsertDevice([
+            'vendor_id' => 4874,
+            'vendor_name' => $vendor->getName(),
+            'vendor_fk' => $vendor->getId(),
+            'product_id' => 31337,
+            'product_name' => 'Eve System Probe',
+        ], $isNew);
+
+        // Endpoint 0: Root Node (id 22, a system type).
+        $this->repository->upsertEndpoint($deviceId, [
+            'endpoint_id' => 0,
+            'device_types' => [['id' => 22, 'revision' => 1]],
+            'server_clusters' => [],
+            'client_clusters' => [],
+        ]);
+        // Endpoint 1: On/Off Light (id 256, a real application type).
+        $this->repository->upsertEndpoint($deviceId, [
+            'endpoint_id' => 1,
+            'device_types' => [['id' => 256, 'revision' => 1]],
+            'server_clusters' => [6],
+            'client_clusters' => [],
+        ]);
+
+        $byVendor = $this->repository->getTopDeviceTypesByVendor(4);
+        $ids = $byVendor[$vendor->getId()] ?? [];
+
+        $this->assertNotContains(22, $ids, 'Root Node should be filtered out');
+        $this->assertContains(256, $ids, 'Application device types should still appear');
+    }
+
     public function testGetDeviceBySlugAttachesAmbiguityFlag(): void
     {
         $em = self::getContainer()->get(EntityManagerInterface::class);

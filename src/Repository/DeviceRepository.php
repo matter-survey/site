@@ -1633,7 +1633,15 @@ class DeviceRepository
      */
     public function getTopDeviceTypesByVendor(int $maxPerVendor = 5): array
     {
-        // Get all device types per vendor with counts
+        // Get all device types per vendor with counts.
+        // Filter out system/utility types (id < 256, e.g. Root Node, Power Source,
+        // OTA Requestor) — they're on every device and reveal nothing about what
+        // the vendor actually makes.
+        //
+        // NOTE: GROUP BY uses the full CAST expression rather than the column
+        // alias. SQLite collapses to a single row per vendor when the alias is
+        // used with a json_each cross-join, so every vendor previously surfaced
+        // only one device type — usually Root Node from endpoint 0.
         $rows = $this->db->executeQuery('
             SELECT
                 p.vendor_fk,
@@ -1642,7 +1650,8 @@ class DeviceRepository
             FROM product_endpoints pe
             JOIN products p ON pe.device_id = p.id, json_each(pe.device_types)
             WHERE json_extract(json_each.value, "$.id") IS NOT NULL
-            GROUP BY p.vendor_fk, device_type_id
+              AND CAST(json_extract(json_each.value, "$.id") AS INTEGER) >= 256
+            GROUP BY p.vendor_fk, CAST(json_extract(json_each.value, "$.id") AS INTEGER)
             ORDER BY p.vendor_fk, product_count DESC
         ')->fetchAllAssociative();
 
