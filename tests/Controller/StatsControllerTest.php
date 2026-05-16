@@ -760,6 +760,42 @@ final class StatsControllerTest extends WebTestCase
         $this->assertSelectorExists('#tab-attributes');
     }
 
+    // === Coming-in-next-Matter view ===
+
+    public function testClustersNextPageRenders(): void
+    {
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/clusters/next');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('.page-header h1', 'Coming in the next Matter release');
+    }
+
+    public function testClustersNextLinksNewClustersToMasterSnapshot(): void
+    {
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/clusters/next');
+
+        $this->assertResponseIsSuccessful();
+
+        // At least one new-cluster card should link to /cluster/0xXXXX/version/master
+        $masterLinks = $crawler->filter('.new-cluster-card[href*="/version/master"]');
+        $this->assertGreaterThan(0, $masterLinks->count(), 'Expected new clusters to link to their master snapshot');
+    }
+
+    public function testClustersNextRendersRevisionBumps(): void
+    {
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/clusters/next');
+
+        $this->assertResponseIsSuccessful();
+
+        // Door Lock historically bumps revision in the next release; just
+        // assert the table has at least one bump row when both snapshots exist.
+        $bumpRows = $crawler->filter('.rev-table tbody tr');
+        $this->assertGreaterThan(0, $bumpRows->count(), 'Expected at least one ClusterRevision bump row');
+    }
+
     // === Cluster Version History Tests ===
 
     public function testClusterShowRendersSpecHistoryPanel(): void

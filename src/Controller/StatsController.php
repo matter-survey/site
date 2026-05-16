@@ -446,6 +446,61 @@ class StatsController extends AbstractController
         ]);
     }
 
+    #[Route('/clusters/next', name: 'stats_clusters_next', methods: ['GET'])]
+    public function clustersNext(): Response
+    {
+        $masterVersion = 'master';
+        $releasedVersion = $this->clusterVersionRepo->findLatestReleasedMatterVersion();
+
+        if (null === $releasedVersion) {
+            throw new NotFoundHttpException('No released Matter snapshots loaded yet');
+        }
+
+        $masterRows = $this->clusterVersionRepo->findByMatterVersion($masterVersion);
+        $releasedRows = $this->clusterVersionRepo->findByMatterVersion($releasedVersion);
+
+        if ([] === $masterRows) {
+            throw new NotFoundHttpException('No master snapshot loaded yet');
+        }
+
+        $releasedById = [];
+        foreach ($releasedRows as $row) {
+            $releasedById[$row->getClusterId()] = $row;
+        }
+
+        $newClusters = [];
+        $revisionBumps = [];
+        foreach ($masterRows as $row) {
+            $id = $row->getClusterId();
+            if (!isset($releasedById[$id])) {
+                $newClusters[] = $row;
+                continue;
+            }
+
+            $masterRev = $row->getClusterRevision();
+            $releasedRev = $releasedById[$id]->getClusterRevision();
+            if (null !== $masterRev && null !== $releasedRev && $masterRev !== $releasedRev) {
+                $revisionBumps[] = [
+                    'clusterId' => $id,
+                    'hexId' => \sprintf('0x%04X', $id),
+                    'name' => $row->getName(),
+                    'fromRevision' => $releasedRev,
+                    'toRevision' => $masterRev,
+                ];
+            }
+        }
+
+        usort($newClusters, fn ($a, $b): int => $a->getClusterId() <=> $b->getClusterId());
+        usort($revisionBumps, fn ($a, $b): int => $a['clusterId'] <=> $b['clusterId']);
+
+        return $this->render('stats/clusters_next.html.twig', [
+            'releasedVersion' => $releasedVersion,
+            'masterVersion' => $masterVersion,
+            'newClusters' => $newClusters,
+            'revisionBumps' => $revisionBumps,
+        ]);
+    }
+
     #[Route('/pairings', name: 'stats_pairings', methods: ['GET'])]
     public function pairings(): Response
     {
