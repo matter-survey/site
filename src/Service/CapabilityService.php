@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -20,11 +22,15 @@ class CapabilityService
 
     private string $fixturesPath;
 
+    private LoggerInterface $logger;
+
     public function __construct(
         string $projectDir,
         private MatterRegistry $matterRegistry,
+        ?LoggerInterface $logger = null,
     ) {
         $this->fixturesPath = $projectDir.'/fixtures/capabilities.yaml';
+        $this->logger = $logger ?? new NullLogger();
     }
 
     /**
@@ -631,10 +637,21 @@ class CapabilityService
     private function loadCapabilityData(): array
     {
         if (null === $this->capabilityData) {
-            if (file_exists($this->fixturesPath)) {
-                $this->capabilityData = Yaml::parseFile($this->fixturesPath);
-            } else {
+            if (!file_exists($this->fixturesPath)) {
+                $this->logger->warning('Capability fixtures file missing; capability analysis will return empty results', [
+                    'path' => $this->fixturesPath,
+                ]);
                 $this->capabilityData = ['capabilities' => [], 'categories' => []];
+            } else {
+                try {
+                    $this->capabilityData = Yaml::parseFile($this->fixturesPath);
+                } catch (\Throwable $e) {
+                    $this->logger->error('Failed to parse capability fixtures YAML', [
+                        'path' => $this->fixturesPath,
+                        'error' => $e->getMessage(),
+                    ]);
+                    $this->capabilityData = ['capabilities' => [], 'categories' => []];
+                }
             }
         }
 

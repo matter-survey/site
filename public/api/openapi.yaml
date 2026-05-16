@@ -20,7 +20,7 @@ info:
     - **v3**: Rich cluster data with feature maps, commands, and attributes (recommended)
 
     The API accepts all versions. Clients should send the highest version they support.
-  version: 1.1.0
+  version: 1.2.0
   contact:
     name: Matter Binding Helper
     url: https://github.com/cedricziel/ha-matter-binding-helper
@@ -134,12 +134,18 @@ paths:
                     status: "error"
                     error: "Invalid JSON: Syntax error"
         '429':
-          description: Rate limit exceeded
+          description: Rate limit exceeded (10 requests per minute per IP, sliding window)
+          headers:
+            Retry-After:
+              description: Seconds to wait before retrying (when present)
+              schema:
+                type: integer
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
+                status: "error"
                 error: "Rate limit exceeded. Please try again later."
         '500':
           description: Internal server error
@@ -185,7 +191,8 @@ components:
           example: 4456
         vendor_name:
           type: string
-          description: Vendor/manufacturer name
+          maxLength: 255
+          description: Vendor/manufacturer name. Truncated to 255 chars; control chars are stripped.
           example: "Eve Systems"
         product_id:
           type: integer
@@ -193,14 +200,17 @@ components:
           example: 80
         product_name:
           type: string
-          description: Product name
+          maxLength: 255
+          description: Product name. Truncated to 255 chars; control chars are stripped.
           example: "Eve Energy"
         hardware_version:
           type: string
+          maxLength: 255
           description: Hardware version string
           example: "1.0"
         software_version:
           type: string
+          maxLength: 255
           description: Software/firmware version string
           example: "2.1.0"
         endpoints:
