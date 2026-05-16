@@ -134,6 +134,11 @@ class ZapSyncCommand extends Command
                 if (!empty($clusterData['features'])) {
                     $existingClusters[$index]['features'] = $clusterData['features'];
                 }
+                if (!empty($clusterData['apiMaturity'])) {
+                    $existingClusters[$index]['apiMaturity'] = $clusterData['apiMaturity'];
+                } else {
+                    unset($existingClusters[$index]['apiMaturity']);
+                }
 
                 ++$updatedCount;
             }
@@ -191,7 +196,7 @@ class ZapSyncCommand extends Command
      * define multiple sibling clusters. Files without any primary cluster definition
      * (types-only, extensions, etc.) return an empty list.
      *
-     * @return list<array{id: int, name: string, attributes: array, commands: array, features: array}>
+     * @return list<array{id: int, name: string, attributes: array, commands: array, features: array, apiMaturity?: string}>
      */
     private function fetchAndParseClusterXml(string $filename, SymfonyStyle $io): array
     {
@@ -217,13 +222,20 @@ class ZapSyncCommand extends Command
                     continue;
                 }
 
-                $results[] = [
+                $entry = [
                     'id' => $this->parseHexOrDecimal($codeValue),
                     'name' => trim((string) $candidate->name),
                     'features' => $this->parseFeatures($candidate),
                     'attributes' => $this->parseAttributes($candidate),
                     'commands' => $this->parseCommands($candidate),
                 ];
+
+                $apiMaturity = trim((string) ($candidate['apiMaturity'] ?? ''));
+                if ('' !== $apiMaturity) {
+                    $entry['apiMaturity'] = $apiMaturity;
+                }
+
+                $results[] = $entry;
             }
 
             return $results;
@@ -235,7 +247,7 @@ class ZapSyncCommand extends Command
     }
 
     /**
-     * @return array<array{bit: int, code: string, name: string, summary: string|null}>
+     * @return array<array{bit: int, code: string, name: string, summary: string|null, apiMaturity?: string}>
      */
     private function parseFeatures(\SimpleXMLElement $clusterNode): array
     {
@@ -253,12 +265,19 @@ class ZapSyncCommand extends Command
                 $summary = trim((string) ($feature->description ?? ''));
             }
 
-            $features[] = [
+            $entry = [
                 'bit' => (int) ($feature['bit'] ?? 0),
                 'code' => (string) ($feature['code'] ?? ''),
                 'name' => (string) ($feature['name'] ?? ''),
                 'summary' => '' !== $summary ? $summary : null,
             ];
+
+            $apiMaturity = trim((string) ($feature['apiMaturity'] ?? ''));
+            if ('' !== $apiMaturity) {
+                $entry['apiMaturity'] = $apiMaturity;
+            }
+
+            $features[] = $entry;
         }
 
         usort($features, fn (array $a, array $b): int => $a['bit'] <=> $b['bit']);
@@ -267,7 +286,11 @@ class ZapSyncCommand extends Command
     }
 
     /**
-     * @return array<array{code: int, name: string, type: string, writable: bool, optional: bool}>
+     * @return array<array{
+     *     code: int, name: string, type: string, writable: bool, optional: bool,
+     *     isNullable?: bool, default?: string, min?: string, max?: string,
+     *     apiMaturity?: string, description?: string, access?: list<array{op: string, privilege: string}>
+     * }>
      */
     private function parseAttributes(\SimpleXMLElement $clusterNode): array
     {
@@ -287,13 +310,37 @@ class ZapSyncCommand extends Command
                 continue;
             }
 
-            $attributes[] = [
+            $entry = [
                 'code' => $this->parseHexOrDecimal($code),
                 'name' => (string) ($attr['name'] ?? $attr->name ?? ''),
                 'type' => (string) ($attr['type'] ?? $attr->type ?? 'unknown'),
                 'writable' => $this->parseBoolean($attr['writable'] ?? 'false'),
                 'optional' => $this->parseBoolean($attr['optional'] ?? 'false'),
             ];
+
+            if ($this->parseBoolean($attr['isNullable'] ?? 'false')) {
+                $entry['isNullable'] = true;
+            }
+            foreach (['default', 'min', 'max'] as $key) {
+                $value = trim((string) ($attr[$key] ?? ''));
+                if ('' !== $value) {
+                    $entry[$key] = $value;
+                }
+            }
+            $apiMaturity = trim((string) ($attr['apiMaturity'] ?? ''));
+            if ('' !== $apiMaturity) {
+                $entry['apiMaturity'] = $apiMaturity;
+            }
+            $description = trim((string) ($attr->description ?? ''));
+            if ('' !== $description) {
+                $entry['description'] = $description;
+            }
+            $access = $this->parseAccess($attr);
+            if ([] !== $access) {
+                $entry['access'] = $access;
+            }
+
+            $attributes[] = $entry;
         }
 
         usort($attributes, fn (array $a, array $b): int => $a['code'] <=> $b['code']);
@@ -330,19 +377,51 @@ class ZapSyncCommand extends Command
                 ];
             }
 
-            $commands[] = [
+            $entry = [
                 'code' => $this->parseHexOrDecimal($code),
                 'name' => (string) ($cmd['name'] ?? $cmd->name ?? ''),
                 'direction' => $direction,
                 'optional' => $this->parseBoolean($cmd['optional'] ?? 'false'),
                 'parameters' => $parameters,
             ];
+
+            $apiMaturity = trim((string) ($cmd['apiMaturity'] ?? ''));
+            if ('' !== $apiMaturity) {
+                $entry['apiMaturity'] = $apiMaturity;
+            }
+            $description = trim((string) ($cmd->description ?? ''));
+            if ('' !== $description) {
+                $entry['description'] = $description;
+            }
+            $access = $this->parseAccess($cmd);
+            if ([] !== $access) {
+                $entry['access'] = $access;
+            }
+
+            $commands[] = $entry;
         }
 
-        // Sort by code
         usort($commands, fn (array $a, array $b): int => $a['code'] <=> $b['code']);
 
         return $commands;
+    }
+
+    /**
+     * @return list<array{op: string, privilege: string}>
+     */
+    private function parseAccess(\SimpleXMLElement $node): array
+    {
+        $access = [];
+        foreach ($node->access ?? [] as $entry) {
+            $op = trim((string) ($entry['op'] ?? ''));
+            $privilege = trim((string) ($entry['privilege'] ?? ''));
+            if ('' === $op || '' === $privilege) {
+                continue;
+            }
+            $access[] = ['op' => $op, 'privilege' => $privilege];
+        }
+
+        return $access;
     }
 
     private function parseHexOrDecimal(string $value): int
