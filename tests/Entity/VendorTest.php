@@ -93,6 +93,15 @@ final class VendorTest extends TestCase
         $this->assertSame('vendor-42', Vendor::canonicalSlug('!!!', 42));
     }
 
+    public function testIsTestVendorIdRecognisesReservedRange(): void
+    {
+        $this->assertTrue(Vendor::isTestVendorId(0xFFF1));
+        $this->assertTrue(Vendor::isTestVendorId(0xFFF4));
+        $this->assertTrue(Vendor::isTestVendorId(1234)); // "Demo Vendor"
+        $this->assertFalse(Vendor::isTestVendorId(4476)); // IKEA of Sweden
+        $this->assertFalse(Vendor::isTestVendorId(null));
+    }
+
     public function testFluentInterface(): void
     {
         $vendor = new Vendor();

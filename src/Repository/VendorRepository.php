@@ -76,6 +76,8 @@ class VendorRepository extends ServiceEntityRepository
     public function findAllOrderedByDeviceCount(): array
     {
         return $this->createQueryBuilder('v')
+            ->where('v.specId NOT IN (:testIds) OR v.specId IS NULL')
+            ->setParameter('testIds', Vendor::TEST_VENDOR_IDS)
             ->orderBy('v.deviceCount', 'DESC')
             ->addOrderBy('v.name', 'ASC')
             ->getQuery()
@@ -91,6 +93,8 @@ class VendorRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('v')
             ->where('v.deviceCount > 0')
+            ->andWhere('v.specId NOT IN (:testIds) OR v.specId IS NULL')
+            ->setParameter('testIds', Vendor::TEST_VENDOR_IDS)
             ->orderBy('v.deviceCount', 'DESC')
             ->setMaxResults($limit)
             ->getQuery()

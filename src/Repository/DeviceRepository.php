@@ -983,13 +983,18 @@ class DeviceRepository
      */
     public function getTopVendors(int $limit = 10): array
     {
-        return $this->db->executeQuery('
+        $placeholders = implode(',', array_fill(0, \count(\App\Entity\Vendor::TEST_VENDOR_IDS), '?'));
+        $params = [...\App\Entity\Vendor::TEST_VENDOR_IDS, $limit];
+        $types = array_fill(0, \count(\App\Entity\Vendor::TEST_VENDOR_IDS) + 1, \Doctrine\DBAL\ParameterType::INTEGER);
+
+        return $this->db->executeQuery("
             SELECT v.id, v.name, v.slug, v.spec_id, v.device_count
             FROM vendors v
             WHERE v.device_count > 0
+              AND (v.spec_id IS NULL OR v.spec_id NOT IN ($placeholders))
             ORDER BY v.device_count DESC
-            LIMIT :limit
-        ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+            LIMIT ?
+        ", $params, $types)->fetchAllAssociative();
     }
 
     /**

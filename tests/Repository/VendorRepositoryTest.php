@@ -119,6 +119,21 @@ final class VendorRepositoryTest extends KernelTestCase
         $this->assertLessThan($aZerosIdx, $cFivesIdx);
     }
 
+    public function testFindPopularExcludesTestVendorIds(): void
+    {
+        $demo = new Vendor()->setName('Demo Vendor')->setSlug('demo-vendor-1234')->setSpecId(1234)->setDeviceCount(100);
+        $real = new Vendor()->setName('Real')->setSlug('real-95500')->setSpecId(95500)->setDeviceCount(50);
+        $this->repository->save($demo);
+        $this->repository->save($real);
+        $this->entityManager->flush();
+
+        $popular = $this->repository->findPopular(10);
+        $names = array_map(static fn (Vendor $v): string => $v->getName(), $popular);
+
+        $this->assertContains('Real', $names);
+        $this->assertNotContains('Demo Vendor', $names);
+    }
+
     public function testFindPopularReturnsOnlyVendorsWithDevices(): void
     {
         $zero = new Vendor()->setName('ZeroOnes')->setSlug('zeroones-1')->setSpecId(95000)->setDeviceCount(0);

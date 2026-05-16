@@ -13,6 +13,19 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Index(name: 'idx_vendors_spec_id', columns: ['spec_id'])]
 class Vendor
 {
+    /**
+     * Vendor IDs reserved by the Matter spec for development & test devices,
+     * plus the well-known "Demo Vendor" (VID 1234) used in sample telemetry.
+     * These are never real products and should not appear in public aggregates.
+     */
+    public const array TEST_VENDOR_IDS = [
+        1234,   // "Demo Vendor" — common Home Assistant demo/sample value
+        65521,  // 0xFFF1 — Test Vendor #1
+        65522,  // 0xFFF2 — Test Vendor #2
+        65523,  // 0xFFF3 — Test Vendor #3
+        65524,  // 0xFFF4 — Test Vendor #4
+    ];
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -172,6 +185,15 @@ class Vendor
         $slug = trim((string) $slug, '-');
 
         return $slug ?: 'vendor-'.($specId ?? 'unknown');
+    }
+
+    /**
+     * Whether the given specId is a known dev/test VID that should be hidden
+     * from public aggregates.
+     */
+    public static function isTestVendorId(?int $specId): bool
+    {
+        return null !== $specId && \in_array($specId, self::TEST_VENDOR_IDS, true);
     }
 
     /**
