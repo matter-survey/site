@@ -1,3 +1,12 @@
+# CORS policy for the public Matter telemetry API.
+#
+# /api/ uses `allow_origin: ['*']` intentionally: telemetry submissions originate
+# from arbitrary self-hosted Home Assistant instances and similar tools, so we
+# cannot enumerate origins. The endpoint is unauthenticated and rate-limited
+# (see config/packages/framework.yaml -> api_submit limiter) and accepts only
+# POST with Content-Type: application/json — a wildcard here does not expose
+# user data or credentials. The default block also covers static assets that
+# may be embedded cross-origin.
 nelmio_cors:
     defaults:
         allow_origin: ['*']
