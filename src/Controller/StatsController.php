@@ -419,11 +419,7 @@ class StatsController extends AbstractController
             'matterVersion' => $matterVersion,
         ]);
         if (!$snapshot instanceof \App\Entity\ClusterVersion) {
-            throw new NotFoundHttpException(\sprintf(
-                'Cluster %s did not exist in Matter %s',
-                $hexId,
-                $matterVersion,
-            ));
+            throw new NotFoundHttpException(\sprintf('Cluster %s did not exist in Matter %s', $hexId, $matterVersion));
         }
 
         $versionHistory = $this->clusterVersionRepo->findByClusterId($cluster->getId());
