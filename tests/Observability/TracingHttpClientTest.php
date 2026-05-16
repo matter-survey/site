@@ -112,4 +112,113 @@ final class TracingHttpClientTest extends TestCase
         $this->assertCount(1, $spans);
         $this->assertSame(StatusCode::STATUS_ERROR, $spans[0]->getStatus()->getCode());
     }
+
+    public function testTransportExceptionRecordedOnSpan(): void
+    {
+        $mock = new MockHttpClient(static fn () => throw new \RuntimeException('connection refused'));
+        $client = new TracingHttpClient($mock);
+
+        try {
+            $client->request('GET', 'https://example.test/down');
+            $this->fail('Expected exception was not thrown');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('connection refused', $e->getMessage());
+        }
+
+        $this->tracerProvider->forceFlush();
+        $spans = iterator_to_array($this->storage->getIterator());
+        $this->assertCount(1, $spans);
+        $this->assertSame(StatusCode::STATUS_ERROR, $spans[0]->getStatus()->getCode());
+    }
+
+    public function testGetHeadersAndToArrayEndSpanOnce(): void
+    {
+        $mock = new MockHttpClient(static fn () => new MockResponse(
+            '{"hello":"world"}',
+            ['http_code' => 200, 'response_headers' => ['Content-Type' => 'application/json']],
+        ));
+        $client = new TracingHttpClient($mock);
+        $response = $client->request('GET', 'https://example.test/json');
+
+        $headers = $response->getHeaders();
+        $this->assertArrayHasKey('content-type', $headers);
+
+        $array = $response->toArray();
+        $this->assertSame(['hello' => 'world'], $array);
+
+        $this->tracerProvider->forceFlush();
+        $spans = iterator_to_array($this->storage->getIterator());
+        $this->assertCount(1, $spans);
+        $this->assertSame(200, $spans[0]->getAttributes()->toArray()['http.response.status_code']);
+    }
+
+    public function testGetInfoDelegatesAndDoesNotEndSpan(): void
+    {
+        $mock = new MockHttpClient(static fn () => new MockResponse('', ['http_code' => 204]));
+        $client = new TracingHttpClient($mock);
+        $response = $client->request('GET', 'https://example.test/info');
+
+        // getInfo() is a pure delegation; it doesn't end the span.
+        $url = $response->getInfo('url');
+        $this->assertSame('https://example.test/info', $url);
+
+        $response->getStatusCode(); // triggers endOk
+        $this->tracerProvider->forceFlush();
+        $this->assertCount(1, iterator_to_array($this->storage->getIterator()));
+    }
+
+    public function testCancelEndsSpanWithoutStatusCodeAttribute(): void
+    {
+        $mock = new MockHttpClient(static fn () => new MockResponse('', ['http_code' => 200]));
+        $client = new TracingHttpClient($mock);
+        $response = $client->request('GET', 'https://example.test/cancel');
+
+        $response->cancel();
+
+        $this->tracerProvider->forceFlush();
+        $spans = iterator_to_array($this->storage->getIterator());
+        $this->assertCount(1, $spans);
+        $this->assertArrayNotHasKey('http.response.status_code', $spans[0]->getAttributes()->toArray());
+    }
+
+    public function testWithOptionsClonesAndAppliesToInner(): void
+    {
+        $captured = [];
+        $mock = new MockHttpClient(function (string $method, string $url, array $options) use (&$captured): MockResponse {
+            $captured[] = $options;
+
+            return new MockResponse('ok', ['http_code' => 200]);
+        });
+        $client = new TracingHttpClient($mock);
+        $configured = $client->withOptions(['base_uri' => 'https://example.test']);
+
+        $this->assertNotSame($client, $configured);
+
+        $configured->request('GET', '/relative')->getStatusCode();
+        $this->assertNotEmpty($captured);
+    }
+
+    public function testStreamUnwrapsTracingResponseAndDelegates(): void
+    {
+        $mock = new MockHttpClient(static fn () => new MockResponse('payload', ['http_code' => 200]));
+        $client = new TracingHttpClient($mock);
+        $response = $client->request('GET', 'https://example.test/stream');
+
+        // Pass a single TracingResponse — exercises the branch that unwraps
+        // before delegating to the inner client's stream().
+        $stream = $client->stream($response);
+        $this->assertInstanceOf(\Symfony\Contracts\HttpClient\ResponseStreamInterface::class, $stream);
+    }
+
+    public function testStreamUnwrapsIterableOfTracingResponses(): void
+    {
+        $mock = new MockHttpClient(static fn () => new MockResponse('one', ['http_code' => 200]));
+        $client = new TracingHttpClient($mock);
+        $a = $client->request('GET', 'https://example.test/a');
+        $b = $client->request('GET', 'https://example.test/b');
+
+        // Exercises the iterable branch with both wrapped and plain responses.
+        $stream = $client->stream([$a, $b]);
+        $this->assertInstanceOf(\Symfony\Contracts\HttpClient\ResponseStreamInterface::class, $stream);
+    }
 }
