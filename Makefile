@@ -65,7 +65,8 @@ lint-fix:
 	vendor/bin/php-cs-fixer fix
 
 analyse:
-	vendor/bin/phpstan analyse --memory-limit=512M
+	@composer install -d tools/phpstan --no-interaction --quiet
+	tools/phpstan/vendor/bin/phpstan analyse --memory-limit=512M
 
 phpstan: analyse
 

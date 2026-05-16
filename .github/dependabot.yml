@@ -61,11 +61,17 @@ updates:
       - dependency-name: "symfony/yaml"
         update-types: ["version-update:semver-major"]
 
-  # Rector (and any future dev tools) live under tools/<tool>/composer.json
-  # with their own committed lockfile, isolated from the main app's
-  # dependency graph. Dependabot needs an explicit entry per directory.
+  # Dev tools live under tools/<tool>/composer.json with their own committed
+  # lockfile, isolated from the main app's dependency graph. Dependabot needs
+  # an explicit entry per directory.
   - package-ecosystem: "composer"
     directory: "/tools/rector"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "composer"
+    directory: "/tools/phpstan"
     schedule:
       interval: "daily"
     open-pull-requests-limit: 5
