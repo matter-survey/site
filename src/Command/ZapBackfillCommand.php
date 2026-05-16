@@ -44,6 +44,7 @@ final class ZapBackfillCommand extends Command
         '1.3' => 'v1.3.0.0',
         '1.4' => 'v1.4.2.0',
         '1.5' => 'v1.5.1.0',
+        'master' => 'master',
     ];
 
     private const string DEFAULT_OUTPUT_DIR = 'fixtures/clusters';
