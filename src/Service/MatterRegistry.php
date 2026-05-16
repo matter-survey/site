@@ -427,11 +427,13 @@ class MatterRegistry
 
         $clusterEntities = $this->clusterRepository->findAll();
         $latestSnapshots = $this->loadLatestClusterSnapshots();
+        $earliestVersions = $this->loadEarliestVersionPerCluster();
 
         foreach ($clusterEntities as $cluster) {
             $this->clusters[$cluster->getId()] = $this->clusterEntityToArray(
                 $cluster,
                 $latestSnapshots[$cluster->getId()] ?? null,
+                $earliestVersions[$cluster->getId()] ?? null,
             );
         }
 
@@ -461,23 +463,51 @@ class MatterRegistry
     }
 
     /**
-     * Convert a Cluster entity to array format, preferring snapshot spec data
-     * when present.
+     * Map of cluster id → earliest matterVersion the cluster appears in. Excludes
+     * "master" because that's the work-in-progress ref, not a released spec.
+     *
+     * @return array<int, string>
      */
-    private function clusterEntityToArray(Cluster $cluster, ?\App\Entity\ClusterVersion $snapshot = null): array
+    private function loadEarliestVersionPerCluster(): array
+    {
+        if (!$this->clusterVersionRepository instanceof ClusterVersionRepository) {
+            return [];
+        }
+
+        $earliest = [];
+        foreach ($this->clusterVersionRepository->findAll() as $row) {
+            if ('master' === $row->getMatterVersion()) {
+                continue;
+            }
+            $clusterId = $row->getClusterId();
+            if (!isset($earliest[$clusterId]) || $row->getMatterVersion() < $earliest[$clusterId]) {
+                $earliest[$clusterId] = $row->getMatterVersion();
+            }
+        }
+
+        return $earliest;
+    }
+
+    /**
+     * Convert a Cluster entity to array format. Spec data comes from the
+     * matching ClusterVersion snapshot when present; clusters without a
+     * snapshot return null for those fields (which is correct — they
+     * haven't shipped in any tagged Matter release).
+     */
+    private function clusterEntityToArray(Cluster $cluster, ?\App\Entity\ClusterVersion $snapshot = null, ?string $earliestMatterVersion = null): array
     {
         return [
             'id' => $cluster->getId(),
             'hexId' => $cluster->getHexId(),
             'name' => $cluster->getName(),
             'description' => $cluster->getDescription(),
-            'specVersion' => $cluster->getSpecVersion(),
+            'specVersion' => $earliestMatterVersion ?? $cluster->getSpecVersion(),
             'category' => $cluster->getCategory(),
             'isGlobal' => $cluster->isGlobal(),
-            'attributes' => $snapshot?->getAttributes() ?? $cluster->getAttributes(),
-            'commands' => $snapshot?->getCommands() ?? $cluster->getCommands(),
-            'features' => $snapshot?->getFeatures() ?? $cluster->getFeatures(),
-            'apiMaturity' => $snapshot?->getApiMaturity() ?? $cluster->getApiMaturity(),
+            'attributes' => $snapshot?->getAttributes(),
+            'commands' => $snapshot?->getCommands(),
+            'features' => $snapshot?->getFeatures(),
+            'apiMaturity' => $snapshot?->getApiMaturity(),
             'clusterRevision' => $snapshot?->getClusterRevision(),
         ];
     }

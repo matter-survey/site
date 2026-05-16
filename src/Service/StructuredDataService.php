@@ -107,12 +107,14 @@ final readonly class StructuredDataService
         int $totalDevices,
         int $mandatoryForCount,
         ?\DateTimeInterface $dateModified,
+        int $commandCount = 0,
+        int $attributeCount = 0,
     ): array {
         $json = [
             '@context' => 'https://schema.org',
             '@type' => 'DefinedTerm',
             'name' => $cluster->getName(),
-            'description' => $this->lede->ledeForCluster($cluster, $mandatoryForCount),
+            'description' => $this->lede->ledeForCluster($cluster, $mandatoryForCount, $commandCount, $attributeCount),
             'termCode' => $cluster->getHexId(),
             'url' => $this->urlGenerator->generate(
                 'stats_cluster_show',

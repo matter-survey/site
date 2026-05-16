@@ -65,13 +65,11 @@ final class AeoLedeService
         return sprintf('%s is a Matter device vendor in the Matter Survey registry.', $name);
     }
 
-    public function ledeForCluster(Cluster $cluster, int $mandatoryForCount): string
+    public function ledeForCluster(Cluster $cluster, int $mandatoryForCount, int $commandCount = 0, int $attributeCount = 0): string
     {
         $name = $cluster->getName();
         $hex = $cluster->getHexId();
         $description = $this->trimOrNull($cluster->getDescription());
-        $commandCount = \count($cluster->getCommands() ?? []);
-        $attributeCount = \count($cluster->getAttributes() ?? []);
 
         $primary = null !== $description
             ? sprintf('The %s cluster (%s) is a Matter cluster that %s.', $name, $hex, $description)

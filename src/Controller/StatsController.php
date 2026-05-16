@@ -379,6 +379,9 @@ class StatsController extends AbstractController
 
         // Per-Matter-version history (one row per release the cluster appears in)
         $versionHistory = $this->clusterVersionRepo->findByClusterId($cluster->getId());
+        $latestSnapshot = [] !== $versionHistory ? end($versionHistory) : null;
+        $aeoCommandCount = $latestSnapshot ? \count($latestSnapshot->getCommands() ?? []) : 0;
+        $aeoAttributeCount = $latestSnapshot ? \count($latestSnapshot->getAttributes() ?? []) : 0;
 
         $aeoBreadcrumbs = [
             ['name' => 'Home', 'url' => $this->generateUrl('device_index', [], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL)],
@@ -396,6 +399,8 @@ class StatsController extends AbstractController
             'versionHistory' => $versionHistory,
             'matterRegistry' => $this->matterRegistry,
             'aeoMandatoryForCount' => \count($deviceTypesRequiring),
+            'aeoCommandCount' => $aeoCommandCount,
+            'aeoAttributeCount' => $aeoAttributeCount,
             'aeoDateModified' => $cluster->getUpdatedAt(),
             'aeoBreadcrumbs' => $aeoBreadcrumbs,
         ]);
@@ -404,7 +409,7 @@ class StatsController extends AbstractController
     #[Route(
         '/cluster/{hexId}/version/{matterVersion}',
         name: 'stats_cluster_version_show',
-        requirements: ['hexId' => '0x[0-9A-Fa-f]+', 'matterVersion' => '\d+\.\d+'],
+        requirements: ['hexId' => '0x[0-9A-Fa-f]+', 'matterVersion' => '\d+\.\d+|master'],
         methods: ['GET'],
     )]
     public function clusterVersionShow(string $hexId, string $matterVersion): Response

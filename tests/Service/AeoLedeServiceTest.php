@@ -125,17 +125,9 @@ final class AeoLedeServiceTest extends TestCase
     {
         $cluster = new Cluster(0x0006)
             ->setName('OnOff')
-            ->setDescription('provides on/off control for endpoints')
-            ->setCommands([
-                ['code' => 0, 'name' => 'Off'],
-                ['code' => 1, 'name' => 'On'],
-                ['code' => 2, 'name' => 'Toggle'],
-            ])
-            ->setAttributes([
-                ['code' => 0, 'name' => 'OnOff'],
-            ]);
+            ->setDescription('provides on/off control for endpoints');
 
-        $lede = $this->svc->ledeForCluster($cluster, mandatoryForCount: 12);
+        $lede = $this->svc->ledeForCluster($cluster, mandatoryForCount: 12, commandCount: 3, attributeCount: 1);
 
         $this->assertStringContainsString('OnOff cluster', $lede);
         $this->assertStringContainsString('0x0006', $lede);
@@ -150,11 +142,9 @@ final class AeoLedeServiceTest extends TestCase
     {
         $cluster = new Cluster(0x0028)
             ->setName('BasicInformation')
-            ->setDescription('reports basic device information')
-            ->setCommands([['code' => 0, 'name' => 'Reset']])
-            ->setAttributes([['code' => 0, 'name' => 'DataModelRevision']]);
+            ->setDescription('reports basic device information');
 
-        $lede = $this->svc->ledeForCluster($cluster, mandatoryForCount: 1);
+        $lede = $this->svc->ledeForCluster($cluster, mandatoryForCount: 1, commandCount: 1, attributeCount: 1);
 
         $this->assertStringContainsString('1 command', $lede);
         $this->assertStringNotContainsString('1 commands', $lede);
@@ -167,9 +157,7 @@ final class AeoLedeServiceTest extends TestCase
     public function testClusterLedeMissingDescriptionOmitsClause(): void
     {
         $cluster = new Cluster(0x9999)
-            ->setName('Custom')
-            ->setCommands([])
-            ->setAttributes([]);
+            ->setName('Custom');
 
         $lede = $this->svc->ledeForCluster($cluster, mandatoryForCount: 0);
 
@@ -220,8 +208,7 @@ final class AeoLedeServiceTest extends TestCase
         $product = new Product()
             ->setVendorId(1)->setProductId(1)->setVendorName('V')->setProductName('P');
         $vendor = new Vendor()->setName('V');
-        $cluster = new Cluster(1)->setName('C')->setDescription('does X')
-            ->setCommands([])->setAttributes([]);
+        $cluster = new Cluster(1)->setName('C')->setDescription('does X');
         $deviceType = new DeviceType(1)->setName('DT')->setDescription('describes Y');
 
         foreach ([

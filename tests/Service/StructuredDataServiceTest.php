@@ -126,22 +126,22 @@ final class StructuredDataServiceTest extends TestCase
     {
         $cluster = new Cluster(0x0006)
             ->setName('OnOff')
-            ->setDescription('provides on/off control for endpoints')
-            ->setCommands([['code' => 0], ['code' => 1], ['code' => 2]])
-            ->setAttributes([['code' => 0]]);
+            ->setDescription('provides on/off control for endpoints');
 
         $jsonLd = $this->svc->clusterJsonLd(
             $cluster,
             totalDevices: 100,
             mandatoryForCount: 12,
             dateModified: new \DateTimeImmutable('2026-05-16'),
+            commandCount: 3,
+            attributeCount: 1,
         );
 
         $this->assertSame('DefinedTerm', $jsonLd['@type']);
         $this->assertSame('OnOff', $jsonLd['name']);
         $this->assertSame('0x0006', $jsonLd['termCode']);
         $this->assertSame('2026-05-16', $jsonLd['dateModified']);
-        $this->assertSame($this->lede->ledeForCluster($cluster, 12), $jsonLd['description']);
+        $this->assertSame($this->lede->ledeForCluster($cluster, 12, 3, 1), $jsonLd['description']);
     }
 
     public function testDeviceTypeJsonLdHasDefinedTermShape(): void

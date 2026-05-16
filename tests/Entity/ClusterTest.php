@@ -17,54 +17,6 @@ final class ClusterTest extends TestCase
         $this->assertSame('0x0006', $cluster->getHexId());
     }
 
-    public function testSetAttributes(): void
-    {
-        $cluster = new Cluster(6);
-        $attributes = [
-            ['code' => 0, 'name' => 'OnOff', 'type' => 'boolean', 'writable' => false, 'optional' => false],
-            ['code' => 16384, 'name' => 'GlobalSceneControl', 'type' => 'boolean', 'writable' => false, 'optional' => true],
-        ];
-
-        $cluster->setAttributes($attributes);
-
-        $this->assertSame($attributes, $cluster->getAttributes());
-    }
-
-    public function testSetCommands(): void
-    {
-        $cluster = new Cluster(6);
-        $commands = [
-            ['code' => 0, 'name' => 'Off', 'direction' => 'client→server', 'optional' => false, 'parameters' => []],
-            ['code' => 1, 'name' => 'On', 'direction' => 'client→server', 'optional' => true, 'parameters' => []],
-        ];
-
-        $cluster->setCommands($commands);
-
-        $this->assertSame($commands, $cluster->getCommands());
-    }
-
-    public function testSetFeatures(): void
-    {
-        $cluster = new Cluster(6);
-        $features = [
-            ['bit' => 0, 'code' => 'LT', 'name' => 'Lighting', 'summary' => 'Behavior that supports lighting applications.'],
-            ['bit' => 1, 'code' => 'DF', 'name' => 'DeadFrontBehavior', 'summary' => 'Device has Dead Front behavior'],
-        ];
-
-        $cluster->setFeatures($features);
-
-        $this->assertSame($features, $cluster->getFeatures());
-    }
-
-    public function testNullableJsonFields(): void
-    {
-        $cluster = new Cluster(6);
-
-        $this->assertNull($cluster->getAttributes());
-        $this->assertNull($cluster->getCommands());
-        $this->assertNull($cluster->getFeatures());
-    }
-
     public function testSetName(): void
     {
         $cluster = new Cluster(6);
@@ -106,9 +58,6 @@ final class ClusterTest extends TestCase
             ->setDescription('Test')
             ->setCategory('lighting')
             ->setIsGlobal(false)
-            ->setAttributes([])
-            ->setCommands([])
-            ->setFeatures([])
             ->setSpecVersion('1.4')
             ->setHexId('0x0006')
             ->setCreatedAt(new \DateTime())

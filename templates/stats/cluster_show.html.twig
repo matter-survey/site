@@ -7,7 +7,7 @@
 
 {% block structured_data %}
 <script type="application/ld+json">
-{{ structured_data_cluster(cluster, totalDevices, aeoMandatoryForCount, aeoDateModified)|json_encode(constant('JSON_UNESCAPED_SLASHES'))|raw }}
+{{ structured_data_cluster(cluster, totalDevices, aeoMandatoryForCount, aeoDateModified, aeoCommandCount|default(0), aeoAttributeCount|default(0))|json_encode(constant('JSON_UNESCAPED_SLASHES'))|raw }}
 </script>
 <script type="application/ld+json">
 {{ structured_data_breadcrumb(aeoBreadcrumbs)|json_encode(constant('JSON_UNESCAPED_SLASHES'))|raw }}
@@ -500,7 +500,7 @@
         <a href="{{ path('stats_clusters') }}">Clusters</a> &raquo; {{ cluster.name }}
     </div>
 
-    <p class="aeo-lede">{{ aeo_lede_cluster(cluster, aeoMandatoryForCount) }}</p>
+    <p class="aeo-lede">{{ aeo_lede_cluster(cluster, aeoMandatoryForCount, aeoCommandCount|default(0), aeoAttributeCount|default(0)) }}</p>
     {% if aeoDateModified %}
         <p class="aeo-meta">
             <time datetime="{{ aeoDateModified.format('Y-m-d') }}">Last updated {{ aeoDateModified.format('j M Y') }}</time>
@@ -524,9 +524,10 @@
                 <span class="badge badge-category">{{ cluster.category|capitalize }}</span>
             </div>
             {% endif %}
-            {% if cluster.apiMaturity %}
+            {% set latestSnapshot = versionHistory|default([])|last %}
+            {% if latestSnapshot and latestSnapshot.apiMaturity %}
             <div class="meta-item">
-                <span class="badge badge-{{ cluster.apiMaturity }}">{{ cluster.apiMaturity|capitalize }}</span>
+                <span class="badge badge-{{ latestSnapshot.apiMaturity }}">{{ latestSnapshot.apiMaturity|capitalize }}</span>
             </div>
             {% endif %}
             {% if versionHistory|default([])|length > 0 %}
@@ -570,9 +571,10 @@
     {% endif %}
 
     {# Specification Data Section - Features, Attributes, Commands #}
-    {% set features = cluster.features ?? [] %}
-    {% set attributes = cluster.attributes ?? [] %}
-    {% set commands = cluster.commands ?? [] %}
+    {# Sourced from the latest ClusterVersion snapshot, falling back to empty. #}
+    {% set features = latestSnapshot ? (latestSnapshot.features ?? []) : [] %}
+    {% set attributes = latestSnapshot ? (latestSnapshot.attributes ?? []) : [] %}
+    {% set commands = latestSnapshot ? (latestSnapshot.commands ?? []) : [] %}
 
     {% if features|length > 0 or attributes|length > 0 or commands|length > 0 %}
     <div class="section">
