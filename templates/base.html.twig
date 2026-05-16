@@ -110,6 +110,28 @@
             display: flex;
             gap: 0.5rem;
             align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        @media (max-width: 640px) {
+            header nav {
+                justify-content: flex-start;
+                width: 100%;
+            }
+
+            .header-search input {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .header-search {
+                flex: 1 1 100%;
+            }
+
+            .nav-divider {
+                display: none;
+            }
         }
 
         header nav a {
