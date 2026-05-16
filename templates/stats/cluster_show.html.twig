@@ -338,6 +338,40 @@
         padding: 0.125rem 0.375rem;
     }
 
+    .badge-provisional {
+        background: #fef3c7;
+        color: #92400e;
+        font-size: 0.6875rem;
+        padding: 0.125rem 0.375rem;
+    }
+
+    .badge-deprecated {
+        background: #fee2e2;
+        color: #991b1b;
+        font-size: 0.6875rem;
+        padding: 0.125rem 0.375rem;
+    }
+
+    .badge-access {
+        background: #ede9fe;
+        color: #5b21b6;
+        font-size: 0.6875rem;
+        padding: 0.125rem 0.375rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .spec-detail {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        margin-top: 0.25rem;
+        line-height: 1.4;
+    }
+
+    .spec-detail .range {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: var(--gray-600);
+    }
+
     .param-list {
         font-size: 0.75rem;
         color: var(--gray-500);
@@ -501,11 +535,39 @@
                     {% for attr in attributes %}
                     <tr>
                         <td class="code-cell">0x{{ '%04X'|format(attr.code) }}</td>
-                        <td>{{ attr.name }}</td>
+                        <td>
+                            {{ attr.name }}
+                            {% set detail_parts = [] %}
+                            {% if attr.min is defined and attr.max is defined %}
+                                {% set detail_parts = detail_parts|merge(['<span class="range">' ~ attr.min ~ '..' ~ attr.max ~ '</span>']) %}
+                            {% elseif attr.min is defined %}
+                                {% set detail_parts = detail_parts|merge(['<span class="range">min ' ~ attr.min ~ '</span>']) %}
+                            {% elseif attr.max is defined %}
+                                {% set detail_parts = detail_parts|merge(['<span class="range">max ' ~ attr.max ~ '</span>']) %}
+                            {% endif %}
+                            {% if attr.default is defined %}
+                                {% set detail_parts = detail_parts|merge(['default <span class="range">' ~ attr.default ~ '</span>']) %}
+                            {% endif %}
+                            {% if attr.isNullable is defined and attr.isNullable %}
+                                {% set detail_parts = detail_parts|merge(['nullable']) %}
+                            {% endif %}
+                            {% if detail_parts|length > 0 %}
+                                <div class="spec-detail">{{ detail_parts|join(' · ')|raw }}</div>
+                            {% endif %}
+                            {% if attr.description is defined and attr.description %}
+                                <div class="spec-detail">{{ attr.description }}</div>
+                            {% endif %}
+                        </td>
                         <td class="type-cell">{{ attr.type }}</td>
                         <td>
                             {% if attr.writable %}<span class="badge badge-writable">Writable</span>{% endif %}
                             {% if attr.optional %}<span class="badge badge-optional">Optional</span>{% endif %}
+                            {% if attr.apiMaturity is defined and attr.apiMaturity %}
+                                <span class="badge badge-{{ attr.apiMaturity }}">{{ attr.apiMaturity|capitalize }}</span>
+                            {% endif %}
+                            {% for ac in attr.access ?? [] %}
+                                <span class="badge badge-access">{{ ac.op }}: {{ ac.privilege }}</span>
+                            {% endfor %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -533,6 +595,15 @@
                         <td>
                             {{ cmd.name }}
                             {% if cmd.optional %}<span class="badge badge-optional">Optional</span>{% endif %}
+                            {% if cmd.apiMaturity is defined and cmd.apiMaturity %}
+                                <span class="badge badge-{{ cmd.apiMaturity }}">{{ cmd.apiMaturity|capitalize }}</span>
+                            {% endif %}
+                            {% for ac in cmd.access ?? [] %}
+                                <span class="badge badge-access">{{ ac.op }}: {{ ac.privilege }}</span>
+                            {% endfor %}
+                            {% if cmd.description is defined and cmd.description %}
+                                <div class="spec-detail">{{ cmd.description }}</div>
+                            {% endif %}
                         </td>
                         <td><span class="badge badge-direction">{{ cmd.direction }}</span></td>
                         <td>
@@ -563,6 +634,9 @@
                         <span class="feature-name">{{ feature.name }}</span>
                         <span class="feature-code">({{ feature.code }})</span>
                         <span class="feature-bit">bit {{ feature.bit }}</span>
+                        {% if feature.apiMaturity is defined and feature.apiMaturity %}
+                            <span class="badge badge-{{ feature.apiMaturity }}">{{ feature.apiMaturity|capitalize }}</span>
+                        {% endif %}
                     </div>
                     {% if feature.summary %}
                     <div class="feature-summary">{{ feature.summary }}</div>
