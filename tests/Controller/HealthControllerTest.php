@@ -4,24 +4,21 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Zenstruck\Browser\Test\HasBrowser;
 
-class HealthControllerTest extends WebTestCase
+class HealthControllerTest extends KernelTestCase
 {
+    use HasBrowser;
+
     public function testHealthEndpointReturnsOk(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/health');
-
-        $this->assertResponseIsSuccessful();
-        $this->assertResponseHeaderSame('content-type', 'application/json');
-
-        $response = json_decode($client->getResponse()->getContent(), true);
-
-        $this->assertArrayHasKey('status', $response);
-        $this->assertArrayHasKey('checks', $response);
-        $this->assertArrayHasKey('timestamp', $response);
-        $this->assertEquals('healthy', $response['status']);
-        $this->assertArrayHasKey('database', $response['checks']);
+        $this->browser()
+            ->visit('/health')
+            ->assertSuccessful()
+            ->assertHeaderContains('Content-Type', 'application/json')
+            ->assertContains('"status":"healthy"')
+            ->assertContains('"database":"ok"')
+            ->assertContains('"timestamp":');
     }
 }

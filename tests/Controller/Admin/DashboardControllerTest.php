@@ -7,180 +7,153 @@ namespace App\Tests\Controller\Admin;
 use App\Entity\User;
 use App\Repository\ApiTokenRepository;
 use App\Repository\UserRepository;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\HttpFoundation\Response;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Zenstruck\Browser\Test\HasBrowser;
 
-class DashboardControllerTest extends WebTestCase
+class DashboardControllerTest extends KernelTestCase
 {
+    use HasBrowser;
+
     public function testAdminDashboardRequiresAuthentication(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/admin');
-
-        // Should redirect to login
-        $this->assertResponseRedirects('/login');
+        $this->browser()
+            ->interceptRedirects()
+            ->visit('/admin')
+            ->assertRedirectedTo('/login');
     }
 
     public function testAdminDashboardRequiresAdminRole(): void
     {
-        $client = static::createClient();
-        $container = static::getContainer();
+        $user = $this->createTestUser('nonadmin@example.com', 'testpassword123', ['ROLE_API']);
 
-        // Create a user without ROLE_ADMIN
-        $user = $this->createTestUser($container, 'nonadmin@example.com', 'testpassword123', ['ROLE_API']);
-        $client->loginUser($user, 'main');
-
-        $client->request('GET', '/admin');
-
-        // Should be forbidden
-        $this->assertResponseStatusCodeSame(Response::HTTP_FORBIDDEN);
-
-        // Cleanup
-        $this->removeTestUser($container, $user);
+        try {
+            $this->browser()
+                ->actingAs($user)
+                ->visit('/admin')
+                ->assertStatus(403);
+        } finally {
+            $this->removeTestUser('nonadmin@example.com');
+        }
     }
 
     public function testAdminDashboardAccessibleWithAdminRole(): void
     {
-        $client = static::createClient();
-        $container = static::getContainer();
+        $user = $this->createTestUser('admin@example.com', 'testpassword123', ['ROLE_ADMIN']);
 
-        // Create an admin user
-        $user = $this->createTestUser($container, 'admin@example.com', 'testpassword123', ['ROLE_ADMIN']);
-
-        // Log in the user using the main firewall
-        $client->loginUser($user, 'main');
-
-        $crawler = $client->request('GET', '/admin');
-
-        $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('.admin-header h1', 'Admin Dashboard');
-
-        // Cleanup
-        $this->removeTestUser($container, $user);
+        try {
+            $this->browser()
+                ->actingAs($user)
+                ->visit('/admin')
+                ->assertSuccessful()
+                ->assertSeeIn('.admin-header h1', 'Admin Dashboard');
+        } finally {
+            $this->removeTestUser('admin@example.com');
+        }
     }
 
     public function testAdminDashboardShowsStatistics(): void
     {
-        $client = static::createClient();
-        $container = static::getContainer();
+        $user = $this->createTestUser('statsadmin@example.com', 'testpassword123', ['ROLE_ADMIN']);
 
-        $user = $this->createTestUser($container, 'statsadmin@example.com', 'testpassword123', ['ROLE_ADMIN']);
-        $client->loginUser($user, 'main');
-
-        $crawler = $client->request('GET', '/admin');
-
-        $this->assertResponseIsSuccessful();
-
-        // Should show statistics section
-        $this->assertSelectorExists('.stats-grid');
-
-        // Cleanup
-        $this->removeTestUser($container, $user);
+        try {
+            $this->browser()
+                ->actingAs($user)
+                ->visit('/admin')
+                ->assertSuccessful()
+                ->assertSeeElement('.stats-grid');
+        } finally {
+            $this->removeTestUser('statsadmin@example.com');
+        }
     }
 
     public function testAdminDashboardShowsUserTokens(): void
     {
-        $client = static::createClient();
-        $container = static::getContainer();
-
-        // Create admin with an API token
-        $user = $this->createTestUser($container, 'tokenadmin@example.com', 'testpassword123', ['ROLE_ADMIN']);
+        $user = $this->createTestUser('tokenadmin@example.com', 'testpassword123', ['ROLE_ADMIN']);
 
         /** @var ApiTokenRepository $tokenRepo */
-        $tokenRepo = $container->get(ApiTokenRepository::class);
+        $tokenRepo = static::getContainer()->get(ApiTokenRepository::class);
         $apiToken = $tokenRepo->createForUser($user, 'Test Token');
         $tokenString = $apiToken->getToken();
 
-        $client->loginUser($user, 'main');
-
-        $crawler = $client->request('GET', '/admin');
-
-        $this->assertResponseIsSuccessful();
-
-        // Should show token section
-        $this->assertSelectorExists('.tokens-table');
-
-        // Should display the token name
-        $this->assertStringContainsString('Test Token', $client->getResponse()->getContent());
-
-        // Cleanup - re-fetch token to avoid detached entity error
-        $tokenToRemove = $tokenRepo->findValidToken($tokenString);
-        if ($tokenToRemove) {
-            $tokenRepo->remove($tokenToRemove, true);
-        }
-        $this->removeTestUser($container, $user);
-    }
-
-    public function testAdminDashboardShowsNoTokensMessage(): void
-    {
-        $client = static::createClient();
-        $container = static::getContainer();
-
-        // Create admin without any tokens
-        $user = $this->createTestUser($container, 'notokenadmin@example.com', 'testpassword123', ['ROLE_ADMIN']);
-        $client->loginUser($user, 'main');
-
-        $crawler = $client->request('GET', '/admin');
-
-        $this->assertResponseIsSuccessful();
-
-        // Should show "no tokens" message
-        $this->assertStringContainsString('No API tokens', $client->getResponse()->getContent());
-
-        // Cleanup
-        $this->removeTestUser($container, $user);
-    }
-
-    public function testAdminDashboardShowsMultipleTokens(): void
-    {
-        $client = static::createClient();
-        $container = static::getContainer();
-
-        // Create admin with multiple API tokens
-        $user = $this->createTestUser($container, 'multitokenadmin@example.com', 'testpassword123', ['ROLE_ADMIN']);
-
-        /** @var ApiTokenRepository $tokenRepo */
-        $tokenRepo = $container->get(ApiTokenRepository::class);
-        $token1 = $tokenRepo->createForUser($user, 'Home Assistant');
-        $token2 = $tokenRepo->createForUser($user, 'CLI Tool');
-        $token3 = $tokenRepo->createForUser($user, 'Development');
-
-        // Store token strings for cleanup
-        $tokenStrings = [$token1->getToken(), $token2->getToken(), $token3->getToken()];
-
-        $client->loginUser($user, 'main');
-
-        $crawler = $client->request('GET', '/admin');
-
-        $this->assertResponseIsSuccessful();
-
-        $content = $client->getResponse()->getContent();
-        $this->assertStringContainsString('Home Assistant', $content);
-        $this->assertStringContainsString('CLI Tool', $content);
-        $this->assertStringContainsString('Development', $content);
-
-        // Cleanup - re-fetch tokens to avoid detached entity error
-        foreach ($tokenStrings as $tokenString) {
+        try {
+            $this->browser()
+                ->actingAs($user)
+                ->visit('/admin')
+                ->assertSuccessful()
+                ->assertSeeElement('.tokens-table')
+                ->assertSee('Test Token');
+        } finally {
             $tokenToRemove = $tokenRepo->findValidToken($tokenString);
             if ($tokenToRemove) {
                 $tokenRepo->remove($tokenToRemove, true);
             }
+            $this->removeTestUser('tokenadmin@example.com');
         }
-        $this->removeTestUser($container, $user);
     }
 
-    private function createTestUser(\Psr\Container\ContainerInterface $container, string $email, string $password, array $roles = []): User
+    public function testAdminDashboardShowsNoTokensMessage(): void
     {
+        $user = $this->createTestUser('notokenadmin@example.com', 'testpassword123', ['ROLE_ADMIN']);
+
+        try {
+            $this->browser()
+                ->actingAs($user)
+                ->visit('/admin')
+                ->assertSuccessful()
+                ->assertSee('No API tokens');
+        } finally {
+            $this->removeTestUser('notokenadmin@example.com');
+        }
+    }
+
+    public function testAdminDashboardShowsMultipleTokens(): void
+    {
+        $user = $this->createTestUser('multitokenadmin@example.com', 'testpassword123', ['ROLE_ADMIN']);
+
+        /** @var ApiTokenRepository $tokenRepo */
+        $tokenRepo = static::getContainer()->get(ApiTokenRepository::class);
+        $tokenStrings = [
+            $tokenRepo->createForUser($user, 'Home Assistant')->getToken(),
+            $tokenRepo->createForUser($user, 'CLI Tool')->getToken(),
+            $tokenRepo->createForUser($user, 'Development')->getToken(),
+        ];
+
+        try {
+            $this->browser()
+                ->actingAs($user)
+                ->visit('/admin')
+                ->assertSuccessful()
+                ->assertSee('Home Assistant')
+                ->assertSee('CLI Tool')
+                ->assertSee('Development');
+        } finally {
+            foreach ($tokenStrings as $tokenString) {
+                $tokenToRemove = $tokenRepo->findValidToken($tokenString);
+                if ($tokenToRemove) {
+                    $tokenRepo->remove($tokenToRemove, true);
+                }
+            }
+            $this->removeTestUser('multitokenadmin@example.com');
+        }
+    }
+
+    /**
+     * @param string[] $roles
+     */
+    private function createTestUser(string $email, string $password, array $roles = []): User
+    {
+        $container = static::getContainer();
+
         /** @var UserRepository $userRepository */
         $userRepository = $container->get(UserRepository::class);
 
         /** @var UserPasswordHasherInterface $passwordHasher */
         $passwordHasher = $container->get(UserPasswordHasherInterface::class);
 
-        $user = new User();
-        $user->setEmail($email);
-        $user->setRoles($roles);
+        $user = (new User())
+            ->setEmail($email)
+            ->setRoles($roles);
         $user->setPassword($passwordHasher->hashPassword($user, $password));
 
         $userRepository->save($user, true);
@@ -188,13 +161,14 @@ class DashboardControllerTest extends WebTestCase
         return $user;
     }
 
-    private function removeTestUser(\Psr\Container\ContainerInterface $container, User $user): void
+    private function removeTestUser(string $email): void
     {
+        $container = static::getContainer();
+
         /** @var UserRepository $userRepository */
         $userRepository = $container->get(UserRepository::class);
 
-        // Re-fetch user to avoid detached entity error
-        $userToRemove = $userRepository->findByEmail($user->getEmail());
+        $userToRemove = $userRepository->findByEmail($email);
         if ($userToRemove) {
             $userRepository->remove($userToRemove, true);
         }
