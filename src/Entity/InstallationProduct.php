@@ -14,8 +14,8 @@ use Doctrine\ORM\Mapping as ORM;
     name: 'unique_installation_product',
     columns: ['installation_id', 'product_id']
 )]
-#[ORM\Index(columns: ['installation_id'], name: 'idx_installation_products_installation')]
-#[ORM\Index(columns: ['product_id'], name: 'idx_installation_products_product')]
+#[ORM\Index(name: 'idx_installation_products_installation', columns: ['installation_id'])]
+#[ORM\Index(name: 'idx_installation_products_product', columns: ['product_id'])]
 class InstallationProduct
 {
     #[ORM\Id]

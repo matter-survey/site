@@ -21,8 +21,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class CreateApiTokenCommand extends Command
 {
     public function __construct(
-        private UserRepository $userRepository,
-        private ApiTokenRepository $apiTokenRepository,
+        private readonly UserRepository $userRepository,
+        private readonly ApiTokenRepository $apiTokenRepository,
     ) {
         parent::__construct();
     }
@@ -46,7 +46,7 @@ class CreateApiTokenCommand extends Command
 
         // Find user
         $user = $this->userRepository->findByEmail($email);
-        if (null === $user) {
+        if (!$user instanceof \App\Entity\User) {
             $io->error(sprintf('User with email "%s" not found.', $email));
 
             return Command::FAILURE;
@@ -82,7 +82,7 @@ class CreateApiTokenCommand extends Command
                 ['User', $user->getEmail()],
                 ['Name', $name],
                 ['Created', $apiToken->getCreatedAt()->format('Y-m-d H:i:s')],
-                ['Expires', $expiresAt ? $expiresAt->format('Y-m-d H:i:s') : 'Never'],
+                ['Expires', $expiresAt instanceof \DateTimeImmutable ? $expiresAt->format('Y-m-d H:i:s') : 'Never'],
             ]
         );
 

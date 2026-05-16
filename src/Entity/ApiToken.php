@@ -120,7 +120,7 @@ class ApiToken
 
     public function isExpired(): bool
     {
-        if (null === $this->expiresAt) {
+        if (!$this->expiresAt instanceof \DateTimeImmutable) {
             return false;
         }
 

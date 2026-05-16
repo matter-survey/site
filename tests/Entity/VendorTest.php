@@ -7,7 +7,7 @@ namespace App\Tests\Entity;
 use App\Entity\Vendor;
 use PHPUnit\Framework\TestCase;
 
-class VendorTest extends TestCase
+final class VendorTest extends TestCase
 {
     public function testDefaults(): void
     {
@@ -24,7 +24,7 @@ class VendorTest extends TestCase
 
     public function testFieldsRoundTrip(): void
     {
-        $vendor = (new Vendor())
+        $vendor = new Vendor()
             ->setName('Acme')
             ->setSlug('acme-1')
             ->setSpecId(1234)
@@ -57,7 +57,7 @@ class VendorTest extends TestCase
         $created = new \DateTime('2025-01-01');
         $updated = new \DateTime('2025-06-01');
 
-        $vendor = (new Vendor())->setCreatedAt($created)->setUpdatedAt($updated);
+        $vendor = new Vendor()->setCreatedAt($created)->setUpdatedAt($updated);
 
         $this->assertSame($created, $vendor->getCreatedAt());
         $this->assertSame($updated, $vendor->getUpdatedAt());

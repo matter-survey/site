@@ -13,7 +13,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
  * test only touched via integration paths. Exercises the stats/facets,
  * cluster/device-type slicers, and pagination/count parity.
  */
-class DeviceRepositoryExtraTest extends KernelTestCase
+final class DeviceRepositoryExtraTest extends KernelTestCase
 {
     private DeviceRepository $repository;
     private MatterRegistry $matterRegistry;
@@ -21,8 +21,8 @@ class DeviceRepositoryExtraTest extends KernelTestCase
     protected function setUp(): void
     {
         self::bootKernel();
-        $this->repository = static::getContainer()->get(DeviceRepository::class);
-        $this->matterRegistry = static::getContainer()->get(MatterRegistry::class);
+        $this->repository = self::getContainer()->get(DeviceRepository::class);
+        $this->matterRegistry = self::getContainer()->get(MatterRegistry::class);
     }
 
     public function testGetAllDevicesAndDeviceCountParity(): void
@@ -30,7 +30,7 @@ class DeviceRepositoryExtraTest extends KernelTestCase
         $total = $this->repository->getDeviceCount();
 
         $all = $this->repository->getAllDevices(1000, 0);
-        $this->assertSame($total, count($all));
+        $this->assertCount($total, $all);
     }
 
     public function testGetAllDevicesPagination(): void
@@ -53,7 +53,7 @@ class DeviceRepositoryExtraTest extends KernelTestCase
         $devices = $this->repository->getFilteredDevices([], 200, 0);
         $count = $this->repository->getFilteredDeviceCount([]);
 
-        $this->assertSame($count, count($devices));
+        $this->assertCount($count, $devices);
         $this->assertGreaterThan(0, $count);
     }
 
@@ -64,7 +64,7 @@ class DeviceRepositoryExtraTest extends KernelTestCase
         $devices = $this->repository->getFilteredDevices(['connectivity' => ['wifi']], 200, 0);
         $count = $this->repository->getFilteredDeviceCount(['connectivity' => ['wifi']]);
 
-        $this->assertSame($count, count($devices));
+        $this->assertCount($count, $devices);
     }
 
     public function testGetFilteredDevicesByBindingFilter(): void
@@ -72,7 +72,7 @@ class DeviceRepositoryExtraTest extends KernelTestCase
         $devices = $this->repository->getFilteredDevices(['binding' => 'yes'], 200, 0);
         $count = $this->repository->getFilteredDeviceCount(['binding' => 'yes']);
 
-        $this->assertSame($count, count($devices));
+        $this->assertCount($count, $devices);
     }
 
     public function testGetFilteredDevicesByDeviceTypeFilter(): void
@@ -80,7 +80,7 @@ class DeviceRepositoryExtraTest extends KernelTestCase
         $devices = $this->repository->getFilteredDevices(['device_types' => [266]], 200, 0);
         $count = $this->repository->getFilteredDeviceCount(['device_types' => [266]]);
 
-        $this->assertSame($count, count($devices));
+        $this->assertCount($count, $devices);
     }
 
     public function testGetTopVendorsReturnsAList(): void
@@ -210,14 +210,14 @@ class DeviceRepositoryExtraTest extends KernelTestCase
 
     public function testGetFilteredDevicesByVendorFk(): void
     {
-        $em = static::getContainer()->get(\Doctrine\ORM\EntityManagerInterface::class);
+        $em = self::getContainer()->get(\Doctrine\ORM\EntityManagerInterface::class);
         $vendor = $em->getRepository(\App\Entity\Vendor::class)->findOneBy(['specId' => 4874]);
         $this->assertNotNull($vendor);
 
         $devices = $this->repository->getFilteredDevices(['vendor' => $vendor->getId()], 200, 0);
         $count = $this->repository->getFilteredDeviceCount(['vendor' => $vendor->getId()]);
 
-        $this->assertSame($count, count($devices));
+        $this->assertCount($count, $devices);
         foreach ($devices as $d) {
             $this->assertSame($vendor->getId(), (int) $d['vendor_fk']);
         }
@@ -228,7 +228,7 @@ class DeviceRepositoryExtraTest extends KernelTestCase
         $devices = $this->repository->getFilteredDevices(['search' => 'Eve'], 200, 0);
         $count = $this->repository->getFilteredDeviceCount(['search' => 'Eve']);
 
-        $this->assertSame($count, count($devices));
+        $this->assertCount($count, $devices);
         $this->assertGreaterThan(0, $count);
     }
 
@@ -239,7 +239,7 @@ class DeviceRepositoryExtraTest extends KernelTestCase
         $devices = $this->repository->getFilteredDevices(['min_rating' => 3], 200, 0);
         $count = $this->repository->getFilteredDeviceCount(['min_rating' => 3]);
 
-        $this->assertSame($count, count($devices));
+        $this->assertCount($count, $devices);
     }
 
     public function testGetFilteredDevicesByCompatibleWithEmptyArray(): void
@@ -276,7 +276,7 @@ class DeviceRepositoryExtraTest extends KernelTestCase
         );
         $count = $this->repository->getFilteredDeviceCount(['capabilities' => ['dimming']]);
 
-        $this->assertSame($count, count($devices));
+        $this->assertCount($count, $devices);
     }
 
     public function testGetFilteredDevicesByMultipleCapabilitiesIntersects(): void

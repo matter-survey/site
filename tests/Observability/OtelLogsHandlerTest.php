@@ -27,7 +27,7 @@ final class OtelLogsHandlerTest extends TestCase
     private LoggerProviderInterface $loggerProvider;
     private TracerProvider $tracerProvider;
     /** @var string|false */
-    private $originalDisabled;
+    private string|bool $originalDisabled;
 
     protected function setUp(): void
     {

@@ -12,7 +12,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
  * Test that ClusterFixtures properly loads cluster data including ZAP spec data
  * (attributes, commands, features) from fixtures/clusters.yaml.
  */
-class ClusterFixturesTest extends KernelTestCase
+final class ClusterFixturesTest extends KernelTestCase
 {
     private ClusterRepository $repository;
 
@@ -26,7 +26,7 @@ class ClusterFixturesTest extends KernelTestCase
     {
         $cluster = $this->repository->find(6); // On/Off cluster
 
-        $this->assertNotNull($cluster);
+        $this->assertInstanceOf(Cluster::class, $cluster);
         $this->assertSame('On/Off', $cluster->getName());
 
         $attributes = $cluster->getAttributes();
@@ -35,13 +35,14 @@ class ClusterFixturesTest extends KernelTestCase
         $this->assertNotEmpty($attributes);
 
         // Verify OnOff attribute exists
-        $onOffAttr = array_filter($attributes, fn ($a) => 'OnOff' === $a['name']);
+        $onOffAttr = array_filter($attributes, fn (array $a): bool => 'OnOff' === $a['name']);
         $this->assertNotEmpty($onOffAttr, 'OnOff attribute should exist');
     }
 
     public function testOnOffClusterHasCommands(): void
     {
         $cluster = $this->repository->find(6);
+        $this->assertInstanceOf(Cluster::class, $cluster);
 
         $commands = $cluster->getCommands();
         $this->assertNotNull($commands);
@@ -49,17 +50,18 @@ class ClusterFixturesTest extends KernelTestCase
         $this->assertNotEmpty($commands);
 
         // Verify Off command exists
-        $offCmd = array_filter($commands, fn ($c) => 'Off' === $c['name']);
+        $offCmd = array_filter($commands, fn (array $c): bool => 'Off' === $c['name']);
         $this->assertNotEmpty($offCmd, 'Off command should exist');
 
         // Verify On command exists
-        $onCmd = array_filter($commands, fn ($c) => 'On' === $c['name']);
+        $onCmd = array_filter($commands, fn (array $c): bool => 'On' === $c['name']);
         $this->assertNotEmpty($onCmd, 'On command should exist');
     }
 
     public function testOnOffClusterHasFeatures(): void
     {
         $cluster = $this->repository->find(6);
+        $this->assertInstanceOf(Cluster::class, $cluster);
 
         $features = $cluster->getFeatures();
         $this->assertNotNull($features);
@@ -67,7 +69,7 @@ class ClusterFixturesTest extends KernelTestCase
         $this->assertNotEmpty($features);
 
         // Verify Lighting feature exists
-        $lightingFeature = array_filter($features, fn ($f) => 'LT' === $f['code']);
+        $lightingFeature = array_filter($features, fn (array $f): bool => 'LT' === $f['code']);
         $this->assertNotEmpty($lightingFeature, 'Lighting (LT) feature should exist');
     }
 
@@ -75,7 +77,7 @@ class ClusterFixturesTest extends KernelTestCase
     {
         $cluster = $this->repository->find(8); // Level Control
 
-        $this->assertNotNull($cluster);
+        $this->assertInstanceOf(Cluster::class, $cluster);
         $this->assertSame('Level Control', $cluster->getName());
 
         // Should have attributes
@@ -94,6 +96,7 @@ class ClusterFixturesTest extends KernelTestCase
     public function testAttributeStructure(): void
     {
         $cluster = $this->repository->find(6);
+        $this->assertInstanceOf(Cluster::class, $cluster);
         $attributes = $cluster->getAttributes();
 
         $firstAttr = $attributes[0];
@@ -113,6 +116,7 @@ class ClusterFixturesTest extends KernelTestCase
     public function testCommandStructure(): void
     {
         $cluster = $this->repository->find(6);
+        $this->assertInstanceOf(Cluster::class, $cluster);
         $commands = $cluster->getCommands();
 
         $firstCmd = $commands[0];
@@ -133,6 +137,7 @@ class ClusterFixturesTest extends KernelTestCase
     public function testFeatureStructure(): void
     {
         $cluster = $this->repository->find(6);
+        $this->assertInstanceOf(Cluster::class, $cluster);
         $features = $cluster->getFeatures();
 
         $firstFeature = $features[0];
@@ -152,7 +157,7 @@ class ClusterFixturesTest extends KernelTestCase
         // The Binding cluster (30) may have minimal or no ZAP data
         $cluster = $this->repository->find(30);
 
-        $this->assertNotNull($cluster);
+        $this->assertInstanceOf(Cluster::class, $cluster);
 
         // These should not throw errors even if null/empty
         $attributes = $cluster->getAttributes();
@@ -160,8 +165,8 @@ class ClusterFixturesTest extends KernelTestCase
         $features = $cluster->getFeatures();
 
         // Values should be either null or arrays - asserting proper return types
-        $this->assertThat($attributes, $this->logicalOr($this->isNull(), $this->isType('array')));
-        $this->assertThat($commands, $this->logicalOr($this->isNull(), $this->isType('array')));
-        $this->assertThat($features, $this->logicalOr($this->isNull(), $this->isType('array')));
+        $this->assertThat($attributes, $this->logicalOr($this->isNull(), $this->isArray()));
+        $this->assertThat($commands, $this->logicalOr($this->isNull(), $this->isArray()));
+        $this->assertThat($features, $this->logicalOr($this->isNull(), $this->isArray()));
     }
 }

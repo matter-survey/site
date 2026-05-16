@@ -7,17 +7,17 @@ namespace App\Dto;
 /**
  * Represents the overall score for a device, with breakdown by device type.
  */
-final class DeviceScore
+final readonly class DeviceScore
 {
     /**
      * @param array<int, DeviceTypeScore> $scoresByType Scores keyed by device type ID
      */
     public function __construct(
-        public readonly float $overallScore,
-        public readonly float $starRating,
-        public readonly bool $isCompliant,
-        public readonly array $scoresByType,
-        public readonly ?string $bestVersion = null,
+        public float $overallScore,
+        public float $starRating,
+        public bool $isCompliant,
+        public array $scoresByType,
+        public ?string $bestVersion = null,
     ) {
     }
 
@@ -64,7 +64,7 @@ final class DeviceScore
      */
     public function getBestTypeScore(): ?DeviceTypeScore
     {
-        if (empty($this->scoresByType)) {
+        if ([] === $this->scoresByType) {
             return null;
         }
 

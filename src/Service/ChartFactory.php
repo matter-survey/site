@@ -13,7 +13,7 @@ use Symfony\UX\Chartjs\Model\Chart;
 class ChartFactory
 {
     // Color palette matching the existing CSS design
-    private const CATEGORY_COLORS = [
+    private const array CATEGORY_COLORS = [
         'Lights' => '#fbbf24',
         'Climate' => '#3b82f6',
         'Sensors' => '#10b981',
@@ -24,10 +24,10 @@ class ChartFactory
         'System' => '#6b7280',
     ];
 
-    private const PRIMARY_COLOR = '#2563eb';
+    private const string PRIMARY_COLOR = '#2563eb';
 
     public function __construct(
-        private ChartBuilderInterface $chartBuilder,
+        private readonly ChartBuilderInterface $chartBuilder,
     ) {
     }
 
@@ -45,7 +45,7 @@ class ChartFactory
         $labels = array_keys($categoryData);
         $data = array_values($categoryData);
         $colors = array_map(
-            fn (string $cat) => self::CATEGORY_COLORS[$cat] ?? '#94a3b8',
+            fn (string $cat): string => self::CATEGORY_COLORS[$cat] ?? '#94a3b8',
             $labels
         );
 
@@ -82,7 +82,7 @@ class ChartFactory
     {
         $vendors = array_slice($vendors, 0, $limit);
         $labels = array_map(
-            fn (array $v) => strlen($v['name']) > 15 ? substr($v['name'], 0, 15).'...' : $v['name'],
+            fn (array $v): string => strlen($v['name']) > 15 ? substr($v['name'], 0, 15).'...' : $v['name'],
             $vendors
         );
         $data = array_column($vendors, 'device_count');

@@ -7,7 +7,7 @@ namespace App\Tests\Entity;
 use App\Entity\WizardAnalytics;
 use PHPUnit\Framework\TestCase;
 
-class WizardAnalyticsTest extends TestCase
+final class WizardAnalyticsTest extends TestCase
 {
     public function testDefaults(): void
     {
@@ -25,7 +25,7 @@ class WizardAnalyticsTest extends TestCase
 
     public function testRequiredFieldsRoundTrip(): void
     {
-        $analytics = (new WizardAnalytics())
+        $analytics = new WizardAnalytics()
             ->setSessionId('sess-abc-123')
             ->setStep(3);
 
@@ -35,7 +35,7 @@ class WizardAnalyticsTest extends TestCase
 
     public function testOptionalFieldsRoundTrip(): void
     {
-        $analytics = (new WizardAnalytics())
+        $analytics = new WizardAnalytics()
             ->setSessionId('s')
             ->setStep(1)
             ->setCategory('lighting')
@@ -53,7 +53,7 @@ class WizardAnalyticsTest extends TestCase
 
     public function testCompletedFlag(): void
     {
-        $analytics = (new WizardAnalytics())
+        $analytics = new WizardAnalytics()
             ->setSessionId('s')
             ->setStep(1);
 
@@ -66,7 +66,7 @@ class WizardAnalyticsTest extends TestCase
     public function testCreatedAtIsMutable(): void
     {
         $when = new \DateTime('2025-03-01 12:00:00');
-        $analytics = (new WizardAnalytics())
+        $analytics = new WizardAnalytics()
             ->setSessionId('s')
             ->setStep(1)
             ->setCreatedAt($when);

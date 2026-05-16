@@ -19,24 +19,24 @@ use Symfony\Component\Security\Http\EntryPoint\AuthenticationEntryPointInterface
 
 class ApiTokenAuthenticator extends AbstractAuthenticator implements AuthenticationEntryPointInterface
 {
-    private const HEADER_NAME = 'Authorization';
-    private const TOKEN_PREFIX = 'Bearer ';
+    private const string HEADER_NAME = 'Authorization';
+    private const string TOKEN_PREFIX = 'Bearer ';
 
     public function __construct(
-        private ApiTokenRepository $apiTokenRepository,
+        private readonly ApiTokenRepository $apiTokenRepository,
     ) {
     }
 
     public function supports(Request $request): ?bool
     {
         return $request->headers->has(self::HEADER_NAME)
-            && str_starts_with($request->headers->get(self::HEADER_NAME, ''), self::TOKEN_PREFIX);
+            && str_starts_with((string) $request->headers->get(self::HEADER_NAME, ''), self::TOKEN_PREFIX);
     }
 
     public function authenticate(Request $request): Passport
     {
         $authHeader = $request->headers->get(self::HEADER_NAME, '');
-        $token = substr($authHeader, strlen(self::TOKEN_PREFIX));
+        $token = substr((string) $authHeader, strlen(self::TOKEN_PREFIX));
 
         if ('' === $token) {
             throw new CustomUserMessageAuthenticationException('No API token provided');
@@ -45,17 +45,17 @@ class ApiTokenAuthenticator extends AbstractAuthenticator implements Authenticat
         // Find and validate the token, also updates last_used_at
         $apiToken = $this->apiTokenRepository->findAndUpdateLastUsed($token);
 
-        if (null === $apiToken) {
+        if (!$apiToken instanceof \App\Entity\ApiToken) {
             throw new CustomUserMessageAuthenticationException('Invalid or expired API token');
         }
 
         $user = $apiToken->getUser();
-        if (null === $user) {
+        if (!$user instanceof \App\Entity\User) {
             throw new CustomUserMessageAuthenticationException('API token has no associated user');
         }
 
         return new SelfValidatingPassport(
-            new UserBadge($user->getUserIdentifier(), fn () => $user)
+            new UserBadge($user->getUserIdentifier(), fn (): \App\Entity\User => $user)
         );
     }
 

@@ -19,9 +19,9 @@ use Symfony\Component\Yaml\Yaml;
  */
 class ProductFixtures extends Fixture implements FixtureGroupInterface, DependentFixtureInterface
 {
-    private const BATCH_SIZE = 100;
+    private const int BATCH_SIZE = 100;
 
-    private string $dataPath;
+    private readonly string $dataPath;
 
     public function __construct(?string $dataPath = null)
     {

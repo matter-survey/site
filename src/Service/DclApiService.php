@@ -12,8 +12,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 class DclApiService
 {
-    private const BASE_URL = 'https://on.dcl.csa-iot.org';
-    private const PAGE_SIZE = 100;
+    private const string BASE_URL = 'https://on.dcl.csa-iot.org';
+    private const int PAGE_SIZE = 100;
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,

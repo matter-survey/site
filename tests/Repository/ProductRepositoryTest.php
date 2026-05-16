@@ -9,7 +9,7 @@ use App\Repository\ProductRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
-class ProductRepositoryTest extends KernelTestCase
+final class ProductRepositoryTest extends KernelTestCase
 {
     private ProductRepository $repository;
     private EntityManagerInterface $entityManager;
@@ -17,8 +17,8 @@ class ProductRepositoryTest extends KernelTestCase
     protected function setUp(): void
     {
         self::bootKernel();
-        $this->repository = static::getContainer()->get(ProductRepository::class);
-        $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $this->repository = self::getContainer()->get(ProductRepository::class);
+        $this->entityManager = self::getContainer()->get(EntityManagerInterface::class);
     }
 
     public function testFindByVendorAndProductId(): void
@@ -34,12 +34,12 @@ class ProductRepositoryTest extends KernelTestCase
 
         // Find it
         $found = $this->repository->findByVendorAndProductId(9999, 1);
-        $this->assertNotNull($found);
-        $this->assertEquals('Test Product', $found->getProductName());
+        $this->assertInstanceOf(Product::class, $found);
+        $this->assertSame('Test Product', $found->getProductName());
 
         // Not found
         $notFound = $this->repository->findByVendorAndProductId(9999, 999);
-        $this->assertNull($notFound);
+        $this->assertNotInstanceOf(Product::class, $notFound);
     }
 
     public function testFindByVendorSpecId(): void
@@ -83,11 +83,11 @@ class ProductRepositoryTest extends KernelTestCase
         $this->entityManager->flush();
 
         $count = $this->repository->countByVendorSpecId(6666);
-        $this->assertEquals(5, $count);
+        $this->assertSame(5, $count);
 
         // Non-existent vendor
         $zeroCount = $this->repository->countByVendorSpecId(5555);
-        $this->assertEquals(0, $zeroCount);
+        $this->assertSame(0, $zeroCount);
     }
 
     public function testGetProductCountsByVendor(): void
@@ -129,16 +129,16 @@ class ProductRepositoryTest extends KernelTestCase
         $this->entityManager->flush();
 
         $this->assertNotNull($product1->getId());
-        $this->assertEquals('Product A', $product1->getProductName());
+        $this->assertSame('Product A', $product1->getProductName());
 
         // Second call finds existing
         $product2 = $this->repository->findOrCreate(1111, 1, 'Vendor A Updated', 'Product A Updated');
         $this->entityManager->flush();
 
-        $this->assertEquals($product1->getId(), $product2->getId());
+        $this->assertSame($product1->getId(), $product2->getId());
         // Names should be updated
-        $this->assertEquals('Vendor A Updated', $product2->getVendorName());
-        $this->assertEquals('Product A Updated', $product2->getProductName());
+        $this->assertSame('Vendor A Updated', $product2->getVendorName());
+        $this->assertSame('Product A Updated', $product2->getProductName());
     }
 
     public function testFindOrCreateUpdatesVendorRelation(): void
@@ -146,18 +146,18 @@ class ProductRepositoryTest extends KernelTestCase
         // Create product without vendor first
         $first = $this->repository->findOrCreate(2222, 1, 'V', 'P');
         $this->entityManager->flush();
-        $this->assertNull($first->getVendor());
+        $this->assertNotInstanceOf(\App\Entity\Vendor::class, $first->getVendor());
 
         // Pull a fixture vendor and pass it in
         $vendor = $this->entityManager->getRepository(\App\Entity\Vendor::class)->findOneBy([]);
-        $this->assertNotNull($vendor);
+        $this->assertInstanceOf(\App\Entity\Vendor::class, $vendor);
 
         $second = $this->repository->findOrCreate(2222, 1, 'V', 'P', $vendor);
         $this->entityManager->flush();
 
         $this->assertSame($first->getId(), $second->getId());
         $this->assertSame($vendor, $second->getVendor());
-        $this->assertNotNull($second->getLastSeen()); // updated path bumps lastSeen
+        $this->assertInstanceOf(\DateTimeInterface::class, $second->getLastSeen()); // updated path bumps lastSeen
     }
 
     public function testFindOrCreateIsIdempotentWhenNothingChanges(): void
@@ -194,7 +194,7 @@ class ProductRepositoryTest extends KernelTestCase
     public function testFindByVendorAndCountByVendor(): void
     {
         $vendor = $this->entityManager->getRepository(\App\Entity\Vendor::class)->findOneBy([]);
-        $this->assertNotNull($vendor);
+        $this->assertInstanceOf(\App\Entity\Vendor::class, $vendor);
 
         // attach two products to this vendor
         for ($i = 1; $i <= 2; ++$i) {
@@ -260,12 +260,12 @@ class ProductRepositoryTest extends KernelTestCase
         $withInstructions->setFactoryResetStepsInstruction('Hold 10s');
         $withInstructions->setCommissioningCustomFlowUrl('https://example.com/flow');
 
-        $withoutAnything = $this->repository->findOrCreate(8002, 1, 'V', 'Plain');
+        $this->repository->findOrCreate(8002, 1, 'V', 'Plain');
         $this->entityManager->flush();
 
         $withCommissioning = $this->repository->findWithCommissioningData();
         $this->assertNotEmpty($withCommissioning);
-        $names = array_map(fn (\App\Entity\Product $p) => $p->getProductName(), $withCommissioning);
+        $names = array_map(fn (Product $p): ?string => $p->getProductName(), $withCommissioning);
         $this->assertContains('WithInstructions', $names);
         $this->assertNotContains('Plain', $names);
 

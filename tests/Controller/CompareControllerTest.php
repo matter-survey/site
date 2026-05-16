@@ -7,12 +7,12 @@ namespace App\Tests\Controller;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
 
-class CompareControllerTest extends WebTestCase
+final class CompareControllerTest extends WebTestCase
 {
     public function testEmptyComparePageLoads(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/compare');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/compare');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('h2', 'Compare Devices');
@@ -21,18 +21,18 @@ class CompareControllerTest extends WebTestCase
 
     public function testComparePageWithSingleDevice(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // First get a device slug from the index page
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
         $href = $deviceLink->attr('href');
 
         // Extract slug from href (format: /device/{slug})
-        $slug = basename($href);
+        $slug = basename((string) $href);
 
         // Request compare page with single device
-        $client->request('GET', '/compare/'.$slug);
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/compare/'.$slug);
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('.compare-header', '1/5 devices selected');
@@ -40,21 +40,21 @@ class CompareControllerTest extends WebTestCase
 
     public function testComparePageWithMultipleDevices(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Get two device slugs from the index page
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLinks = $crawler->filter('.device-info h3 a');
 
         if ($deviceLinks->count() < 2) {
             $this->markTestSkipped('Not enough devices in fixtures for this test');
         }
 
-        $slug1 = basename($deviceLinks->eq(0)->attr('href'));
-        $slug2 = basename($deviceLinks->eq(1)->attr('href'));
+        $slug1 = basename((string) $deviceLinks->eq(0)->attr('href'));
+        $slug2 = basename((string) $deviceLinks->eq(1)->attr('href'));
 
         // Request compare page with two devices
-        $client->request('GET', '/compare/'.$slug1.','.$slug2);
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/compare/'.$slug1.','.$slug2);
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('.compare-header', '2/5 devices selected');
@@ -63,20 +63,20 @@ class CompareControllerTest extends WebTestCase
 
     public function testComparePageShowsDeviceHeaders(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Get two device slugs
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLinks = $crawler->filter('.device-info h3 a');
 
         if ($deviceLinks->count() < 2) {
             $this->markTestSkipped('Not enough devices in fixtures for this test');
         }
 
-        $slug1 = basename($deviceLinks->eq(0)->attr('href'));
-        $slug2 = basename($deviceLinks->eq(1)->attr('href'));
+        $slug1 = basename((string) $deviceLinks->eq(0)->attr('href'));
+        $slug2 = basename((string) $deviceLinks->eq(1)->attr('href'));
 
-        $crawler = $client->request('GET', '/compare/'.$slug1.','.$slug2);
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/compare/'.$slug1.','.$slug2);
 
         $this->assertResponseIsSuccessful();
 
@@ -87,14 +87,14 @@ class CompareControllerTest extends WebTestCase
 
     public function testComparePageShowsCapabilities(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Get device slug
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
-        $slug = basename($deviceLink->attr('href'));
+        $slug = basename((string) $deviceLink->attr('href'));
 
-        $crawler = $client->request('GET', '/compare/'.$slug);
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/compare/'.$slug);
 
         $this->assertResponseIsSuccessful();
 
@@ -105,14 +105,14 @@ class CompareControllerTest extends WebTestCase
 
     public function testComparePageShowsSummaryRow(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Get device slug
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
-        $slug = basename($deviceLink->attr('href'));
+        $slug = basename((string) $deviceLink->attr('href'));
 
-        $crawler = $client->request('GET', '/compare/'.$slug);
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/compare/'.$slug);
 
         $this->assertResponseIsSuccessful();
 
@@ -123,14 +123,14 @@ class CompareControllerTest extends WebTestCase
 
     public function testComparePageHasAddDeviceColumn(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Get device slug
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
-        $slug = basename($deviceLink->attr('href'));
+        $slug = basename((string) $deviceLink->attr('href'));
 
-        $crawler = $client->request('GET', '/compare/'.$slug);
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/compare/'.$slug);
 
         $this->assertResponseIsSuccessful();
 
@@ -141,23 +141,23 @@ class CompareControllerTest extends WebTestCase
 
     public function testComparePageWithInvalidSlugReturns404(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/compare/non-existent-device-slug');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/compare/non-existent-device-slug');
 
         $this->assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
     }
 
     public function testComparePageIgnoresInvalidSlugsInList(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Get a valid device slug
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
-        $slug = basename($deviceLink->attr('href'));
+        $slug = basename((string) $deviceLink->attr('href'));
 
         // Mix valid and invalid slugs
-        $client->request('GET', '/compare/'.$slug.',invalid-slug-123');
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/compare/'.$slug.',invalid-slug-123');
 
         // Should load successfully with just the valid device
         $this->assertResponseIsSuccessful();
@@ -166,8 +166,8 @@ class CompareControllerTest extends WebTestCase
 
     public function testCompareSearchApiReturnsJson(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/api/compare/search', ['q' => 'Eve']);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/api/compare/search', ['q' => 'Eve']);
 
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/json');
@@ -181,15 +181,15 @@ class CompareControllerTest extends WebTestCase
 
     public function testCompareSearchApiFiltersExcludedDevices(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // First get a device slug
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
-        $slug = basename($deviceLink->attr('href'));
+        $slug = basename((string) $deviceLink->attr('href'));
 
         // Search with the device excluded
-        $client->request('GET', '/api/compare/search', [
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/api/compare/search', [
             'q' => substr($slug, 0, 3), // Use part of slug as search term
             'exclude' => $slug,
         ]);
@@ -207,8 +207,8 @@ class CompareControllerTest extends WebTestCase
 
     public function testCompareSearchApiRequiresMinLength(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/api/compare/search', ['q' => 'a']);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/api/compare/search', ['q' => 'a']);
 
         $this->assertResponseIsSuccessful();
 
@@ -221,56 +221,56 @@ class CompareControllerTest extends WebTestCase
 
     public function testCompareAddDeviceRedirects(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Get a device slug
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
-        $slug = basename($deviceLink->attr('href'));
+        $slug = basename((string) $deviceLink->attr('href'));
 
         // Add device should redirect to compare page
-        $client->request('GET', '/compare/add/'.$slug);
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/compare/add/'.$slug);
 
         $this->assertResponseRedirects();
-        $this->assertStringContainsString('/compare/', $client->getResponse()->headers->get('Location'));
+        $this->assertStringContainsString('/compare/', (string) $client->getResponse()->headers->get('Location'));
     }
 
     public function testCompareAddDeviceAppendsToExisting(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Get two device slugs
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLinks = $crawler->filter('.device-info h3 a');
 
         if ($deviceLinks->count() < 2) {
             $this->markTestSkipped('Not enough devices in fixtures for this test');
         }
 
-        $slug1 = basename($deviceLinks->eq(0)->attr('href'));
-        $slug2 = basename($deviceLinks->eq(1)->attr('href'));
+        $slug1 = basename((string) $deviceLinks->eq(0)->attr('href'));
+        $slug2 = basename((string) $deviceLinks->eq(1)->attr('href'));
 
         // Add second device to first
-        $client->request('GET', '/compare/add/'.$slug2, ['current' => $slug1]);
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/compare/add/'.$slug2, ['current' => $slug1]);
 
         $this->assertResponseRedirects();
 
         $location = $client->getResponse()->headers->get('Location');
-        $this->assertStringContainsString($slug1, $location);
-        $this->assertStringContainsString($slug2, $location);
+        $this->assertStringContainsString($slug1, (string) $location);
+        $this->assertStringContainsString($slug2, (string) $location);
     }
 
     public function testComparePageDeduplicatesSlugs(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Get a device slug
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
-        $slug = basename($deviceLink->attr('href'));
+        $slug = basename((string) $deviceLink->attr('href'));
 
         // Request with duplicate slugs
-        $client->request('GET', '/compare/'.$slug.','.$slug);
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/compare/'.$slug.','.$slug);
 
         $this->assertResponseIsSuccessful();
 
@@ -280,10 +280,10 @@ class CompareControllerTest extends WebTestCase
 
     public function testComparePageMaxFiveDevices(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Get device slugs
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLinks = $crawler->filter('.device-info h3 a');
 
         if ($deviceLinks->count() < 6) {
@@ -292,11 +292,11 @@ class CompareControllerTest extends WebTestCase
 
         $slugs = [];
         for ($i = 0; $i < 6; ++$i) {
-            $slugs[] = basename($deviceLinks->eq($i)->attr('href'));
+            $slugs[] = basename((string) $deviceLinks->eq($i)->attr('href'));
         }
 
         // Request with 6 slugs
-        $client->request('GET', '/compare/'.implode(',', $slugs));
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/compare/'.implode(',', $slugs));
 
         $this->assertResponseIsSuccessful();
 
@@ -306,8 +306,8 @@ class CompareControllerTest extends WebTestCase
 
     public function testDeviceIndexPageHasCompareCheckboxes(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
 
         $this->assertResponseIsSuccessful();
 
@@ -318,14 +318,14 @@ class CompareControllerTest extends WebTestCase
 
     public function testComparePageHasCopyLinkButton(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Get a device slug
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
-        $slug = basename($deviceLink->attr('href'));
+        $slug = basename((string) $deviceLink->attr('href'));
 
-        $client->request('GET', '/compare/'.$slug);
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/compare/'.$slug);
 
         $this->assertResponseIsSuccessful();
 
@@ -335,14 +335,14 @@ class CompareControllerTest extends WebTestCase
 
     public function testComparePageHasRemoveDeviceButtons(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Get a device slug
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
-        $slug = basename($deviceLink->attr('href'));
+        $slug = basename((string) $deviceLink->attr('href'));
 
-        $client->request('GET', '/compare/'.$slug);
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/compare/'.$slug);
 
         $this->assertResponseIsSuccessful();
 
@@ -352,14 +352,14 @@ class CompareControllerTest extends WebTestCase
 
     public function testComparePageDeviceLinksWork(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Get a device slug
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
-        $slug = basename($deviceLink->attr('href'));
+        $slug = basename((string) $deviceLink->attr('href'));
 
-        $crawler = $client->request('GET', '/compare/'.$slug);
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/compare/'.$slug);
 
         $this->assertResponseIsSuccessful();
 

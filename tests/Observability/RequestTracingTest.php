@@ -37,21 +37,21 @@ final class RequestTracingTest extends WebTestCase
     {
         $this->tracerProvider->shutdown();
         Globals::reset();
-        static::ensureKernelShutdown();
+        self::ensureKernelShutdown();
         parent::tearDown();
     }
 
     public function testHealthEndpointEmitsRootServerSpan(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/health');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/health');
         $this->assertResponseIsSuccessful();
 
         $this->tracerProvider->forceFlush();
 
         /** @var list<ImmutableSpan> $spans */
         $spans = iterator_to_array($this->storage->getIterator());
-        $serverSpans = array_values(array_filter($spans, static fn (ImmutableSpan $s) => SpanKind::KIND_SERVER === $s->getKind()));
+        $serverSpans = array_values(array_filter($spans, static fn (ImmutableSpan $s): bool => SpanKind::KIND_SERVER === $s->getKind()));
 
         $this->assertCount(1, $serverSpans, 'Exactly one SERVER kind span expected');
 
@@ -72,8 +72,8 @@ final class RequestTracingTest extends WebTestCase
         // attributes wholesale to the UrlGenerator, which walks objects via
         // get_object_vars; the Span's circular internals then exploded the
         // recursion under PHP 8.4's default zend.max_allowed_stack_size.
-        $client = static::createClient();
-        $client->request('GET', '/health');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/health');
         $this->assertResponseIsSuccessful();
 
         $attrs = $client->getRequest()->attributes->all();
@@ -97,15 +97,15 @@ final class RequestTracingTest extends WebTestCase
         $parentSpanId = 'b7ad6b7169203331';
         $traceparent = sprintf('00-%s-%s-01', $traceId, $parentSpanId);
 
-        $client = static::createClient();
-        $client->request('GET', '/health', [], [], ['HTTP_TRACEPARENT' => $traceparent]);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/health', [], [], ['HTTP_TRACEPARENT' => $traceparent]);
         $this->assertResponseIsSuccessful();
 
         $this->tracerProvider->forceFlush();
 
         /** @var list<ImmutableSpan> $spans */
         $spans = iterator_to_array($this->storage->getIterator());
-        $serverSpans = array_values(array_filter($spans, static fn (ImmutableSpan $s) => SpanKind::KIND_SERVER === $s->getKind()));
+        $serverSpans = array_values(array_filter($spans, static fn (ImmutableSpan $s): bool => SpanKind::KIND_SERVER === $s->getKind()));
 
         $this->assertCount(1, $serverSpans);
         $span = $serverSpans[0];

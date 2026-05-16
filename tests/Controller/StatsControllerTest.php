@@ -16,14 +16,14 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  * - 8 devices total with various device types and clusters
  * - 4 devices with binding support (cluster 30): Eve Motion, Eve Energy, Philips Hue bulb, Nanoleaf Shapes
  */
-class StatsControllerTest extends WebTestCase
+final class StatsControllerTest extends WebTestCase
 {
     // === Dashboard Overview Tests ===
 
     public function testDashboardPageLoads(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/dashboard');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/dashboard');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('html');
@@ -31,8 +31,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testDashboardShowsCorrectDeviceCount(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/dashboard');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/dashboard');
 
         $this->assertResponseIsSuccessful();
 
@@ -42,8 +42,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testDashboardShowsCorrectVendorCount(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/dashboard');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/dashboard');
 
         $this->assertResponseIsSuccessful();
 
@@ -53,8 +53,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testDashboardShowsBindingDeviceCount(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/dashboard');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/dashboard');
 
         $this->assertResponseIsSuccessful();
 
@@ -64,8 +64,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testDashboardShowsTopVendorsSection(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/dashboard');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/dashboard');
 
         $this->assertResponseIsSuccessful();
 
@@ -76,8 +76,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testDashboardShowsRecentDevices(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/dashboard');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/dashboard');
 
         $this->assertResponseIsSuccessful();
 
@@ -96,8 +96,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testDashboardShowsCategoryDistributionWithLights(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/dashboard');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/dashboard');
 
         $this->assertResponseIsSuccessful();
 
@@ -108,8 +108,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testDashboardShowsCategoryDistributionWithSensors(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/dashboard');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/dashboard');
 
         $this->assertResponseIsSuccessful();
 
@@ -122,8 +122,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testClustersPageLoads(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/clusters');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/clusters');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('html');
@@ -131,8 +131,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testClustersPageShowsDescriptorCluster(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/clusters');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/clusters');
 
         $this->assertResponseIsSuccessful();
 
@@ -142,8 +142,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testClustersPageShowsOnOffCluster(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/clusters');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/clusters');
 
         $this->assertResponseIsSuccessful();
 
@@ -153,8 +153,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testClustersPageShowsBindingCluster(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/clusters');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/clusters');
 
         $this->assertResponseIsSuccessful();
 
@@ -164,8 +164,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testClustersPageShowsColorControlCluster(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/clusters');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/clusters');
 
         $this->assertResponseIsSuccessful();
 
@@ -175,8 +175,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testClustersPageShowsClusterCoOccurrence(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/clusters');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/clusters');
 
         $this->assertResponseIsSuccessful();
 
@@ -191,8 +191,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testClustersPageShowsCorrectClusterCount(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/clusters');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/clusters');
 
         $this->assertResponseIsSuccessful();
 
@@ -205,8 +205,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testDeviceTypesPageLoads(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/device-types');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device-types');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('html');
@@ -214,8 +214,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testDeviceTypesPageShowsExtendedColorLight(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/device-types');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device-types');
 
         $this->assertResponseIsSuccessful();
 
@@ -223,7 +223,7 @@ class StatsControllerTest extends WebTestCase
         // Search all device type cards for the name
         $allCategorySections = $crawler->filter('.category-section');
         $found = false;
-        $allCategorySections->each(function ($section) use (&$found) {
+        $allCategorySections->each(function ($section) use (&$found): void {
             if (str_contains($section->text(), 'Extended Color Light')) {
                 $found = true;
             }
@@ -233,15 +233,15 @@ class StatsControllerTest extends WebTestCase
 
     public function testDeviceTypesPageShowsOccupancySensor(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/device-types');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device-types');
 
         $this->assertResponseIsSuccessful();
 
         // Occupancy Sensor (263) - Eve Motion
         $allCategorySections = $crawler->filter('.category-section');
         $found = false;
-        $allCategorySections->each(function ($section) use (&$found) {
+        $allCategorySections->each(function ($section) use (&$found): void {
             if (str_contains($section->text(), 'Occupancy Sensor')) {
                 $found = true;
             }
@@ -251,15 +251,15 @@ class StatsControllerTest extends WebTestCase
 
     public function testDeviceTypesPageShowsContactSensor(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/device-types');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device-types');
 
         $this->assertResponseIsSuccessful();
 
         // Contact Sensor (21) - Eve Door
         $allCategorySections = $crawler->filter('.category-section');
         $found = false;
-        $allCategorySections->each(function ($section) use (&$found) {
+        $allCategorySections->each(function ($section) use (&$found): void {
             if (str_contains($section->text(), 'Contact Sensor')) {
                 $found = true;
             }
@@ -269,15 +269,15 @@ class StatsControllerTest extends WebTestCase
 
     public function testDeviceTypesPageShowsSpeaker(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/device-types');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device-types');
 
         $this->assertResponseIsSuccessful();
 
         // Speaker (34) - HomePod mini
         $allCategorySections = $crawler->filter('.category-section');
         $found = false;
-        $allCategorySections->each(function ($section) use (&$found) {
+        $allCategorySections->each(function ($section) use (&$found): void {
             if (str_contains($section->text(), 'Speaker')) {
                 $found = true;
             }
@@ -287,8 +287,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testDeviceTypesPageShowsLightsCategory(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/device-types');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device-types');
 
         $this->assertResponseIsSuccessful();
 
@@ -299,8 +299,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testDeviceTypesPageShowsSensorsCategory(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/device-types');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device-types');
 
         $this->assertResponseIsSuccessful();
 
@@ -311,8 +311,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testDeviceTypesPageShowsEntertainmentCategory(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/device-types');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device-types');
 
         $this->assertResponseIsSuccessful();
 
@@ -323,8 +323,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testDeviceTypesPageShowsMissingDeviceTypes(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/device-types');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device-types');
 
         $this->assertResponseIsSuccessful();
 
@@ -339,8 +339,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testDeviceTypesPageShowsSpecVersionBadges(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/device-types');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device-types');
 
         $this->assertResponseIsSuccessful();
 
@@ -353,8 +353,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testBindingPageLoads(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/binding');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/binding');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('html');
@@ -362,8 +362,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testBindingPageShowsCorrectBindingCount(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/binding');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/binding');
 
         $this->assertResponseIsSuccessful();
 
@@ -373,8 +373,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testBindingPageShowsBindingCapableDevices(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/binding');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/binding');
 
         $this->assertResponseIsSuccessful();
 
@@ -388,8 +388,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testBindingPageShowsPhilipsHueBulb(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/binding');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/binding');
 
         $this->assertResponseIsSuccessful();
 
@@ -400,8 +400,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testBindingPageShowsNanoleaf(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/binding');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/binding');
 
         $this->assertResponseIsSuccessful();
 
@@ -412,8 +412,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testBindingPageShowsCategoryBreakdown(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/binding');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/binding');
 
         $this->assertResponseIsSuccessful();
 
@@ -428,8 +428,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testBindingPageShowsPercentage(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/binding');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/binding');
 
         $this->assertResponseIsSuccessful();
 
@@ -441,8 +441,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testVersionsPageLoads(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/versions');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/versions');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('html');
@@ -450,8 +450,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testVersionsPageShowsVersionStats(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/versions');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/versions');
 
         $this->assertResponseIsSuccessful();
 
@@ -462,8 +462,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testVersionsPageShowsUniqueSoftwareVersions(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/versions');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/versions');
 
         $this->assertResponseIsSuccessful();
 
@@ -474,8 +474,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testVersionsPageShowsUniqueHardwareVersions(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/versions');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/versions');
 
         $this->assertResponseIsSuccessful();
 
@@ -488,8 +488,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testNavigationFromDashboardToClusters(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/dashboard');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/dashboard');
 
         $this->assertResponseIsSuccessful();
 
@@ -502,8 +502,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testNavigationFromDashboardToDeviceTypes(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/dashboard');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/dashboard');
 
         $this->assertResponseIsSuccessful();
 
@@ -516,8 +516,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testNavigationFromDashboardToBinding(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/dashboard');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/dashboard');
 
         $this->assertResponseIsSuccessful();
 
@@ -530,8 +530,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testNavigationFromDashboardToVersions(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/dashboard');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/dashboard');
 
         $this->assertResponseIsSuccessful();
 
@@ -544,8 +544,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testHeaderNavigationShowsStatsLink(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
 
         $this->assertResponseIsSuccessful();
 
@@ -558,8 +558,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testDashboardLinkToDeviceDetail(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/dashboard');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/dashboard');
 
         $this->assertResponseIsSuccessful();
 
@@ -574,8 +574,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testBindingPageLinkToDeviceDetail(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/binding');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/binding');
 
         $this->assertResponseIsSuccessful();
 
@@ -592,9 +592,9 @@ class StatsControllerTest extends WebTestCase
 
     public function testClusterShowPageLoads(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         // On/Off cluster (0x0006) should exist in fixtures
-        $client->request('GET', '/cluster/0x0006');
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/cluster/0x0006');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('.cluster-header h1', 'On/Off');
@@ -602,17 +602,17 @@ class StatsControllerTest extends WebTestCase
 
     public function testClusterShowPageLoadsWithLowercaseHex(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         // Should work with lowercase hex too
-        $client->request('GET', '/cluster/0x0006');
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/cluster/0x0006');
 
         $this->assertResponseIsSuccessful();
     }
 
     public function testClusterShowPageHasStructuredData(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/cluster/0x0006');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/cluster/0x0006');
 
         $this->assertResponseIsSuccessful();
 
@@ -626,8 +626,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testClusterShowPageLinksFromClustersIndex(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/clusters');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/clusters');
 
         $this->assertResponseIsSuccessful();
 
@@ -642,8 +642,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testClusterShowPage404ForNonexistentCluster(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/cluster/0xFFFF');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/cluster/0xFFFF');
 
         $this->assertResponseStatusCodeSame(404);
     }
@@ -652,8 +652,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testMarketPageLoads(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/market');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/market');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('html');
@@ -661,8 +661,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testMarketPageShowsTotalVendors(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/market');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/market');
 
         $this->assertResponseIsSuccessful();
 
@@ -673,8 +673,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testMarketPageShowsTotalProducts(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/market');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/market');
 
         $this->assertResponseIsSuccessful();
 
@@ -685,8 +685,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testMarketPageShowsCategoryDistribution(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/market');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/market');
 
         $this->assertResponseIsSuccessful();
 
@@ -696,8 +696,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testMarketPageShowsTopVendors(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/market');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/market');
 
         $this->assertResponseIsSuccessful();
 
@@ -715,8 +715,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testMarketPageHasActiveNavigation(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/market');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/market');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('.dashboard-nav a.active', 'Market');
@@ -726,8 +726,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testCommissioningPageLoads(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/commissioning');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/commissioning');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('html');
@@ -735,8 +735,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testCommissioningPageShowsTotalProducts(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/commissioning');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/commissioning');
 
         $this->assertResponseIsSuccessful();
 
@@ -747,8 +747,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testCommissioningPageShowsSetupInstructionsStat(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/commissioning');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/commissioning');
 
         $this->assertResponseIsSuccessful();
 
@@ -759,8 +759,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testCommissioningPageShowsFactoryResetStat(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/commissioning');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/commissioning');
 
         $this->assertResponseIsSuccessful();
 
@@ -771,8 +771,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testCommissioningPageHasActiveNavigation(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/commissioning');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/commissioning');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('.dashboard-nav a.active', 'Commissioning');
@@ -780,8 +780,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testNavigationFromDashboardToMarket(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/versions');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/versions');
 
         $this->assertResponseIsSuccessful();
 
@@ -794,8 +794,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testNavigationFromDashboardToCommissioning(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/versions');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/versions');
 
         $this->assertResponseIsSuccessful();
 
@@ -810,9 +810,9 @@ class StatsControllerTest extends WebTestCase
 
     public function testDeviceTypeShowPageLoads(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         // On/Off Light (256) should exist in fixtures
-        $client->request('GET', '/device-types/256');
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device-types/256');
 
         $this->assertResponseIsSuccessful();
         // Device type name is in the main content h1, not the site header
@@ -821,9 +821,9 @@ class StatsControllerTest extends WebTestCase
 
     public function testDeviceTypeShowPageDefaultsToRatingSorting(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         // Use Occupancy Sensor (263) which has test devices
-        $crawler = $client->request('GET', '/device-types/263');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device-types/263');
 
         $this->assertResponseIsSuccessful();
 
@@ -840,32 +840,32 @@ class StatsControllerTest extends WebTestCase
 
     public function testDeviceTypeShowPageSortByRating(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/device-types/256', ['sort' => 'rating']);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device-types/256', ['sort' => 'rating']);
 
         $this->assertResponseIsSuccessful();
     }
 
     public function testDeviceTypeShowPageSortByName(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/device-types/256', ['sort' => 'name']);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device-types/256', ['sort' => 'name']);
 
         $this->assertResponseIsSuccessful();
     }
 
     public function testDeviceTypeShowPageSortByRecent(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/device-types/256', ['sort' => 'recent']);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device-types/256', ['sort' => 'recent']);
 
         $this->assertResponseIsSuccessful();
     }
 
     public function testDeviceTypeShowPageInvalidSortDefaultsToRating(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/device-types/256', ['sort' => 'invalid']);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device-types/256', ['sort' => 'invalid']);
 
         $this->assertResponseIsSuccessful();
         // Invalid sort should not cause errors, falls back to rating
@@ -873,8 +873,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testDeviceTypeShowPageHasSortControls(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/device-types/256');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device-types/256');
 
         $this->assertResponseIsSuccessful();
 
@@ -889,8 +889,8 @@ class StatsControllerTest extends WebTestCase
 
     public function testDeviceTypeShowPageShowsStarRatings(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/device-types/256');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device-types/256');
 
         $this->assertResponseIsSuccessful();
 
@@ -901,15 +901,15 @@ class StatsControllerTest extends WebTestCase
 
     public function testDeviceTypeShowPagePaginationPreservesSort(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/device-types/256', ['sort' => 'name', 'page' => '1']);
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device-types/256', ['sort' => 'name', 'page' => '1']);
 
         $this->assertResponseIsSuccessful();
 
         // If pagination links exist, they should preserve the sort parameter
         $paginationLinks = $crawler->filter('.pagination a');
         foreach ($paginationLinks as $link) {
-            \assert($link instanceof \DOMElement);
+            $this->assertInstanceOf(\DOMElement::class, $link);
             $href = $link->getAttribute('href');
             $this->assertStringContainsString('sort=name', $href);
         }
@@ -917,16 +917,16 @@ class StatsControllerTest extends WebTestCase
 
     public function testDeviceTypeShowPage404ForNonexistentType(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/device-types/99999');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device-types/99999');
 
         $this->assertResponseStatusCodeSame(404);
     }
 
     public function testDeviceTypeShowPageShowsClusterRequirements(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/device-types/256');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device-types/256');
 
         $this->assertResponseIsSuccessful();
 

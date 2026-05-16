@@ -9,7 +9,7 @@ use App\Service\WizardAnalyticsService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
-class WizardAnalyticsServiceTest extends KernelTestCase
+final class WizardAnalyticsServiceTest extends KernelTestCase
 {
     private WizardAnalyticsService $service;
     private WizardAnalyticsRepository $repository;
@@ -18,9 +18,9 @@ class WizardAnalyticsServiceTest extends KernelTestCase
     protected function setUp(): void
     {
         self::bootKernel();
-        $this->service = static::getContainer()->get(WizardAnalyticsService::class);
-        $this->repository = static::getContainer()->get(WizardAnalyticsRepository::class);
-        $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $this->service = self::getContainer()->get(WizardAnalyticsService::class);
+        $this->repository = self::getContainer()->get(WizardAnalyticsRepository::class);
+        $this->entityManager = self::getContainer()->get(EntityManagerInterface::class);
     }
 
     public function testGenerateSessionIdReturnsHexString(): void
@@ -35,11 +35,11 @@ class WizardAnalyticsServiceTest extends KernelTestCase
 
     public function testRecordStepWithMinimalAnswers(): void
     {
-        $sessionId = 'minimal-' . bin2hex(random_bytes(4));
+        $sessionId = 'minimal-'.bin2hex(random_bytes(4));
         $this->service->recordStep($sessionId, 1, []);
 
         $latest = $this->repository->findLatestBySessionId($sessionId);
-        $this->assertNotNull($latest);
+        $this->assertInstanceOf(\App\Entity\WizardAnalytics::class, $latest);
         $this->assertSame(1, $latest->getStep());
         $this->assertNull($latest->getCategory());
         $this->assertNull($latest->getConnectivity());
@@ -50,7 +50,7 @@ class WizardAnalyticsServiceTest extends KernelTestCase
 
     public function testRecordStepWithFullAnswers(): void
     {
-        $sessionId = 'full-' . bin2hex(random_bytes(4));
+        $sessionId = 'full-'.bin2hex(random_bytes(4));
         $this->service->recordStep($sessionId, 4, [
             'category' => 'lighting',
             'connectivity' => ['wifi', 'thread'],
@@ -60,7 +60,7 @@ class WizardAnalyticsServiceTest extends KernelTestCase
         ]);
 
         $latest = $this->repository->findLatestBySessionId($sessionId);
-        $this->assertNotNull($latest);
+        $this->assertInstanceOf(\App\Entity\WizardAnalytics::class, $latest);
         $this->assertSame('lighting', $latest->getCategory());
         $this->assertSame(['wifi', 'thread'], $latest->getConnectivity());
         $this->assertSame(4, $latest->getMinRating());
@@ -71,18 +71,18 @@ class WizardAnalyticsServiceTest extends KernelTestCase
 
     public function testRecordStepWithEmptyBindingIgnored(): void
     {
-        $sessionId = 'empty-binding-' . bin2hex(random_bytes(4));
+        $sessionId = 'empty-binding-'.bin2hex(random_bytes(4));
         // empty string for binding should be treated as "not set"
         $this->service->recordStep($sessionId, 2, ['binding' => '']);
 
         $latest = $this->repository->findLatestBySessionId($sessionId);
-        $this->assertNotNull($latest);
+        $this->assertInstanceOf(\App\Entity\WizardAnalytics::class, $latest);
         $this->assertNull($latest->getBinding());
     }
 
     public function testRecordCompletionMarksLatestStepCompleted(): void
     {
-        $sessionId = 'complete-' . bin2hex(random_bytes(4));
+        $sessionId = 'complete-'.bin2hex(random_bytes(4));
         $this->service->recordStep($sessionId, 1, ['category' => 'plugs']);
         $this->service->recordStep($sessionId, 2, ['category' => 'plugs']);
 
@@ -90,7 +90,7 @@ class WizardAnalyticsServiceTest extends KernelTestCase
         $this->entityManager->clear();
 
         $latest = $this->repository->findLatestBySessionId($sessionId);
-        $this->assertNotNull($latest);
+        $this->assertInstanceOf(\App\Entity\WizardAnalytics::class, $latest);
         $this->assertSame(2, $latest->getStep());
         $this->assertTrue($latest->isCompleted());
     }
@@ -98,7 +98,7 @@ class WizardAnalyticsServiceTest extends KernelTestCase
     public function testRecordCompletionOnUnknownSessionIsNoOp(): void
     {
         // Should not throw even when no analytics rows exist for the session.
-        $this->service->recordCompletion('does-not-exist-' . bin2hex(random_bytes(4)));
+        $this->service->recordCompletion('does-not-exist-'.bin2hex(random_bytes(4)));
         $this->assertTrue(true);
     }
 
@@ -121,7 +121,7 @@ class WizardAnalyticsServiceTest extends KernelTestCase
 
     public function testGetCompletionStatsDelegates(): void
     {
-        $sessionId = 'stats-' . bin2hex(random_bytes(4));
+        $sessionId = 'stats-'.bin2hex(random_bytes(4));
         $this->service->recordStep($sessionId, 1, []);
         $this->service->recordCompletion($sessionId);
 

@@ -13,7 +13,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
  * These tests require the database fixtures to be loaded.
  * Run `make test-reset` before running tests if fixtures are missing.
  */
-class MatterRegistryTest extends KernelTestCase
+final class MatterRegistryTest extends KernelTestCase
 {
     private MatterRegistry $registry;
 
@@ -25,29 +25,29 @@ class MatterRegistryTest extends KernelTestCase
 
     public function testGetClusterNameReturnsKnownCluster(): void
     {
-        $this->assertEquals('On/Off', $this->registry->getClusterName(6));
-        $this->assertEquals('Level Control', $this->registry->getClusterName(8));
-        $this->assertEquals('Color Control', $this->registry->getClusterName(768));
-        $this->assertEquals('Thermostat', $this->registry->getClusterName(513));
+        $this->assertSame('On/Off', $this->registry->getClusterName(6));
+        $this->assertSame('Level Control', $this->registry->getClusterName(8));
+        $this->assertSame('Color Control', $this->registry->getClusterName(768));
+        $this->assertSame('Thermostat', $this->registry->getClusterName(513));
     }
 
     public function testGetClusterNameReturnsFormattedHexForUnknown(): void
     {
         $name = $this->registry->getClusterName(0x9999);
-        $this->assertEquals('Cluster 0x9999', $name);
+        $this->assertSame('Cluster 0x9999', $name);
     }
 
     public function testGetDeviceTypeNameReturnsKnownType(): void
     {
-        $this->assertEquals('On/Off Light', $this->registry->getDeviceTypeName(256));
-        $this->assertEquals('Dimmable Light', $this->registry->getDeviceTypeName(257));
-        $this->assertEquals('Thermostat', $this->registry->getDeviceTypeName(769));
+        $this->assertSame('On/Off Light', $this->registry->getDeviceTypeName(256));
+        $this->assertSame('Dimmable Light', $this->registry->getDeviceTypeName(257));
+        $this->assertSame('Thermostat', $this->registry->getDeviceTypeName(769));
     }
 
     public function testGetDeviceTypeNameReturnsDefaultForUnknown(): void
     {
         $name = $this->registry->getDeviceTypeName(99999);
-        $this->assertEquals('Device Type 99999', $name);
+        $this->assertSame('Device Type 99999', $name);
     }
 
     public function testGetDeviceTypeMetadataReturnsFullMetadata(): void
@@ -77,24 +77,24 @@ class MatterRegistryTest extends KernelTestCase
 
     public function testGetDeviceTypeIcon(): void
     {
-        $this->assertEquals('lightbulb', $this->registry->getDeviceTypeIcon(256));
-        $this->assertEquals('thermometer', $this->registry->getDeviceTypeIcon(769));
+        $this->assertSame('lightbulb', $this->registry->getDeviceTypeIcon(256));
+        $this->assertSame('thermometer', $this->registry->getDeviceTypeIcon(769));
         $this->assertNull($this->registry->getDeviceTypeIcon(99999));
     }
 
     public function testGetDeviceTypeCategory(): void
     {
-        $this->assertEquals('lighting', $this->registry->getDeviceTypeCategory(256));
-        $this->assertEquals('hvac', $this->registry->getDeviceTypeCategory(769));
-        $this->assertEquals('sensors', $this->registry->getDeviceTypeCategory(770));
+        $this->assertSame('lighting', $this->registry->getDeviceTypeCategory(256));
+        $this->assertSame('hvac', $this->registry->getDeviceTypeCategory(769));
+        $this->assertSame('sensors', $this->registry->getDeviceTypeCategory(770));
         $this->assertNull($this->registry->getDeviceTypeCategory(99999));
     }
 
     public function testGetDeviceTypeDisplayCategory(): void
     {
-        $this->assertEquals('Lights', $this->registry->getDeviceTypeDisplayCategory(256));
-        $this->assertEquals('Climate', $this->registry->getDeviceTypeDisplayCategory(769));
-        $this->assertEquals('Sensors', $this->registry->getDeviceTypeDisplayCategory(770));
+        $this->assertSame('Lights', $this->registry->getDeviceTypeDisplayCategory(256));
+        $this->assertSame('Climate', $this->registry->getDeviceTypeDisplayCategory(769));
+        $this->assertSame('Sensors', $this->registry->getDeviceTypeDisplayCategory(770));
         $this->assertNull($this->registry->getDeviceTypeDisplayCategory(99999));
     }
 
@@ -306,7 +306,7 @@ class MatterRegistryTest extends KernelTestCase
         $this->assertEmpty($analysis['missingMandatoryServer']);
         $this->assertEmpty($analysis['missingOptionalServer']);
         $this->assertTrue($analysis['compliance']['mandatory']);
-        $this->assertEquals(100.0, $analysis['compliance']['score']);
+        $this->assertEqualsWithDelta(100.0, $analysis['compliance']['score'], PHP_FLOAT_EPSILON);
     }
 
     public function testAnalyzeClusterGapsScoreCalculation(): void
@@ -319,11 +319,11 @@ class MatterRegistryTest extends KernelTestCase
         $analysis = $this->registry->analyzeClusterGaps(256, $actualServerClusters, $actualClientClusters);
 
         // Mandatory score should be 100% (all implemented)
-        $this->assertEquals(100.0, $analysis['compliance']['mandatoryScore']);
+        $this->assertEqualsWithDelta(100.0, $analysis['compliance']['mandatoryScore'], PHP_FLOAT_EPSILON);
 
         // Overall score = 70% mandatory + 30% optional
         // With 100% mandatory and 0% optional: 70 + 0 = 70
-        $this->assertEquals(70.0, $analysis['compliance']['score']);
+        $this->assertEqualsWithDelta(70.0, $analysis['compliance']['score'], PHP_FLOAT_EPSILON);
     }
 
     public function testAnalyzeClusterGapsIncludesClientClusters(): void
@@ -335,7 +335,7 @@ class MatterRegistryTest extends KernelTestCase
 
         // Provide server clusters and some client clusters
         $serverClusterIds = array_column($mandatoryServer, 'id');
-        $clientClusterIds = !empty($optionalClient) ? [array_column($optionalClient, 'id')[0]] : [];
+        $clientClusterIds = [] === $optionalClient ? [] : [array_column($optionalClient, 'id')[0]];
 
         $analysis = $this->registry->analyzeClusterGaps(769, $serverClusterIds, $clientClusterIds);
 

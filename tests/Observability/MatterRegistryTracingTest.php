@@ -21,7 +21,7 @@ final class MatterRegistryTracingTest extends KernelTestCase
     use InMemoryOtelTrait;
 
     /** @var string|false */
-    private $originalFlag;
+    private string|bool $originalFlag;
 
     protected function setUp(): void
     {
@@ -31,7 +31,7 @@ final class MatterRegistryTracingTest extends KernelTestCase
 
     protected function tearDown(): void
     {
-        static::ensureKernelShutdown();
+        self::ensureKernelShutdown();
         $this->tearDownOtel();
 
         if (false === $this->originalFlag) {

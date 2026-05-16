@@ -23,7 +23,7 @@ use Symfony\Component\Yaml\Yaml;
 )]
 class DclSyncCommand extends Command
 {
-    private const DEFAULT_OUTPUT_DIR = 'fixtures';
+    private const string DEFAULT_OUTPUT_DIR = 'fixtures';
 
     public function __construct(
         private readonly DclApiService $dclApiService,
@@ -122,7 +122,7 @@ class DclSyncCommand extends Command
 
         // Prepare batch request data
         $batchData = [];
-        foreach ($certifiedModels as $key => $cert) {
+        foreach ($certifiedModels as $cert) {
             if (\count($cert['certifiedVersions']) > 0) {
                 // Use the first (oldest) certified version
                 $batchData[] = [
@@ -139,7 +139,7 @@ class DclSyncCommand extends Command
 
         $complianceInfo = $this->dclApiService->fetchComplianceInfoBatch(
             $batchData,
-            function ($processed, $total) use ($progressBar) {
+            function (int $processed, $total) use ($progressBar): void {
                 $progressBar->setProgress($processed);
             }
         );
@@ -172,7 +172,7 @@ class DclSyncCommand extends Command
         }
 
         // Sort by vendorId, then productId
-        usort($fixtures, function ($a, $b) {
+        usort($fixtures, function (array $a, array $b): int {
             if ($a['vendorId'] !== $b['vendorId']) {
                 return $a['vendorId'] <=> $b['vendorId'];
             }
@@ -220,7 +220,7 @@ class DclSyncCommand extends Command
         }
 
         // Sort by specId for consistent output
-        usort($fixtures, fn ($a, $b) => $a['specId'] <=> $b['specId']);
+        usort($fixtures, fn (array $a, array $b): int => $a['specId'] <=> $b['specId']);
 
         // Write YAML file
         $yamlContent = "# Matter Vendors from DCL (Distributed Compliance Ledger)\n";
@@ -349,7 +349,7 @@ class DclSyncCommand extends Command
         }
 
         // Sort by vendorId, then productId for consistent output
-        usort($fixtures, function ($a, $b) {
+        usort($fixtures, function (array $a, array $b): int {
             if ($a['vendorId'] !== $b['vendorId']) {
                 return $a['vendorId'] <=> $b['vendorId'];
             }
@@ -369,8 +369,8 @@ class DclSyncCommand extends Command
         file_put_contents($productsFile, $yamlContent);
 
         // Count products with certification data and compliance info
-        $certifiedCount = \count(array_filter($fixtures, fn ($f) => isset($f['certifiedSoftwareVersions'])));
-        $withDatesCount = \count(array_filter($fixtures, fn ($f) => isset($f['certificationDate'])));
+        $certifiedCount = \count(array_filter($fixtures, fn (array $f): bool => isset($f['certifiedSoftwareVersions'])));
+        $withDatesCount = \count(array_filter($fixtures, fn (array $f): bool => isset($f['certificationDate'])));
 
         $message = \sprintf('Wrote %d products to %s (%d with certification data', \count($fixtures), $productsFile, $certifiedCount);
         if ($withDatesCount > 0) {

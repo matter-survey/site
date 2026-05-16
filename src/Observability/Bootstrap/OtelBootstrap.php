@@ -59,10 +59,10 @@ final class OtelBootstrap implements EventSubscriberInterface
             'deployment.environment.name' => $this->environment,
         ]);
 
-        $tracerProvider = (new TracerProviderFactory())->create();
-        $meterProvider = (new MeterProviderFactory())->create();
-        $loggerProvider = (new LoggerProviderFactory())->create();
-        $propagator = (new PropagatorFactory())->create();
+        $tracerProvider = new TracerProviderFactory()->create();
+        $meterProvider = new MeterProviderFactory()->create();
+        $loggerProvider = new LoggerProviderFactory()->create();
+        $propagator = new PropagatorFactory()->create();
 
         Sdk::builder()
             ->setTracerProvider($tracerProvider)

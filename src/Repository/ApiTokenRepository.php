@@ -44,7 +44,7 @@ class ApiTokenRepository extends ServiceEntityRepository
     {
         $apiToken = $this->findValidToken($token);
 
-        if (null === $apiToken) {
+        if (!$apiToken instanceof ApiToken) {
             return null;
         }
 
@@ -90,7 +90,7 @@ class ApiTokenRepository extends ServiceEntityRepository
         $apiToken->setName($name);
         $apiToken->setUser($user);
 
-        if (null !== $expiresAt) {
+        if ($expiresAt instanceof \DateTimeImmutable) {
             $apiToken->setExpiresAt($expiresAt);
         }
 

@@ -9,7 +9,7 @@ use Doctrine\DBAL\Connection;
 
 class DeviceRepository
 {
-    private const BINDING_CLUSTER_ID = 30; // 0x001E
+    private const int BINDING_CLUSTER_ID = 30; // 0x001E
 
     /**
      * Capability filter definitions mapping user-friendly keys to cluster requirements.
@@ -63,7 +63,7 @@ class DeviceRepository
         ],
     ];
 
-    private Connection $db;
+    private readonly Connection $db;
 
     public function __construct(DatabaseService $databaseService)
     {
@@ -90,12 +90,12 @@ class DeviceRepository
         $connectivityTypes = $deviceData['connectivity_types'] ?? [];
         if (!$isNew && !empty($connectivityTypes)) {
             $existingTypes = $existing['connectivity_types']
-                ? json_decode($existing['connectivity_types'], true) ?? []
+                ? json_decode((string) $existing['connectivity_types'], true) ?? []
                 : [];
             $connectivityTypes = array_values(array_unique(array_merge($existingTypes, $connectivityTypes)));
             sort($connectivityTypes);
         }
-        $connectivityTypesJson = !empty($connectivityTypes) ? json_encode($connectivityTypes) : null;
+        $connectivityTypesJson = empty($connectivityTypes) ? null : json_encode($connectivityTypes);
 
         // Generate slug for new products
         $slug = \App\Entity\Product::generateSlug(
@@ -212,9 +212,13 @@ class DeviceRepository
      *
      * @param array{
      *     connectivity?: array<string>,
-     *     binding?: bool|null,
+     *     binding?: bool|string|null,
      *     vendor?: int|null,
-     *     search?: string|null
+     *     search?: string|null,
+     *     device_types?: array<int>,
+     *     min_rating?: int,
+     *     compatible_with?: array<int>,
+     *     capabilities?: array<string>
      * } $filters
      */
     public function getFilteredDevices(array $filters, int $limit = 100, int $offset = 0): array
@@ -241,9 +245,13 @@ class DeviceRepository
      *
      * @param array{
      *     connectivity?: array<string>,
-     *     binding?: bool|null,
+     *     binding?: bool|string|null,
      *     vendor?: int|null,
-     *     search?: string|null
+     *     search?: string|null,
+     *     device_types?: array<int>,
+     *     min_rating?: int,
+     *     compatible_with?: array<int>,
+     *     capabilities?: array<string>
      * } $filters
      */
     public function getFilteredDeviceCount(array $filters): int
@@ -329,7 +337,7 @@ class DeviceRepository
         // Compatible with owned devices filter
         if (!empty($filters['compatible_with'])) {
             $compatibleIds = $this->findCompatibleDevices($filters['compatible_with']);
-            if (!empty($compatibleIds)) {
+            if ([] !== $compatibleIds) {
                 $placeholders = [];
                 foreach ($compatibleIds as $i => $id) {
                     $paramName = 'compat_'.$i;
@@ -376,7 +384,7 @@ class DeviceRepository
                 ";
             }
 
-            if (!empty($capabilitySubqueries)) {
+            if ([] !== $capabilitySubqueries) {
                 // INTERSECT to ensure device has ALL selected capabilities
                 $sql .= ' AND id IN ('.implode(' INTERSECT ', $capabilitySubqueries).')';
             }
@@ -396,7 +404,7 @@ class DeviceRepository
      */
     private function findCompatibleDevices(array $ownedDeviceIds, int $limit = 200): array
     {
-        if (empty($ownedDeviceIds)) {
+        if ([] === $ownedDeviceIds) {
             return [];
         }
 
@@ -424,14 +432,14 @@ class DeviceRepository
         $params['limit'] = $limit;
 
         $types = [];
-        foreach ($ownedDeviceIds as $i => $id) {
+        foreach (array_keys($ownedDeviceIds) as $i) {
             $types['owned_'.$i] = \Doctrine\DBAL\ParameterType::INTEGER;
         }
         $types['limit'] = \Doctrine\DBAL\ParameterType::INTEGER;
 
         $results = $this->db->executeQuery($sql, $params, $types)->fetchAllAssociative();
 
-        return array_map(fn (array $row) => (int) $row['product_id'], $results);
+        return array_map(fn (array $row): int => (int) $row['product_id'], $results);
     }
 
     /**
@@ -521,7 +529,7 @@ class DeviceRepository
         $facets = [];
 
         foreach (self::CAPABILITY_FILTERS as $key => $config) {
-            $count = $this->countDevicesWithCapability($config['clusters'], $config['features']);
+            $count = $this->countDevicesWithCapability($config['clusters']);
             $facets[] = [
                 'key' => $key,
                 'label' => $config['label'],
@@ -530,7 +538,7 @@ class DeviceRepository
         }
 
         // Sort by count descending
-        usort($facets, fn (array $a, array $b) => $b['count'] <=> $a['count']);
+        usort($facets, fn (array $a, array $b): int => $b['count'] <=> $a['count']);
 
         return $facets;
     }
@@ -538,12 +546,11 @@ class DeviceRepository
     /**
      * Count devices that have the specified clusters (and optionally features).
      *
-     * @param array<int>    $clusters Cluster IDs (any match counts)
-     * @param array<string> $features Feature codes (optional, for V3 feature checking)
+     * @param array<int> $clusters Cluster IDs (any match counts)
      */
-    private function countDevicesWithCapability(array $clusters, array $features = []): int
+    private function countDevicesWithCapability(array $clusters): int
     {
-        if (empty($clusters)) {
+        if ([] === $clusters) {
             return 0;
         }
 
@@ -654,7 +661,7 @@ class DeviceRepository
      */
     private function attachNameAmbiguity(array $rows): array
     {
-        if (empty($rows)) {
+        if ([] === $rows) {
             return $rows;
         }
 
@@ -662,14 +669,20 @@ class DeviceRepository
         foreach ($rows as $row) {
             $vendorFk = $row['vendor_fk'] ?? null;
             $name = $row['product_name'] ?? null;
-            if (null === $vendorFk || null === $name || '' === $name) {
+            if (null === $vendorFk) {
+                continue;
+            }
+            if (null === $name) {
+                continue;
+            }
+            if ('' === $name) {
                 continue;
             }
             $pairs[$vendorFk.':'.$name] = [(int) $vendorFk, (string) $name];
         }
 
         $duplicates = [];
-        if (!empty($pairs)) {
+        if ([] !== $pairs) {
             $conditions = [];
             $params = [];
             foreach (array_values($pairs) as $i => [$fk, $name]) {
@@ -713,11 +726,11 @@ class DeviceRepository
 
         $endpoints = [];
         foreach ($rows as $row) {
-            $row['device_types'] = json_decode($row['device_types'], true) ?? [];
-            $row['server_clusters'] = json_decode($row['server_clusters'], true) ?? [];
-            $row['client_clusters'] = json_decode($row['client_clusters'], true) ?? [];
-            $row['server_cluster_details'] = $row['server_cluster_details'] ? json_decode($row['server_cluster_details'], true) : null;
-            $row['client_cluster_details'] = $row['client_cluster_details'] ? json_decode($row['client_cluster_details'], true) : null;
+            $row['device_types'] = json_decode((string) $row['device_types'], true) ?? [];
+            $row['server_clusters'] = json_decode((string) $row['server_clusters'], true) ?? [];
+            $row['client_clusters'] = json_decode((string) $row['client_clusters'], true) ?? [];
+            $row['server_cluster_details'] = $row['server_cluster_details'] ? json_decode((string) $row['server_cluster_details'], true) : null;
+            $row['client_cluster_details'] = $row['client_cluster_details'] ? json_decode((string) $row['client_cluster_details'], true) : null;
             $row['schema_version'] = (int) ($row['schema_version'] ?? 2);
             // Derive binding support from either server or client clusters
             $row['has_binding_cluster'] = \in_array(self::BINDING_CLUSTER_ID, $row['server_clusters'], true)
@@ -749,9 +762,9 @@ class DeviceRepository
 
         $endpoints = [];
         foreach ($rows as $row) {
-            $row['device_types'] = json_decode($row['device_types'], true) ?? [];
-            $row['server_clusters'] = json_decode($row['server_clusters'], true) ?? [];
-            $row['client_clusters'] = json_decode($row['client_clusters'], true) ?? [];
+            $row['device_types'] = json_decode((string) $row['device_types'], true) ?? [];
+            $row['server_clusters'] = json_decode((string) $row['server_clusters'], true) ?? [];
+            $row['client_clusters'] = json_decode((string) $row['client_clusters'], true) ?? [];
             $row['server_cluster_details'] = json_decode($row['server_cluster_details'] ?? 'null', true);
             $row['client_cluster_details'] = json_decode($row['client_cluster_details'] ?? 'null', true);
             $row['has_binding_cluster'] = \in_array(self::BINDING_CLUSTER_ID, $row['server_clusters'], true)
@@ -960,7 +973,7 @@ class DeviceRepository
             $versionStats[$specVersion] += (int) $dt['product_count'];
         }
 
-        uksort($versionStats, 'version_compare');
+        uksort($versionStats, version_compare(...));
 
         return $versionStats;
     }
@@ -1063,7 +1076,7 @@ class DeviceRepository
             $stat['percentage'] = round(($stat['with_binding'] / $stat['total']) * 100, 1);
         }
 
-        uasort($categoryStats, fn ($a, $b) => $b['percentage'] <=> $a['percentage']);
+        uasort($categoryStats, fn ($a, $b): int => $b['percentage'] <=> $a['percentage']);
 
         return $categoryStats;
     }
@@ -1666,7 +1679,7 @@ class DeviceRepository
         // Take top N categories
         $topCategories = array_slice(array_keys($categoryDistribution), 0, $limit);
 
-        if (empty($topCategories)) {
+        if ([] === $topCategories) {
             return [];
         }
 
@@ -1682,7 +1695,7 @@ class DeviceRepository
                 }
             }
 
-            if (empty($categoryDeviceTypeIds)) {
+            if ([] === $categoryDeviceTypeIds) {
                 continue;
             }
 

@@ -10,9 +10,9 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: WizardAnalyticsRepository::class)]
 #[ORM\Table(name: 'wizard_analytics')]
-#[ORM\Index(columns: ['session_id'], name: 'idx_wizard_session')]
-#[ORM\Index(columns: ['category'], name: 'idx_wizard_category')]
-#[ORM\Index(columns: ['created_at'], name: 'idx_wizard_created')]
+#[ORM\Index(name: 'idx_wizard_session', columns: ['session_id'])]
+#[ORM\Index(name: 'idx_wizard_category', columns: ['category'])]
+#[ORM\Index(name: 'idx_wizard_created', columns: ['created_at'])]
 class WizardAnalytics
 {
     #[ORM\Id]

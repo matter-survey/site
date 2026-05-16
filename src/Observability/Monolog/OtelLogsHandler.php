@@ -23,7 +23,7 @@ final class OtelLogsHandler extends AbstractProcessingHandler
 
         $psrLevel = $record->level->toPsrLogLevel();
 
-        $otelRecord = (new LogRecord($record->message))
+        $otelRecord = new LogRecord($record->message)
             ->setSeverityText($psrLevel)
             ->setSeverityNumber(Severity::fromPsr3($psrLevel))
             ->setTimestamp((int) ($record->datetime->format('U.u') * LogRecord::NANOS_PER_SECOND))

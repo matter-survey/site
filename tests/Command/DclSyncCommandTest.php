@@ -19,7 +19,7 @@ use Symfony\Component\Yaml\Yaml;
  * and writes fixtures to a per-test temp directory so the real fixtures/
  * are never touched.
  */
-class DclSyncCommandTest extends KernelTestCase
+final class DclSyncCommandTest extends KernelTestCase
 {
     private string $tmpDir;
     private DclApiService&MockObject $dclMock;
@@ -29,7 +29,7 @@ class DclSyncCommandTest extends KernelTestCase
         self::bootKernel();
 
         $this->tmpDir = sys_get_temp_dir().'/dcl-sync-test-'.bin2hex(random_bytes(4));
-        (new Filesystem())->mkdir($this->tmpDir);
+        new Filesystem()->mkdir($this->tmpDir);
 
         $this->dclMock = $this->createMock(DclApiService::class);
         self::getContainer()->set(DclApiService::class, $this->dclMock);
@@ -37,7 +37,7 @@ class DclSyncCommandTest extends KernelTestCase
 
     protected function tearDown(): void
     {
-        (new Filesystem())->remove($this->tmpDir);
+        new Filesystem()->remove($this->tmpDir);
         parent::tearDown();
     }
 
@@ -92,7 +92,7 @@ class DclSyncCommandTest extends KernelTestCase
         $this->assertCount(2, $vendors);
         $this->assertSame(4097, $vendors[0]['specId'], 'fixtures must be sorted by specId');
         $this->assertSame(4660, $vendors[1]['specId']);
-        $this->assertStringContainsString('-4660', $vendors[1]['slug']);
+        $this->assertStringContainsString('-4660', (string) $vendors[1]['slug']);
     }
 
     public function testProductsOnlyMergesCertificationsWhenSkippedFlagsAreOff(): void
@@ -180,7 +180,7 @@ class DclSyncCommandTest extends KernelTestCase
     private function relativeOutputDir(): string
     {
         $projectDir = self::$kernel->getProjectDir();
-        $relative = (new Filesystem())->makePathRelative($this->tmpDir, $projectDir);
+        $relative = new Filesystem()->makePathRelative($this->tmpDir, $projectDir);
 
         return rtrim($relative, '/');
     }

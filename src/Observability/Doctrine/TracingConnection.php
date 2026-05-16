@@ -14,11 +14,13 @@ use OpenTelemetry\API\Trace\StatusCode;
 
 final class TracingConnection extends AbstractConnectionMiddleware
 {
+    #[\Override]
     public function prepare(string $sql): Statement
     {
         return new TracingStatement(parent::prepare($sql), $sql);
     }
 
+    #[\Override]
     public function query(string $sql): Result
     {
         $span = $this->startSpan($sql);
@@ -36,6 +38,7 @@ final class TracingConnection extends AbstractConnectionMiddleware
         return $result;
     }
 
+    #[\Override]
     public function exec(string $sql): int|string
     {
         $span = $this->startSpan($sql);

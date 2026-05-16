@@ -16,7 +16,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
  * identifyStandouts/identifyMissing branches, humanizeTechnicalName edge
  * cases, and the getCategories accessor.
  */
-class CapabilityServiceCategoryInferenceTest extends KernelTestCase
+final class CapabilityServiceCategoryInferenceTest extends KernelTestCase
 {
     private CapabilityService $capabilityService;
 

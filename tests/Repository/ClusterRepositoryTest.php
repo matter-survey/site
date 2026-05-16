@@ -6,24 +6,21 @@ namespace App\Tests\Repository;
 
 use App\Entity\Cluster;
 use App\Repository\ClusterRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
-class ClusterRepositoryTest extends KernelTestCase
+final class ClusterRepositoryTest extends KernelTestCase
 {
     private ClusterRepository $repository;
-    private EntityManagerInterface $entityManager;
 
     protected function setUp(): void
     {
         self::bootKernel();
-        $this->repository = static::getContainer()->get(ClusterRepository::class);
-        $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $this->repository = self::getContainer()->get(ClusterRepository::class);
     }
 
     public function testSaveAndFlush(): void
     {
-        $cluster = (new Cluster(9000))
+        $cluster = new Cluster(9000)
             ->setName('Test Cluster')
             ->setCategory('test')
             ->setIsGlobal(false);
@@ -32,27 +29,27 @@ class ClusterRepositoryTest extends KernelTestCase
         $this->repository->flush();
 
         $found = $this->repository->find(9000);
-        $this->assertNotNull($found);
+        $this->assertInstanceOf(Cluster::class, $found);
         $this->assertSame('Test Cluster', $found->getName());
     }
 
     public function testSaveWithFlushPersistsImmediately(): void
     {
-        $cluster = (new Cluster(9001))
+        $cluster = new Cluster(9001)
             ->setName('Eager Cluster')
             ->setCategory('test')
             ->setIsGlobal(false);
 
         $this->repository->save($cluster, true);
 
-        $this->assertNotNull($this->repository->find(9001));
+        $this->assertInstanceOf(Cluster::class, $this->repository->find(9001));
     }
 
     public function testFindByHexIdMatchesUppercase(): void
     {
         $found = $this->repository->findByHexId('0x0006');
 
-        $this->assertNotNull($found);
+        $this->assertInstanceOf(Cluster::class, $found);
         $this->assertSame('On/Off', $found->getName());
     }
 
@@ -61,14 +58,14 @@ class ClusterRepositoryTest extends KernelTestCase
         $upper = $this->repository->findByHexId('0X001D');
         $lower = $this->repository->findByHexId('0x001d');
 
-        $this->assertNotNull($upper);
-        $this->assertNotNull($lower);
+        $this->assertInstanceOf(Cluster::class, $upper);
+        $this->assertInstanceOf(Cluster::class, $lower);
         $this->assertSame($upper->getId(), $lower->getId());
     }
 
     public function testFindByHexIdReturnsNullForUnknown(): void
     {
-        $this->assertNull($this->repository->findByHexId('0xFFFE'));
+        $this->assertNotInstanceOf(Cluster::class, $this->repository->findByHexId('0xFFFE'));
     }
 
     public function testFindAllGroupedByCategory(): void
@@ -80,15 +77,13 @@ class ClusterRepositoryTest extends KernelTestCase
 
         foreach ($grouped as $category => $clusters) {
             $this->assertIsString($category);
-            foreach ($clusters as $cluster) {
-                $this->assertInstanceOf(Cluster::class, $cluster);
-            }
+            $this->assertContainsOnlyInstancesOf(Cluster::class, $clusters);
         }
     }
 
     public function testFindAllGroupedByCategoryFallsBackToOtherWhenCategoryIsNull(): void
     {
-        $orphan = (new Cluster(9002))
+        $orphan = new Cluster(9002)
             ->setName('Orphan Cluster')
             ->setCategory(null)
             ->setIsGlobal(false);
@@ -100,7 +95,7 @@ class ClusterRepositoryTest extends KernelTestCase
         $this->assertArrayHasKey('Other', $grouped);
         $found = false;
         foreach ($grouped['Other'] as $cluster) {
-            if ($cluster->getId() === 9002) {
+            if (9002 === $cluster->getId()) {
                 $found = true;
                 break;
             }
@@ -155,8 +150,8 @@ class ClusterRepositoryTest extends KernelTestCase
 
     public function testGlobalAndApplicationAreDisjoint(): void
     {
-        $globalIds = array_map(fn (Cluster $c) => $c->getId(), $this->repository->findGlobalClusters());
-        $appIds = array_map(fn (Cluster $c) => $c->getId(), $this->repository->findApplicationClusters());
+        $globalIds = array_map(fn (Cluster $c): int => $c->getId(), $this->repository->findGlobalClusters());
+        $appIds = array_map(fn (Cluster $c): int => $c->getId(), $this->repository->findApplicationClusters());
 
         $this->assertSame([], array_intersect($globalIds, $appIds));
     }
@@ -166,7 +161,7 @@ class ClusterRepositoryTest extends KernelTestCase
         $results = $this->repository->search('On/Off');
 
         $this->assertNotEmpty($results);
-        $names = array_map(fn (Cluster $c) => $c->getName(), $results);
+        $names = array_map(fn (Cluster $c): string => $c->getName(), $results);
         $this->assertContains('On/Off', $names);
     }
 

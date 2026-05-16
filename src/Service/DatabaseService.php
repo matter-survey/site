@@ -14,7 +14,7 @@ use Doctrine\DBAL\Connection;
 class DatabaseService
 {
     public function __construct(
-        private Connection $connection,
+        private readonly Connection $connection,
     ) {
     }
 

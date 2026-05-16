@@ -20,13 +20,13 @@ use Symfony\Component\Routing\Attribute\Route;
 class StatsController extends AbstractController
 {
     public function __construct(
-        private DeviceRepository $deviceRepo,
-        private TelemetryService $telemetryService,
-        private MatterRegistry $matterRegistry,
-        private ClusterRepository $clusterRepo,
-        private ProductRepository $productRepo,
-        private ChartFactory $chartFactory,
-        private DeviceScoreService $deviceScoreService,
+        private readonly DeviceRepository $deviceRepo,
+        private readonly TelemetryService $telemetryService,
+        private readonly MatterRegistry $matterRegistry,
+        private readonly ClusterRepository $clusterRepo,
+        private readonly ProductRepository $productRepo,
+        private readonly ChartFactory $chartFactory,
+        private readonly DeviceScoreService $deviceScoreService,
     ) {
     }
 
@@ -96,7 +96,7 @@ class StatsController extends AbstractController
         }
 
         // Sort by total count descending
-        uasort($clusterMap, fn ($a, $b) => $b['totalCount'] <=> $a['totalCount']);
+        uasort($clusterMap, fn ($a, $b): int => $b['totalCount'] <=> $a['totalCount']);
         $clusters = array_values($clusterMap);
 
         // Group by category
@@ -111,7 +111,7 @@ class StatsController extends AbstractController
         }
 
         // Sort categories by total devices
-        uasort($categories, fn ($a, $b) => $b['totalDevices'] <=> $a['totalDevices']);
+        uasort($categories, fn ($a, $b): int => $b['totalDevices'] <=> $a['totalDevices']);
 
         // Calculate insights
         $totalClusters = \count($clusters);
@@ -120,10 +120,10 @@ class StatsController extends AbstractController
             : 0;
 
         // Most common category
-        $topCategory = !empty($categories) ? array_key_first($categories) : 'N/A';
+        $topCategory = [] === $categories ? 'N/A' : array_key_first($categories);
 
         // Clusters only seen as client (interesting edge cases)
-        $clientOnlyClusters = array_filter($clusters, fn ($c) => 0 === $c['serverCount'] && $c['clientCount'] > 0);
+        $clientOnlyClusters = array_filter($clusters, fn (array $c): bool => 0 === $c['serverCount'] && $c['clientCount'] > 0);
 
         $insights = [
             'totalClusters' => $totalClusters,
@@ -227,7 +227,7 @@ class StatsController extends AbstractController
         ]);
     }
 
-    #[Route('/device-types/{type}', name: 'stats_device_type_show', methods: ['GET'], requirements: ['type' => '\d+'])]
+    #[Route('/device-types/{type}', name: 'stats_device_type_show', requirements: ['type' => '\d+'], methods: ['GET'])]
     public function deviceTypeShow(int $type, Request $request): Response
     {
         $metadata = $this->matterRegistry->getDeviceTypeMetadata($type);
@@ -306,12 +306,12 @@ class StatsController extends AbstractController
         ]);
     }
 
-    #[Route('/cluster/{hexId}', name: 'stats_cluster_show', methods: ['GET'], requirements: ['hexId' => '0x[0-9A-Fa-f]+'])]
+    #[Route('/cluster/{hexId}', name: 'stats_cluster_show', requirements: ['hexId' => '0x[0-9A-Fa-f]+'], methods: ['GET'])]
     public function clusterShow(string $hexId, Request $request): Response
     {
         $cluster = $this->clusterRepo->findByHexId($hexId);
 
-        if (null === $cluster) {
+        if (!$cluster instanceof \App\Entity\Cluster) {
             throw new NotFoundHttpException(\sprintf('Cluster %s not found', $hexId));
         }
 

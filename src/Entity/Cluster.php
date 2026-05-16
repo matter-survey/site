@@ -10,15 +10,11 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ClusterRepository::class)]
 #[ORM\Table(name: 'clusters')]
-#[ORM\Index(columns: ['hex_id'], name: 'idx_clusters_hex_id')]
-#[ORM\Index(columns: ['category'], name: 'idx_clusters_category')]
-#[ORM\Index(columns: ['spec_version'], name: 'idx_clusters_spec_version')]
+#[ORM\Index(name: 'idx_clusters_hex_id', columns: ['hex_id'])]
+#[ORM\Index(name: 'idx_clusters_category', columns: ['category'])]
+#[ORM\Index(name: 'idx_clusters_spec_version', columns: ['spec_version'])]
 class Cluster
 {
-    #[ORM\Id]
-    #[ORM\Column]
-    private int $id;
-
     #[ORM\Column(name: 'hex_id', length: 10, unique: true)]
     private string $hexId;
 
@@ -64,10 +60,11 @@ class Cluster
     #[ORM\Column(name: 'updated_at', type: Types::DATETIME_MUTABLE)]
     private \DateTimeInterface $updatedAt;
 
-    public function __construct(int $id)
+    public function __construct(#[ORM\Id]
+        #[ORM\Column]
+        private int $id)
     {
-        $this->id = $id;
-        $this->hexId = \sprintf('0x%04X', $id);
+        $this->hexId = \sprintf('0x%04X', $this->id);
         $this->createdAt = new \DateTime();
         $this->updatedAt = new \DateTime();
     }

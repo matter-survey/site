@@ -9,6 +9,7 @@ use Doctrine\DBAL\Driver\Middleware\AbstractDriverMiddleware;
 
 final class TracingDriver extends AbstractDriverMiddleware
 {
+    #[\Override]
     public function connect(
         #[\SensitiveParameter]
         array $params,

@@ -22,6 +22,7 @@ final class TracingStatement extends AbstractStatementMiddleware
         parent::__construct($wrapped);
     }
 
+    #[\Override]
     public function bindValue(int|string $param, mixed $value, ParameterType $type): void
     {
         if (is_scalar($value) || null === $value) {
@@ -30,6 +31,7 @@ final class TracingStatement extends AbstractStatementMiddleware
         parent::bindValue($param, $value, $type);
     }
 
+    #[\Override]
     public function execute(): Result
     {
         $span = Globals::tracerProvider()

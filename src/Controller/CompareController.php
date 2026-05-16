@@ -15,12 +15,12 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class CompareController extends AbstractController
 {
-    private const MAX_DEVICES = 5;
+    private const int MAX_DEVICES = 5;
 
     public function __construct(
-        private DeviceRepository $deviceRepo,
-        private CapabilityService $capabilityService,
-        private DeviceScoreService $deviceScoreService,
+        private readonly DeviceRepository $deviceRepo,
+        private readonly CapabilityService $capabilityService,
+        private readonly DeviceScoreService $deviceScoreService,
     ) {
     }
 
@@ -37,10 +37,10 @@ class CompareController extends AbstractController
         ]);
     }
 
-    #[Route('/compare/{slugs}', name: 'compare_devices', methods: ['GET'], requirements: ['slugs' => '[a-z0-9,-]+'])]
+    #[Route('/compare/{slugs}', name: 'compare_devices', requirements: ['slugs' => '[a-z0-9,-]+'], methods: ['GET'])]
     public function compare(string $slugs): Response
     {
-        $slugArray = array_filter(array_map('trim', explode(',', $slugs)));
+        $slugArray = array_filter(array_map(trim(...), explode(',', $slugs)));
         $slugArray = array_slice(array_unique($slugArray), 0, self::MAX_DEVICES);
 
         if (0 === \count($slugArray)) {
@@ -60,7 +60,7 @@ class CompareController extends AbstractController
 
             $id = (int) $device['id'];
             $endpoints = $this->deviceScoreService->getLatestVersionEndpoints($id);
-            if (empty($endpoints)) {
+            if ([] === $endpoints) {
                 $endpoints = $this->deviceRepo->getDeviceEndpoints($id);
             }
 
@@ -76,7 +76,7 @@ class CompareController extends AbstractController
             $deviceScores[$slug] = $score;
         }
 
-        if (empty($devices)) {
+        if ([] === $devices) {
             throw $this->createNotFoundException('No valid devices found');
         }
 
@@ -118,7 +118,7 @@ class CompareController extends AbstractController
         ]);
     }
 
-    #[Route('/compare/add/{slug}', name: 'compare_add', methods: ['GET'], requirements: ['slug' => '[a-z0-9-]+'])]
+    #[Route('/compare/add/{slug}', name: 'compare_add', requirements: ['slug' => '[a-z0-9-]+'], methods: ['GET'])]
     public function addDevice(string $slug, Request $request): Response
     {
         $current = $request->query->getString('current', '');
@@ -186,7 +186,7 @@ class CompareController extends AbstractController
             $catKey = $cap['category'];
             if (!isset($byCategory[$catKey])) {
                 $byCategory[$catKey] = [
-                    'label' => $allCategories[$catKey] ?? ucfirst($catKey),
+                    'label' => $allCategories[$catKey] ?? ucfirst((string) $catKey),
                     'capabilities' => [],
                 ];
             }

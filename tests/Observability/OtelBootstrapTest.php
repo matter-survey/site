@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 
 final class OtelBootstrapTest extends TestCase
 {
-    private const ENV_VARS = [
+    private const array ENV_VARS = [
         'OTEL_SDK_DISABLED',
         'OTEL_SERVICE_NAME',
         'OTEL_SERVICE_VERSION',

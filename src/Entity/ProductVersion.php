@@ -14,7 +14,7 @@ use Doctrine\ORM\Mapping as ORM;
     name: 'unique_product_version',
     columns: ['device_id', 'hardware_version', 'software_version']
 )]
-#[ORM\Index(columns: ['device_id'], name: 'idx_product_versions_product')]
+#[ORM\Index(name: 'idx_product_versions_product', columns: ['device_id'])]
 class ProductVersion
 {
     #[ORM\Id]

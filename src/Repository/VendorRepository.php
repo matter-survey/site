@@ -44,7 +44,7 @@ class VendorRepository extends ServiceEntityRepository
     {
         $vendor = $this->findBySpecId($specId);
 
-        if (null !== $vendor) {
+        if ($vendor instanceof Vendor) {
             // Update name if provided and different
             if (null !== $name && $name !== $vendor->getName()) {
                 $vendor->setName($name);

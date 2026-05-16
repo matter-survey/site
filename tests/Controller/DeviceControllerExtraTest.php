@@ -11,7 +11,7 @@ use Zenstruck\Browser\Test\HasBrowser;
  * Functional tests for DeviceController paths not covered by DeviceControllerTest:
  * the JSON autocomplete endpoint and the index filter branches.
  */
-class DeviceControllerExtraTest extends KernelTestCase
+final class DeviceControllerExtraTest extends KernelTestCase
 {
     use HasBrowser;
 

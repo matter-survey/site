@@ -12,7 +12,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
  * the existing test suite: description/category/hex-id, command/attribute name
  * lookups, isGlobal/isProprietary, and feature-map decoding.
  */
-class MatterRegistryLookupsTest extends KernelTestCase
+final class MatterRegistryLookupsTest extends KernelTestCase
 {
     private MatterRegistry $registry;
 
@@ -130,14 +130,12 @@ class MatterRegistryLookupsTest extends KernelTestCase
 
         // featureMap=0 means no bits set; every feature should be marked disabled.
         $this->assertIsArray($decoded);
-        if ([] !== $decoded) {
-            foreach ($decoded as $feature) {
-                $this->assertArrayHasKey('code', $feature);
-                $this->assertArrayHasKey('name', $feature);
-                $this->assertArrayHasKey('summary', $feature);
-                $this->assertArrayHasKey('enabled', $feature);
-                $this->assertFalse($feature['enabled']);
-            }
+        foreach ($decoded as $feature) {
+            $this->assertArrayHasKey('code', $feature);
+            $this->assertArrayHasKey('name', $feature);
+            $this->assertArrayHasKey('summary', $feature);
+            $this->assertArrayHasKey('enabled', $feature);
+            $this->assertFalse($feature['enabled']);
         }
     }
 
@@ -199,15 +197,7 @@ class MatterRegistryLookupsTest extends KernelTestCase
         if ([] === $decoded) {
             $this->markTestSkipped('Color Control cluster has no features in fixture');
         }
-
-        // Find a feature with bit 0
-        $bit0Feature = null;
-        foreach ($decoded as $feature) {
-            if ($feature['enabled']) {
-                $bit0Feature = $feature;
-                break;
-            }
-        }
+        $bit0Feature = array_find($decoded, fn ($feature) => $feature['enabled']);
 
         if (null === $bit0Feature) {
             $this->markTestSkipped('No feature uses bit 0 in fixture');

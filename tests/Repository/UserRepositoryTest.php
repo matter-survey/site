@@ -11,7 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
-class UserRepositoryTest extends KernelTestCase
+final class UserRepositoryTest extends KernelTestCase
 {
     private UserRepository $repository;
     private EntityManagerInterface $entityManager;
@@ -19,13 +19,13 @@ class UserRepositoryTest extends KernelTestCase
     protected function setUp(): void
     {
         self::bootKernel();
-        $this->repository = static::getContainer()->get(UserRepository::class);
-        $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $this->repository = self::getContainer()->get(UserRepository::class);
+        $this->entityManager = self::getContainer()->get(EntityManagerInterface::class);
     }
 
     private function makeUser(string $email, array $roles = ['ROLE_USER']): User
     {
-        return (new User())
+        return new User()
             ->setEmail($email)
             ->setPassword('hashed-placeholder')
             ->setRoles($roles);
@@ -58,7 +58,7 @@ class UserRepositoryTest extends KernelTestCase
 
         $this->repository->remove($user, true);
 
-        $this->assertNull($this->repository->find($id));
+        $this->assertNotInstanceOf(User::class, $this->repository->find($id));
     }
 
     public function testRemoveWithoutFlushDefers(): void
@@ -69,7 +69,7 @@ class UserRepositoryTest extends KernelTestCase
         $this->repository->remove($user, false);
         $this->entityManager->flush();
 
-        $this->assertNull($this->repository->findByEmail('lazy-delete@example.com'));
+        $this->assertNotInstanceOf(User::class, $this->repository->findByEmail('lazy-delete@example.com'));
     }
 
     public function testFindAllAdminsReturnsOnlyAdminRoleUsers(): void
@@ -81,7 +81,7 @@ class UserRepositoryTest extends KernelTestCase
 
         $admins = $this->repository->findAllAdmins();
 
-        $emails = array_map(fn (User $u) => $u->getEmail(), $admins);
+        $emails = array_map(fn (User $u): ?string => $u->getEmail(), $admins);
         $this->assertContains('admin1@example.com', $emails);
         $this->assertContains('admin2@example.com', $emails);
         $this->assertNotContains('user1@example.com', $emails);

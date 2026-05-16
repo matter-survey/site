@@ -20,7 +20,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 )]
 final class OtelDoctorCommand extends Command
 {
-    private const RELEVANT_VARS = [
+    private const array RELEVANT_VARS = [
         'OTEL_SDK_DISABLED',
         'OTEL_SERVICE_NAME',
         'OTEL_SERVICE_VERSION',
@@ -97,7 +97,7 @@ final class OtelDoctorCommand extends Command
         $tracesExporter = $this->getEnv('OTEL_TRACES_EXPORTER') ?? 'otlp';
         $logsExporter = $this->getEnv('OTEL_LOGS_EXPORTER') ?? 'none';
         $metricsExporter = $this->getEnv('OTEL_METRICS_EXPORTER') ?? 'none';
-        $needsEndpoint = 'otlp' === $tracesExporter || 'otlp' === $logsExporter || 'otlp' === $metricsExporter;
+        $needsEndpoint = in_array('otlp', [$tracesExporter, $logsExporter, $metricsExporter], true);
 
         if ($needsEndpoint && (null === $this->getEnv('OTEL_EXPORTER_OTLP_ENDPOINT') || '' === $this->getEnv('OTEL_EXPORTER_OTLP_ENDPOINT'))) {
             $issues[] = 'OTEL_EXPORTER_OTLP_ENDPOINT is required when any signal uses the otlp exporter.';
@@ -123,7 +123,7 @@ final class OtelDoctorCommand extends Command
     {
         $class = $provider::class;
 
-        return is_a($provider, $noopClass) ? $class.' (no-op)' : $class;
+        return $provider instanceof $noopClass ? $class.' (no-op)' : $class;
     }
 
     private function getEnv(string $name): ?string

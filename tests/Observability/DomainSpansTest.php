@@ -32,7 +32,7 @@ final class DomainSpansTest extends KernelTestCase
     private MeterProviderInterface $meterProvider;
 
     /** @var string|false */
-    private $originalDisabled;
+    private string|bool $originalDisabled;
 
     protected function setUp(): void
     {
@@ -65,7 +65,7 @@ final class DomainSpansTest extends KernelTestCase
         $this->tracerProvider->shutdown();
         $this->meterProvider->shutdown();
         Globals::reset();
-        static::ensureKernelShutdown();
+        self::ensureKernelShutdown();
 
         if (false === $this->originalDisabled) {
             putenv('OTEL_SDK_DISABLED');
@@ -114,24 +114,24 @@ final class DomainSpansTest extends KernelTestCase
 
         $spans = iterator_to_array($this->spanStorage->getIterator());
 
-        $submitSpans = array_values(array_filter($spans, static fn (ImmutableSpan $s) => 'telemetry.submit' === $s->getName()));
+        $submitSpans = array_values(array_filter($spans, static fn (ImmutableSpan $s): bool => 'telemetry.submit' === $s->getName()));
         $this->assertCount(1, $submitSpans);
         $attrs = $submitSpans[0]->getAttributes()->toArray();
         $this->assertSame(3, $attrs['submission.schema_version'] ?? null);
         $this->assertSame(1, $attrs['submission.endpoint_count'] ?? null);
         $this->assertSame(1, $attrs['submission.device_count'] ?? null);
 
-        $scoreSpans = array_values(array_filter($spans, static fn (ImmutableSpan $s) => 'score.calculate' === $s->getName()));
+        $scoreSpans = array_values(array_filter($spans, static fn (ImmutableSpan $s): bool => 'score.calculate' === $s->getName()));
         $this->assertNotEmpty($scoreSpans, 'score.calculate span expected as part of a successful submission');
 
         $metrics = $this->getMetrics();
 
         $submissionsCounter = $metrics['submissions.total'] ?? null;
-        $this->assertNotNull($submissionsCounter, 'submissions.total counter expected; got: '.implode(',', array_keys($metrics)));
+        $this->assertInstanceOf(Metric::class, $submissionsCounter, 'submissions.total counter expected; got: '.implode(',', array_keys($metrics)));
         $this->assertInstanceOf(Sum::class, $submissionsCounter->data);
 
         $duration = $metrics['submissions.duration_ms'] ?? null;
-        $this->assertNotNull($duration, 'submissions.duration_ms histogram expected');
+        $this->assertInstanceOf(Metric::class, $duration, 'submissions.duration_ms histogram expected');
     }
 
     /**

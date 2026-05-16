@@ -17,26 +17,26 @@ class TelemetryService
      * Endpoints with this device type represent devices bridged from other protocols
      * (Z-Wave, Zigbee, etc.) and are user-specific, so we don't record them.
      */
-    private const BRIDGED_NODE_DEVICE_TYPE_ID = 19;
+    private const int BRIDGED_NODE_DEVICE_TYPE_ID = 19;
 
     /**
      * Network Diagnostics cluster IDs that indicate connectivity type.
      */
-    private const CONNECTIVITY_CLUSTERS = [
+    private const array CONNECTIVITY_CLUSTERS = [
         53 => 'thread',   // Thread Network Diagnostics
         54 => 'wifi',     // WiFi Network Diagnostics
         55 => 'ethernet', // Ethernet Network Diagnostics
     ];
 
-    private Connection $db;
+    private readonly Connection $db;
 
     public function __construct(
         DatabaseService $databaseService,
-        private DeviceRepository $deviceRepo,
-        private VendorRepository $vendorRepo,
-        private DeviceScoreService $deviceScoreService,
-        private EntityManagerInterface $em,
-        private LoggerInterface $logger,
+        private readonly DeviceRepository $deviceRepo,
+        private readonly VendorRepository $vendorRepo,
+        private readonly DeviceScoreService $deviceScoreService,
+        private readonly EntityManagerInterface $em,
+        private readonly LoggerInterface $logger,
     ) {
         $this->db = $databaseService->getConnection();
     }
@@ -57,7 +57,7 @@ class TelemetryService
 
         $span = \App\Observability\Tracer::start('telemetry.submit', [
             'submission.schema_version' => $schemaVersionAttr,
-            'submission.endpoint_count' => array_sum(array_map(static fn (array $d) => count($d['endpoints'] ?? []), $devices)),
+            'submission.endpoint_count' => array_sum(array_map(static fn (array $d): int => count($d['endpoints'] ?? []), $devices)),
             'submission.device_count' => count($devices),
         ]);
         $scope = $span->activate();
@@ -146,7 +146,7 @@ class TelemetryService
             return ['valid' => false, 'error' => 'Missing or invalid devices array'];
         }
 
-        if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $payload['installation_id'])) {
+        if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', (string) $payload['installation_id'])) {
             return ['valid' => false, 'error' => 'Invalid installation_id format'];
         }
 
@@ -219,7 +219,7 @@ class TelemetryService
         // Update vendor device count if this is a new device
         if ($isNewDevice && null !== $vendorFk) {
             $vendor = $this->vendorRepo->find($vendorFk);
-            if ($vendor) {
+            if ($vendor instanceof \App\Entity\Vendor) {
                 $vendor->incrementDeviceCount();
             }
         }
@@ -295,7 +295,7 @@ class TelemetryService
      */
     private function isV3ClusterFormat(array $clusters): bool
     {
-        if (empty($clusters)) {
+        if ([] === $clusters) {
             return false;
         }
 
@@ -354,11 +354,7 @@ class TelemetryService
         foreach ($endpoints as $endpoint) {
             foreach ($endpoint['server_clusters'] ?? [] as $cluster) {
                 // Handle both v2 (integer) and v3 (object with 'id') formats
-                if (\is_array($cluster)) {
-                    $clusterId = $cluster['id'] ?? null;
-                } else {
-                    $clusterId = $cluster;
-                }
+                $clusterId = \is_array($cluster) ? $cluster['id'] ?? null : $cluster;
 
                 if (null !== $clusterId && isset(self::CONNECTIVITY_CLUSTERS[$clusterId])) {
                     $types[] = self::CONNECTIVITY_CLUSTERS[$clusterId];

@@ -7,7 +7,7 @@ namespace App\Tests\Entity;
 use App\Entity\DeviceType;
 use PHPUnit\Framework\TestCase;
 
-class DeviceTypeTest extends TestCase
+final class DeviceTypeTest extends TestCase
 {
     public function testConstructorSetsIdHexIdAndTimestamps(): void
     {
@@ -21,13 +21,13 @@ class DeviceTypeTest extends TestCase
 
     public function testHexIdIsPaddedToFourDigits(): void
     {
-        $this->assertSame('0x000A', (new DeviceType(10))->getHexId());
-        $this->assertSame('0x0FFF', (new DeviceType(4095))->getHexId());
+        $this->assertSame('0x000A', new DeviceType(10)->getHexId());
+        $this->assertSame('0x0FFF', new DeviceType(4095)->getHexId());
     }
 
     public function testNameAndDescriptionRoundTrip(): void
     {
-        $deviceType = (new DeviceType(266))
+        $deviceType = new DeviceType(266)
             ->setName('On/Off Plug-in Unit')
             ->setDescription('A plug-in module with on/off control.');
 
@@ -37,7 +37,7 @@ class DeviceTypeTest extends TestCase
 
     public function testTaxonomyFieldsRoundTrip(): void
     {
-        $deviceType = (new DeviceType(266))
+        $deviceType = new DeviceType(266)
             ->setSpecVersion('1.4')
             ->setCategory('plugs')
             ->setDisplayCategory('Plugs & Outlets')
@@ -59,7 +59,7 @@ class DeviceTypeTest extends TestCase
 
     public function testClusterCollectionsRoundTrip(): void
     {
-        $deviceType = (new DeviceType(266))
+        $deviceType = new DeviceType(266)
             ->setMandatoryServerClusters([3, 4, 6])
             ->setOptionalServerClusters([8])
             ->setMandatoryClientClusters([29])
@@ -73,7 +73,7 @@ class DeviceTypeTest extends TestCase
 
     public function testTotalClusterCounts(): void
     {
-        $deviceType = (new DeviceType(266))
+        $deviceType = new DeviceType(266)
             ->setMandatoryServerClusters([3, 4, 6])
             ->setOptionalServerClusters([8])
             ->setMandatoryClientClusters([29])
@@ -88,7 +88,7 @@ class DeviceTypeTest extends TestCase
     {
         $weights = ['mandatoryServerWeight' => 0.5, 'keyClientClusters' => [29]];
 
-        $deviceType = (new DeviceType(266))->setScoringWeights($weights);
+        $deviceType = new DeviceType(266)->setScoringWeights($weights);
 
         $this->assertSame($weights, $deviceType->getScoringWeights());
     }
@@ -99,17 +99,17 @@ class DeviceTypeTest extends TestCase
 
         $defaults = $deviceType->getScoringWeightsWithDefaults();
 
-        $this->assertSame(0.40, $defaults['mandatoryServerWeight']);
-        $this->assertSame(0.20, $defaults['mandatoryClientWeight']);
-        $this->assertSame(0.25, $defaults['optionalServerWeight']);
-        $this->assertSame(0.15, $defaults['optionalClientWeight']);
+        $this->assertEqualsWithDelta(0.40, $defaults['mandatoryServerWeight'], PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(0.20, $defaults['mandatoryClientWeight'], PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(0.25, $defaults['optionalServerWeight'], PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(0.15, $defaults['optionalClientWeight'], PHP_FLOAT_EPSILON);
         $this->assertSame([], $defaults['keyClientClusters']);
-        $this->assertSame(0.0, $defaults['keyClientBonus']);
+        $this->assertEqualsWithDelta(0.0, $defaults['keyClientBonus'], PHP_FLOAT_EPSILON);
     }
 
     public function testScoringWeightsWithDefaultsMergesOverrides(): void
     {
-        $deviceType = (new DeviceType(266))
+        $deviceType = new DeviceType(266)
             ->setScoringWeights([
                 'mandatoryServerWeight' => 0.60,
                 'keyClientClusters' => [29],
@@ -119,13 +119,13 @@ class DeviceTypeTest extends TestCase
         $merged = $deviceType->getScoringWeightsWithDefaults();
 
         // overridden
-        $this->assertSame(0.60, $merged['mandatoryServerWeight']);
+        $this->assertEqualsWithDelta(0.60, $merged['mandatoryServerWeight'], PHP_FLOAT_EPSILON);
         $this->assertSame([29], $merged['keyClientClusters']);
-        $this->assertSame(0.10, $merged['keyClientBonus']);
+        $this->assertEqualsWithDelta(0.10, $merged['keyClientBonus'], PHP_FLOAT_EPSILON);
         // default preserved
-        $this->assertSame(0.20, $merged['mandatoryClientWeight']);
-        $this->assertSame(0.25, $merged['optionalServerWeight']);
-        $this->assertSame(0.15, $merged['optionalClientWeight']);
+        $this->assertEqualsWithDelta(0.20, $merged['mandatoryClientWeight'], PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(0.25, $merged['optionalServerWeight'], PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(0.15, $merged['optionalClientWeight'], PHP_FLOAT_EPSILON);
     }
 
     public function testTimestampSetters(): void
@@ -133,7 +133,7 @@ class DeviceTypeTest extends TestCase
         $createdAt = new \DateTime('2025-01-01');
         $updatedAt = new \DateTime('2025-06-01');
 
-        $deviceType = (new DeviceType(266))
+        $deviceType = new DeviceType(266)
             ->setCreatedAt($createdAt)
             ->setUpdatedAt($updatedAt);
 

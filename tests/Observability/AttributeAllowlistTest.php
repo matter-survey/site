@@ -26,7 +26,7 @@ final class AttributeAllowlistTest extends KernelTestCase
 
     protected function tearDown(): void
     {
-        static::ensureKernelShutdown();
+        self::ensureKernelShutdown();
         $this->tearDownOtel();
         parent::tearDown();
     }
@@ -81,7 +81,7 @@ final class AttributeAllowlistTest extends KernelTestCase
 
         // Sanity: we must have observed at least one allowlisted span; otherwise
         // the test is vacuously true.
-        $observedNames = array_unique(array_map(static fn (ImmutableSpan $s) => $s->getName(), $spans));
+        $observedNames = array_unique(array_map(static fn (ImmutableSpan $s): string => $s->getName(), $spans));
         $observedAllowlisted = array_intersect($observedNames, array_keys($allowlist));
         $this->assertNotEmpty($observedAllowlisted, 'No allowlisted span was observed');
     }

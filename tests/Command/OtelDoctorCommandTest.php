@@ -11,7 +11,7 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 final class OtelDoctorCommandTest extends TestCase
 {
-    private const ENV_VARS = [
+    private const array ENV_VARS = [
         'OTEL_SDK_DISABLED',
         'OTEL_TRACES_EXPORTER',
         'OTEL_METRICS_EXPORTER',

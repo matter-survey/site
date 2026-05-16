@@ -16,13 +16,13 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 class SitemapController extends AbstractController
 {
     /** @var string[] */
-    private const LOCALES = ['en', 'de'];
+    private const array LOCALES = ['en', 'de'];
 
     public function __construct(
-        private DeviceRepository $deviceRepo,
-        private VendorRepository $vendorRepo,
-        private ClusterRepository $clusterRepo,
-        private DeviceTypeRepository $deviceTypeRepo,
+        private readonly DeviceRepository $deviceRepo,
+        private readonly VendorRepository $vendorRepo,
+        private readonly ClusterRepository $clusterRepo,
+        private readonly DeviceTypeRepository $deviceTypeRepo,
     ) {
     }
 
@@ -260,8 +260,6 @@ class SitemapController extends AbstractController
             $xml .= '  </url>'."\n";
         }
 
-        $xml .= '</urlset>';
-
-        return $xml;
+        return $xml.'</urlset>';
     }
 }

@@ -40,7 +40,7 @@ class WizardAnalyticsRepository extends ServiceEntityRepository
             ->groupBy('w.category')
             ->orderBy('demand', 'DESC');
 
-        if (null !== $since) {
+        if ($since instanceof \DateTimeInterface) {
             $qb->andWhere('w.createdAt >= :since')
                 ->setParameter('since', $since);
         }
@@ -72,7 +72,7 @@ class WizardAnalyticsRepository extends ServiceEntityRepository
         ';
         $params = [];
 
-        if (null !== $since) {
+        if ($since instanceof \DateTimeInterface) {
             $sql .= ' AND created_at >= :since';
             $params['since'] = $since->format('Y-m-d H:i:s');
         }
@@ -104,7 +104,7 @@ class WizardAnalyticsRepository extends ServiceEntityRepository
             ->select('COUNT(DISTINCT w.sessionId)')
             ->where('w.completed = true');
 
-        if (null !== $since) {
+        if ($since instanceof \DateTimeInterface) {
             $totalQb->andWhere('w.createdAt >= :since')->setParameter('since', $since);
             $completedQb->andWhere('w.createdAt >= :since')->setParameter('since', $since);
         }

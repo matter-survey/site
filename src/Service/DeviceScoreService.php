@@ -18,7 +18,7 @@ class DeviceScoreService
      * System/utility device type IDs that should be skipped for scoring.
      * These are infrastructure device types, not user-facing devices.
      */
-    private const SYSTEM_DEVICE_TYPES = [
+    private const array SYSTEM_DEVICE_TYPES = [
         14,  // Aggregator
         17,  // Power Source
         18,  // OTA Requestor
@@ -74,7 +74,11 @@ class DeviceScoreService
 
             foreach ($deviceTypes as $dt) {
                 $deviceTypeId = \is_array($dt) ? ($dt['id'] ?? null) : $dt;
-                if (null === $deviceTypeId || \in_array((int) $deviceTypeId, self::SYSTEM_DEVICE_TYPES, true)) {
+                if (null === $deviceTypeId) {
+                    // Skip system/utility device types
+                    continue;
+                }
+                if (\in_array((int) $deviceTypeId, self::SYSTEM_DEVICE_TYPES, true)) {
                     // Skip system/utility device types
                     continue;
                 }
@@ -98,7 +102,7 @@ class DeviceScoreService
         }
 
         // If no device types found, return a default score
-        if (empty($scoresByType)) {
+        if ([] === $scoresByType) {
             $span->setAttribute('score.value', 0.0);
 
             return new DeviceScore(
@@ -260,7 +264,7 @@ class DeviceScoreService
      */
     public function getCachedScoresForDevices(array $deviceIds): array
     {
-        if (empty($deviceIds)) {
+        if ([] === $deviceIds) {
             return [];
         }
 
@@ -278,7 +282,7 @@ class DeviceScoreService
 
         $scores = [];
         foreach ($rows as $row) {
-            $scoresByType = json_decode($row['scores_by_type'], true) ?: [];
+            $scoresByType = json_decode((string) $row['scores_by_type'], true) ?: [];
             $parsedScoresByType = [];
             foreach ($scoresByType as $typeId => $typeData) {
                 $parsedScoresByType[$typeId] = DeviceTypeScore::fromArray($typeData);
@@ -331,7 +335,7 @@ class DeviceScoreService
         // Get the latest version's endpoints specifically
         $endpoints = $this->getLatestVersionEndpoints($deviceId);
 
-        if (empty($endpoints)) {
+        if ([] === $endpoints) {
             // Remove from cache if no endpoints
             $this->connection->executeStatement(
                 'DELETE FROM device_scores WHERE device_id = ?',
@@ -347,7 +351,7 @@ class DeviceScoreService
         $bestVersion = $this->findBestVersion($deviceId);
 
         $scoresByTypeJson = json_encode(
-            array_map(fn (DeviceTypeScore $ts) => $ts->toArray(), $score->scoresByType)
+            array_map(fn (DeviceTypeScore $ts): array => $ts->toArray(), $score->scoresByType)
         );
 
         $this->connection->executeStatement(
@@ -374,7 +378,7 @@ class DeviceScoreService
     {
         $versions = $this->deviceRepository->getDeviceEndpointVersions($deviceId);
 
-        if (empty($versions)) {
+        if ([] === $versions) {
             return [];
         }
 

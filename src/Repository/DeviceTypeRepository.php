@@ -208,7 +208,7 @@ class DeviceTypeRepository extends ServiceEntityRepository
             ['clusterId' => \Doctrine\DBAL\ParameterType::INTEGER],
         )->fetchFirstColumn();
 
-        if (empty($ids)) {
+        if ([] === $ids) {
             return [];
         }
 

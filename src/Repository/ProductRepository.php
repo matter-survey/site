@@ -48,7 +48,7 @@ class ProductRepository extends ServiceEntityRepository
     ): Product {
         $product = $this->findByVendorAndProductId($vendorId, $productId);
 
-        if (null !== $product) {
+        if ($product instanceof Product) {
             // Update names if provided and different
             $updated = false;
 
@@ -63,7 +63,7 @@ class ProductRepository extends ServiceEntityRepository
                 $updated = true;
             }
 
-            if (null !== $vendor && $vendor !== $product->getVendor()) {
+            if ($vendor instanceof Vendor && $vendor !== $product->getVendor()) {
                 $product->setVendor($vendor);
                 $updated = true;
             }

@@ -11,7 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Zenstruck\Browser\Test\HasBrowser;
 
-class DashboardControllerTest extends KernelTestCase
+final class DashboardControllerTest extends KernelTestCase
 {
     use HasBrowser;
 
@@ -72,7 +72,7 @@ class DashboardControllerTest extends KernelTestCase
         $user = $this->createTestUser('tokenadmin@example.com', 'testpassword123', ['ROLE_ADMIN']);
 
         /** @var ApiTokenRepository $tokenRepo */
-        $tokenRepo = static::getContainer()->get(ApiTokenRepository::class);
+        $tokenRepo = self::getContainer()->get(ApiTokenRepository::class);
         $apiToken = $tokenRepo->createForUser($user, 'Test Token');
         $tokenString = $apiToken->getToken();
 
@@ -112,7 +112,7 @@ class DashboardControllerTest extends KernelTestCase
         $user = $this->createTestUser('multitokenadmin@example.com', 'testpassword123', ['ROLE_ADMIN']);
 
         /** @var ApiTokenRepository $tokenRepo */
-        $tokenRepo = static::getContainer()->get(ApiTokenRepository::class);
+        $tokenRepo = self::getContainer()->get(ApiTokenRepository::class);
         $tokenStrings = [
             $tokenRepo->createForUser($user, 'Home Assistant')->getToken(),
             $tokenRepo->createForUser($user, 'CLI Tool')->getToken(),
@@ -143,7 +143,7 @@ class DashboardControllerTest extends KernelTestCase
      */
     private function createTestUser(string $email, string $password, array $roles = []): User
     {
-        $container = static::getContainer();
+        $container = self::getContainer();
 
         /** @var UserRepository $userRepository */
         $userRepository = $container->get(UserRepository::class);
@@ -151,7 +151,7 @@ class DashboardControllerTest extends KernelTestCase
         /** @var UserPasswordHasherInterface $passwordHasher */
         $passwordHasher = $container->get(UserPasswordHasherInterface::class);
 
-        $user = (new User())
+        $user = new User()
             ->setEmail($email)
             ->setRoles($roles);
         $user->setPassword($passwordHasher->hashPassword($user, $password));
@@ -163,7 +163,7 @@ class DashboardControllerTest extends KernelTestCase
 
     private function removeTestUser(string $email): void
     {
-        $container = static::getContainer();
+        $container = self::getContainer();
 
         /** @var UserRepository $userRepository */
         $userRepository = $container->get(UserRepository::class);

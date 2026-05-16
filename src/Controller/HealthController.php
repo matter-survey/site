@@ -12,7 +12,7 @@ use Symfony\Component\Routing\Attribute\Route;
 class HealthController extends AbstractController
 {
     public function __construct(
-        private DatabaseService $databaseService,
+        private readonly DatabaseService $databaseService,
     ) {
     }
 
@@ -27,7 +27,7 @@ class HealthController extends AbstractController
             $db = $this->databaseService->getConnection();
             $db->executeQuery('SELECT 1');
             $checks['database'] = 'ok';
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             $checks['database'] = 'error';
             $status = 'unhealthy';
         }
@@ -35,7 +35,7 @@ class HealthController extends AbstractController
         return $this->json([
             'status' => $status,
             'checks' => $checks,
-            'timestamp' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
+            'timestamp' => new \DateTimeImmutable()->format(\DateTimeInterface::ATOM),
         ], 'healthy' === $status ? 200 : 503);
     }
 }

@@ -11,7 +11,7 @@ use App\Repository\VendorRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
-class VendorRepositoryTest extends KernelTestCase
+final class VendorRepositoryTest extends KernelTestCase
 {
     private VendorRepository $repository;
     private ProductRepository $productRepository;
@@ -20,42 +20,42 @@ class VendorRepositoryTest extends KernelTestCase
     protected function setUp(): void
     {
         self::bootKernel();
-        $this->repository = static::getContainer()->get(VendorRepository::class);
-        $this->productRepository = static::getContainer()->get(ProductRepository::class);
-        $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $this->repository = self::getContainer()->get(VendorRepository::class);
+        $this->productRepository = self::getContainer()->get(ProductRepository::class);
+        $this->entityManager = self::getContainer()->get(EntityManagerInterface::class);
     }
 
     public function testFindBySlug(): void
     {
-        $vendor = (new Vendor())
+        $vendor = new Vendor()
             ->setName('Findable')
             ->setSlug('findable-1')
             ->setSpecId(1000);
         $this->repository->save($vendor, true);
 
         $found = $this->repository->findBySlug('findable-1');
-        $this->assertNotNull($found);
+        $this->assertInstanceOf(Vendor::class, $found);
         $this->assertSame('Findable', $found->getName());
-        $this->assertNull($this->repository->findBySlug('nonexistent'));
+        $this->assertNotInstanceOf(Vendor::class, $this->repository->findBySlug('nonexistent'));
     }
 
     public function testFindBySpecId(): void
     {
-        $vendor = (new Vendor())
+        $vendor = new Vendor()
             ->setName('SpecIdVendor')
             ->setSlug('specid-vendor-2000')
             ->setSpecId(2000);
         $this->repository->save($vendor, true);
 
         $found = $this->repository->findBySpecId(2000);
-        $this->assertNotNull($found);
-        $this->assertNull($this->repository->findBySpecId(99999));
+        $this->assertInstanceOf(Vendor::class, $found);
+        $this->assertNotInstanceOf(Vendor::class, $this->repository->findBySpecId(99999));
     }
 
     public function testFindOrCreateBySpecIdCreatesNew(): void
     {
         $before = $this->repository->findBySpecId(3000);
-        $this->assertNull($before);
+        $this->assertNotInstanceOf(Vendor::class, $before);
 
         $vendor = $this->repository->findOrCreateBySpecId(3000, 'NewCo');
         $this->entityManager->flush();
@@ -90,9 +90,9 @@ class VendorRepositoryTest extends KernelTestCase
 
     public function testFindAllOrderedByDeviceCountDescThenNameAsc(): void
     {
-        $a = (new Vendor())->setName('AZeros')->setSlug('azeros-1')->setSpecId(94001)->setDeviceCount(0);
-        $b = (new Vendor())->setName('BTens')->setSlug('btens-1')->setSpecId(94002)->setDeviceCount(10);
-        $c = (new Vendor())->setName('CFives')->setSlug('cfives-1')->setSpecId(94003)->setDeviceCount(5);
+        $a = new Vendor()->setName('AZeros')->setSlug('azeros-1')->setSpecId(94001)->setDeviceCount(0);
+        $b = new Vendor()->setName('BTens')->setSlug('btens-1')->setSpecId(94002)->setDeviceCount(10);
+        $c = new Vendor()->setName('CFives')->setSlug('cfives-1')->setSpecId(94003)->setDeviceCount(5);
 
         $this->repository->save($a);
         $this->repository->save($b);
@@ -112,15 +112,15 @@ class VendorRepositoryTest extends KernelTestCase
 
     public function testFindPopularReturnsOnlyVendorsWithDevices(): void
     {
-        $zero = (new Vendor())->setName('ZeroOnes')->setSlug('zeroones-1')->setSpecId(95000)->setDeviceCount(0);
-        $popular = (new Vendor())->setName('Popular')->setSlug('popular-1')->setSpecId(95001)->setDeviceCount(50);
+        $zero = new Vendor()->setName('ZeroOnes')->setSlug('zeroones-1')->setSpecId(95000)->setDeviceCount(0);
+        $popular = new Vendor()->setName('Popular')->setSlug('popular-1')->setSpecId(95001)->setDeviceCount(50);
         $this->repository->save($zero);
         $this->repository->save($popular);
         $this->entityManager->flush();
 
         $top = $this->repository->findPopular(10);
 
-        $names = array_map(fn (Vendor $v) => $v->getName(), $top);
+        $names = array_map(fn (Vendor $v): string => $v->getName(), $top);
         $this->assertContains('Popular', $names);
         $this->assertNotContains('ZeroOnes', $names);
     }
@@ -128,7 +128,7 @@ class VendorRepositoryTest extends KernelTestCase
     public function testFindPopularRespectsLimit(): void
     {
         for ($i = 1; $i <= 5; ++$i) {
-            $v = (new Vendor())->setName("V{$i}")->setSlug("v{$i}-96000")->setSpecId(96000 + $i)->setDeviceCount($i);
+            $v = new Vendor()->setName("V{$i}")->setSlug("v{$i}-96000")->setSpecId(96000 + $i)->setDeviceCount($i);
             $this->repository->save($v);
         }
         $this->entityManager->flush();
@@ -144,7 +144,7 @@ class VendorRepositoryTest extends KernelTestCase
 
         // Attach 3 products
         for ($i = 1; $i <= 3; ++$i) {
-            $p = (new Product())
+            $p = new Product()
                 ->setVendorId(97000)
                 ->setProductId($i)
                 ->setProductName("P{$i}")

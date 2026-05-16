@@ -60,7 +60,7 @@ class WizardAnalyticsService
     {
         $latest = $this->repository->findLatestBySessionId($sessionId);
 
-        if (null !== $latest) {
+        if ($latest instanceof WizardAnalytics) {
             $latest->setCompleted(true);
             $this->entityManager->flush();
         }

@@ -16,24 +16,23 @@ use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-#[Route('/api')]
 class ApiController extends AbstractController
 {
     public function __construct(
-        private TelemetryService $telemetryService,
-        private RateLimiterFactoryInterface $apiSubmitLimiter,
-        private LoggerInterface $logger,
-        private ValidatorInterface $validator,
+        private readonly TelemetryService $telemetryService,
+        private readonly RateLimiterFactoryInterface $apiSubmitLimiter,
+        private readonly LoggerInterface $logger,
+        private readonly ValidatorInterface $validator,
     ) {
     }
 
-    #[Route('/', name: 'api_docs_redirect', methods: ['GET'])]
+    #[Route('/api/', name: 'api_docs_redirect', methods: ['GET'])]
     public function docsRedirect(): Response
     {
         return $this->redirect('/api/docs.html');
     }
 
-    #[Route('/submit', name: 'api_submit', methods: ['POST'])]
+    #[Route('/api/submit', name: 'api_submit', methods: ['POST'])]
     public function submit(Request $request): JsonResponse
     {
         // Rate limiting
@@ -114,7 +113,7 @@ class ApiController extends AbstractController
         $submission->installation_id = $payload['installation_id'] ?? null;
 
         if (isset($payload['devices']) && is_array($payload['devices'])) {
-            $submission->devices = array_map(function ($deviceData) {
+            $submission->devices = array_map(function (array $deviceData): TelemetryDevice {
                 $device = new TelemetryDevice();
                 $device->vendor_id = $deviceData['vendor_id'] ?? null;
                 $device->vendor_name = $deviceData['vendor_name'] ?? null;

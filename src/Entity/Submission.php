@@ -10,7 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: SubmissionRepository::class)]
 #[ORM\Table(name: 'submissions')]
-#[ORM\Index(columns: ['installation_id'], name: 'idx_submissions_installation')]
+#[ORM\Index(name: 'idx_submissions_installation', columns: ['installation_id'])]
 class Submission
 {
     #[ORM\Id]

@@ -14,7 +14,7 @@ use OpenTelemetry\API\Metrics\HistogramInterface;
  */
 final class Metrics
 {
-    public const METER_NAME = 'app.matter-survey';
+    public const string METER_NAME = 'app.matter-survey';
 
     public static function counter(string $name, ?string $unit = null, ?string $description = null): CounterInterface
     {

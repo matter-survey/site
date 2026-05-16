@@ -16,10 +16,10 @@ use Symfony\Component\Routing\Attribute\Route;
 class VendorController extends AbstractController
 {
     public function __construct(
-        private VendorRepository $vendorRepo,
-        private DeviceRepository $deviceRepo,
-        private ProductRepository $productRepo,
-        private MatterRegistry $matterRegistry,
+        private readonly VendorRepository $vendorRepo,
+        private readonly DeviceRepository $deviceRepo,
+        private readonly ProductRepository $productRepo,
+        private readonly MatterRegistry $matterRegistry,
     ) {
     }
 
@@ -35,14 +35,14 @@ class VendorController extends AbstractController
 
         // Sort vendors based on request
         if ('products' === $sort) {
-            usort($vendors, function ($a, $b) use ($productCounts) {
+            usort($vendors, function ($a, $b) use ($productCounts): int {
                 $aCount = $productCounts[$a->getSpecId()] ?? 0;
                 $bCount = $productCounts[$b->getSpecId()] ?? 0;
 
                 return $bCount <=> $aCount ?: strcmp($a->getName(), $b->getName());
             });
         } elseif ('name' === $sort) {
-            usort($vendors, fn ($a, $b) => strcmp($a->getName(), $b->getName()));
+            usort($vendors, fn ($a, $b): int => strcmp($a->getName(), $b->getName()));
         }
         // 'devices' is already the default sort from findAllOrderedByDeviceCount()
 
@@ -54,7 +54,7 @@ class VendorController extends AbstractController
 
         // Enrich device types with metadata (icons, names)
         $deviceTypeMetadata = [];
-        foreach ($deviceTypesByVendor as $vendorFk => $deviceTypeIds) {
+        foreach ($deviceTypesByVendor as $deviceTypeIds) {
             foreach ($deviceTypeIds as $dtId) {
                 if (!isset($deviceTypeMetadata[$dtId])) {
                     $meta = $this->matterRegistry->getDeviceTypeMetadata($dtId);
@@ -86,7 +86,7 @@ class VendorController extends AbstractController
     {
         $vendor = $this->vendorRepo->findBySlug($slug);
 
-        if (!$vendor) {
+        if (!$vendor instanceof \App\Entity\Vendor) {
             throw $this->createNotFoundException('Vendor not found');
         }
 
@@ -108,14 +108,14 @@ class VendorController extends AbstractController
         $bindingStats = $this->deviceRepo->getBindingSupportByVendor($vendor->getId());
 
         // Enrich device types with names from MatterRegistry
-        $enrichedDeviceTypes = array_map(fn ($dt) => [
+        $enrichedDeviceTypes = array_map(fn (array $dt): array => [
             'id' => $dt['device_type_id'],
             'name' => $this->matterRegistry->getDeviceTypeMetadata((int) $dt['device_type_id'])['name'] ?? 'Unknown',
             'count' => $dt['product_count'],
         ], $deviceTypeDistribution);
 
         // Enrich clusters with names from MatterRegistry
-        $enrichedClusters = array_map(fn ($c) => [
+        $enrichedClusters = array_map(fn (array $c): array => [
             'id' => $c['cluster_id'],
             'name' => $this->matterRegistry->getClusterName((int) $c['cluster_id']),
             'type' => $c['type'],

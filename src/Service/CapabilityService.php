@@ -20,13 +20,13 @@ class CapabilityService
     /** @var array<string, mixed>|null */
     private ?array $capabilityData = null;
 
-    private string $fixturesPath;
+    private readonly string $fixturesPath;
 
-    private LoggerInterface $logger;
+    private readonly LoggerInterface $logger;
 
     public function __construct(
         string $projectDir,
-        private MatterRegistry $matterRegistry,
+        private readonly MatterRegistry $matterRegistry,
         ?LoggerInterface $logger = null,
     ) {
         $this->fixturesPath = $projectDir.'/fixtures/capabilities.yaml';
@@ -50,7 +50,8 @@ class CapabilityService
      *     byCategory: array<string, array{supported: array<string, mixed>, unsupported: array<string, mixed>}>,
      *     summary: array{total: int, supported: int, percentage: int},
      *     standouts: array<int, string>,
-     *     missing: array<int, string>
+     *     missing: array<int, string>,
+     *     deviceCategory: string|null
      * }
      */
     public function analyzeCapabilities(array $endpoints): array
@@ -103,7 +104,7 @@ class CapabilityService
         // Check each capability
         foreach ($capabilities as $capKey => $capability) {
             // Skip capabilities not relevant to this device type
-            if (!empty($relevantCapabilities) && !\in_array($capKey, $relevantCapabilities, true)) {
+            if ([] !== $relevantCapabilities && !\in_array($capKey, $relevantCapabilities, true)) {
                 continue;
             }
 
@@ -158,9 +159,7 @@ class CapabilityService
         }
 
         // Remove empty categories
-        $byCategory = array_filter($byCategory, function ($cat) {
-            return !empty($cat['supported']) || !empty($cat['unsupported']);
-        });
+        $byCategory = array_filter($byCategory, fn (array $cat): bool => !empty($cat['supported']) || !empty($cat['unsupported']));
 
         // Calculate summary
         $total = \count($supported) + \count($unsupported);
@@ -168,7 +167,7 @@ class CapabilityService
         $percentage = $total > 0 ? (int) round(($supportedCount / $total) * 100) : 0;
 
         // Identify standouts (rare capabilities this device has)
-        $standouts = $this->identifyStandouts($supported, $deviceTypeCategory);
+        $standouts = $this->identifyStandouts($supported);
 
         // Identify notable missing features
         $missing = $this->identifyMissing($unsupported, $deviceTypeCategory);
@@ -316,8 +315,8 @@ class CapabilityService
             $featureMap = $telemetryDetails['feature_map'] ?? null;
 
             // Convert to lookup maps for quick checking
-            $implementedCommands = array_flip(array_map('intval', $acceptedCommands));
-            $implementedAttributes = array_flip(array_map('intval', $attributeList));
+            $implementedCommands = array_flip(array_map(intval(...), $acceptedCommands));
+            $implementedAttributes = array_flip(array_map(intval(...), $attributeList));
 
             // Build friendly action mappings from capability definition
             $friendlyActions = [];
@@ -339,7 +338,7 @@ class CapabilityService
             $specCommands = $this->matterRegistry->getClusterCommands($clusterId);
             $hasV3Telemetry = !empty($acceptedCommands);
 
-            if (!empty($specCommands)) {
+            if ([] !== $specCommands) {
                 // We have spec data - show full spec with implementation status
                 foreach ($specCommands as $cmd) {
                     $cmdId = $cmd['id'];
@@ -373,7 +372,7 @@ class CapabilityService
                         'optional' => false,
                     ];
                 }
-            } elseif (!empty($friendlyActions)) {
+            } elseif ([] !== $friendlyActions) {
                 // Fall back to capability definition (no V3 telemetry, no spec)
                 foreach ($friendlyActions as $cmdId => $friendly) {
                     $technicalName = $this->matterRegistry->getClusterCommandName($clusterId, $cmdId) ?? "Command {$cmdId}";
@@ -391,7 +390,7 @@ class CapabilityService
             $specAttributes = $this->matterRegistry->getClusterAttributes($clusterId);
             $hasV3TelemetryAttrs = !empty($attributeList);
 
-            if (!empty($specAttributes)) {
+            if ([] !== $specAttributes) {
                 // We have spec data - show full spec with implementation status
                 foreach ($specAttributes as $attr) {
                     $attrId = $attr['id'];
@@ -429,7 +428,7 @@ class CapabilityService
                         'optional' => false,
                     ];
                 }
-            } elseif (!empty($friendlyStatuses)) {
+            } elseif ([] !== $friendlyStatuses) {
                 // Fall back to capability definition (no V3 telemetry)
                 foreach ($friendlyStatuses as $attrId => $friendly) {
                     $technicalName = $this->matterRegistry->getClusterAttributeName($clusterId, $attrId) ?? "Attribute {$attrId}";
@@ -457,7 +456,7 @@ class CapabilityService
             }
 
             // Only return details if we have meaningful content
-            if (empty($actions) && empty($statuses) && empty($features)) {
+            if ([] === $actions && [] === $statuses && [] === $features) {
                 return null;
             }
 
@@ -578,7 +577,7 @@ class CapabilityService
      *
      * @return array<int, string>
      */
-    private function identifyStandouts(array $supported, ?string $category): array
+    private function identifyStandouts(array $supported): array
     {
         // Capabilities that are notable when present
         $notableCapabilities = [
@@ -591,7 +590,7 @@ class CapabilityService
         ];
 
         $standouts = [];
-        foreach ($notableCapabilities as $key => $label) {
+        foreach (array_keys($notableCapabilities) as $key) {
             if (isset($supported[$key])) {
                 $standouts[] = $supported[$key]['label'];
             }

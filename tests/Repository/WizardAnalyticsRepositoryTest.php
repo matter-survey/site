@@ -9,7 +9,7 @@ use App\Repository\WizardAnalyticsRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
-class WizardAnalyticsRepositoryTest extends KernelTestCase
+final class WizardAnalyticsRepositoryTest extends KernelTestCase
 {
     private WizardAnalyticsRepository $repository;
     private EntityManagerInterface $entityManager;
@@ -17,8 +17,8 @@ class WizardAnalyticsRepositoryTest extends KernelTestCase
     protected function setUp(): void
     {
         self::bootKernel();
-        $this->repository = static::getContainer()->get(WizardAnalyticsRepository::class);
-        $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $this->repository = self::getContainer()->get(WizardAnalyticsRepository::class);
+        $this->entityManager = self::getContainer()->get(EntityManagerInterface::class);
     }
 
     private function makeRecord(
@@ -29,14 +29,14 @@ class WizardAnalyticsRepositoryTest extends KernelTestCase
         bool $completed = false,
         ?\DateTimeInterface $createdAt = null,
     ): WizardAnalytics {
-        $analytics = (new WizardAnalytics())
+        $analytics = new WizardAnalytics()
             ->setSessionId($sessionId)
             ->setStep($step)
             ->setCategory($category)
             ->setConnectivity($connectivity)
             ->setCompleted($completed);
 
-        if ($createdAt !== null) {
+        if ($createdAt instanceof \DateTimeInterface) {
             $analytics->setCreatedAt($createdAt);
         }
 
@@ -50,7 +50,7 @@ class WizardAnalyticsRepositoryTest extends KernelTestCase
         $this->repository->save($analytics, true);
 
         $found = $this->repository->find($analytics->getId());
-        $this->assertNotNull($found);
+        $this->assertInstanceOf(WizardAnalytics::class, $found);
         $this->assertSame('lighting', $found->getCategory());
     }
 
@@ -61,7 +61,7 @@ class WizardAnalyticsRepositoryTest extends KernelTestCase
         $this->repository->save($analytics, false);
         $this->entityManager->flush();
 
-        $this->assertNotNull($this->repository->find($analytics->getId()));
+        $this->assertInstanceOf(WizardAnalytics::class, $this->repository->find($analytics->getId()));
     }
 
     public function testGetCategoryDemandCountsDistinctSessions(): void
@@ -70,7 +70,7 @@ class WizardAnalyticsRepositoryTest extends KernelTestCase
         $this->repository->save($this->makeRecord('a', 2, 'lighting')); // same session, same category — should count once
         $this->repository->save($this->makeRecord('b', 1, 'lighting'));
         $this->repository->save($this->makeRecord('c', 1, 'climate'));
-        $this->repository->save($this->makeRecord('d', 1, null)); // null category — excluded
+        $this->repository->save($this->makeRecord('d', 1)); // null category — excluded
         $this->entityManager->flush();
 
         $demand = $this->repository->getCategoryDemand();
@@ -149,7 +149,7 @@ class WizardAnalyticsRepositoryTest extends KernelTestCase
 
         $this->assertSame(0, $stats['total_sessions']);
         $this->assertSame(0, $stats['completed_sessions']);
-        $this->assertSame(0.0, $stats['completion_rate']);
+        $this->assertEqualsWithDelta(0.0, $stats['completion_rate'], PHP_FLOAT_EPSILON);
     }
 
     public function testGetCompletionStatsRespectsSinceFilter(): void
@@ -166,7 +166,7 @@ class WizardAnalyticsRepositoryTest extends KernelTestCase
         // Only "new" should be counted
         $this->assertSame(1, $stats['total_sessions']);
         $this->assertSame(0, $stats['completed_sessions']);
-        $this->assertSame(0.0, $stats['completion_rate']);
+        $this->assertEqualsWithDelta(0.0, $stats['completion_rate'], PHP_FLOAT_EPSILON);
     }
 
     public function testFindLatestBySessionIdReturnsHighestStep(): void
@@ -178,12 +178,12 @@ class WizardAnalyticsRepositoryTest extends KernelTestCase
 
         $latest = $this->repository->findLatestBySessionId('multi-step');
 
-        $this->assertNotNull($latest);
+        $this->assertInstanceOf(WizardAnalytics::class, $latest);
         $this->assertSame(3, $latest->getStep());
     }
 
     public function testFindLatestBySessionIdReturnsNullForUnknown(): void
     {
-        $this->assertNull($this->repository->findLatestBySessionId('does-not-exist'));
+        $this->assertNotInstanceOf(WizardAnalytics::class, $this->repository->findLatestBySessionId('does-not-exist'));
     }
 }

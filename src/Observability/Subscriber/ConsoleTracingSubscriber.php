@@ -32,7 +32,7 @@ final class ConsoleTracingSubscriber implements EventSubscriberInterface
     public function onCommand(ConsoleCommandEvent $event): void
     {
         $command = $event->getCommand();
-        if (null === $command) {
+        if (!$command instanceof \Symfony\Component\Console\Command\Command) {
             return;
         }
 
@@ -62,7 +62,7 @@ final class ConsoleTracingSubscriber implements EventSubscriberInterface
 
     public function onError(ConsoleErrorEvent $event): void
     {
-        if (null === $this->span) {
+        if (!$this->span instanceof SpanInterface) {
             return;
         }
         $this->span->recordException($event->getError());
@@ -71,7 +71,7 @@ final class ConsoleTracingSubscriber implements EventSubscriberInterface
 
     public function onTerminate(ConsoleTerminateEvent $event): void
     {
-        if (null === $this->span) {
+        if (!$this->span instanceof SpanInterface) {
             return;
         }
 

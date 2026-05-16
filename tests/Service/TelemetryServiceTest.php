@@ -15,7 +15,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
  * bridged-node filtering, connectivity extraction, string sanitization,
  * and rollback behavior.
  */
-class TelemetryServiceTest extends KernelTestCase
+final class TelemetryServiceTest extends KernelTestCase
 {
     private TelemetryService $service;
     private Connection $db;
@@ -111,7 +111,7 @@ class TelemetryServiceTest extends KernelTestCase
             [0x2001, 0x0042]
         );
         $this->assertIsArray($row);
-        $this->assertSame([6, 8, 29], json_decode($row['server_clusters'], true));
+        $this->assertSame([6, 8, 29], json_decode((string) $row['server_clusters'], true));
         $this->assertNull($row['server_cluster_details']);
     }
 
@@ -152,8 +152,8 @@ class TelemetryServiceTest extends KernelTestCase
             [0x2002, 0x0043]
         );
         $this->assertIsArray($row);
-        $this->assertSame([6, 29], json_decode($row['server_clusters'], true), 'v3 normalizer must extract ids for legacy column');
-        $details = json_decode($row['server_cluster_details'], true);
+        $this->assertSame([6, 29], json_decode((string) $row['server_clusters'], true), 'v3 normalizer must extract ids for legacy column');
+        $details = json_decode((string) $row['server_cluster_details'], true);
         $this->assertCount(2, $details);
         $this->assertSame([0, 1, 2], $details[0]['accepted_command_list']);
     }
@@ -186,7 +186,7 @@ class TelemetryServiceTest extends KernelTestCase
              ORDER BY endpoint_id',
             [0x2003, 0x0044]
         );
-        $endpointIds = array_map(static fn ($r) => (int) $r['endpoint_id'], $rows);
+        $endpointIds = array_map(static fn (array $r): int => (int) $r['endpoint_id'], $rows);
         $this->assertNotContains(5, $endpointIds, 'Bridged Node (device type 19) endpoint must be skipped');
         $this->assertContains(6, $endpointIds);
     }
@@ -273,7 +273,7 @@ class TelemetryServiceTest extends KernelTestCase
             [0x2006, 0x0047]
         );
         $this->assertSame('HelloWorld', $row['vendor_name']);
-        $this->assertSame(255, strlen($row['product_name']));
+        $this->assertSame(255, strlen((string) $row['product_name']));
     }
 
     public function testProcessSubmissionIncrementsInstallationCountOnRepeat(): void

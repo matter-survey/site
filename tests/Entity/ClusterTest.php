@@ -7,7 +7,7 @@ namespace App\Tests\Entity;
 use App\Entity\Cluster;
 use PHPUnit\Framework\TestCase;
 
-class ClusterTest extends TestCase
+final class ClusterTest extends TestCase
 {
     public function testConstructorSetsIdAndHexId(): void
     {
@@ -119,14 +119,14 @@ class ClusterTest extends TestCase
 
     public function testHexIdRoundTrip(): void
     {
-        $cluster = (new Cluster(6))->setHexId('0x00FF');
+        $cluster = new Cluster(6)->setHexId('0x00FF');
 
         $this->assertSame('0x00FF', $cluster->getHexId());
     }
 
     public function testSpecVersionRoundTrip(): void
     {
-        $cluster = (new Cluster(6))->setSpecVersion('1.4');
+        $cluster = new Cluster(6)->setSpecVersion('1.4');
 
         $this->assertSame('1.4', $cluster->getSpecVersion());
     }
@@ -136,7 +136,7 @@ class ClusterTest extends TestCase
         $created = new \DateTime('2025-01-01');
         $updated = new \DateTime('2025-02-01');
 
-        $cluster = (new Cluster(6))
+        $cluster = new Cluster(6)
             ->setCreatedAt($created)
             ->setUpdatedAt($updated);
 

@@ -10,7 +10,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Zenstruck\Browser\Test\HasBrowser;
 
-class SecurityControllerTest extends KernelTestCase
+final class SecurityControllerTest extends KernelTestCase
 {
     use HasBrowser;
 
@@ -114,7 +114,7 @@ class SecurityControllerTest extends KernelTestCase
      */
     private function createTestUser(string $email, string $password, array $roles = []): User
     {
-        $container = static::getContainer();
+        $container = self::getContainer();
 
         /** @var UserRepository $userRepository */
         $userRepository = $container->get(UserRepository::class);
@@ -122,7 +122,7 @@ class SecurityControllerTest extends KernelTestCase
         /** @var UserPasswordHasherInterface $passwordHasher */
         $passwordHasher = $container->get(UserPasswordHasherInterface::class);
 
-        $user = (new User())
+        $user = new User()
             ->setEmail($email)
             ->setRoles($roles);
         $user->setPassword($passwordHasher->hashPassword($user, $password));
@@ -134,7 +134,7 @@ class SecurityControllerTest extends KernelTestCase
 
     private function removeTestUser(string $email): void
     {
-        $container = static::getContainer();
+        $container = self::getContainer();
 
         /** @var UserRepository $userRepository */
         $userRepository = $container->get(UserRepository::class);

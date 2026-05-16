@@ -19,7 +19,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
 
 final class RequestTracingSubscriber implements EventSubscriberInterface
 {
-    private const TRACER_NAME = 'app.matter-survey';
+    private const string TRACER_NAME = 'app.matter-survey';
 
     /**
      * Per-request OTel state, keyed by Request object. Stored off-Request because

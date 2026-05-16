@@ -7,7 +7,7 @@ namespace App\Tests\Controller;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Zenstruck\Browser\Test\HasBrowser;
 
-class VendorControllerTest extends KernelTestCase
+final class VendorControllerTest extends KernelTestCase
 {
     use HasBrowser;
 

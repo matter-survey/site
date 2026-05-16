@@ -7,12 +7,12 @@ namespace App\Tests\Controller;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
 
-class DeviceControllerTest extends WebTestCase
+final class DeviceControllerTest extends WebTestCase
 {
     public function testIndexPageLoads(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('html');
@@ -20,8 +20,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageShowsFixtureDevices(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
 
         $this->assertResponseIsSuccessful();
 
@@ -33,8 +33,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageShowsStats(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
 
         $this->assertResponseIsSuccessful();
 
@@ -47,8 +47,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageWithSearch(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/', ['q' => 'Eve']);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['q' => 'Eve']);
 
         $this->assertResponseIsSuccessful();
 
@@ -58,8 +58,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageSearchFindsVendorName(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/', ['q' => 'Signify']);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['q' => 'Signify']);
 
         $this->assertResponseIsSuccessful();
 
@@ -69,8 +69,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageSearchNoResults(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/', ['q' => 'NonExistentDeviceName12345']);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['q' => 'NonExistentDeviceName12345']);
 
         $this->assertResponseIsSuccessful();
 
@@ -80,23 +80,23 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageWithPagination(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/', ['page' => '2']);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['page' => '2']);
 
         $this->assertResponseIsSuccessful();
     }
 
     public function testDeviceShowPageWithFixtureData(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // First get a device ID from the index page
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
         $href = $deviceLink->attr('href');
 
         // Navigate to device detail page
-        $client->request('GET', $href);
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, $href);
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('.device-header');
@@ -104,10 +104,10 @@ class DeviceControllerTest extends WebTestCase
 
     public function testDeviceShowPageDisplaysEndpoints(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Get device from index
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
         $client->click($deviceLink->link());
 
@@ -119,12 +119,12 @@ class DeviceControllerTest extends WebTestCase
 
     public function testDeviceShowPageHasVendorLink(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Get device from index
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
-        $crawler = $client->click($deviceLink->link());
+        $client->click($deviceLink->link());
 
         $this->assertResponseIsSuccessful();
 
@@ -134,23 +134,23 @@ class DeviceControllerTest extends WebTestCase
 
     public function testDeviceShowNotFound(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/device/non-existent-device-slug');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device/non-existent-device-slug');
 
         $this->assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
     }
 
     public function testDeviceShowLegacyIdRedirectsToSlug(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // First get a device ID from the database
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $this->assertResponseIsSuccessful();
 
         // Get the first device's slug-based link
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
-        $slugHref = $deviceLink->attr('href');
+        $deviceLink->attr('href');
 
         // Extract device ID by going to the page and checking what we find
         // Since we're using slugs now, we need to test the redirect from ID to slug
@@ -158,7 +158,7 @@ class DeviceControllerTest extends WebTestCase
         // The slug would be eve-motion-4874-100
 
         // Request with ID should redirect to slug
-        $client->request('GET', '/device/1');
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device/1');
 
         // Should redirect (301) to slug URL
         $this->assertResponseRedirects();
@@ -167,10 +167,10 @@ class DeviceControllerTest extends WebTestCase
 
     public function testDeviceShowSlugBasedUrlWorks(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Navigate from index using slug-based link
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
         $href = $deviceLink->attr('href');
 
@@ -178,22 +178,22 @@ class DeviceControllerTest extends WebTestCase
         $this->assertMatchesRegularExpression('#/device/[a-z0-9-]+$#', $href);
 
         // Navigate to the slug URL
-        $client->request('GET', $href);
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, $href);
         $this->assertResponseIsSuccessful();
     }
 
     public function testDeviceShowInvalidId(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/device/invalid');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device/invalid');
 
         $this->assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
     }
 
     public function testDeviceIndexLinksToDevicePages(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
 
         $this->assertResponseIsSuccessful();
 
@@ -210,8 +210,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testDeviceIndexShowsVendorLinks(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
 
         $this->assertResponseIsSuccessful();
 
@@ -226,10 +226,10 @@ class DeviceControllerTest extends WebTestCase
 
     public function testDeviceShowPageFromVendorPage(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Start from vendor page (slug now includes specId)
-        $crawler = $client->request('GET', '/vendor/eve-4874');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/vendor/eve-4874');
         $this->assertResponseIsSuccessful();
 
         // Click on a device
@@ -248,10 +248,10 @@ class DeviceControllerTest extends WebTestCase
      */
     public function testDeviceShowPageDisplaysCompatibilityForClientClusters(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Find Eve Motion device (has On/Off client cluster)
-        $crawler = $client->request('GET', '/', ['q' => 'Eve Motion']);
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['q' => 'Eve Motion']);
         $this->assertResponseIsSuccessful();
 
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
@@ -280,14 +280,14 @@ class DeviceControllerTest extends WebTestCase
      */
     public function testDeviceShowPageHidesCompatibilityWhenNoClientClusters(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Find Eve Door & Window (has no client clusters)
-        $crawler = $client->request('GET', '/', ['q' => 'Eve Door']);
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['q' => 'Eve Door']);
         $this->assertResponseIsSuccessful();
 
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
-        $crawler = $client->click($deviceLink->link());
+        $client->click($deviceLink->link());
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('.device-header', 'Eve Door');
@@ -301,10 +301,10 @@ class DeviceControllerTest extends WebTestCase
      */
     public function testDeviceCompatibilityLinksWork(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Find Eve Motion (has compatibility)
-        $crawler = $client->request('GET', '/', ['q' => 'Eve Motion']);
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['q' => 'Eve Motion']);
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
         $crawler = $client->click($deviceLink->link());
 
@@ -327,14 +327,14 @@ class DeviceControllerTest extends WebTestCase
      */
     public function testDeviceShowPageDisplaysCanProvideToForServerClusters(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Find Eve Energy (has On/Off server cluster)
-        $crawler = $client->request('GET', '/', ['q' => 'Eve Energy']);
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['q' => 'Eve Energy']);
         $this->assertResponseIsSuccessful();
 
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
-        $crawler = $client->click($deviceLink->link());
+        $client->click($deviceLink->link());
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('.device-header', 'Eve Energy');
@@ -353,14 +353,14 @@ class DeviceControllerTest extends WebTestCase
      */
     public function testDeviceShowPageDisplaysCanProvideToForHueBulb(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Find Hue bulb
-        $crawler = $client->request('GET', '/', ['q' => 'Hue White and Color']);
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['q' => 'Hue White and Color']);
         $this->assertResponseIsSuccessful();
 
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
-        $crawler = $client->click($deviceLink->link());
+        $client->click($deviceLink->link());
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('.device-header', 'Hue');
@@ -377,8 +377,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageHasFilterSidebar(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
 
         $this->assertResponseIsSuccessful();
 
@@ -398,8 +398,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageFilterByConnectivityThread(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/', ['connectivity' => ['thread']]);
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['connectivity' => ['thread']]);
 
         $this->assertResponseIsSuccessful();
 
@@ -410,14 +410,14 @@ class DeviceControllerTest extends WebTestCase
         // Thread checkbox should be checked
         $threadCheckbox = $crawler->filter('input[name="connectivity[]"][value="thread"]');
         if ($threadCheckbox->count() > 0) {
-            $this->assertEquals('checked', $threadCheckbox->attr('checked'));
+            $this->assertSame('checked', $threadCheckbox->attr('checked'));
         }
     }
 
     public function testIndexPageFilterByConnectivityWifi(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/', ['connectivity' => ['wifi']]);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['connectivity' => ['wifi']]);
 
         $this->assertResponseIsSuccessful();
 
@@ -428,8 +428,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageFilterByBindingEnabled(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/', ['binding' => '1']);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['binding' => '1']);
 
         $this->assertResponseIsSuccessful();
 
@@ -440,8 +440,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageFilterByBindingDisabled(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/', ['binding' => '0']);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['binding' => '0']);
 
         $this->assertResponseIsSuccessful();
 
@@ -452,8 +452,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageClearAllFilters(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/', [
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', [
             'connectivity' => ['thread'],
             'binding' => '1',
         ]);
@@ -474,8 +474,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageCombinedFilters(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/', [
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', [
             'connectivity' => ['thread'],
             'binding' => '1',
             'q' => 'Eve',
@@ -491,8 +491,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPagePaginationPreservesFilters(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/', [
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', [
             'connectivity' => ['thread'],
             'page' => '1',
         ]);
@@ -503,14 +503,14 @@ class DeviceControllerTest extends WebTestCase
         $paginationLinks = $crawler->filter('.pagination a');
         if ($paginationLinks->count() > 0) {
             $href = $paginationLinks->first()->attr('href');
-            $this->assertStringContainsString('connectivity', $href, 'Pagination should preserve filter parameters');
+            $this->assertStringContainsString('connectivity', (string) $href, 'Pagination should preserve filter parameters');
         }
     }
 
     public function testIndexPageRemoveIndividualFilter(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/', [
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', [
             'connectivity' => ['thread', 'wifi'],
         ]);
 
@@ -527,8 +527,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageMobileFilterToggle(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
 
         $this->assertResponseIsSuccessful();
 
@@ -539,8 +539,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageFacetCounts(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
 
         $this->assertResponseIsSuccessful();
 
@@ -551,8 +551,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageHasDeviceTypeFilter(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
 
         $this->assertResponseIsSuccessful();
 
@@ -566,10 +566,10 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageFilterByDeviceType(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Extended Color Light is device type 269 (0x010D)
-        $crawler = $client->request('GET', '/', ['device_types' => ['269']]);
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['device_types' => ['269']]);
 
         $this->assertResponseIsSuccessful();
 
@@ -580,10 +580,10 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageFilterByMultipleDeviceTypes(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Filter by multiple device types
-        $crawler = $client->request('GET', '/', ['device_types' => ['269', '266']]);
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['device_types' => ['269', '266']]);
 
         $this->assertResponseIsSuccessful();
 
@@ -595,10 +595,10 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageHandlesEmptyFilterParameters(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Test URL pattern with device_types array and empty vendor
-        $client->request('GET', '/', [
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', [
             'q' => '',
             'device_types' => ['770'],
             'vendor' => '',
@@ -609,10 +609,10 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageHandlesAllEmptyParameters(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // All empty parameters
-        $client->request('GET', '/', [
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', [
             'q' => '',
             'device_types' => [],
             'vendor' => '',
@@ -628,8 +628,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageHasOpenGraphMetaTags(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
 
         $this->assertResponseIsSuccessful();
 
@@ -647,8 +647,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageHasWebSiteJsonLd(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
 
         $this->assertResponseIsSuccessful();
 
@@ -668,10 +668,10 @@ class DeviceControllerTest extends WebTestCase
 
     public function testDeviceShowPageHasProductJsonLd(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Get device from index
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
         $crawler = $client->click($deviceLink->link());
 
@@ -693,10 +693,10 @@ class DeviceControllerTest extends WebTestCase
 
     public function testDeviceShowPageHasProductOpenGraph(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Get device from index
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
         $crawler = $client->click($deviceLink->link());
 
@@ -704,7 +704,7 @@ class DeviceControllerTest extends WebTestCase
 
         // Check OpenGraph type is product
         $ogType = $crawler->filter('meta[property="og:type"]')->attr('content');
-        $this->assertEquals('product', $ogType);
+        $this->assertSame('product', $ogType);
     }
 
     // ========================================================================
@@ -713,8 +713,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageShowsStarRatingFilter(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
 
         $this->assertResponseIsSuccessful();
 
@@ -725,8 +725,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageWithMinRatingFilter(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/', ['min_rating' => '3']);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['min_rating' => '3']);
 
         $this->assertResponseIsSuccessful();
         // Page should load without error, even if no devices match
@@ -734,8 +734,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageWithInvalidMinRatingIsIgnored(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/', ['min_rating' => '99']);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['min_rating' => '99']);
 
         $this->assertResponseIsSuccessful();
         // Invalid rating should be ignored, not cause errors
@@ -743,8 +743,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageMinRatingFilterShowsInActiveFilters(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/', ['min_rating' => '4']);
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['min_rating' => '4']);
 
         $this->assertResponseIsSuccessful();
 
@@ -757,8 +757,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageShowsStarBadgesOnDeviceCards(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
 
         $this->assertResponseIsSuccessful();
 
@@ -774,24 +774,24 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageWithThreadFilter(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/', ['connectivity' => ['thread']]);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['connectivity' => ['thread']]);
 
         $this->assertResponseIsSuccessful();
     }
 
     public function testIndexPageWithWifiFilter(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/', ['connectivity' => ['wifi']]);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['connectivity' => ['wifi']]);
 
         $this->assertResponseIsSuccessful();
     }
 
     public function testIndexPageWithMultipleConnectivityFilters(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/', ['connectivity' => ['thread', 'wifi']]);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['connectivity' => ['thread', 'wifi']]);
 
         $this->assertResponseIsSuccessful();
     }
@@ -802,16 +802,16 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageWithBindingFilterEnabled(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/', ['binding' => '1']);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['binding' => '1']);
 
         $this->assertResponseIsSuccessful();
     }
 
     public function testIndexPageWithBindingFilterDisabled(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/', ['binding' => '0']);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['binding' => '0']);
 
         $this->assertResponseIsSuccessful();
     }
@@ -822,8 +822,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageWithCombinedFilters(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/', [
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', [
             'q' => 'light',
             'connectivity' => ['thread'],
             'min_rating' => '3',
@@ -834,8 +834,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageFiltersPreservedInPagination(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/', [
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', [
             'min_rating' => '3',
             'page' => '1',
         ]);
@@ -845,7 +845,7 @@ class DeviceControllerTest extends WebTestCase
         // If pagination exists, links should preserve the filter
         $paginationLinks = $crawler->filter('.pagination a');
         foreach ($paginationLinks as $link) {
-            \assert($link instanceof \DOMElement);
+            $this->assertInstanceOf(\DOMElement::class, $link);
             $href = $link->getAttribute('href');
             // Links should either not exist or preserve min_rating
             // (pagination may not exist if few results)
@@ -858,8 +858,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageHasCapabilitiesFilter(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
 
         $this->assertResponseIsSuccessful();
 
@@ -873,8 +873,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageFilterByCapabilityDimming(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/', ['capabilities' => ['dimming']]);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['capabilities' => ['dimming']]);
 
         $this->assertResponseIsSuccessful();
 
@@ -885,8 +885,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageFilterByCapabilityFullColor(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/', ['capabilities' => ['full_color']]);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['capabilities' => ['full_color']]);
 
         $this->assertResponseIsSuccessful();
 
@@ -897,8 +897,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageFilterByMultipleCapabilities(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/', ['capabilities' => ['dimming', 'full_color']]);
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['capabilities' => ['dimming', 'full_color']]);
 
         $this->assertResponseIsSuccessful();
 
@@ -910,8 +910,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageCapabilityFilterRemovable(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/', ['capabilities' => ['dimming', 'motion_detection']]);
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['capabilities' => ['dimming', 'motion_detection']]);
 
         $this->assertResponseIsSuccessful();
 
@@ -922,8 +922,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageCapabilityFilterPreservedInPagination(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/', [
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', [
             'capabilities' => ['dimming'],
             'page' => '1',
         ]);
@@ -934,14 +934,14 @@ class DeviceControllerTest extends WebTestCase
         $paginationLinks = $crawler->filter('.pagination a');
         if ($paginationLinks->count() > 0) {
             $href = $paginationLinks->first()->attr('href');
-            $this->assertStringContainsString('capabilities', $href, 'Pagination should preserve capability filter');
+            $this->assertStringContainsString('capabilities', (string) $href, 'Pagination should preserve capability filter');
         }
     }
 
     public function testIndexPageCapabilityCombinedWithOtherFilters(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/', [
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', [
             'capabilities' => ['dimming'],
             'connectivity' => ['thread'],
             'q' => 'light',
@@ -956,8 +956,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageCapabilityFilterIgnoresInvalidKeys(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/', ['capabilities' => ['invalid_capability_key']]);
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['capabilities' => ['invalid_capability_key']]);
 
         // Should not cause error, just ignore invalid key
         $this->assertResponseIsSuccessful();
@@ -965,8 +965,8 @@ class DeviceControllerTest extends WebTestCase
 
     public function testIndexPageCapabilityFacetShowsCount(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
 
         $this->assertResponseIsSuccessful();
 
@@ -982,10 +982,10 @@ class DeviceControllerTest extends WebTestCase
 
     public function testDeviceShowPageHasCapabilitiesSection(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Get device from index
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
         $client->click($deviceLink->link());
 
@@ -997,10 +997,10 @@ class DeviceControllerTest extends WebTestCase
 
     public function testDeviceShowPageHasCapabilitiesTable(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Get device from index (Hue Bulb has on_off, dimming, full_color capabilities)
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
         $client->click($deviceLink->link());
 
@@ -1012,9 +1012,9 @@ class DeviceControllerTest extends WebTestCase
 
     public function testDeviceShowPageCapabilityTableHasRows(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
         $crawler = $client->click($deviceLink->link());
 
@@ -1027,9 +1027,9 @@ class DeviceControllerTest extends WebTestCase
 
     public function testDeviceShowPageCapabilityRowStructure(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
         $crawler = $client->click($deviceLink->link());
 
@@ -1049,9 +1049,9 @@ class DeviceControllerTest extends WebTestCase
 
     public function testDeviceShowPageCapabilityTableShowsSpecVersion(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
         $crawler = $client->click($deviceLink->link());
 
@@ -1065,9 +1065,9 @@ class DeviceControllerTest extends WebTestCase
 
     public function testDeviceShowPageExpandableCapabilitiesHaveIcon(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
         $crawler = $client->click($deviceLink->link());
 
@@ -1083,9 +1083,9 @@ class DeviceControllerTest extends WebTestCase
 
     public function testDeviceShowPageHasCapabilityDetailsRow(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
         $crawler = $client->click($deviceLink->link());
 
@@ -1102,9 +1102,9 @@ class DeviceControllerTest extends WebTestCase
 
     public function testDeviceShowPageUnsupportedCapabilitiesShowRedX(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('.device-info h3 a')->first();
         $crawler = $client->click($deviceLink->link());
 
@@ -1126,8 +1126,8 @@ class DeviceControllerTest extends WebTestCase
      */
     public function testDeviceIndexShowsPidDisambiguatorForDuplicateNames(): void
     {
-        $client = static::createClient();
-        $container = static::getContainer();
+        $client = self::createClient();
+        $container = self::getContainer();
 
         $em = $container->get(\Doctrine\ORM\EntityManagerInterface::class);
         $vendor = $em->getRepository(\App\Entity\Vendor::class)->findOneBy(['specId' => 4874]);
@@ -1143,11 +1143,11 @@ class DeviceControllerTest extends WebTestCase
             'product_name' => 'Eve Motion',
         ], $isNew);
 
-        $crawler = $client->request('GET', '/', ['q' => 'Eve Motion']);
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['q' => 'Eve Motion']);
         $this->assertResponseIsSuccessful();
 
         $suffixes = $crawler->filter('.device-list .device-pid-suffix');
-        $this->assertSame(2, $suffixes->count(), 'Both Eve Motion entries should render a PID suffix');
+        $this->assertCount(2, $suffixes, 'Both Eve Motion entries should render a PID suffix');
         $this->assertStringContainsString('PID 0x', $suffixes->first()->text());
     }
 }

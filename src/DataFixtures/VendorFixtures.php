@@ -18,7 +18,7 @@ use Symfony\Component\Yaml\Yaml;
  */
 class VendorFixtures extends Fixture implements FixtureGroupInterface
 {
-    private string $dataPath;
+    private readonly string $dataPath;
 
     public function __construct(?string $dataPath = null)
     {

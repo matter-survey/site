@@ -14,7 +14,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
  *
  * These tests verify the scoring algorithm and related functionality.
  */
-class DeviceScoreServiceTest extends KernelTestCase
+final class DeviceScoreServiceTest extends KernelTestCase
 {
     private DeviceScoreService $scoreService;
 
@@ -51,7 +51,7 @@ class DeviceScoreServiceTest extends KernelTestCase
         $score = $this->scoreService->calculateDeviceScore([]);
 
         $this->assertInstanceOf(DeviceScore::class, $score);
-        $this->assertEquals(0.0, $score->overallScore);
+        $this->assertEqualsWithDelta(0.0, $score->overallScore, PHP_FLOAT_EPSILON);
         $this->assertEquals(1, $score->starRating);
         $this->assertTrue($score->isCompliant);
         $this->assertEmpty($score->scoresByType);
@@ -70,7 +70,7 @@ class DeviceScoreServiceTest extends KernelTestCase
         $score = $this->scoreService->calculateDeviceScore($endpoints);
 
         // Should return default score since system types are skipped
-        $this->assertEquals(0.0, $score->overallScore);
+        $this->assertEqualsWithDelta(0.0, $score->overallScore, PHP_FLOAT_EPSILON);
         $this->assertEmpty($score->scoresByType);
     }
 
@@ -126,8 +126,8 @@ class DeviceScoreServiceTest extends KernelTestCase
 
         // Overall score should be from the best device type
         $bestTypeScore = $score->getBestTypeScore();
-        $this->assertNotNull($bestTypeScore);
-        $this->assertEquals($bestTypeScore->score, $score->overallScore);
+        $this->assertInstanceOf(DeviceTypeScore::class, $bestTypeScore);
+        $this->assertSame($bestTypeScore->score, $score->overallScore);
     }
 
     // ========================================================================
@@ -143,8 +143,8 @@ class DeviceScoreServiceTest extends KernelTestCase
         );
 
         $this->assertInstanceOf(DeviceTypeScore::class, $score);
-        $this->assertEquals(256, $score->deviceTypeId);
-        $this->assertEquals('On/Off Light', $score->deviceTypeName);
+        $this->assertSame(256, $score->deviceTypeId);
+        $this->assertSame('On/Off Light', $score->deviceTypeName);
         $this->assertTrue($score->isCompliant);
         $this->assertIsArray($score->breakdown);
     }
@@ -195,7 +195,7 @@ class DeviceScoreServiceTest extends KernelTestCase
         $this->assertArrayHasKey('optionalClientScore', $score->breakdown);
 
         // Mandatory server score should be 100 since all are implemented
-        $this->assertEquals(100.0, $score->breakdown['mandatoryServerScore']);
+        $this->assertEqualsWithDelta(100.0, $score->breakdown['mandatoryServerScore'], PHP_FLOAT_EPSILON);
     }
 
     // ========================================================================
@@ -230,36 +230,36 @@ class DeviceScoreServiceTest extends KernelTestCase
     public function testScoreToStarsConversion(): void
     {
         // Test all thresholds (now with half-star support)
-        $this->assertEquals(5.0, $this->scoreService->scoreToStars(95.0, true));
-        $this->assertEquals(4.5, $this->scoreService->scoreToStars(90.0, true));
-        $this->assertEquals(4.5, $this->scoreService->scoreToStars(85.0, true));
-        $this->assertEquals(4.0, $this->scoreService->scoreToStars(84.0, true));
-        $this->assertEquals(4.0, $this->scoreService->scoreToStars(75.0, true));
-        $this->assertEquals(3.5, $this->scoreService->scoreToStars(74.0, true));
-        $this->assertEquals(3.5, $this->scoreService->scoreToStars(65.0, true));
-        $this->assertEquals(3.0, $this->scoreService->scoreToStars(64.0, true));
-        $this->assertEquals(3.0, $this->scoreService->scoreToStars(55.0, true));
-        $this->assertEquals(2.5, $this->scoreService->scoreToStars(54.0, true));
-        $this->assertEquals(2.5, $this->scoreService->scoreToStars(45.0, true));
-        $this->assertEquals(2.0, $this->scoreService->scoreToStars(44.0, true));
-        $this->assertEquals(2.0, $this->scoreService->scoreToStars(35.0, true));
-        $this->assertEquals(1.5, $this->scoreService->scoreToStars(34.0, true));
-        $this->assertEquals(1.5, $this->scoreService->scoreToStars(25.0, true));
-        $this->assertEquals(1.0, $this->scoreService->scoreToStars(24.0, true));
-        $this->assertEquals(1.0, $this->scoreService->scoreToStars(15.0, true));
-        $this->assertEquals(0.5, $this->scoreService->scoreToStars(14.0, true));
-        $this->assertEquals(0.5, $this->scoreService->scoreToStars(0.0, true));
+        $this->assertEqualsWithDelta(5.0, $this->scoreService->scoreToStars(95.0, true), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(4.5, $this->scoreService->scoreToStars(90.0, true), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(4.5, $this->scoreService->scoreToStars(85.0, true), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(4.0, $this->scoreService->scoreToStars(84.0, true), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(4.0, $this->scoreService->scoreToStars(75.0, true), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(3.5, $this->scoreService->scoreToStars(74.0, true), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(3.5, $this->scoreService->scoreToStars(65.0, true), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(3.0, $this->scoreService->scoreToStars(64.0, true), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(3.0, $this->scoreService->scoreToStars(55.0, true), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(2.5, $this->scoreService->scoreToStars(54.0, true), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(2.5, $this->scoreService->scoreToStars(45.0, true), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(2.0, $this->scoreService->scoreToStars(44.0, true), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(2.0, $this->scoreService->scoreToStars(35.0, true), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(1.5, $this->scoreService->scoreToStars(34.0, true), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(1.5, $this->scoreService->scoreToStars(25.0, true), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(1.0, $this->scoreService->scoreToStars(24.0, true), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(1.0, $this->scoreService->scoreToStars(15.0, true), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(0.5, $this->scoreService->scoreToStars(14.0, true), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(0.5, $this->scoreService->scoreToStars(0.0, true), PHP_FLOAT_EPSILON);
     }
 
     public function testNonCompliantDevicesCappedAtTwoAndHalfStars(): void
     {
         // Even with a high score, non-compliant should be max 2.5 stars
-        $this->assertEquals(2.5, $this->scoreService->scoreToStars(95.0, false));
-        $this->assertEquals(2.5, $this->scoreService->scoreToStars(80.0, false));
-        $this->assertEquals(2.5, $this->scoreService->scoreToStars(50.0, false));
-        $this->assertEquals(2.0, $this->scoreService->scoreToStars(40.0, false));
-        $this->assertEquals(1.5, $this->scoreService->scoreToStars(30.0, false));
-        $this->assertEquals(0.5, $this->scoreService->scoreToStars(10.0, false));
+        $this->assertEqualsWithDelta(2.5, $this->scoreService->scoreToStars(95.0, false), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(2.5, $this->scoreService->scoreToStars(80.0, false), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(2.5, $this->scoreService->scoreToStars(50.0, false), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(2.0, $this->scoreService->scoreToStars(40.0, false), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(1.5, $this->scoreService->scoreToStars(30.0, false), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(0.5, $this->scoreService->scoreToStars(10.0, false), PHP_FLOAT_EPSILON);
     }
 
     // ========================================================================
@@ -312,11 +312,11 @@ class DeviceScoreServiceTest extends KernelTestCase
         $array = $score->toArray();
         $restored = DeviceTypeScore::fromArray($array);
 
-        $this->assertEquals($score->deviceTypeId, $restored->deviceTypeId);
-        $this->assertEquals($score->deviceTypeName, $restored->deviceTypeName);
-        $this->assertEquals($score->score, $restored->score);
-        $this->assertEquals($score->starRating, $restored->starRating);
-        $this->assertEquals($score->isCompliant, $restored->isCompliant);
+        $this->assertSame($score->deviceTypeId, $restored->deviceTypeId);
+        $this->assertSame($score->deviceTypeName, $restored->deviceTypeName);
+        $this->assertSame($score->score, $restored->score);
+        $this->assertSame($score->starRating, $restored->starRating);
+        $this->assertSame($score->isCompliant, $restored->isCompliant);
     }
 
     // ========================================================================
@@ -336,8 +336,8 @@ class DeviceScoreServiceTest extends KernelTestCase
         $score = $this->scoreService->calculateDeviceScore($endpoints);
         $best = $score->getBestTypeScore();
 
-        $this->assertNotNull($best);
-        $this->assertEquals(256, $best->deviceTypeId);
+        $this->assertInstanceOf(DeviceTypeScore::class, $best);
+        $this->assertSame(256, $best->deviceTypeId);
     }
 
     public function testDeviceScoreGetBestTypeScoreReturnsNullWhenEmpty(): void
@@ -345,7 +345,7 @@ class DeviceScoreServiceTest extends KernelTestCase
         $score = $this->scoreService->calculateDeviceScore([]);
         $best = $score->getBestTypeScore();
 
-        $this->assertNull($best);
+        $this->assertNotInstanceOf(DeviceTypeScore::class, $best);
     }
 
     // ========================================================================

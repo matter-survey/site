@@ -11,19 +11,21 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class SecurityController extends AbstractController
 {
+    public function __construct(private readonly AuthenticationUtils $authenticationUtils)
+    {
+    }
+
     #[Route('/login', name: 'app_login')]
-    public function login(AuthenticationUtils $authenticationUtils): Response
+    public function login(): Response
     {
         // If already logged in, redirect to admin dashboard
-        if ($this->getUser()) {
+        if ($this->getUser() instanceof \Symfony\Component\Security\Core\User\UserInterface) {
             return $this->redirectToRoute('admin_dashboard');
         }
-
         // Get the login error if there is one
-        $error = $authenticationUtils->getLastAuthenticationError();
-
+        $error = $this->authenticationUtils->getLastAuthenticationError();
         // Last username entered by the user
-        $lastUsername = $authenticationUtils->getLastUsername();
+        $lastUsername = $this->authenticationUtils->getLastUsername();
 
         return $this->render('security/login.html.twig', [
             'last_username' => $lastUsername,

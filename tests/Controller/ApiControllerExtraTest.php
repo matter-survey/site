@@ -12,7 +12,7 @@ use Zenstruck\Browser\Test\HasBrowser;
  * ApiControllerTest suite: the docs redirect and the early-exit error
  * paths (empty body, invalid JSON).
  */
-class ApiControllerExtraTest extends KernelTestCase
+final class ApiControllerExtraTest extends KernelTestCase
 {
     use HasBrowser;
 

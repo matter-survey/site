@@ -97,12 +97,12 @@ final class TracingHttpClientTest extends TestCase
         $normalized = $captured['normalized_headers'] ?? [];
         $this->assertArrayHasKey('traceparent', $normalized);
         $traceparentLine = $normalized['traceparent'][0] ?? '';
-        $this->assertStringContainsString($rootSpan->getContext()->getTraceId(), $traceparentLine);
+        $this->assertStringContainsString($rootSpan->getContext()->getTraceId(), (string) $traceparentLine);
     }
 
     public function testErrorStatusMarksSpanError(): void
     {
-        $mock = new MockHttpClient(static fn () => new MockResponse('boom', ['http_code' => 500]));
+        $mock = new MockHttpClient(static fn (): MockResponse => new MockResponse('boom', ['http_code' => 500]));
         $client = new TracingHttpClient($mock);
 
         $client->request('GET', 'https://example.test/fail')->getStatusCode();
@@ -133,7 +133,7 @@ final class TracingHttpClientTest extends TestCase
 
     public function testGetHeadersAndToArrayEndSpanOnce(): void
     {
-        $mock = new MockHttpClient(static fn () => new MockResponse(
+        $mock = new MockHttpClient(static fn (): MockResponse => new MockResponse(
             '{"hello":"world"}',
             ['http_code' => 200, 'response_headers' => ['Content-Type' => 'application/json']],
         ));
@@ -154,7 +154,7 @@ final class TracingHttpClientTest extends TestCase
 
     public function testGetInfoDelegatesAndDoesNotEndSpan(): void
     {
-        $mock = new MockHttpClient(static fn () => new MockResponse('', ['http_code' => 204]));
+        $mock = new MockHttpClient(static fn (): MockResponse => new MockResponse('', ['http_code' => 204]));
         $client = new TracingHttpClient($mock);
         $response = $client->request('GET', 'https://example.test/info');
 
@@ -169,7 +169,7 @@ final class TracingHttpClientTest extends TestCase
 
     public function testCancelEndsSpanWithoutStatusCodeAttribute(): void
     {
-        $mock = new MockHttpClient(static fn () => new MockResponse('', ['http_code' => 200]));
+        $mock = new MockHttpClient(static fn (): MockResponse => new MockResponse('', ['http_code' => 200]));
         $client = new TracingHttpClient($mock);
         $response = $client->request('GET', 'https://example.test/cancel');
 
@@ -200,7 +200,7 @@ final class TracingHttpClientTest extends TestCase
 
     public function testStreamUnwrapsTracingResponseAndDelegates(): void
     {
-        $mock = new MockHttpClient(static fn () => new MockResponse('payload', ['http_code' => 200]));
+        $mock = new MockHttpClient(static fn (): MockResponse => new MockResponse('payload', ['http_code' => 200]));
         $client = new TracingHttpClient($mock);
         $response = $client->request('GET', 'https://example.test/stream');
 
@@ -212,7 +212,7 @@ final class TracingHttpClientTest extends TestCase
 
     public function testStreamUnwrapsIterableOfTracingResponses(): void
     {
-        $mock = new MockHttpClient(static fn () => new MockResponse('one', ['http_code' => 200]));
+        $mock = new MockHttpClient(static fn (): MockResponse => new MockResponse('one', ['http_code' => 200]));
         $client = new TracingHttpClient($mock);
         $a = $client->request('GET', 'https://example.test/a');
         $b = $client->request('GET', 'https://example.test/b');

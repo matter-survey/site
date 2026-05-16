@@ -8,7 +8,7 @@ use App\Entity\ApiToken;
 use App\Entity\User;
 use PHPUnit\Framework\TestCase;
 
-class UserTest extends TestCase
+final class UserTest extends TestCase
 {
     public function testNewUserHasDefaultValues(): void
     {
@@ -19,7 +19,7 @@ class UserTest extends TestCase
         $this->assertNull($user->getPassword());
         $this->assertEmpty($user->getApiTokens());
         $this->assertInstanceOf(\DateTimeImmutable::class, $user->getCreatedAt());
-        $this->assertNull($user->getLastLoginAt());
+        $this->assertNotInstanceOf(\DateTimeImmutable::class, $user->getLastLoginAt());
     }
 
     public function testSetAndGetEmail(): void
@@ -27,8 +27,8 @@ class UserTest extends TestCase
         $user = new User();
         $user->setEmail('test@example.com');
 
-        $this->assertEquals('test@example.com', $user->getEmail());
-        $this->assertEquals('test@example.com', $user->getUserIdentifier());
+        $this->assertSame('test@example.com', $user->getEmail());
+        $this->assertSame('test@example.com', $user->getUserIdentifier());
     }
 
     public function testSetAndGetPassword(): void
@@ -36,7 +36,7 @@ class UserTest extends TestCase
         $user = new User();
         $user->setPassword('hashed_password');
 
-        $this->assertEquals('hashed_password', $user->getPassword());
+        $this->assertSame('hashed_password', $user->getPassword());
     }
 
     public function testGetRolesAlwaysIncludesRoleUser(): void
@@ -139,7 +139,7 @@ class UserTest extends TestCase
         $user->removeApiToken($token);
 
         $this->assertCount(0, $user->getApiTokens());
-        $this->assertNull($token->getUser());
+        $this->assertNotInstanceOf(User::class, $token->getUser());
     }
 
     public function testSetAndGetLastLoginAt(): void

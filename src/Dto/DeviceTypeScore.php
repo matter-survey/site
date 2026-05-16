@@ -7,18 +7,18 @@ namespace App\Dto;
 /**
  * Represents the score breakdown for a single device type.
  */
-final class DeviceTypeScore
+final readonly class DeviceTypeScore
 {
     public function __construct(
-        public readonly int $deviceTypeId,
-        public readonly string $deviceTypeName,
-        public readonly float $score,
-        public readonly float $starRating,
-        public readonly bool $isCompliant,
-        public readonly float $mandatoryScore,
-        public readonly float $optionalScore,
-        public readonly float $clientBonus,
-        public readonly array $breakdown,
+        public int $deviceTypeId,
+        public string $deviceTypeName,
+        public float $score,
+        public float $starRating,
+        public bool $isCompliant,
+        public float $mandatoryScore,
+        public float $optionalScore,
+        public float $clientBonus,
+        public array $breakdown,
     ) {
     }
 

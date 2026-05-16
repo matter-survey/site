@@ -23,8 +23,8 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 class CreateUserCommand extends Command
 {
     public function __construct(
-        private UserRepository $userRepository,
-        private UserPasswordHasherInterface $passwordHasher,
+        private readonly UserRepository $userRepository,
+        private readonly UserPasswordHasherInterface $passwordHasher,
     ) {
         parent::__construct();
     }
@@ -45,7 +45,7 @@ class CreateUserCommand extends Command
         $email = $input->getArgument('email');
 
         // Check if user already exists
-        if (null !== $this->userRepository->findByEmail($email)) {
+        if ($this->userRepository->findByEmail($email) instanceof User) {
             $io->error(sprintf('A user with email "%s" already exists.', $email));
 
             return Command::FAILURE;
@@ -106,7 +106,7 @@ class CreateUserCommand extends Command
 
         $io->success(sprintf('User "%s" created successfully!', $email));
 
-        if (!empty($roles)) {
+        if ([] !== $roles) {
             $io->info(sprintf('Roles: %s', implode(', ', $roles)));
         }
 

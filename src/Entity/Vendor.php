@@ -10,7 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: VendorRepository::class)]
 #[ORM\Table(name: 'vendors')]
-#[ORM\Index(columns: ['spec_id'], name: 'idx_vendors_spec_id')]
+#[ORM\Index(name: 'idx_vendors_spec_id', columns: ['spec_id'])]
 class Vendor
 {
     #[ORM\Id]
@@ -21,7 +21,7 @@ class Vendor
     #[ORM\Column(length: 255, unique: true)]
     private string $slug;
 
-    #[ORM\Column(name: 'spec_id', nullable: true, unique: true)]
+    #[ORM\Column(name: 'spec_id', unique: true, nullable: true)]
     private ?int $specId = null;
 
     #[ORM\Column(length: 255)]
@@ -161,15 +161,15 @@ class Vendor
      */
     public static function generateSlug(string $name, ?int $specId = null): string
     {
-        if (empty($name) && null !== $specId) {
+        if (('' === $name || '0' === $name) && null !== $specId) {
             return 'vendor-'.$specId;
         }
 
         $slug = strtolower($name);
         $slug = preg_replace('/[^a-z0-9\s-]/', '', $slug);
-        $slug = preg_replace('/[\s_]+/', '-', $slug);
-        $slug = preg_replace('/-+/', '-', $slug);
-        $slug = trim($slug, '-');
+        $slug = preg_replace('/[\s_]+/', '-', (string) $slug);
+        $slug = preg_replace('/-+/', '-', (string) $slug);
+        $slug = trim((string) $slug, '-');
 
         return $slug ?: 'vendor-'.($specId ?? 'unknown');
     }

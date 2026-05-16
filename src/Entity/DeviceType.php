@@ -10,14 +10,10 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: DeviceTypeRepository::class)]
 #[ORM\Table(name: 'device_types')]
-#[ORM\Index(columns: ['display_category'], name: 'idx_device_types_category')]
-#[ORM\Index(columns: ['spec_version'], name: 'idx_device_types_spec_version')]
+#[ORM\Index(name: 'idx_device_types_category', columns: ['display_category'])]
+#[ORM\Index(name: 'idx_device_types_spec_version', columns: ['spec_version'])]
 class DeviceType
 {
-    #[ORM\Id]
-    #[ORM\Column]
-    private int $id;
-
     #[ORM\Column(name: 'hex_id', length: 10)]
     private string $hexId;
 
@@ -69,10 +65,11 @@ class DeviceType
     #[ORM\Column(name: 'updated_at', type: Types::DATETIME_MUTABLE)]
     private \DateTimeInterface $updatedAt;
 
-    public function __construct(int $id)
+    public function __construct(#[ORM\Id]
+        #[ORM\Column]
+        private int $id)
     {
-        $this->id = $id;
-        $this->hexId = sprintf('0x%04X', $id);
+        $this->hexId = sprintf('0x%04X', $this->id);
         $this->createdAt = new \DateTime();
         $this->updatedAt = new \DateTime();
     }

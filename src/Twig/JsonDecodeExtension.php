@@ -4,18 +4,9 @@ declare(strict_types=1);
 
 namespace App\Twig;
 
-use Twig\Extension\AbstractExtension;
-use Twig\TwigFilter;
-
-class JsonDecodeExtension extends AbstractExtension
+class JsonDecodeExtension
 {
-    public function getFilters(): array
-    {
-        return [
-            new TwigFilter('json_decode', [$this, 'jsonDecode']),
-        ];
-    }
-
+    #[\Twig\Attribute\AsTwigFilter(name: 'json_decode')]
     public function jsonDecode(?string $json): ?array
     {
         if (null === $json || '' === $json) {

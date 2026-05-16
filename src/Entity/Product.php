@@ -13,10 +13,10 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 #[ORM\Table(name: 'products')]
 #[ORM\UniqueConstraint(name: 'unique_vendor_product', columns: ['vendor_id', 'product_id'])]
-#[ORM\Index(columns: ['vendor_id'], name: 'idx_products_vendor')]
-#[ORM\Index(columns: ['product_id'], name: 'idx_products_product')]
-#[ORM\Index(columns: ['vendor_fk'], name: 'idx_products_vendor_fk')]
-#[ORM\Index(columns: ['slug'], name: 'idx_products_slug')]
+#[ORM\Index(name: 'idx_products_vendor', columns: ['vendor_id'])]
+#[ORM\Index(name: 'idx_products_product', columns: ['product_id'])]
+#[ORM\Index(name: 'idx_products_vendor_fk', columns: ['vendor_fk'])]
+#[ORM\Index(name: 'idx_products_slug', columns: ['slug'])]
 class Product
 {
     #[ORM\Id]
@@ -25,14 +25,14 @@ class Product
     private ?int $id = null;
 
     /** @var Collection<int, ProductVersion> */
-    #[ORM\OneToMany(mappedBy: 'product', targetEntity: ProductVersion::class, cascade: ['remove'])]
+    #[ORM\OneToMany(targetEntity: ProductVersion::class, mappedBy: 'product', cascade: ['remove'])]
     private Collection $versions;
 
     /** @var Collection<int, ProductEndpoint> */
-    #[ORM\OneToMany(mappedBy: 'product', targetEntity: ProductEndpoint::class, cascade: ['remove'])]
+    #[ORM\OneToMany(targetEntity: ProductEndpoint::class, mappedBy: 'product', cascade: ['remove'])]
     private Collection $endpoints;
 
-    #[ORM\OneToOne(mappedBy: 'product', targetEntity: DeviceScore::class, cascade: ['remove'])]
+    #[ORM\OneToOne(targetEntity: DeviceScore::class, mappedBy: 'product', cascade: ['remove'])]
     private ?DeviceScore $score = null;
 
     #[ORM\Column(length: 255, unique: true, nullable: true)]
@@ -622,12 +622,12 @@ class Product
     {
         $slug = '';
 
-        if (!empty($productName)) {
+        if (!in_array($productName, [null, '', '0'], true)) {
             $slug = strtolower($productName);
             $slug = preg_replace('/[^a-z0-9\s-]/', '', $slug);
-            $slug = preg_replace('/[\s_]+/', '-', $slug);
-            $slug = preg_replace('/-+/', '-', $slug);
-            $slug = trim($slug, '-');
+            $slug = preg_replace('/[\s_]+/', '-', (string) $slug);
+            $slug = preg_replace('/-+/', '-', (string) $slug);
+            $slug = trim((string) $slug, '-');
         }
 
         // Always append vendor_id and product_id for uniqueness

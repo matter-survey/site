@@ -8,7 +8,7 @@ use App\Dto\DeviceScore;
 use App\Dto\DeviceTypeScore;
 use PHPUnit\Framework\TestCase;
 
-class DeviceScoreTest extends TestCase
+final class DeviceScoreTest extends TestCase
 {
     private function makeTypeScore(int $id, string $name, float $score): DeviceTypeScore
     {
@@ -39,8 +39,8 @@ class DeviceScoreTest extends TestCase
             bestVersion: '1.4',
         );
 
-        $this->assertSame(85.0, $score->overallScore);
-        $this->assertSame(4.25, $score->starRating);
+        $this->assertEqualsWithDelta(85.0, $score->overallScore, PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(4.25, $score->starRating, PHP_FLOAT_EPSILON);
         $this->assertTrue($score->isCompliant);
         $this->assertSame($byType, $score->scoresByType);
         $this->assertSame('1.4', $score->bestVersion);
@@ -82,8 +82,8 @@ class DeviceScoreTest extends TestCase
 
         $score = DeviceScore::fromArray($data);
 
-        $this->assertSame(80.0, $score->overallScore);
-        $this->assertSame(4.0, $score->starRating);
+        $this->assertEqualsWithDelta(80.0, $score->overallScore, PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(4.0, $score->starRating, PHP_FLOAT_EPSILON);
         $this->assertTrue($score->isCompliant);
         $this->assertSame('1.3', $score->bestVersion);
         $this->assertArrayHasKey(266, $score->scoresByType);
@@ -98,7 +98,7 @@ class DeviceScoreTest extends TestCase
             'isCompliant' => false,
         ]);
 
-        $this->assertSame(0.0, $score->overallScore);
+        $this->assertEqualsWithDelta(0.0, $score->overallScore, PHP_FLOAT_EPSILON);
         $this->assertNull($score->bestVersion);
         $this->assertSame([], $score->scoresByType);
     }
@@ -118,9 +118,9 @@ class DeviceScoreTest extends TestCase
 
         $rebuilt = DeviceScore::fromArray($original->toArray());
 
-        $this->assertEquals($original->overallScore, $rebuilt->overallScore);
-        $this->assertEquals($original->starRating, $rebuilt->starRating);
-        $this->assertEquals($original->isCompliant, $rebuilt->isCompliant);
+        $this->assertSame($original->overallScore, $rebuilt->overallScore);
+        $this->assertSame($original->starRating, $rebuilt->starRating);
+        $this->assertSame($original->isCompliant, $rebuilt->isCompliant);
         $this->assertEquals($original->bestVersion, $rebuilt->bestVersion);
         $this->assertCount(2, $rebuilt->scoresByType);
     }
@@ -140,9 +140,9 @@ class DeviceScoreTest extends TestCase
 
         $best = $score->getBestTypeScore();
 
-        $this->assertNotNull($best);
+        $this->assertInstanceOf(DeviceTypeScore::class, $best);
         $this->assertSame(269, $best->deviceTypeId);
-        $this->assertSame(90.0, $best->score);
+        $this->assertEqualsWithDelta(90.0, $best->score, PHP_FLOAT_EPSILON);
     }
 
     public function testGetBestTypeScoreReturnsNullWhenEmpty(): void
@@ -154,6 +154,6 @@ class DeviceScoreTest extends TestCase
             scoresByType: [],
         );
 
-        $this->assertNull($score->getBestTypeScore());
+        $this->assertNotInstanceOf(DeviceTypeScore::class, $score->getBestTypeScore());
     }
 }

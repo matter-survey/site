@@ -16,15 +16,15 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class WizardController extends AbstractController
 {
-    private const SESSION_COOKIE_NAME = 'wizard_session';
-    private const TOTAL_STEPS = 3;
+    private const string SESSION_COOKIE_NAME = 'wizard_session';
+    private const int TOTAL_STEPS = 3;
 
     /**
      * Category metadata for display.
      *
      * @var array<string, array{icon: string, desc: string}>
      */
-    private const CATEGORY_META = [
+    private const array CATEGORY_META = [
         'Lights' => ['icon' => 'lightbulb', 'desc' => 'Smart bulbs, dimmers, and light strips'],
         'Climate' => ['icon' => 'thermometer', 'desc' => 'Thermostats, fans, and air quality'],
         'Sensors' => ['icon' => 'sensor', 'desc' => 'Motion, contact, and environmental sensors'],
@@ -120,7 +120,7 @@ class WizardController extends AbstractController
         $devices = $this->deviceRepo->searchDevices($query, 10);
 
         return $this->json([
-            'results' => array_map(fn (array $d) => [
+            'results' => array_map(fn (array $d): array => [
                 'id' => $d['id'],
                 'name' => $d['product_name'],
                 'vendor' => $d['vendor_name'],
@@ -144,7 +144,7 @@ class WizardController extends AbstractController
         $validCapabilityKeys = array_keys(DeviceRepository::CAPABILITY_FILTERS);
         $validCapabilities = array_values(array_filter(
             $capabilities,
-            fn ($v) => \in_array($v, $validCapabilityKeys, true)
+            fn ($v): bool => \in_array($v, $validCapabilityKeys, true)
         ));
 
         return [
@@ -153,7 +153,7 @@ class WizardController extends AbstractController
             'capabilities' => $validCapabilities,
             'min_rating' => $minRating,
             'binding' => $request->query->get('binding'),
-            'owned' => array_filter(array_map('intval', $request->query->all('owned'))),
+            'owned' => array_filter(array_map(intval(...), $request->query->all('owned'))),
         ];
     }
 
@@ -177,7 +177,7 @@ class WizardController extends AbstractController
         $sessionId = $request->cookies->get(self::SESSION_COOKIE_NAME);
 
         if (null === $sessionId) {
-            $sessionId = $this->analyticsService->generateSessionId();
+            return $this->analyticsService->generateSessionId();
         }
 
         return $sessionId;
@@ -193,7 +193,7 @@ class WizardController extends AbstractController
         $categories = $this->deviceTypeRepo->findAllDisplayCategories();
 
         // Filter out System category
-        $categories = array_filter($categories, fn ($c) => 'System' !== $c);
+        $categories = array_filter($categories, fn (string $c): bool => 'System' !== $c);
 
         return [
             'categories' => array_values($categories),
@@ -248,8 +248,8 @@ class WizardController extends AbstractController
         // Map category to device type IDs
         if (!empty($state['category'])) {
             $deviceTypes = $this->deviceTypeRepo->findByDisplayCategory($state['category']);
-            if (!empty($deviceTypes)) {
-                $filters['device_types'] = array_map(fn ($dt) => $dt->getId(), $deviceTypes);
+            if ([] !== $deviceTypes) {
+                $filters['device_types'] = array_map(fn ($dt): int => $dt->getId(), $deviceTypes);
             }
         }
 

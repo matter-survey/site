@@ -9,7 +9,7 @@ use App\Repository\DeviceTypeRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
-class DeviceTypeRepositoryTest extends KernelTestCase
+final class DeviceTypeRepositoryTest extends KernelTestCase
 {
     private DeviceTypeRepository $repository;
     private EntityManagerInterface $entityManager;
@@ -17,26 +17,26 @@ class DeviceTypeRepositoryTest extends KernelTestCase
     protected function setUp(): void
     {
         self::bootKernel();
-        $this->repository = static::getContainer()->get(DeviceTypeRepository::class);
-        $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $this->repository = self::getContainer()->get(DeviceTypeRepository::class);
+        $this->entityManager = self::getContainer()->get(EntityManagerInterface::class);
     }
 
     public function testSaveWithFlush(): void
     {
-        $deviceType = (new DeviceType(9000))
+        $deviceType = new DeviceType(9000)
             ->setName('Test Device Type')
             ->setDisplayCategory('Test');
 
         $this->repository->save($deviceType, true);
 
         $found = $this->repository->find(9000);
-        $this->assertNotNull($found);
+        $this->assertInstanceOf(DeviceType::class, $found);
         $this->assertSame('Test Device Type', $found->getName());
     }
 
     public function testSaveWithoutFlushDoesNotPersistImmediately(): void
     {
-        $deviceType = (new DeviceType(9001))
+        $deviceType = new DeviceType(9001)
             ->setName('Lazy Device Type')
             ->setDisplayCategory('Test');
 
@@ -62,16 +62,14 @@ class DeviceTypeRepositoryTest extends KernelTestCase
             $this->assertIsString($category);
             $this->assertIsArray($deviceTypes);
             $this->assertNotEmpty($deviceTypes);
-            foreach ($deviceTypes as $dt) {
-                $this->assertInstanceOf(DeviceType::class, $dt);
-            }
+            $this->assertContainsOnlyInstancesOf(DeviceType::class, $deviceTypes);
         }
     }
 
     public function testFindAllGroupedByCategoryFallsBackToSystemWhenCategoryIsNull(): void
     {
         // Add a device type with no display category
-        $orphan = (new DeviceType(9002))
+        $orphan = new DeviceType(9002)
             ->setName('Orphan Device Type')
             ->setDisplayCategory(null);
 
@@ -82,7 +80,7 @@ class DeviceTypeRepositoryTest extends KernelTestCase
         $this->assertArrayHasKey('System', $grouped);
         $orphanFound = false;
         foreach ($grouped['System'] as $dt) {
-            if ($dt->getId() === 9002) {
+            if (9002 === $dt->getId()) {
                 $orphanFound = true;
                 break;
             }
@@ -187,14 +185,7 @@ class DeviceTypeRepositoryTest extends KernelTestCase
         $this->assertNotEmpty($deviceTypes);
         foreach ($deviceTypes as $dt) {
             $this->assertInstanceOf(DeviceType::class, $dt);
-            // Verify cluster ID 3 actually appears in the mandatory list
-            $hasCluster = false;
-            foreach ($dt->getMandatoryServerClusters() as $cluster) {
-                if (($cluster['id'] ?? null) === 3) {
-                    $hasCluster = true;
-                    break;
-                }
-            }
+            $hasCluster = array_any($dt->getMandatoryServerClusters(), fn ($cluster): bool => ($cluster['id'] ?? null) === 3);
             $this->assertTrue($hasCluster);
         }
     }

@@ -10,9 +10,9 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: DeviceScoreRepository::class)]
 #[ORM\Table(name: 'device_scores')]
-#[ORM\Index(columns: ['star_rating'], name: 'idx_device_scores_rating')]
-#[ORM\Index(columns: ['overall_score'], name: 'idx_device_scores_score')]
-#[ORM\Index(columns: ['is_compliant'], name: 'idx_device_scores_compliant')]
+#[ORM\Index(name: 'idx_device_scores_rating', columns: ['star_rating'])]
+#[ORM\Index(name: 'idx_device_scores_score', columns: ['overall_score'])]
+#[ORM\Index(name: 'idx_device_scores_compliant', columns: ['is_compliant'])]
 class DeviceScore
 {
     #[ORM\Id]
@@ -21,7 +21,7 @@ class DeviceScore
     private ?int $id = null;
 
     #[ORM\OneToOne(targetEntity: Product::class, inversedBy: 'score')]
-    #[ORM\JoinColumn(name: 'device_id', nullable: false, unique: true, onDelete: 'CASCADE')]
+    #[ORM\JoinColumn(name: 'device_id', unique: true, nullable: false, onDelete: 'CASCADE')]
     private Product $product;
 
     #[ORM\Column(name: 'overall_score', type: Types::FLOAT)]

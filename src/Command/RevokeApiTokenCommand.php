@@ -19,7 +19,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class RevokeApiTokenCommand extends Command
 {
     public function __construct(
-        private ApiTokenRepository $apiTokenRepository,
+        private readonly ApiTokenRepository $apiTokenRepository,
     ) {
         parent::__construct();
     }

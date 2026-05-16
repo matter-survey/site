@@ -27,10 +27,10 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 )]
 class ZapSyncCommand extends Command
 {
-    private const ZCL_BASE_URL = 'https://raw.githubusercontent.com/project-chip/connectedhomeip/master/src/app/zap-templates/zcl';
-    private const ZCL_JSON_URL = self::ZCL_BASE_URL.'/zcl.json';
-    private const ZCL_XML_BASE = self::ZCL_BASE_URL.'/data-model/chip/';
-    private const DEFAULT_OUTPUT_FILE = 'fixtures/clusters.yaml';
+    private const string ZCL_BASE_URL = 'https://raw.githubusercontent.com/project-chip/connectedhomeip/master/src/app/zap-templates/zcl';
+    private const string ZCL_JSON_URL = self::ZCL_BASE_URL.'/zcl.json';
+    private const string ZCL_XML_BASE = self::ZCL_BASE_URL.'/data-model/chip/';
+    private const string DEFAULT_OUTPUT_FILE = 'fixtures/clusters.yaml';
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
@@ -91,7 +91,7 @@ class ZapSyncCommand extends Command
         // Fetch list of XML files from zcl.json
         $io->section('Fetching cluster file list from GitHub...');
         $clusterFiles = $this->fetchClusterFileList($io);
-        if (empty($clusterFiles)) {
+        if ([] === $clusterFiles) {
             $io->error('Failed to fetch cluster file list');
 
             return Command::FAILURE;
@@ -213,7 +213,7 @@ class ZapSyncCommand extends Command
             $clusters = $xml->xpath('//cluster');
             foreach ($clusters as $candidate) {
                 // The actual cluster definition has a <code> child element, not just a 'code' attribute
-                if (isset($candidate->code) || isset($candidate->name)) {
+                if (property_exists($candidate, 'code') && null !== $candidate->code || property_exists($candidate, 'name') && null !== $candidate->name) {
                     $clusterNode = $candidate;
                     break;
                 }
@@ -225,7 +225,7 @@ class ZapSyncCommand extends Command
 
             // Get cluster ID from <code> child element or 'code' attribute
             $codeValue = (string) ($clusterNode->code ?? $clusterNode['code'] ?? '');
-            if (empty($codeValue)) {
+            if ('' === $codeValue || '0' === $codeValue) {
                 return null;
             }
 
@@ -273,7 +273,7 @@ class ZapSyncCommand extends Command
         }
 
         // Sort by bit position
-        usort($features, fn ($a, $b) => $a['bit'] <=> $b['bit']);
+        usort($features, fn (array $a, array $b): int => $a['bit'] <=> $b['bit']);
 
         return $features;
     }
@@ -290,7 +290,10 @@ class ZapSyncCommand extends Command
 
         foreach ($attrNodes as $attr) {
             $code = (string) ($attr['code'] ?? $attr['id'] ?? '');
-            if (empty($code)) {
+            if ('' === $code) {
+                continue;
+            }
+            if ('0' === $code) {
                 continue;
             }
 
@@ -304,7 +307,7 @@ class ZapSyncCommand extends Command
         }
 
         // Sort by code
-        usort($attributes, fn ($a, $b) => $a['code'] <=> $b['code']);
+        usort($attributes, fn (array $a, array $b): int => $a['code'] <=> $b['code']);
 
         return $attributes;
     }
@@ -321,7 +324,10 @@ class ZapSyncCommand extends Command
 
         foreach ($cmdNodes as $cmd) {
             $code = (string) ($cmd['code'] ?? $cmd['id'] ?? '');
-            if (empty($code)) {
+            if ('' === $code) {
+                continue;
+            }
+            if ('0' === $code) {
                 continue;
             }
 
@@ -348,7 +354,7 @@ class ZapSyncCommand extends Command
         }
 
         // Sort by code
-        usort($commands, fn ($a, $b) => $a['code'] <=> $b['code']);
+        usort($commands, fn (array $a, array $b): int => $a['code'] <=> $b['code']);
 
         return $commands;
     }

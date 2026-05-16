@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 
-class ApiTokenAuthenticatorTest extends TestCase
+final class ApiTokenAuthenticatorTest extends TestCase
 {
     private ApiTokenAuthenticator $authenticator;
     private ApiTokenRepository&MockObject $tokenRepository;
@@ -78,7 +78,7 @@ class ApiTokenAuthenticatorTest extends TestCase
 
         $passport = $this->authenticator->authenticate($request);
 
-        $this->assertEquals('test@example.com', $passport->getUser()->getUserIdentifier());
+        $this->assertSame('test@example.com', $passport->getUser()->getUserIdentifier());
     }
 
     public function testAuthenticateThrowsExceptionWithEmptyToken(): void
@@ -133,11 +133,11 @@ class ApiTokenAuthenticatorTest extends TestCase
     public function testOnAuthenticationSuccessReturnsNull(): void
     {
         $request = new Request();
-        $token = $this->createMock(TokenInterface::class);
+        $token = $this->createStub(TokenInterface::class);
 
         $result = $this->authenticator->onAuthenticationSuccess($request, $token, 'api');
 
-        $this->assertNull($result);
+        $this->assertNotInstanceOf(Response::class, $result);
     }
 
     public function testOnAuthenticationFailureReturnsJsonError(): void
@@ -146,8 +146,9 @@ class ApiTokenAuthenticatorTest extends TestCase
         $exception = new CustomUserMessageAuthenticationException('Test error message');
 
         $response = $this->authenticator->onAuthenticationFailure($request, $exception);
+        $this->assertInstanceOf(Response::class, $response);
 
-        $this->assertEquals(Response::HTTP_UNAUTHORIZED, $response->getStatusCode());
+        $this->assertSame(Response::HTTP_UNAUTHORIZED, $response->getStatusCode(), (string) $response->getContent());
         $this->assertJson($response->getContent());
 
         $data = json_decode($response->getContent(), true);
@@ -161,11 +162,11 @@ class ApiTokenAuthenticatorTest extends TestCase
 
         $response = $this->authenticator->start($request);
 
-        $this->assertEquals(Response::HTTP_UNAUTHORIZED, $response->getStatusCode());
+        $this->assertSame(Response::HTTP_UNAUTHORIZED, $response->getStatusCode(), (string) $response->getContent());
         $this->assertJson($response->getContent());
 
         $data = json_decode($response->getContent(), true);
         $this->assertEquals('error', $data['status']);
-        $this->assertStringContainsString('Authentication required', $data['error']);
+        $this->assertStringContainsString('Authentication required', (string) $data['error']);
     }
 }

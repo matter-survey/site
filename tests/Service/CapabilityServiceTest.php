@@ -13,7 +13,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
  * These tests verify that capabilities are correctly detected based on
  * cluster presence and feature flags from V3 telemetry data.
  */
-class CapabilityServiceTest extends KernelTestCase
+final class CapabilityServiceTest extends KernelTestCase
 {
     private CapabilityService $capabilityService;
 
@@ -41,7 +41,7 @@ class CapabilityServiceTest extends KernelTestCase
         $this->assertArrayHasKey('supported', $result);
 
         // Find on_off capability
-        $onOffCapability = array_filter($result['supported'], fn ($c) => 'on_off' === $c['key']);
+        $onOffCapability = array_filter($result['supported'], fn (array $c): bool => 'on_off' === $c['key']);
         $this->assertNotEmpty($onOffCapability, 'on_off capability should be detected');
     }
 
@@ -65,11 +65,11 @@ class CapabilityServiceTest extends KernelTestCase
         $result = $this->capabilityService->analyzeCapabilities($endpoints);
 
         // Scheduling should NOT be supported (missing SCH/MSCH features)
-        $schedulingCapability = array_filter($result['supported'], fn ($c) => 'scheduling' === $c['key']);
+        $schedulingCapability = array_filter($result['supported'], fn (array $c): bool => 'scheduling' === $c['key']);
         $this->assertEmpty($schedulingCapability, 'Scheduling should NOT be supported without SCH/MSCH features');
 
         // But heating SHOULD be supported (HEAT feature is present)
-        $heatingCapability = array_filter($result['supported'], fn ($c) => 'heating' === $c['key']);
+        $heatingCapability = array_filter($result['supported'], fn (array $c): bool => 'heating' === $c['key']);
         $this->assertNotEmpty($heatingCapability, 'Heating should be supported with HEAT feature');
     }
 
@@ -91,7 +91,7 @@ class CapabilityServiceTest extends KernelTestCase
 
         $result = $this->capabilityService->analyzeCapabilities($endpoints);
 
-        $schedulingCapability = array_filter($result['supported'], fn ($c) => 'scheduling' === $c['key']);
+        $schedulingCapability = array_filter($result['supported'], fn (array $c): bool => 'scheduling' === $c['key']);
         $this->assertNotEmpty($schedulingCapability, 'Scheduling should be supported with SCH feature');
     }
 
@@ -113,7 +113,7 @@ class CapabilityServiceTest extends KernelTestCase
 
         $result = $this->capabilityService->analyzeCapabilities($endpoints);
 
-        $schedulingCapability = array_filter($result['supported'], fn ($c) => 'scheduling' === $c['key']);
+        $schedulingCapability = array_filter($result['supported'], fn (array $c): bool => 'scheduling' === $c['key']);
         $this->assertNotEmpty($schedulingCapability, 'Scheduling should be supported with MSCH feature');
     }
 
@@ -135,7 +135,7 @@ class CapabilityServiceTest extends KernelTestCase
 
         $result = $this->capabilityService->analyzeCapabilities($endpoints);
 
-        $coolingCapability = array_filter($result['supported'], fn ($c) => 'cooling' === $c['key']);
+        $coolingCapability = array_filter($result['supported'], fn (array $c): bool => 'cooling' === $c['key']);
         $this->assertEmpty($coolingCapability, 'Cooling should NOT be supported without COOL feature');
     }
 
@@ -157,7 +157,7 @@ class CapabilityServiceTest extends KernelTestCase
 
         $result = $this->capabilityService->analyzeCapabilities($endpoints);
 
-        $coolingCapability = array_filter($result['supported'], fn ($c) => 'cooling' === $c['key']);
+        $coolingCapability = array_filter($result['supported'], fn (array $c): bool => 'cooling' === $c['key']);
         $this->assertNotEmpty($coolingCapability, 'Cooling should be supported with COOL feature');
     }
 
@@ -179,7 +179,7 @@ class CapabilityServiceTest extends KernelTestCase
 
         $result = $this->capabilityService->analyzeCapabilities($endpoints);
 
-        $autoCapability = array_filter($result['supported'], fn ($c) => 'auto_mode' === $c['key']);
+        $autoCapability = array_filter($result['supported'], fn (array $c): bool => 'auto_mode' === $c['key']);
         $this->assertEmpty($autoCapability, 'Auto mode should NOT be supported without AUTO feature');
     }
 
@@ -201,7 +201,7 @@ class CapabilityServiceTest extends KernelTestCase
 
         $result = $this->capabilityService->analyzeCapabilities($endpoints);
 
-        $autoCapability = array_filter($result['supported'], fn ($c) => 'auto_mode' === $c['key']);
+        $autoCapability = array_filter($result['supported'], fn (array $c): bool => 'auto_mode' === $c['key']);
         $this->assertNotEmpty($autoCapability, 'Auto mode should be supported with AUTO feature');
     }
 
@@ -222,7 +222,7 @@ class CapabilityServiceTest extends KernelTestCase
         $result = $this->capabilityService->analyzeCapabilities($endpoints);
 
         // With V2 fallback, scheduling should be assumed supported (cluster exists)
-        $schedulingCapability = array_filter($result['supported'], fn ($c) => 'scheduling' === $c['key']);
+        $schedulingCapability = array_filter($result['supported'], fn (array $c): bool => 'scheduling' === $c['key']);
         $this->assertNotEmpty($schedulingCapability, 'V2 fallback should assume capability supported when cluster exists');
     }
 
@@ -245,7 +245,7 @@ class CapabilityServiceTest extends KernelTestCase
         $result = $this->capabilityService->analyzeCapabilities($endpoints);
 
         // Should fall back to V2 behavior
-        $schedulingCapability = array_filter($result['supported'], fn ($c) => 'scheduling' === $c['key']);
+        $schedulingCapability = array_filter($result['supported'], fn (array $c): bool => 'scheduling' === $c['key']);
         $this->assertNotEmpty($schedulingCapability, 'V2 fallback should assume capability supported when feature_map missing');
     }
 
@@ -267,7 +267,7 @@ class CapabilityServiceTest extends KernelTestCase
 
         $result = $this->capabilityService->analyzeCapabilities($endpoints);
 
-        $thermostatControl = array_filter($result['supported'], fn ($c) => 'thermostat_control' === $c['key']);
+        $thermostatControl = array_filter($result['supported'], fn (array $c): bool => 'thermostat_control' === $c['key']);
         $this->assertNotEmpty($thermostatControl, 'Thermostat control should be supported with just the cluster');
     }
 
@@ -301,11 +301,11 @@ class CapabilityServiceTest extends KernelTestCase
         $result = $this->capabilityService->analyzeCapabilities($endpoints);
 
         // Should detect heating from endpoint 1's Thermostat cluster
-        $heatingCapability = array_filter($result['supported'], fn ($c) => 'heating' === $c['key']);
+        $heatingCapability = array_filter($result['supported'], fn (array $c): bool => 'heating' === $c['key']);
         $this->assertNotEmpty($heatingCapability, 'heating should be detected from thermostat cluster');
 
         // Should detect temperature_sensing from endpoint 2's Temperature Measurement cluster
-        $tempCapability = array_filter($result['supported'], fn ($c) => 'temperature_sensing' === $c['key']);
+        $tempCapability = array_filter($result['supported'], fn (array $c): bool => 'temperature_sensing' === $c['key']);
         $this->assertNotEmpty($tempCapability, 'temperature_sensing should be detected from temp measurement cluster');
     }
 
@@ -339,8 +339,8 @@ class CapabilityServiceTest extends KernelTestCase
         $result = $this->capabilityService->analyzeCapabilities($endpoints);
 
         // Last endpoint wins, so only COOL should be detected, not HEAT
-        $heatingCapability = array_filter($result['supported'], fn ($c) => 'heating' === $c['key']);
-        $coolingCapability = array_filter($result['supported'], fn ($c) => 'cooling' === $c['key']);
+        $heatingCapability = array_filter($result['supported'], fn (array $c): bool => 'heating' === $c['key']);
+        $coolingCapability = array_filter($result['supported'], fn (array $c): bool => 'cooling' === $c['key']);
 
         $this->assertEmpty($heatingCapability, 'heating NOT detected (last endpoint overwrites)');
         $this->assertNotEmpty($coolingCapability, 'cooling detected from last endpoint');
@@ -364,7 +364,7 @@ class CapabilityServiceTest extends KernelTestCase
 
         $result = $this->capabilityService->analyzeCapabilities($endpoints);
 
-        $presetsCapability = array_filter($result['supported'], fn ($c) => 'thermostat_presets' === $c['key']);
+        $presetsCapability = array_filter($result['supported'], fn (array $c): bool => 'thermostat_presets' === $c['key']);
         $this->assertEmpty($presetsCapability, 'Presets should NOT be supported without PRES feature');
     }
 
@@ -386,7 +386,7 @@ class CapabilityServiceTest extends KernelTestCase
 
         $result = $this->capabilityService->analyzeCapabilities($endpoints);
 
-        $presetsCapability = array_filter($result['supported'], fn ($c) => 'thermostat_presets' === $c['key']);
+        $presetsCapability = array_filter($result['supported'], fn (array $c): bool => 'thermostat_presets' === $c['key']);
         $this->assertNotEmpty($presetsCapability, 'Presets should be supported with PRES feature');
     }
 
@@ -405,7 +405,7 @@ class CapabilityServiceTest extends KernelTestCase
         $result = $this->capabilityService->analyzeCapabilities($endpoints);
 
         // Find on_off capability
-        $onOffCapability = array_filter($result['supported'], fn ($c) => 'on_off' === $c['key']);
+        $onOffCapability = array_filter($result['supported'], fn (array $c): bool => 'on_off' === $c['key']);
         $this->assertNotEmpty($onOffCapability);
 
         $capability = reset($onOffCapability);
@@ -436,7 +436,7 @@ class CapabilityServiceTest extends KernelTestCase
         $result = $this->capabilityService->analyzeCapabilities($endpoints);
 
         // Find on_off capability
-        $onOffCapability = array_filter($result['supported'], fn ($c) => 'on_off' === $c['key']);
+        $onOffCapability = array_filter($result['supported'], fn (array $c): bool => 'on_off' === $c['key']);
         $this->assertNotEmpty($onOffCapability);
 
         /** @var array<string, mixed> $capability */
@@ -491,7 +491,7 @@ class CapabilityServiceTest extends KernelTestCase
 
         $result = $this->capabilityService->analyzeCapabilities($endpoints);
 
-        $onOffCapability = array_filter($result['supported'], fn ($c) => 'on_off' === $c['key']);
+        $onOffCapability = array_filter($result['supported'], fn (array $c): bool => 'on_off' === $c['key']);
         /** @var array<string, mixed>|false $capability */
         $capability = reset($onOffCapability);
 
@@ -543,7 +543,7 @@ class CapabilityServiceTest extends KernelTestCase
 
         $result = $this->capabilityService->analyzeCapabilities($endpoints);
 
-        $onOffCapability = array_filter($result['supported'], fn ($c) => 'on_off' === $c['key']);
+        $onOffCapability = array_filter($result['supported'], fn (array $c): bool => 'on_off' === $c['key']);
         /** @var array<string, mixed>|false $capability */
         $capability = reset($onOffCapability);
 

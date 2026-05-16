@@ -44,7 +44,7 @@ final class DoctrineTracingTest extends TestCase
 
     public function testPreparedQueryProducesClientSpan(): void
     {
-        $driver = (new TracingMiddleware())->wrap(new SqliteDriver());
+        $driver = new TracingMiddleware()->wrap(new SqliteDriver());
         $config = new Configuration();
         $config->setMiddlewares([new TracingMiddleware()]);
 
@@ -57,7 +57,7 @@ final class DoctrineTracingTest extends TestCase
         $this->tracerProvider->forceFlush();
 
         $spans = $this->getSpans();
-        $insertSpans = array_values(array_filter($spans, static fn ($s) => 'INSERT t' === $s->getName()));
+        $insertSpans = array_values(array_filter($spans, static fn (ImmutableSpan $s): bool => 'INSERT t' === $s->getName()));
         $this->assertCount(1, $insertSpans);
 
         $attrs = $insertSpans[0]->getAttributes()->toArray();
@@ -72,7 +72,7 @@ final class DoctrineTracingTest extends TestCase
         putenv('OTEL_PHP_TRACES_DB_PARAMETER_CAPTURE=true');
 
         try {
-            $driver = (new TracingMiddleware())->wrap(new SqliteDriver());
+            $driver = new TracingMiddleware()->wrap(new SqliteDriver());
             $conn = $driver->connect(['memory' => true]);
             $conn->exec('CREATE TABLE u (id INTEGER PRIMARY KEY, name TEXT)');
             $stmt = $conn->prepare('INSERT INTO u (name) VALUES (?)');
@@ -81,7 +81,7 @@ final class DoctrineTracingTest extends TestCase
 
             $this->tracerProvider->forceFlush();
             $spans = $this->getSpans();
-            $inserts = array_values(array_filter($spans, static fn ($s) => 'INSERT u' === $s->getName()));
+            $inserts = array_values(array_filter($spans, static fn (ImmutableSpan $s): bool => 'INSERT u' === $s->getName()));
             $this->assertCount(1, $inserts);
             $this->assertSame('bob', $inserts[0]->getAttributes()->toArray()['db.query.parameter.1'] ?? null);
         } finally {
@@ -91,7 +91,7 @@ final class DoctrineTracingTest extends TestCase
 
     public function testFailedQueryRecordsException(): void
     {
-        $driver = (new TracingMiddleware())->wrap(new SqliteDriver());
+        $driver = new TracingMiddleware()->wrap(new SqliteDriver());
         $conn = $driver->connect(['memory' => true]);
 
         $threw = false;
@@ -110,7 +110,7 @@ final class DoctrineTracingTest extends TestCase
 
     public function testQueryDirectProducesSpan(): void
     {
-        $driver = (new TracingMiddleware())->wrap(new SqliteDriver());
+        $driver = new TracingMiddleware()->wrap(new SqliteDriver());
         $conn = $driver->connect(['memory' => true]);
         $conn->exec('CREATE TABLE q (id INTEGER PRIMARY KEY)');
         $conn->exec('INSERT INTO q VALUES (1)');
@@ -121,7 +121,7 @@ final class DoctrineTracingTest extends TestCase
 
         $this->tracerProvider->forceFlush();
         $spans = $this->getSpans();
-        $selectSpans = array_values(array_filter($spans, static fn ($s) => 'SELECT q' === $s->getName()));
+        $selectSpans = array_values(array_filter($spans, static fn (ImmutableSpan $s): bool => 'SELECT q' === $s->getName()));
         $this->assertCount(1, $selectSpans);
     }
 

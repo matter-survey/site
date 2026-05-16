@@ -42,8 +42,8 @@ class MatterRegistry
     private bool $lastLookupHitCache = false;
 
     public function __construct(
-        private ?DeviceTypeRepository $deviceTypeRepository = null,
-        private ?ClusterRepository $clusterRepository = null,
+        private readonly ?DeviceTypeRepository $deviceTypeRepository = null,
+        private readonly ?ClusterRepository $clusterRepository = null,
     ) {
     }
 
@@ -412,7 +412,7 @@ class MatterRegistry
 
         $this->clusters = [];
 
-        if (null === $this->clusterRepository) {
+        if (!$this->clusterRepository instanceof ClusterRepository) {
             return $this->clusters;
         }
 
@@ -575,7 +575,7 @@ class MatterRegistry
 
         return array_filter(
             $deviceTypes,
-            fn (array $meta) => ($meta['category'] ?? '') === $category
+            fn (array $meta): bool => ($meta['category'] ?? '') === $category
         );
     }
 
@@ -590,7 +590,7 @@ class MatterRegistry
 
         return array_filter(
             $deviceTypes,
-            fn (array $meta) => ($meta['displayCategory'] ?? '') === $displayCategory
+            fn (array $meta): bool => ($meta['displayCategory'] ?? '') === $displayCategory
         );
     }
 
@@ -605,7 +605,7 @@ class MatterRegistry
 
         return array_filter(
             $deviceTypes,
-            fn (array $meta) => ($meta['specVersion'] ?? '') === $specVersion
+            fn (array $meta): bool => ($meta['specVersion'] ?? '') === $specVersion
         );
     }
 
@@ -650,7 +650,7 @@ class MatterRegistry
         $versions = array_unique(
             array_filter(array_column($deviceTypes, 'specVersion'))
         );
-        usort($versions, 'version_compare');
+        usort($versions, version_compare(...));
 
         return array_values($versions);
     }
@@ -690,7 +690,7 @@ class MatterRegistry
 
         $this->deviceTypes = [];
 
-        if (null === $this->deviceTypeRepository) {
+        if (!$this->deviceTypeRepository instanceof DeviceTypeRepository) {
             return $this->deviceTypes;
         }
 
@@ -891,7 +891,7 @@ class MatterRegistry
      * Cluster equivalents: legacy cluster ID => replacement cluster ID.
      * Devices implementing the legacy version should be considered compliant.
      */
-    private const CLUSTER_EQUIVALENTS = [
+    private const array CLUSTER_EQUIVALENTS = [
         5 => 98,   // Scenes (1.0) → Scenes Management (1.4)
     ];
 
@@ -1020,11 +1020,11 @@ class MatterRegistry
         // Find missing mandatory clusters (considering equivalents like Scenes → Scenes Management)
         $missingMandatoryServerIds = array_filter(
             $mandatoryServerIds,
-            fn (int $id) => !$this->isClusterSatisfied($id, $actualServerClusters)
+            fn (int $id): bool => !$this->isClusterSatisfied($id, $actualServerClusters)
         );
         $missingMandatoryClientIds = array_filter(
             $mandatoryClientIds,
-            fn (int $id) => !$this->isClusterSatisfied($id, $actualClientClusters)
+            fn (int $id): bool => !$this->isClusterSatisfied($id, $actualClientClusters)
         );
 
         // Find missing optional clusters
@@ -1042,16 +1042,16 @@ class MatterRegistry
         $extraClientIds = array_diff($actualClientClusters, $allSpecClientIds);
 
         // Build result arrays with names
-        $missingMandatoryServer = array_filter($mandatoryServer, fn ($c) => \in_array($c['id'], $missingMandatoryServerIds, true));
-        $missingMandatoryClient = array_filter($mandatoryClient, fn ($c) => \in_array($c['id'], $missingMandatoryClientIds, true));
-        $missingOptionalServer = array_filter($optionalServer, fn ($c) => \in_array($c['id'], $missingOptionalServerIds, true));
-        $missingOptionalClient = array_filter($optionalClient, fn ($c) => \in_array($c['id'], $missingOptionalClientIds, true));
-        $implementedOptionalServer = array_filter($optionalServer, fn ($c) => \in_array($c['id'], $implementedOptionalServerIds, true));
-        $implementedOptionalClient = array_filter($optionalClient, fn ($c) => \in_array($c['id'], $implementedOptionalClientIds, true));
+        $missingMandatoryServer = array_filter($mandatoryServer, fn (array $c): bool => \in_array($c['id'], $missingMandatoryServerIds, true));
+        $missingMandatoryClient = array_filter($mandatoryClient, fn (array $c): bool => \in_array($c['id'], $missingMandatoryClientIds, true));
+        $missingOptionalServer = array_filter($optionalServer, fn (array $c): bool => \in_array($c['id'], $missingOptionalServerIds, true));
+        $missingOptionalClient = array_filter($optionalClient, fn (array $c): bool => \in_array($c['id'], $missingOptionalClientIds, true));
+        $implementedOptionalServer = array_filter($optionalServer, fn (array $c): bool => \in_array($c['id'], $implementedOptionalServerIds, true));
+        $implementedOptionalClient = array_filter($optionalClient, fn (array $c): bool => \in_array($c['id'], $implementedOptionalClientIds, true));
 
         // Build extra clusters with names
-        $extraServer = array_map(fn ($id) => ['id' => $id, 'name' => $this->getClusterName($id)], array_values($extraServerIds));
-        $extraClient = array_map(fn ($id) => ['id' => $id, 'name' => $this->getClusterName($id)], array_values($extraClientIds));
+        $extraServer = array_map(fn (int $id): array => ['id' => $id, 'name' => $this->getClusterName($id)], array_values($extraServerIds));
+        $extraClient = array_map(fn (int $id): array => ['id' => $id, 'name' => $this->getClusterName($id)], array_values($extraClientIds));
 
         // Calculate compliance
         $totalMandatory = \count($mandatoryServerIds) + \count($mandatoryClientIds);

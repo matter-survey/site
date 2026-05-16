@@ -6,12 +6,12 @@ namespace App\Tests\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class WizardControllerTest extends WebTestCase
+final class WizardControllerTest extends WebTestCase
 {
     public function testWizardIndexLoadsStep1(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/wizard');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('.wizard-container');
@@ -20,8 +20,8 @@ class WizardControllerTest extends WebTestCase
 
     public function testWizardStep1ShowsCategories(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/wizard?step=1');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=1');
 
         $this->assertResponseIsSuccessful();
         // Should show category cards
@@ -30,24 +30,24 @@ class WizardControllerTest extends WebTestCase
 
     public function testCannotSkipToStep2WithoutCategory(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/wizard?step=2');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=2');
 
         $this->assertResponseRedirects('/wizard?step=1');
     }
 
     public function testCannotSkipToStep3WithoutCategory(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/wizard?step=3');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=3');
 
         $this->assertResponseRedirects('/wizard?step=1');
     }
 
     public function testStep2LoadsWithCategory(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/wizard?step=2&category=Lights');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=2&category=Lights');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('.feature-section');
@@ -55,8 +55,8 @@ class WizardControllerTest extends WebTestCase
 
     public function testStep3LoadsWithCategory(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/wizard?step=3&category=Lights');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=3&category=Lights');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('.device-search-container');
@@ -64,8 +64,8 @@ class WizardControllerTest extends WebTestCase
 
     public function testResultsRedirectsToDeviceIndex(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/wizard/results?category=Lights');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard/results?category=Lights');
 
         $this->assertResponseRedirects();
         $client->followRedirect();
@@ -74,29 +74,29 @@ class WizardControllerTest extends WebTestCase
 
     public function testResultsIncludesDeviceTypeFilters(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/wizard/results?category=Lights');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard/results?category=Lights');
 
         $this->assertResponseRedirects();
         $location = $client->getResponse()->headers->get('Location');
         // Should include device_types filter parameter
-        $this->assertStringContainsString('device_types', $location);
+        $this->assertStringContainsString('device_types', (string) $location);
     }
 
     public function testResultsIncludesConnectivityFilter(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/wizard/results?category=Lights&connectivity[]=thread');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard/results?category=Lights&connectivity[]=thread');
 
         $this->assertResponseRedirects();
         $location = $client->getResponse()->headers->get('Location');
-        $this->assertStringContainsString('connectivity', $location);
+        $this->assertStringContainsString('connectivity', (string) $location);
     }
 
     public function testDeviceSearchEndpoint(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/wizard/device-search?q=test');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard/device-search?q=test');
 
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('Content-Type', 'application/json');
@@ -108,8 +108,8 @@ class WizardControllerTest extends WebTestCase
 
     public function testDeviceSearchReturnsEmptyForShortQuery(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/wizard/device-search?q=a');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard/device-search?q=a');
 
         $this->assertResponseIsSuccessful();
 
@@ -120,18 +120,18 @@ class WizardControllerTest extends WebTestCase
 
     public function testWizardSetsSessionCookie(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/wizard');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard');
 
         $this->assertResponseIsSuccessful();
         $cookie = $client->getCookieJar()->get('wizard_session');
-        $this->assertNotNull($cookie);
+        $this->assertInstanceOf(\Symfony\Component\BrowserKit\Cookie::class, $cookie);
     }
 
     public function testProgressIndicatorShowsCorrectStep(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/wizard?step=2&category=Lights');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=2&category=Lights');
 
         $this->assertResponseIsSuccessful();
         // First step should be completed
@@ -142,14 +142,14 @@ class WizardControllerTest extends WebTestCase
 
     public function testStep2FormSubmissionWithConnectivity(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Load step 2
-        $crawler = $client->request('GET', '/wizard?step=2&category=Climate');
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=2&category=Climate');
         $this->assertResponseIsSuccessful();
 
         // Submit the form by navigating directly (simulating form submission)
-        $client->request('GET', '/wizard?step=3&category=Climate&connectivity[]=thread&min_rating=&binding=');
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=3&category=Climate&connectivity[]=thread&min_rating=&binding=');
 
         // Should navigate to step 3 successfully
         $this->assertResponseIsSuccessful();
@@ -158,10 +158,10 @@ class WizardControllerTest extends WebTestCase
 
     public function testStep3LoadsWithConnectivityParameter(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Navigate to step 3 with connectivity parameter - should not error
-        $crawler = $client->request('GET', '/wizard?step=3&category=Climate&connectivity[]=thread');
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=3&category=Climate&connectivity[]=thread');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('.device-search-container');
@@ -169,20 +169,20 @@ class WizardControllerTest extends WebTestCase
 
     public function testStep2WithEmptyMinRating(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Empty min_rating parameter should not cause Bad Request
-        $client->request('GET', '/wizard?step=2&category=Climate&min_rating=');
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=2&category=Climate&min_rating=');
 
         $this->assertResponseIsSuccessful();
     }
 
     public function testStep3WithAllEmptyOptionalParams(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // All optional params empty should not cause Bad Request
-        $client->request('GET', '/wizard?step=3&category=Climate&connectivity[]=&min_rating=&binding=');
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=3&category=Climate&connectivity[]=&min_rating=&binding=');
 
         $this->assertResponseIsSuccessful();
     }
@@ -193,8 +193,8 @@ class WizardControllerTest extends WebTestCase
 
     public function testStep2ShowsCapabilitiesSection(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/wizard?step=2&category=Lights');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=2&category=Lights');
 
         $this->assertResponseIsSuccessful();
         // Should show capabilities section
@@ -205,8 +205,8 @@ class WizardControllerTest extends WebTestCase
 
     public function testStep2PreservesCapabilitiesInForm(): void
     {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/wizard?step=2&category=Lights&capabilities[]=dimming');
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=2&category=Lights&capabilities[]=dimming');
 
         $this->assertResponseIsSuccessful();
         // The dimming checkbox should be checked (checked attribute present means it's checked)
@@ -216,27 +216,27 @@ class WizardControllerTest extends WebTestCase
 
     public function testStep3LoadsWithCapabilitiesParameter(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/wizard?step=3&category=Lights&capabilities[]=dimming&capabilities[]=full_color');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=3&category=Lights&capabilities[]=dimming&capabilities[]=full_color');
 
         $this->assertResponseIsSuccessful();
     }
 
     public function testResultsIncludesCapabilitiesFilter(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/wizard/results?category=Lights&capabilities[]=dimming');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard/results?category=Lights&capabilities[]=dimming');
 
         $this->assertResponseRedirects();
         $location = $client->getResponse()->headers->get('Location');
-        $this->assertStringContainsString('capabilities', $location);
+        $this->assertStringContainsString('capabilities', (string) $location);
     }
 
     public function testCapabilitiesFilterIgnoresInvalidKeys(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         // Invalid capability key should be filtered out
-        $client->request('GET', '/wizard?step=2&category=Lights&capabilities[]=invalid_key');
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=2&category=Lights&capabilities[]=invalid_key');
 
         $this->assertResponseIsSuccessful();
     }

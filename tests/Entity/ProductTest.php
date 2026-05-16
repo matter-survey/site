@@ -8,7 +8,7 @@ use App\Entity\Product;
 use App\Entity\Vendor;
 use PHPUnit\Framework\TestCase;
 
-class ProductTest extends TestCase
+final class ProductTest extends TestCase
 {
     public function testNewProductHasDefaultValues(): void
     {
@@ -18,10 +18,10 @@ class ProductTest extends TestCase
         $this->assertNull($product->getSlug());
         $this->assertNull($product->getVendorName());
         $this->assertNull($product->getProductName());
-        $this->assertNull($product->getFirstSeen());
-        $this->assertNull($product->getLastSeen());
+        $this->assertNotInstanceOf(\DateTimeInterface::class, $product->getFirstSeen());
+        $this->assertNotInstanceOf(\DateTimeInterface::class, $product->getLastSeen());
         $this->assertSame(0, $product->getSubmissionCount());
-        $this->assertNull($product->getVendor());
+        $this->assertNotInstanceOf(Vendor::class, $product->getVendor());
         $this->assertNull($product->getDeviceTypeId());
         $this->assertNull($product->getPartNumber());
         $this->assertNull($product->getProductUrl());
@@ -44,17 +44,17 @@ class ProductTest extends TestCase
         $this->assertNull($product->getLsfRevision());
         $this->assertNull($product->getCertifiedSoftwareVersions());
         $this->assertNull($product->getConnectivityTypes());
-        $this->assertNull($product->getCertificationDate());
+        $this->assertNotInstanceOf(\DateTimeInterface::class, $product->getCertificationDate());
         $this->assertNull($product->getCertificateId());
         $this->assertNull($product->getSoftwareVersionString());
-        $this->assertNull($product->getScore());
+        $this->assertNotInstanceOf(\App\Entity\DeviceScore::class, $product->getScore());
         $this->assertCount(0, $product->getVersions());
         $this->assertCount(0, $product->getEndpoints());
     }
 
     public function testIdentityFieldsRoundTrip(): void
     {
-        $product = (new Product())
+        $product = new Product()
             ->setVendorId(4874)
             ->setProductId(100)
             ->setVendorName('Eve')
@@ -73,7 +73,7 @@ class ProductTest extends TestCase
         $first = new \DateTime('2025-01-01 00:00:00');
         $last = new \DateTime('2025-06-01 12:00:00');
 
-        $product = (new Product())
+        $product = new Product()
             ->setFirstSeen($first)
             ->setLastSeen($last)
             ->setSubmissionCount(42);
@@ -91,7 +91,7 @@ class ProductTest extends TestCase
         $product->incrementSubmissionCount();
 
         $this->assertSame(1, $product->getSubmissionCount());
-        $this->assertNotNull($product->getLastSeen());
+        $this->assertInstanceOf(\DateTimeInterface::class, $product->getLastSeen());
         $this->assertGreaterThanOrEqual($before->getTimestamp(), $product->getLastSeen()->getTimestamp());
 
         $product->incrementSubmissionCount();
@@ -101,7 +101,7 @@ class ProductTest extends TestCase
     public function testVendorRelation(): void
     {
         $vendor = new Vendor();
-        $product = (new Product())->setVendor($vendor);
+        $product = new Product()->setVendor($vendor);
 
         $this->assertSame($vendor, $product->getVendor());
 
@@ -111,7 +111,7 @@ class ProductTest extends TestCase
 
     public function testMetadataFieldsRoundTrip(): void
     {
-        $product = (new Product())
+        $product = new Product()
             ->setDeviceTypeId(266)
             ->setPartNumber('PN-001')
             ->setProductUrl('https://example.com/product')
@@ -127,7 +127,7 @@ class ProductTest extends TestCase
 
     public function testCommissioningAndMaintenanceFieldsRoundTrip(): void
     {
-        $product = (new Product())
+        $product = new Product()
             ->setDiscoveryCapabilitiesBitmask(6)
             ->setCommissioningCustomFlow(1)
             ->setCommissioningCustomFlowUrl('https://example.com/flow')
@@ -161,7 +161,7 @@ class ProductTest extends TestCase
     {
         $certDate = new \DateTime('2025-03-15');
 
-        $product = (new Product())
+        $product = new Product()
             ->setLsfUrl('https://example.com/lsf')
             ->setLsfRevision(3)
             ->setCertifiedSoftwareVersions([1, 2, 3])
@@ -179,7 +179,7 @@ class ProductTest extends TestCase
 
     public function testConnectivityTypesSetterAccepts(): void
     {
-        $product = (new Product())->setConnectivityTypes(['wifi', 'thread']);
+        $product = new Product()->setConnectivityTypes(['wifi', 'thread']);
 
         $this->assertSame(['wifi', 'thread'], $product->getConnectivityTypes());
     }

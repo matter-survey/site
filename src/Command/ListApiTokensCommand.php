@@ -20,8 +20,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class ListApiTokensCommand extends Command
 {
     public function __construct(
-        private UserRepository $userRepository,
-        private ApiTokenRepository $apiTokenRepository,
+        private readonly UserRepository $userRepository,
+        private readonly ApiTokenRepository $apiTokenRepository,
     ) {
         parent::__construct();
     }
@@ -41,7 +41,7 @@ class ListApiTokensCommand extends Command
 
         // Find user
         $user = $this->userRepository->findByEmail($email);
-        if (null === $user) {
+        if (!$user instanceof \App\Entity\User) {
             $io->error(sprintf('User with email "%s" not found.', $email));
 
             return Command::FAILURE;
@@ -50,7 +50,7 @@ class ListApiTokensCommand extends Command
         // Get tokens
         $tokens = $this->apiTokenRepository->findByUser($user);
 
-        if (empty($tokens)) {
+        if ([] === $tokens) {
             $io->info(sprintf('No API tokens found for user "%s".', $email));
 
             return Command::SUCCESS;
@@ -64,7 +64,7 @@ class ListApiTokensCommand extends Command
             $rows[] = [
                 $token->getId(),
                 $token->getName(),
-                substr($token->getToken(), 0, 12).'...',
+                substr((string) $token->getToken(), 0, 12).'...',
                 $token->getCreatedAt()->format('Y-m-d H:i'),
                 $token->getLastUsedAt() ? $token->getLastUsedAt()->format('Y-m-d H:i') : 'Never',
                 $token->getExpiresAt() ? $token->getExpiresAt()->format('Y-m-d H:i') : 'Never',

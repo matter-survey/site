@@ -7,12 +7,12 @@ namespace App\Tests\Controller;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
 
-class ApiControllerTest extends WebTestCase
+final class ApiControllerTest extends WebTestCase
 {
     public function testApiDocsRedirect(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/api/');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/api/');
 
         // /api/ should redirect to docs
         $this->assertResponseRedirects('/api/docs.html');
@@ -20,8 +20,8 @@ class ApiControllerTest extends WebTestCase
 
     public function testSubmitWithEmptyBody(): void
     {
-        $client = static::createClient();
-        $client->request('POST', '/api/submit', [], [], [
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ]);
 
@@ -29,13 +29,13 @@ class ApiControllerTest extends WebTestCase
 
         $response = json_decode($client->getResponse()->getContent(), true);
         $this->assertEquals('error', $response['status']);
-        $this->assertStringContainsString('Empty request body', $response['error']);
+        $this->assertStringContainsString('Empty request body', (string) $response['error']);
     }
 
     public function testSubmitWithInvalidJson(): void
     {
-        $client = static::createClient();
-        $client->request('POST', '/api/submit', [], [], [
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], 'not valid json {');
 
@@ -43,13 +43,13 @@ class ApiControllerTest extends WebTestCase
 
         $response = json_decode($client->getResponse()->getContent(), true);
         $this->assertEquals('error', $response['status']);
-        $this->assertStringContainsString('Invalid JSON', $response['error']);
+        $this->assertStringContainsString('Invalid JSON', (string) $response['error']);
     }
 
     public function testSubmitWithMissingInstallationId(): void
     {
-        $client = static::createClient();
-        $client->request('POST', '/api/submit', [], [], [
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode(['devices' => []]));
 
@@ -57,13 +57,13 @@ class ApiControllerTest extends WebTestCase
 
         $response = json_decode($client->getResponse()->getContent(), true);
         $this->assertEquals('error', $response['status']);
-        $this->assertStringContainsString('installation_id', $response['error']);
+        $this->assertStringContainsString('installation_id', (string) $response['error']);
     }
 
     public function testSubmitWithInvalidInstallationIdFormat(): void
     {
-        $client = static::createClient();
-        $client->request('POST', '/api/submit', [], [], [
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode([
             'installation_id' => 'not-a-uuid',
@@ -74,13 +74,13 @@ class ApiControllerTest extends WebTestCase
 
         $response = json_decode($client->getResponse()->getContent(), true);
         $this->assertEquals('error', $response['status']);
-        $this->assertStringContainsString('installation_id', $response['error']);
+        $this->assertStringContainsString('installation_id', (string) $response['error']);
     }
 
     public function testSubmitWithMissingDevices(): void
     {
-        $client = static::createClient();
-        $client->request('POST', '/api/submit', [], [], [
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440000',
@@ -90,13 +90,13 @@ class ApiControllerTest extends WebTestCase
 
         $response = json_decode($client->getResponse()->getContent(), true);
         $this->assertEquals('error', $response['status']);
-        $this->assertStringContainsString('devices', $response['error']);
+        $this->assertStringContainsString('devices', (string) $response['error']);
     }
 
     public function testSubmitWithValidEmptyDevices(): void
     {
-        $client = static::createClient();
-        $client->request('POST', '/api/submit', [], [], [
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440000',
@@ -112,8 +112,8 @@ class ApiControllerTest extends WebTestCase
 
     public function testSubmitWithValidDevice(): void
     {
-        $client = static::createClient();
-        $client->request('POST', '/api/submit', [], [], [
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440001',
@@ -147,18 +147,18 @@ class ApiControllerTest extends WebTestCase
 
     public function testSubmitMethodNotAllowed(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/api/submit');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/api/submit');
 
         $this->assertResponseStatusCodeSame(Response::HTTP_METHOD_NOT_ALLOWED);
     }
 
     public function testSubmitSameDeviceDifferentVersionsCreatesSeparateEndpoints(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Submit version 1.0
-        $client->request('POST', '/api/submit', [], [], [
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440010',
@@ -185,7 +185,7 @@ class ApiControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Submit version 2.0 with additional cluster (Binding)
-        $client->request('POST', '/api/submit', [], [], [
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440010',
@@ -212,7 +212,7 @@ class ApiControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Verify both versions exist by checking the device page
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $this->assertResponseIsSuccessful();
 
         // Find the device link and visit it
@@ -223,17 +223,17 @@ class ApiControllerTest extends WebTestCase
 
             // Verify both versions are displayed
             $content = $client->getResponse()->getContent();
-            $this->assertStringContainsString('1.0.0', $content);
-            $this->assertStringContainsString('2.0.0', $content);
+            $this->assertStringContainsString('1.0.0', (string) $content);
+            $this->assertStringContainsString('2.0.0', (string) $content);
         }
     }
 
     public function testSubmitSameDeviceVersionUpdatesExistingEndpoint(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // First submission
-        $client->request('POST', '/api/submit', [], [], [
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440011',
@@ -262,7 +262,7 @@ class ApiControllerTest extends WebTestCase
         $this->assertEquals(1, $response1['devices_processed']);
 
         // Second submission with same version - should update, not duplicate
-        $client->request('POST', '/api/submit', [], [], [
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440012', // Different installation
@@ -291,7 +291,7 @@ class ApiControllerTest extends WebTestCase
         $this->assertEquals(1, $response2['devices_processed']);
 
         // Device page should show the endpoint only once for this version
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('a:contains("Update Test Product")');
         if ($deviceLink->count() > 0) {
             $client->click($deviceLink->link());
@@ -299,16 +299,16 @@ class ApiControllerTest extends WebTestCase
 
             // Count occurrences of "Endpoint 1" - should appear only once per version
             $content = $client->getResponse()->getContent();
-            $this->assertEquals(1, substr_count($content, 'SW: 1.0.0'));
+            $this->assertSame(1, substr_count($content, 'SW: 1.0.0'));
         }
     }
 
     public function testSubmitDeviceWithClientClustersStoresCorrectly(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Submit device with both server and client clusters
-        $client->request('POST', '/api/submit', [], [], [
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440013',
@@ -335,7 +335,7 @@ class ApiControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Verify client clusters are displayed on device page
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('a:contains("Motion Sensor With Binding")');
         if ($deviceLink->count() > 0) {
             $client->click($deviceLink->link());
@@ -343,18 +343,18 @@ class ApiControllerTest extends WebTestCase
 
             $content = $client->getResponse()->getContent();
             // Should show "Client Clusters" section
-            $this->assertStringContainsString('Client Clusters', $content);
+            $this->assertStringContainsString('Client Clusters', (string) $content);
             // Should show OnOff in client clusters
-            $this->assertStringContainsString('On/Off', $content);
+            $this->assertStringContainsString('On/Off', (string) $content);
         }
     }
 
     public function testVersionDiffShowsAddedAndRemovedClusters(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Submit version 1.0 with basic clusters
-        $client->request('POST', '/api/submit', [], [], [
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440020',
@@ -381,7 +381,7 @@ class ApiControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Submit version 2.0 with added Binding cluster and OnOff client
-        $client->request('POST', '/api/submit', [], [], [
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440020',
@@ -408,7 +408,7 @@ class ApiControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Visit device page and verify diff is shown
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('a:contains("Diff Test Light")');
         $this->assertGreaterThan(0, $deviceLink->count(), 'Device link should exist');
 
@@ -418,17 +418,17 @@ class ApiControllerTest extends WebTestCase
         $content = $client->getResponse()->getContent();
 
         // Should show both versions
-        $this->assertStringContainsString('2.0.0', $content);
-        $this->assertStringContainsString('1.0.0', $content);
+        $this->assertStringContainsString('2.0.0', (string) $content);
+        $this->assertStringContainsString('1.0.0', (string) $content);
 
         // Should show diff section
-        $this->assertStringContainsString('Changes from previous version', $content);
+        $this->assertStringContainsString('Changes from previous version', (string) $content);
 
         // Should show added Binding cluster (server)
-        $this->assertStringContainsString('Binding', $content);
+        $this->assertStringContainsString('Binding', (string) $content);
 
         // Should show added OnOff client
-        $this->assertStringContainsString('On/Off', $content);
+        $this->assertStringContainsString('On/Off', (string) $content);
 
         // Verify diff is on the NEWER version (2.0.0), not the older one
         // Find the version group containing 2.0.0 and verify it has the diff section
@@ -453,10 +453,10 @@ class ApiControllerTest extends WebTestCase
      */
     public function testSubmitFiltersBridgedNodeEndpoints(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Submit a bridge device with root, aggregator, and bridged node endpoints
-        $client->request('POST', '/api/submit', [], [], [
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440030',
@@ -506,25 +506,25 @@ class ApiControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Verify device page shows only non-bridged endpoints
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('a:contains("Test Matter Bridge")');
         $this->assertGreaterThan(0, $deviceLink->count(), 'Device link should exist');
 
-        $crawler = $client->click($deviceLink->link());
+        $client->click($deviceLink->link());
         $this->assertResponseIsSuccessful();
 
         $content = $client->getResponse()->getContent();
 
         // Should show Root Node and Aggregator endpoints
-        $this->assertStringContainsString('Endpoint 0', $content);
-        $this->assertStringContainsString('Endpoint 1', $content);
+        $this->assertStringContainsString('Endpoint 0', (string) $content);
+        $this->assertStringContainsString('Endpoint 1', (string) $content);
 
         // Should NOT show Bridged Node endpoints (3 and 4)
-        $this->assertStringNotContainsString('Endpoint 3', $content);
-        $this->assertStringNotContainsString('Endpoint 4', $content);
+        $this->assertStringNotContainsString('Endpoint 3', (string) $content);
+        $this->assertStringNotContainsString('Endpoint 4', (string) $content);
 
         // Should show Root Node device type
-        $this->assertStringContainsString('Root Node', $content);
+        $this->assertStringContainsString('Root Node', (string) $content);
 
         // Should NOT show "Bridged Node" as a device type (the endpoints were filtered)
         // Note: The text "Bridged Node" might still appear in other contexts,
@@ -533,10 +533,10 @@ class ApiControllerTest extends WebTestCase
 
     public function testSubmitCalculatesAndCachesDeviceScore(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Submit a device with proper endpoint data for scoring
-        $client->request('POST', '/api/submit', [], [], [
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440040',
@@ -566,7 +566,7 @@ class ApiControllerTest extends WebTestCase
         $this->assertEquals(1, $response['devices_processed']);
 
         // Verify score was cached by checking the database directly
-        $container = static::getContainer();
+        $container = self::getContainer();
         $connection = $container->get('doctrine.dbal.default_connection');
 
         // Find the device ID
@@ -591,10 +591,10 @@ class ApiControllerTest extends WebTestCase
      */
     public function testSubmitWithV3SchemaRichClusterData(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Submit device with v3 schema - clusters have full details
-        $client->request('POST', '/api/submit', [], [], [
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440050',
@@ -654,7 +654,7 @@ class ApiControllerTest extends WebTestCase
         $this->assertEquals(1, $response['devices_processed']);
 
         // Verify cluster details were stored in database
-        $container = static::getContainer();
+        $container = self::getContainer();
         $connection = $container->get('doctrine.dbal.default_connection');
 
         $deviceId = $connection->fetchOne(
@@ -673,7 +673,7 @@ class ApiControllerTest extends WebTestCase
         $this->assertNotNull($endpoint['client_cluster_details'], 'Client cluster details should be stored');
 
         // Verify cluster IDs are extracted for backwards compatibility
-        $serverClusters = json_decode($endpoint['server_clusters'], true);
+        $serverClusters = json_decode((string) $endpoint['server_clusters'], true);
         $this->assertContains(6, $serverClusters);
         $this->assertContains(8, $serverClusters);
         $this->assertContains(29, $serverClusters);
@@ -682,15 +682,7 @@ class ApiControllerTest extends WebTestCase
         $serverDetails = json_decode($endpoint['server_cluster_details'], true);
         $this->assertIsArray($serverDetails);
         $this->assertCount(3, $serverDetails);
-
-        // Find OnOff cluster details
-        $onOffDetails = null;
-        foreach ($serverDetails as $detail) {
-            if (6 === $detail['id']) {
-                $onOffDetails = $detail;
-                break;
-            }
-        }
+        $onOffDetails = array_find($serverDetails, fn ($detail): bool => 6 === $detail['id']);
         $this->assertNotNull($onOffDetails, 'OnOff cluster details should exist');
         $this->assertEquals(1, $onOffDetails['feature_map']);
         $this->assertContains(0, $onOffDetails['accepted_command_list']); // Off command
@@ -702,10 +694,10 @@ class ApiControllerTest extends WebTestCase
      */
     public function testSubmitAutoDetectsV3SchemaFromClusterFormat(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Submit without schema_version but with v3 cluster format
-        $client->request('POST', '/api/submit', [], [], [
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440051',
@@ -735,7 +727,7 @@ class ApiControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Verify schema version was detected as 3
-        $container = static::getContainer();
+        $container = self::getContainer();
         $connection = $container->get('doctrine.dbal.default_connection');
 
         $endpoint = $connection->fetchAssociative(
@@ -753,10 +745,10 @@ class ApiControllerTest extends WebTestCase
      */
     public function testV2SubmissionPreservesExistingV3Details(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // First: Submit with v3 schema
-        $client->request('POST', '/api/submit', [], [], [
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440052',
@@ -785,7 +777,7 @@ class ApiControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Second: Submit with v2 schema (same device, same version)
-        $client->request('POST', '/api/submit', [], [], [
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440053',
@@ -812,7 +804,7 @@ class ApiControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Verify v3 details were preserved
-        $container = static::getContainer();
+        $container = self::getContainer();
         $connection = $container->get('doctrine.dbal.default_connection');
 
         $endpoint = $connection->fetchAssociative(
@@ -836,10 +828,10 @@ class ApiControllerTest extends WebTestCase
      */
     public function testDevicePageShowsActualCapabilitiesForV3Data(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         // Submit device with v3 schema
-        $client->request('POST', '/api/submit', [], [], [
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440054',
@@ -881,23 +873,23 @@ class ApiControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Visit device page
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $deviceLink = $crawler->filter('a:contains("Display V3 Dimmer")');
         $this->assertGreaterThan(0, $deviceLink->count(), 'Device link should exist');
 
-        $crawler = $client->click($deviceLink->link());
+        $client->click($deviceLink->link());
         $this->assertResponseIsSuccessful();
 
         $content = $client->getResponse()->getContent();
 
         // Should show the actual telemetry indicator (checkmark)
-        $this->assertStringContainsString('✓', $content, 'Should show actual telemetry indicator');
+        $this->assertStringContainsString('✓', (string) $content, 'Should show actual telemetry indicator');
 
         // Should show "Actual" label for feature map
-        $this->assertStringContainsString('Actual', $content, 'Should show Actual label for v3 data');
+        $this->assertStringContainsString('Actual', (string) $content, 'Should show Actual label for v3 data');
 
         // Should show commands (these come from the actual telemetry)
-        $this->assertStringContainsString('Commands', $content, 'Should show Commands section');
+        $this->assertStringContainsString('Commands', (string) $content, 'Should show Commands section');
     }
 
     /**
@@ -905,9 +897,9 @@ class ApiControllerTest extends WebTestCase
      */
     public function testSubmitV3SchemaWithThreadConnectivity(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
-        $client->request('POST', '/api/submit', [], [], [
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440055',
@@ -938,7 +930,7 @@ class ApiControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Verify connectivity type was extracted from v3 format
-        $container = static::getContainer();
+        $container = self::getContainer();
         $connection = $container->get('doctrine.dbal.default_connection');
 
         $device = $connection->fetchAssociative(
@@ -947,7 +939,7 @@ class ApiControllerTest extends WebTestCase
         );
         $this->assertNotFalse($device);
 
-        $connectivity = json_decode($device['connectivity_types'], true);
+        $connectivity = json_decode((string) $device['connectivity_types'], true);
         $this->assertContains('thread', $connectivity, 'Thread connectivity should be detected from v3 cluster format');
     }
 }

@@ -23,7 +23,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface, Fixtu
     public const DEVICE_NANOLEAF_SHAPES = 'device-nanoleaf-shapes';
 
     public function __construct(
-        private DeviceRepository $deviceRepository,
+        private readonly DeviceRepository $deviceRepository,
     ) {
     }
 

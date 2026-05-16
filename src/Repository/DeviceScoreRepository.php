@@ -57,7 +57,7 @@ class DeviceScoreRepository extends ServiceEntityRepository
      */
     public function findByProducts(array $productIds): array
     {
-        if (empty($productIds)) {
+        if ([] === $productIds) {
             return [];
         }
 

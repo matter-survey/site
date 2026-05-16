@@ -8,7 +8,7 @@ use App\Entity\ApiToken;
 use App\Entity\User;
 use PHPUnit\Framework\TestCase;
 
-class ApiTokenTest extends TestCase
+final class ApiTokenTest extends TestCase
 {
     public function testNewApiTokenHasDefaultValues(): void
     {
@@ -17,10 +17,10 @@ class ApiTokenTest extends TestCase
         $this->assertNull($token->getId());
         $this->assertNull($token->getToken());
         $this->assertNull($token->getName());
-        $this->assertNull($token->getUser());
+        $this->assertNotInstanceOf(User::class, $token->getUser());
         $this->assertInstanceOf(\DateTimeImmutable::class, $token->getCreatedAt());
-        $this->assertNull($token->getLastUsedAt());
-        $this->assertNull($token->getExpiresAt());
+        $this->assertNotInstanceOf(\DateTimeImmutable::class, $token->getLastUsedAt());
+        $this->assertNotInstanceOf(\DateTimeImmutable::class, $token->getExpiresAt());
     }
 
     public function testSetAndGetToken(): void
@@ -28,7 +28,7 @@ class ApiTokenTest extends TestCase
         $token = new ApiToken();
         $token->setToken('ms_test_token_123');
 
-        $this->assertEquals('ms_test_token_123', $token->getToken());
+        $this->assertSame('ms_test_token_123', $token->getToken());
     }
 
     public function testSetAndGetName(): void
@@ -36,7 +36,7 @@ class ApiTokenTest extends TestCase
         $token = new ApiToken();
         $token->setName('Home Assistant');
 
-        $this->assertEquals('Home Assistant', $token->getName());
+        $this->assertSame('Home Assistant', $token->getName());
     }
 
     public function testSetAndGetUser(): void
@@ -138,7 +138,7 @@ class ApiTokenTest extends TestCase
         $this->assertStringStartsWith('ms_', $token);
 
         // Should be 68 characters total (3 for prefix + 64 hex chars)
-        $this->assertEquals(67, strlen($token));
+        $this->assertSame(67, strlen($token));
 
         // The hex part should only contain hex characters
         $hexPart = substr($token, 3);

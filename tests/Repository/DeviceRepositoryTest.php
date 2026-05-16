@@ -9,19 +9,19 @@ use App\Repository\DeviceRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
-class DeviceRepositoryTest extends KernelTestCase
+final class DeviceRepositoryTest extends KernelTestCase
 {
     private DeviceRepository $repository;
 
     protected function setUp(): void
     {
         self::bootKernel();
-        $this->repository = static::getContainer()->get(DeviceRepository::class);
+        $this->repository = self::getContainer()->get(DeviceRepository::class);
     }
 
     public function testIsNameAmbiguousFlagsDuplicateNamesPerVendor(): void
     {
-        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $em = self::getContainer()->get(EntityManagerInterface::class);
         $vendor = $em->getRepository(Vendor::class)->findOneBy(['specId' => 4874]);
         $this->assertNotNull($vendor, 'Eve fixture vendor (specId 4874) should exist');
 
@@ -38,7 +38,7 @@ class DeviceRepositoryTest extends KernelTestCase
 
         $eveMotion = array_values(array_filter(
             $devices,
-            fn (array $d) => 'Eve Motion' === ($d['product_name'] ?? null)
+            fn (array $d): bool => 'Eve Motion' === ($d['product_name'] ?? null)
         ));
         $this->assertCount(2, $eveMotion, 'Both Eve Motion entries should be returned');
         foreach ($eveMotion as $row) {
@@ -50,7 +50,7 @@ class DeviceRepositoryTest extends KernelTestCase
 
         $unique = array_values(array_filter(
             $devices,
-            fn (array $d) => 'Hue Bridge' === ($d['product_name'] ?? null)
+            fn (array $d): bool => 'Hue Bridge' === ($d['product_name'] ?? null)
         ));
         $this->assertCount(1, $unique);
         $this->assertFalse(
@@ -61,7 +61,7 @@ class DeviceRepositoryTest extends KernelTestCase
 
     public function testGetDeviceBySlugAttachesAmbiguityFlag(): void
     {
-        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $em = self::getContainer()->get(EntityManagerInterface::class);
         $vendor = $em->getRepository(Vendor::class)->findOneBy(['specId' => 4874]);
         $this->assertNotNull($vendor);
 
@@ -75,13 +75,7 @@ class DeviceRepositoryTest extends KernelTestCase
         ], $isNew);
 
         $devices = $this->repository->getFilteredDevices([], 200, 0);
-        $someEveMotion = null;
-        foreach ($devices as $d) {
-            if ('Eve Motion' === ($d['product_name'] ?? null)) {
-                $someEveMotion = $d;
-                break;
-            }
-        }
+        $someEveMotion = array_find($devices, fn ($d): bool => 'Eve Motion' === ($d['product_name'] ?? null));
         $this->assertNotNull($someEveMotion);
 
         $bySlug = $this->repository->getDeviceBySlug($someEveMotion['slug']);

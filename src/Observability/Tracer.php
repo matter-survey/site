@@ -15,7 +15,7 @@ use OpenTelemetry\API\Trace\SpanKind;
  */
 final class Tracer
 {
-    public const TRACER_NAME = 'app.matter-survey';
+    public const string TRACER_NAME = 'app.matter-survey';
 
     /**
      * @param array<string, scalar|array<scalar>|null> $attributes

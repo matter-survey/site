@@ -6,12 +6,12 @@ namespace App\Tests\EventSubscriber;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class SecurityHeadersSubscriberTest extends WebTestCase
+final class SecurityHeadersSubscriberTest extends WebTestCase
 {
     public function testSecurityHeadersAreSetOnHealthResponse(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/health');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/health');
 
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('X-Content-Type-Options', 'nosniff');
@@ -25,15 +25,15 @@ class SecurityHeadersSubscriberTest extends WebTestCase
 
     public function testHstsOnlySetWhenRequestIsSecure(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/health');
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/health');
 
         $this->assertFalse(
             $client->getResponse()->headers->has('Strict-Transport-Security'),
             'HSTS must not be set on plain HTTP requests',
         );
 
-        $client->request('GET', '/health', server: ['HTTPS' => 'on']);
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/health', server: ['HTTPS' => 'on']);
 
         $this->assertResponseHeaderSame(
             'Strict-Transport-Security',

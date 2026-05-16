@@ -19,12 +19,12 @@ use Symfony\Component\Routing\Attribute\Route;
 class DeviceController extends AbstractController
 {
     public function __construct(
-        private DeviceRepository $deviceRepo,
-        private ProductRepository $productRepo,
-        private TelemetryService $telemetryService,
-        private MatterRegistry $matterRegistry,
-        private DeviceScoreService $deviceScoreService,
-        private CapabilityService $capabilityService,
+        private readonly DeviceRepository $deviceRepo,
+        private readonly ProductRepository $productRepo,
+        private readonly TelemetryService $telemetryService,
+        private readonly MatterRegistry $matterRegistry,
+        private readonly DeviceScoreService $deviceScoreService,
+        private readonly CapabilityService $capabilityService,
     ) {
     }
 
@@ -97,8 +97,8 @@ class DeviceController extends AbstractController
 
         // Connectivity types (array)
         $connectivity = $request->query->all('connectivity');
-        if (!empty($connectivity)) {
-            $filters['connectivity'] = array_filter($connectivity, fn ($v) => \in_array($v, ['thread', 'wifi', 'ethernet'], true));
+        if ([] !== $connectivity) {
+            $filters['connectivity'] = array_filter($connectivity, fn ($v): bool => \in_array($v, ['thread', 'wifi', 'ethernet'], true));
         }
 
         // Binding filter
@@ -120,10 +120,10 @@ class DeviceController extends AbstractController
 
         // Device type filter (array of IDs)
         $deviceTypes = $request->query->all('device_types');
-        if (!empty($deviceTypes)) {
+        if ([] !== $deviceTypes) {
             $filters['device_types'] = array_filter(
-                array_map('intval', $deviceTypes),
-                fn ($v) => $v > 0
+                array_map(intval(...), $deviceTypes),
+                fn ($v): bool => $v > 0
             );
         }
 
@@ -138,12 +138,12 @@ class DeviceController extends AbstractController
 
         // Capability filters (array of capability keys)
         $capabilities = $request->query->all('capabilities');
-        if (!empty($capabilities)) {
+        if ([] !== $capabilities) {
             // Validate against known capability keys
             $validKeys = array_keys(DeviceRepository::CAPABILITY_FILTERS);
             $filters['capabilities'] = array_values(array_filter(
                 $capabilities,
-                fn ($v) => \in_array($v, $validKeys, true)
+                fn ($v): bool => \in_array($v, $validKeys, true)
             ));
         }
 
@@ -179,7 +179,7 @@ class DeviceController extends AbstractController
         $devices = $this->deviceRepo->searchDevices($query, 8);
 
         return $this->json([
-            'results' => array_map(function (array $d) {
+            'results' => array_map(function (array $d): array {
                 $name = $d['product_name'];
                 if (!empty($d['is_name_ambiguous']) && isset($d['product_id'])) {
                     $name .= sprintf(' (PID 0x%04X)', (int) $d['product_id']);
@@ -239,10 +239,8 @@ class DeviceController extends AbstractController
         );
 
         // If device has no product name, try to get it from DCL Product registry
-        if (empty($device['product_name']) || '-' === $device['product_name']) {
-            if ($product && $product->getProductName()) {
-                $device['product_name'] = $product->getProductName();
-            }
+        if ((empty($device['product_name']) || '-' === $device['product_name']) && ($product instanceof \App\Entity\Product && $product->getProductName())) {
+            $device['product_name'] = $product->getProductName();
         }
 
         $endpoints = $this->deviceRepo->getDeviceEndpoints($id);
@@ -264,12 +262,12 @@ class DeviceController extends AbstractController
         // Calculate device score based on latest version endpoints
         $latestEndpoints = $this->deviceScoreService->getLatestVersionEndpoints($id);
         $deviceScore = $this->deviceScoreService->calculateDeviceScore(
-            !empty($latestEndpoints) ? $latestEndpoints : $endpoints
+            [] === $latestEndpoints ? $endpoints : $latestEndpoints
         );
 
         // Analyze human-friendly capabilities (based on latest version)
         $capabilities = $this->capabilityService->analyzeCapabilities(
-            !empty($latestEndpoints) ? $latestEndpoints : $endpoints
+            [] === $latestEndpoints ? $endpoints : $latestEndpoints
         );
 
         return $this->render('device/show.html.twig', [
