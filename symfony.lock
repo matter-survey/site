@@ -345,5 +345,14 @@
             "config/packages/web_profiler.yaml",
             "config/routes/web_profiler.yaml"
         ]
+    },
+    "zenstruck/browser": {
+        "version": "1.10",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "1.9",
+            "ref": "98ea0fbe24749dd1a84976de6f53dbb608046f16"
+        }
     }
 }
