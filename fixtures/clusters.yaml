@@ -676,6 +676,12 @@
   category: sensors
   isGlobal: false
 -
+  id: 1076
+  name: 'Smoke Concentration Measurement'
+  description: 'The server cluster provides an interface to concentration measurement functionality.'
+  category: null
+  isGlobal: false
+-
   id: 1104
   name: 'Network Identity Management'
   description: 'Manages persistent network identity credentials (e.g. Thread/Wi-Fi credentials) shared across fabrics.'
