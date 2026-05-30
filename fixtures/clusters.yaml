@@ -484,6 +484,18 @@
   category: energy
   isGlobal: false
 -
+  id: 162
+  name: 'Electrical Distribution'
+  description: 'This cluster provides an interface for a device which distributes electrical power to other devices, providing information about the capacity of the device as well as whether it has been damaged or has reached the end of its service life.'
+  category: null
+  isGlobal: false
+-
+  id: 163
+  name: 'Electrical Protection Alarm'
+  description: 'This cluster is a derived cluster of the Alarm Base cluster and provides the alarm definition related to the Electrical Protection device type.'
+  category: null
+  isGlobal: false
+-
   id: 257
   name: 'Door Lock'
   description: 'Controls door locks including lock/unlock operations, user management, and access schedules.'
