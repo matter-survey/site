@@ -484,6 +484,12 @@
   category: energy
   isGlobal: false
 -
+  id: 161
+  name: 'Electrical Alarm'
+  description: 'This cluster is a derived cluster of the Alarm Base cluster and provides the alarm definition related to Electrical Sensor device type.'
+  category: null
+  isGlobal: false
+-
   id: 162
   name: 'Electrical Distribution'
   description: 'This cluster provides an interface for a device which distributes electrical power to other devices, providing information about the capacity of the device as well as whether it has been damaged or has reached the end of its service life.'
@@ -842,6 +848,12 @@
   name: Chime
   description: 'Plays a chime/notification sound on a device (e.g. doorbell chime, indoor camera notification).'
   category: media
+  isGlobal: false
+-
+  id: 1367
+  name: 'AV Analysis'
+  description: 'This server cluster provides an interface for controlling events pertaining to AV analysis.'
+  category: null
   isGlobal: false
 -
   id: 1792
