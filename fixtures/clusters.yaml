@@ -688,6 +688,12 @@
   category: sensors
   isGlobal: false
 -
+  id: 1074
+  name: 'Ambient Sensing Union'
+  description: 'This cluster provides data modeling and protocol implementation of multi-node ambient sensing system.'
+  category: null
+  isGlobal: false
+-
   id: 1075
   name: 'Proximity Ranging'
   description: 'Reports distance/proximity measurements between two devices (e.g. UWB, BLE ranging).'
