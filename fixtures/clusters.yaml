@@ -484,6 +484,24 @@
   category: energy
   isGlobal: false
 -
+  id: 161
+  name: 'Electrical Alarm'
+  description: 'This cluster is a derived cluster of the Alarm Base cluster and provides the alarm definition related to Electrical Sensor device type.'
+  category: null
+  isGlobal: false
+-
+  id: 162
+  name: 'Electrical Distribution'
+  description: 'This cluster provides an interface for a device which distributes electrical power to other devices, providing information about the capacity of the device as well as whether it has been damaged or has reached the end of its service life.'
+  category: null
+  isGlobal: false
+-
+  id: 163
+  name: 'Electrical Protection Alarm'
+  description: 'This cluster is a derived cluster of the Alarm Base cluster and provides the alarm definition related to the Electrical Protection device type.'
+  category: null
+  isGlobal: false
+-
   id: 257
   name: 'Door Lock'
   description: 'Controls door locks including lock/unlock operations, user management, and access schedules.'
@@ -670,10 +688,22 @@
   category: sensors
   isGlobal: false
 -
+  id: 1074
+  name: 'Ambient Sensing Union'
+  description: 'This cluster provides data modeling and protocol implementation of multi-node ambient sensing system.'
+  category: null
+  isGlobal: false
+-
   id: 1075
   name: 'Proximity Ranging'
   description: 'Reports distance/proximity measurements between two devices (e.g. UWB, BLE ranging).'
   category: sensors
+  isGlobal: false
+-
+  id: 1076
+  name: 'Smoke Concentration Measurement'
+  description: 'The server cluster provides an interface to concentration measurement functionality.'
+  category: null
   isGlobal: false
 -
   id: 1104
@@ -824,6 +854,12 @@
   name: Chime
   description: 'Plays a chime/notification sound on a device (e.g. doorbell chime, indoor camera notification).'
   category: media
+  isGlobal: false
+-
+  id: 1367
+  name: 'AV Analysis'
+  description: 'This server cluster provides an interface for controlling events pertaining to AV analysis.'
+  category: null
   isGlobal: false
 -
   id: 1792
