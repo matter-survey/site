@@ -262,6 +262,12 @@
   category: appliances
   isGlobal: false
 -
+  id: 75
+  name: 'Temperature Controlled Cabinet Topology'
+  description: 'This cluster provides contextual information with respect to the disablement or otherwise of Temperature Controlled Cabinet Endpoints that may be composed as part of a Device.'
+  category: null
+  isGlobal: false
+-
   id: 80
   name: 'Mode Select'
   description: 'Allows selection between predefined operating modes on a device.'
