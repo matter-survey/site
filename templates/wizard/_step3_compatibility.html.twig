@@ -7,6 +7,9 @@
     {% for conn in wizardState.connectivity %}
         <input type="hidden" name="connectivity[]" value="{{ conn }}">
     {% endfor %}
+    {% for cap in wizardState.capabilities %}
+        <input type="hidden" name="capabilities[]" value="{{ cap }}">
+    {% endfor %}
     {% if wizardState.min_rating %}
         <input type="hidden" name="min_rating" value="{{ wizardState.min_rating }}">
     {% endif %}
@@ -44,6 +47,7 @@
             step: 2,
             category: wizardState.category,
             connectivity: wizardState.connectivity,
+            capabilities: wizardState.capabilities,
             min_rating: wizardState.min_rating,
             binding: wizardState.binding
         }) }}" class="wizard-btn wizard-btn-secondary">
@@ -53,6 +57,7 @@
             <a href="{{ path('wizard_results', {
                 category: wizardState.category,
                 connectivity: wizardState.connectivity,
+                capabilities: wizardState.capabilities,
                 min_rating: wizardState.min_rating,
                 binding: wizardState.binding
             }) }}" class="wizard-btn wizard-btn-secondary">

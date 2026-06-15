@@ -240,4 +240,91 @@ final class WizardControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
     }
+
+    public function testStep3CarriesCapabilitiesAsHiddenInputs(): void
+    {
+        $client = self::createClient();
+        // Regression: capabilities chosen in step 2 must survive into step 3's
+        // form so they reach the results redirect (previously dropped).
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=3&category=Lights&capabilities[]=dimming&capabilities[]=full_color');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertGreaterThan(
+            0,
+            $crawler->filter('#wizard-form-step3 input[type="hidden"][name="capabilities[]"][value="dimming"]')->count(),
+            'Step 3 form must carry the dimming capability as a hidden input'
+        );
+        $this->assertGreaterThan(
+            0,
+            $crawler->filter('#wizard-form-step3 input[type="hidden"][name="capabilities[]"][value="full_color"]')->count(),
+            'Step 3 form must carry the full_color capability as a hidden input'
+        );
+    }
+
+    public function testStep3BackAndSkipLinksPreserveCapabilities(): void
+    {
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=3&category=Lights&capabilities[]=dimming');
+
+        $this->assertResponseIsSuccessful();
+        // Both the Back (to step 2) and Skip (to results) links must keep the
+        // capability selection in their query string.
+        $links = $crawler->filter('#wizard-form-step3 a.wizard-btn');
+        $hrefs = $links->each(fn ($node): string => (string) $node->attr('href'));
+        foreach ($hrefs as $href) {
+            $this->assertStringContainsString('capabilities', $href);
+        }
+        $this->assertNotEmpty($hrefs);
+    }
+
+    public function testStep3SkipPreservesCapabilitiesThroughToResults(): void
+    {
+        $client = self::createClient();
+        // End-to-end: skipping from step 3 still forwards capabilities to the
+        // device index redirect.
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard/results?category=Lights&capabilities[]=dimming');
+
+        $this->assertResponseRedirects();
+        $location = (string) $client->getResponse()->headers->get('Location');
+        $this->assertStringContainsString('capabilities', $location);
+        $this->assertStringContainsString('dimming', $location);
+    }
+
+    public function testMatchCountShownOnStep2(): void
+    {
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=2&category=Lights');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorExists('.wizard-match-count');
+    }
+
+    public function testMatchCountHiddenOnStep1(): void
+    {
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=1');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorNotExists('.wizard-match-count');
+    }
+
+    public function testCompletedStepIsClickable(): void
+    {
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=2&category=Lights');
+
+        $this->assertResponseIsSuccessful();
+        // The completed step 1 should render as a navigable link back to step 1.
+        $this->assertSelectorExists('a.wizard-step.completed');
+    }
+
+    public function testCategoryRadioIsFocusable(): void
+    {
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=1');
+
+        $this->assertResponseIsSuccessful();
+        // Radios must exist in the DOM (not display:none-removed) for keyboard a11y.
+        $this->assertGreaterThan(0, $crawler->filter('.category-card input[type="radio"]')->count());
+    }
 }

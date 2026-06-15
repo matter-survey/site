@@ -68,12 +68,19 @@ class WizardController extends AbstractController
             default => $this->getStep3Data($wizardState),
         };
 
+        // Live count of devices matching the current selections, so users
+        // don't commit to a filter set blind.
+        $matchingCount = $this->deviceRepo->getFilteredDeviceCount(
+            $this->buildFiltersFromWizardState($wizardState)
+        );
+
         $response = $this->render('wizard/index.html.twig', [
             'step' => $step,
             'wizardState' => $wizardState,
             'stepData' => $stepData,
             'totalSteps' => self::TOTAL_STEPS,
             'categoryMeta' => self::CATEGORY_META,
+            'matchingCount' => $matchingCount,
         ]);
 
         // Set session cookie if new
