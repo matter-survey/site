@@ -124,7 +124,7 @@ final class SecurityControllerTest extends KernelTestCase
 
         $user = new User()
             ->setEmail($email)
-            ->setRoles($roles);
+            ->setRoles(array_values($roles));
         $user->setPassword($passwordHasher->hashPassword($user, $password));
 
         $userRepository->save($user, true);

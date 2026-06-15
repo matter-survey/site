@@ -250,8 +250,8 @@ class SitemapController extends AbstractController
                 $date = $url['lastmod'];
                 if (10 === \strlen($date)) {
                     $xml .= '    <lastmod>'.$date.'</lastmod>'."\n";
-                } elseif (false !== strtotime($date)) {
-                    $xml .= '    <lastmod>'.date('Y-m-d', strtotime($date)).'</lastmod>'."\n";
+                } elseif (false !== ($ts = strtotime($date))) {
+                    $xml .= '    <lastmod>'.date('Y-m-d', $ts).'</lastmod>'."\n";
                 }
             }
 

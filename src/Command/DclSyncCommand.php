@@ -149,7 +149,16 @@ class DclSyncCommand extends Command
 
         $io->info(\sprintf('Fetched compliance info for %d products', \count($complianceInfo)));
 
-        return $complianceInfo;
+        $typed = [];
+        foreach ($complianceInfo as $key => $info) {
+            $typed[$key] = [
+                'date' => isset($info['date']) ? (string) $info['date'] : '',
+                'cDCertificateId' => isset($info['cDCertificateId']) ? (string) $info['cDCertificateId'] : '',
+                'softwareVersionString' => isset($info['softwareVersionString']) ? (string) $info['softwareVersionString'] : '',
+            ];
+        }
+
+        return $typed;
     }
 
     /**

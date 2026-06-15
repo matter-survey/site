@@ -99,7 +99,32 @@ class MatterRegistry
         $clusters = $this->loadClusters();
         $this->lastLookupHitCache = isset($clusters[$id]);
 
-        return $clusters[$id] ?? null;
+        $cluster = $clusters[$id] ?? null;
+        if (null === $cluster) {
+            return null;
+        }
+
+        $metadata = [
+            'id' => (int) $cluster['id'],
+            'hexId' => (string) $cluster['hexId'],
+            'name' => (string) $cluster['name'],
+            'description' => null !== $cluster['description'] ? (string) $cluster['description'] : null,
+            'specVersion' => null !== $cluster['specVersion'] ? (string) $cluster['specVersion'] : null,
+            'category' => null !== $cluster['category'] ? (string) $cluster['category'] : null,
+            'isGlobal' => (bool) $cluster['isGlobal'],
+        ];
+
+        if (isset($cluster['attributes']) && \is_array($cluster['attributes'])) {
+            $metadata['attributes'] = $cluster['attributes'];
+        }
+        if (isset($cluster['commands']) && \is_array($cluster['commands'])) {
+            $metadata['commands'] = $cluster['commands'];
+        }
+        if (isset($cluster['features']) && \is_array($cluster['features'])) {
+            $metadata['features'] = $cluster['features'];
+        }
+
+        return $metadata;
     }
 
     /**
@@ -561,7 +586,66 @@ class MatterRegistry
         $deviceTypes = $this->loadDeviceTypes();
         $this->lastLookupHitCache = isset($deviceTypes[$id]);
 
-        return $deviceTypes[$id] ?? null;
+        $deviceType = $deviceTypes[$id] ?? null;
+        if (null === $deviceType) {
+            return null;
+        }
+
+        $metadata = [
+            'name' => (string) $deviceType['name'],
+            'specVersion' => null !== $deviceType['specVersion'] ? (string) $deviceType['specVersion'] : null,
+            'category' => null !== $deviceType['category'] ? (string) $deviceType['category'] : null,
+            'displayCategory' => null !== $deviceType['displayCategory'] ? (string) $deviceType['displayCategory'] : null,
+            'icon' => null !== $deviceType['icon'] ? (string) $deviceType['icon'] : null,
+            'description' => null !== $deviceType['description'] ? (string) $deviceType['description'] : null,
+        ];
+
+        if (isset($deviceType['id'])) {
+            $metadata['id'] = (int) $deviceType['id'];
+        }
+        if (isset($deviceType['hexId'])) {
+            $metadata['hexId'] = (string) $deviceType['hexId'];
+        }
+        if (isset($deviceType['class'])) {
+            $metadata['class'] = (string) $deviceType['class'];
+        }
+        if (isset($deviceType['scope'])) {
+            $metadata['scope'] = (string) $deviceType['scope'];
+        }
+        if (isset($deviceType['superset'])) {
+            $metadata['superset'] = (string) $deviceType['superset'];
+        }
+        if (isset($deviceType['mandatoryServerClusters']) && \is_array($deviceType['mandatoryServerClusters'])) {
+            $metadata['mandatoryServerClusters'] = $deviceType['mandatoryServerClusters'];
+        }
+        if (isset($deviceType['optionalServerClusters']) && \is_array($deviceType['optionalServerClusters'])) {
+            $metadata['optionalServerClusters'] = $deviceType['optionalServerClusters'];
+        }
+        if (isset($deviceType['mandatoryClientClusters']) && \is_array($deviceType['mandatoryClientClusters'])) {
+            $metadata['mandatoryClientClusters'] = $deviceType['mandatoryClientClusters'];
+        }
+        if (isset($deviceType['optionalClientClusters']) && \is_array($deviceType['optionalClientClusters'])) {
+            $metadata['optionalClientClusters'] = $deviceType['optionalClientClusters'];
+        }
+        if (isset($deviceType['scoringWeights']) && \is_array($deviceType['scoringWeights'])) {
+            $weights = $deviceType['scoringWeights'];
+            $keyClientClusters = [];
+            if (isset($weights['keyClientClusters']) && \is_array($weights['keyClientClusters'])) {
+                foreach ($weights['keyClientClusters'] as $cluster) {
+                    $keyClientClusters[] = (int) $cluster;
+                }
+            }
+            $metadata['scoringWeights'] = [
+                'mandatoryServerWeight' => (float) ($weights['mandatoryServerWeight'] ?? 0.0),
+                'mandatoryClientWeight' => (float) ($weights['mandatoryClientWeight'] ?? 0.0),
+                'optionalServerWeight' => (float) ($weights['optionalServerWeight'] ?? 0.0),
+                'optionalClientWeight' => (float) ($weights['optionalClientWeight'] ?? 0.0),
+                'keyClientClusters' => $keyClientClusters,
+                'keyClientBonus' => (float) ($weights['keyClientBonus'] ?? 0.0),
+            ];
+        }
+
+        return $metadata;
     }
 
     /**
@@ -718,7 +802,7 @@ class MatterRegistry
         $versions = array_unique(
             array_filter(array_column($deviceTypes, 'specVersion'))
         );
-        usort($versions, version_compare(...));
+        usort($versions, static fn (string $a, string $b): int => version_compare($a, $b));
 
         return array_values($versions);
     }

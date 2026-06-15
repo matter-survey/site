@@ -11,6 +11,9 @@ namespace App\Observability\Doctrine;
  */
 final class SqlSpanNamer
 {
+    /**
+     * @return non-empty-string
+     */
     public static function nameFor(string $sql): string
     {
         $trimmed = ltrim($sql);

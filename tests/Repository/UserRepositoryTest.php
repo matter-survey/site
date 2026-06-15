@@ -28,7 +28,7 @@ final class UserRepositoryTest extends KernelTestCase
         return new User()
             ->setEmail($email)
             ->setPassword('hashed-placeholder')
-            ->setRoles($roles);
+            ->setRoles(array_values($roles));
     }
 
     public function testSaveWithFlush(): void

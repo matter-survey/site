@@ -27,8 +27,9 @@ final class TracingHttpClient implements HttpClientInterface
     public function request(string $method, string $url, array $options = []): ResponseInterface
     {
         $tracer = Globals::tracerProvider()->getTracer('app.matter-survey');
+        $spanName = '' === $method ? 'HTTP' : $method;
         $span = $tracer
-            ->spanBuilder($method)
+            ->spanBuilder($spanName)
             ->setSpanKind(SpanKind::KIND_CLIENT)
             ->setAttribute('http.request.method', $method)
             ->setAttribute('url.full', $url)

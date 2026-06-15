@@ -26,7 +26,7 @@ final class ApiAuthenticationTest extends WebTestCase
         // Submit endpoint should be accessible without authentication
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode([
+        ], (string) json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440099',
             'devices' => [],
         ]));
@@ -68,7 +68,7 @@ final class ApiAuthenticationTest extends WebTestCase
         // Invalid tokens should be rejected
         $this->assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
 
-        $response = json_decode($client->getResponse()->getContent(), true);
+        $response = json_decode((string) $client->getResponse()->getContent(), true);
         $this->assertEquals('error', $response['status']);
         $this->assertStringContainsString('Invalid or expired', (string) $response['error']);
     }
@@ -93,7 +93,7 @@ final class ApiAuthenticationTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
 
-        $response = json_decode($client->getResponse()->getContent(), true);
+        $response = json_decode((string) $client->getResponse()->getContent(), true);
         $this->assertStringContainsString('Invalid or expired', (string) $response['error']);
 
         // Cleanup - re-fetch to avoid detached entity errors
@@ -252,7 +252,7 @@ final class ApiAuthenticationTest extends WebTestCase
 
         $user = new User();
         $user->setEmail($email);
-        $user->setRoles($roles);
+        $user->setRoles(array_values($roles));
         $user->setPassword($passwordHasher->hashPassword($user, $password));
 
         $userRepository->save($user, true);

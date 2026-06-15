@@ -173,7 +173,7 @@ final class CompareControllerTest extends WebTestCase
         $this->assertResponseHeaderSame('content-type', 'application/json');
 
         $content = $client->getResponse()->getContent();
-        $data = json_decode($content, true);
+        $data = json_decode((string) $content, true);
 
         $this->assertIsArray($data);
         $this->assertArrayHasKey('results', $data);
@@ -197,7 +197,7 @@ final class CompareControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         $content = $client->getResponse()->getContent();
-        $data = json_decode($content, true);
+        $data = json_decode((string) $content, true);
 
         // The excluded slug should not appear in results
         foreach ($data['results'] as $result) {
@@ -213,7 +213,7 @@ final class CompareControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         $content = $client->getResponse()->getContent();
-        $data = json_decode($content, true);
+        $data = json_decode((string) $content, true);
 
         // Should return empty results for short queries
         $this->assertEmpty($data['results']);

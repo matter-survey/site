@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Rector\CodingStyle\Rector\ArrowFunction\ArrowFunctionDelegatingCallToFirstClassCallableRector;
 use Rector\Config\RectorConfig;
 
 return RectorConfig::configure()
@@ -16,6 +17,12 @@ return RectorConfig::configure()
         __DIR__.'/tools',
         __DIR__.'/var',
         __DIR__.'/vendor',
+        // Converting `static fn (string $a, string $b): int => version_compare($a, $b)`
+        // into the first-class callable `version_compare(...)` reintroduces a
+        // PHPStan level-7 error: version_compare's 3-arg form returns int|bool,
+        // which does not satisfy the callable(string, string): int that
+        // usort()/uksort() expect. The explicit closure is intentional.
+        ArrowFunctionDelegatingCallToFirstClassCallableRector::class,
     ])
     ->withPhpSets()
     ->withComposerBased(
