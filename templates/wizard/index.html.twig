@@ -209,6 +209,66 @@ a.wizard-step {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
 }
 
+/* Educational explainer (step 3) */
+.wizard-explainer {
+    display: flex;
+    gap: 1.25rem;
+    align-items: center;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 0.5rem;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.wizard-illustration {
+    width: 200px;
+    flex-shrink: 0;
+    height: auto;
+}
+
+.wizard-explainer-body h3 {
+    font-size: 1rem;
+    margin: 0 0 0.5rem;
+}
+
+.wizard-explainer-body p {
+    font-size: 0.8125rem;
+    color: var(--gray-600);
+    margin: 0 0 0.5rem;
+    line-height: 1.5;
+}
+
+.wizard-explainer-body p:last-child {
+    margin-bottom: 0;
+}
+
+.wizard-explainer-body strong {
+    color: var(--gray-800);
+}
+
+/* Small helper note under a feature group (e.g. Thread border-router hint) */
+.feature-note {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+.wizard-empty-note {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    text-align: center;
+    padding: 1rem 0;
+}
+
+@media (max-width: 640px) {
+    .wizard-explainer {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
 /* Live match count shown above the wizard actions */
 .wizard-match-count {
     text-align: center;
@@ -435,7 +495,8 @@ a.wizard-step {
             {% set stepLabel %}
                 {% if i == 1 %}{{ 'wizard.step1.label'|trans({}, 'wizard') }}
                 {% elseif i == 2 %}{{ 'wizard.step2.label'|trans({}, 'wizard') }}
-                {% else %}{{ 'wizard.step3.label'|trans({}, 'wizard') }}
+                {% elseif i == 3 %}{{ 'wizard.step3.label'|trans({}, 'wizard') }}
+                {% else %}{{ 'wizard.step4.label'|trans({}, 'wizard') }}
                 {% endif %}
             {% endset %}
             {% set stepNumber %}{% if i < step %}&#10003;{% else %}{{ i }}{% endif %}{% endset %}
@@ -457,9 +518,11 @@ a.wizard-step {
         {% if step == 1 %}
             {% include 'wizard/_step1_category.html.twig' %}
         {% elseif step == 2 %}
-            {% include 'wizard/_step2_features.html.twig' %}
+            {% include 'wizard/_step2_capabilities.html.twig' %}
+        {% elseif step == 3 %}
+            {% include 'wizard/_step3_home.html.twig' %}
         {% else %}
-            {% include 'wizard/_step3_compatibility.html.twig' %}
+            {% include 'wizard/_step4_compatibility.html.twig' %}
         {% endif %}
     </div>
 

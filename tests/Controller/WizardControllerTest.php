@@ -59,6 +59,16 @@ final class WizardControllerTest extends WebTestCase
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=3&category=Lights');
 
         $this->assertResponseIsSuccessful();
+        // Step 3 is now the "how it fits your home" step with the explainer.
+        $this->assertSelectorExists('.wizard-explainer');
+    }
+
+    public function testStep4LoadsWithCategory(): void
+    {
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=4&category=Lights');
+
+        $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('.device-search-container');
     }
 
@@ -140,18 +150,18 @@ final class WizardControllerTest extends WebTestCase
         $this->assertSelectorExists('.wizard-step.active');
     }
 
-    public function testStep2FormSubmissionWithConnectivity(): void
+    public function testStep3FormSubmissionWithConnectivity(): void
     {
         $client = self::createClient();
 
-        // Load step 2
-        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=2&category=Climate');
+        // Connectivity is now collected on step 3 (home setup) and carried to step 4.
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=3&category=Climate');
         $this->assertResponseIsSuccessful();
 
         // Submit the form by navigating directly (simulating form submission)
-        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=3&category=Climate&connectivity[]=thread&min_rating=&binding=');
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=4&category=Climate&connectivity[]=thread&min_rating=&binding=');
 
-        // Should navigate to step 3 successfully
+        // Should navigate to step 4 (compatibility) successfully
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('.device-search-container');
     }
@@ -164,7 +174,7 @@ final class WizardControllerTest extends WebTestCase
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=3&category=Climate&connectivity[]=thread');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorExists('.device-search-container');
+        $this->assertSelectorExists('.feature-section');
     }
 
     public function testStep2WithEmptyMinRating(): void
@@ -197,10 +207,29 @@ final class WizardControllerTest extends WebTestCase
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=2&category=Lights');
 
         $this->assertResponseIsSuccessful();
-        // Should show capabilities section
-        $this->assertSelectorTextContains('body', 'Device Capabilities');
-        // Should have capability checkboxes
+        // Should show the Features group with capability checkboxes
+        $this->assertSelectorTextContains('body', 'Features');
         $this->assertSelectorExists('input[name="capabilities[]"]');
+    }
+
+    public function testStep2ScopesCapabilitiesToCategory(): void
+    {
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=2&category=Lights');
+
+        $this->assertResponseIsSuccessful();
+        // Lights have dimming/color devices in the dataset...
+        $this->assertGreaterThan(
+            0,
+            $crawler->filter('input[name="capabilities[]"][value="dimming"]')->count(),
+            'Lights step should offer the dimming capability'
+        );
+        // ...but no motion sensors, so motion_detection must be hidden.
+        $this->assertCount(
+            0,
+            $crawler->filter('input[name="capabilities[]"][value="motion_detection"]'),
+            'Lights step must not offer motion detection (zero-count for this category)'
+        );
     }
 
     public function testStep2PreservesCapabilitiesInForm(): void
@@ -261,20 +290,72 @@ final class WizardControllerTest extends WebTestCase
         );
     }
 
-    public function testStep3BackAndSkipLinksPreserveCapabilities(): void
+    public function testStep4BackAndSkipLinksPreserveCapabilities(): void
     {
         $client = self::createClient();
-        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=3&category=Lights&capabilities[]=dimming');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=4&category=Lights&capabilities[]=dimming');
 
         $this->assertResponseIsSuccessful();
-        // Both the Back (to step 2) and Skip (to results) links must keep the
+        // Both the Back (to step 3) and Skip (to results) links must keep the
         // capability selection in their query string.
-        $links = $crawler->filter('#wizard-form-step3 a.wizard-btn');
+        $links = $crawler->filter('#wizard-form-step4 a.wizard-btn');
         $hrefs = $links->each(fn ($node): string => (string) $node->attr('href'));
         foreach ($hrefs as $href) {
             $this->assertStringContainsString('capabilities', $href);
         }
         $this->assertNotEmpty($hrefs);
+    }
+
+    public function testStep4CarriesCapabilitiesAsHiddenInputs(): void
+    {
+        $client = self::createClient();
+        // Capabilities must survive the final hop into the compatibility form so
+        // they reach the results redirect.
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=4&category=Lights&capabilities[]=dimming&capabilities[]=full_color');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertGreaterThan(
+            0,
+            $crawler->filter('#wizard-form-step4 input[type="hidden"][name="capabilities[]"][value="dimming"]')->count(),
+            'Step 4 form must carry the dimming capability as a hidden input'
+        );
+        $this->assertGreaterThan(
+            0,
+            $crawler->filter('#wizard-form-step4 input[type="hidden"][name="capabilities[]"][value="full_color"]')->count(),
+            'Step 4 form must carry the full_color capability as a hidden input'
+        );
+    }
+
+    public function testStep3ShowsBindingGroupsExplainerForLights(): void
+    {
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=3&category=Lights');
+
+        $this->assertResponseIsSuccessful();
+        // The educational explainer and its illustration should render for Lights.
+        $this->assertSelectorExists('.wizard-explainer');
+        $this->assertSelectorExists('.wizard-illustration');
+        $this->assertSelectorTextContains('.wizard-explainer', 'Binding');
+        $this->assertSelectorTextContains('.wizard-explainer', 'Groups');
+        // Category-specific copy (lights guide), not the generic fallback.
+        $this->assertSelectorTextContains('.wizard-explainer', 'lights');
+        $this->assertGreaterThan(
+            0,
+            $crawler->filter('.wizard-illustration')->count(),
+            'Lights should render the binding illustration'
+        );
+    }
+
+    public function testStep3ShowsDefaultExplainerForOtherCategory(): void
+    {
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/wizard?step=3&category=Security');
+
+        $this->assertResponseIsSuccessful();
+        // Categories without bespoke content still get the default explainer
+        // (no illustration), and must not error.
+        $this->assertSelectorExists('.wizard-explainer');
+        $this->assertSelectorNotExists('.wizard-illustration');
     }
 
     public function testStep3SkipPreservesCapabilitiesThroughToResults(): void

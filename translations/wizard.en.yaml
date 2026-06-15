@@ -10,37 +10,64 @@ wizard:
     match_count: "{0}No devices match these selections|{1}<strong>1</strong> device matches your selections|]1,Inf[<strong>%count%</strong> devices match your selections"
 
     step1:
-        label: "Category"
-        title: "What do you want to control?"
-        subtitle: "Select a category to get started"
+        label: "Type"
+        title: "What kind of device are you looking for?"
+        subtitle: "Pick the type of gear you want to add"
 
     step2:
-        label: "Features"
-        title: "What features matter to you?"
-        subtitle: "Customize your preferences (all optional)"
-        connectivity:
-            title: "Connectivity Type"
-            description: "Select your preferred connection types"
-        capabilities:
-            title: "Device Capabilities"
-            description: "Select the features you need"
-        rating:
-            title: "Minimum Quality Rating"
-            description: "Only show devices with this rating or higher"
-            any: "Any"
-        binding:
-            title: "Device-to-Device Binding"
-            description: "Binding allows direct communication between devices without a hub"
-            any: "Any"
-            required: "Required"
+        label: "What it does"
+        title: "What should it be able to do?"
+        subtitle: "Pick the capabilities that matter — we'll only show ones this kind of device offers"
+        empty: "We don't track specific capability filters for this category yet — continue to narrow by connection and setup."
+        features:
+            title: "Features"
+            description: "What the device can do"
+        power:
+            title: "Power"
+            description: "How it's powered — handy for sensors and remotes you place anywhere"
 
     step3:
-        label: "Compatibility"
+        label: "Your home"
+        title: "How will it fit your home?"
+        subtitle: "Match the gear to what your setup already supports"
+        connectivity:
+            title: "How should it connect?"
+            description: "What does your home network support?"
+            note: "Thread devices need a Thread border router — most modern Apple, Google, and Amazon hubs include one. Wi-Fi devices just need your existing network."
+        binding:
+            title: "Work without a hub?"
+            description: "Binding lets devices talk to each other directly, so they keep working even if your hub or internet is down."
+            any: "Doesn't matter"
+            required: "Hub-independent"
+        rating:
+            title: "Minimum quality (optional)"
+            description: "Only show devices that score at least this well"
+            any: "Any"
+
+    step4:
+        label: "Owned gear"
         title: "What devices do you already own?"
-        subtitle: "Optional: We'll find devices that work well with your existing setup"
+        subtitle: "Optional: we'll prioritise gear that works well alongside your existing setup"
         search:
             title: "Search for your devices"
             placeholder: "Start typing a device name..."
+
+    # Educational explainer shown on the "your home" step, keyed by category.
+    # 'default' is the fallback; add a per-category block to tailor it.
+    guide:
+        binding_label: "Binding:"
+        groups_label: "Groups:"
+        groups_label_short: "Group"
+        default:
+            title: "Why hubs and direct control matter"
+            binding: "Some Matter devices can be bound directly to one another, so a button or sensor controls a device instantly without routing through a hub or the cloud."
+            groups: "Grouping lets several devices respond to one command together, so a whole room or zone reacts at once."
+        lights:
+            title: "Why binding & groups matter for lights"
+            binding: "A wall switch or dimmer can be bound straight to your bulbs, so they react the instant you press it — even if your hub or Wi-Fi is down. Without binding, every press has to travel to a hub and back."
+            groups: "Put several bulbs in a group and they act as one: the whole room fades on or off together, instead of popping one bulb at a time."
+            illustration_alt: "A wall switch wired directly to three bulbs, with the bulbs braced together as one group"
+            switch_label: "Switch"
 
     category:
         lights: "Lights"
