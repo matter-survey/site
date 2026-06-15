@@ -17,7 +17,7 @@ use Symfony\Component\Routing\Attribute\Route;
 class WizardController extends AbstractController
 {
     private const string SESSION_COOKIE_NAME = 'wizard_session';
-    private const int TOTAL_STEPS = 3;
+    private const int TOTAL_STEPS = 4;
 
     /**
      * Category metadata for display.
@@ -32,6 +32,17 @@ class WizardController extends AbstractController
         'Appliances' => ['icon' => 'appliance', 'desc' => 'Kitchen and household appliances'],
         'Entertainment' => ['icon' => 'tv', 'desc' => 'Speakers, TVs, and media players'],
         'Energy' => ['icon' => 'bolt', 'desc' => 'Plugs, meters, and energy management'],
+    ];
+
+    /**
+     * Per-category guide for the "how it fits your home" step: which translation
+     * namespace drives the binding/groups explainer and which illustration partial
+     * to render. Categories not listed fall back to the 'default' guide.
+     *
+     * @var array<string, array{key: string, illustration: ?string}>
+     */
+    private const array CATEGORY_GUIDES = [
+        'Lights' => ['key' => 'lights', 'illustration' => 'binding_lights'],
     ];
 
     public function __construct(
@@ -64,8 +75,9 @@ class WizardController extends AbstractController
         // Get step-specific data
         $stepData = match ($step) {
             1 => $this->getStep1Data(),
-            2 => $this->getStep2Data(),
-            default => $this->getStep3Data($wizardState),
+            2 => $this->getStep2Data($wizardState),
+            3 => $this->getStep3Data($wizardState),
+            default => $this->getStep4Data($wizardState),
         };
 
         // Live count of devices matching the current selections, so users
@@ -208,26 +220,54 @@ class WizardController extends AbstractController
     }
 
     /**
-     * Get data for step 2 (feature preferences).
+     * Get data for step 2 (what it should do — capabilities).
+     *
+     * Capabilities are scoped to the chosen category and zero-count options are
+     * dropped, so the step only shows capabilities relevant to that device type.
+     *
+     * @param array<string, mixed> $state
      *
      * @return array<string, mixed>
      */
-    private function getStep2Data(): array
+    private function getStep2Data(array $state): array
     {
+        $deviceTypeIds = $this->deviceTypeIdsForCategory((string) $state['category']);
+        $capabilityOptions = array_values(array_filter(
+            $this->deviceRepo->getCapabilityFacets($deviceTypeIds),
+            fn (array $cap): bool => $cap['count'] > 0
+        ));
+
         return [
-            'connectivityOptions' => $this->deviceRepo->getConnectivityFacets(),
-            'ratingOptions' => $this->deviceRepo->getStarRatingFacets(),
-            'bindingOptions' => $this->deviceRepo->getBindingFacets(),
-            'capabilityOptions' => $this->deviceRepo->getCapabilityFacets(),
+            'capabilityOptions' => $capabilityOptions,
         ];
     }
 
     /**
-     * Get data for step 3 (compatibility).
+     * Get data for step 3 (how it fits your home — connectivity, hub, power).
+     *
+     * @param array<string, mixed> $state
      *
      * @return array<string, mixed>
      */
     private function getStep3Data(array $state): array
+    {
+        $guide = self::CATEGORY_GUIDES[(string) $state['category']] ?? ['key' => 'default', 'illustration' => null];
+
+        return [
+            'connectivityOptions' => $this->deviceRepo->getConnectivityFacets(),
+            'bindingOptions' => $this->deviceRepo->getBindingFacets(),
+            'guide' => $guide,
+        ];
+    }
+
+    /**
+     * Get data for step 4 (compatibility with owned devices).
+     *
+     * @param array<string, mixed> $state
+     *
+     * @return array<string, mixed>
+     */
+    private function getStep4Data(array $state): array
     {
         $ownedDevices = [];
 
@@ -244,6 +284,23 @@ class WizardController extends AbstractController
     }
 
     /**
+     * Resolve the device-type ids that belong to a display category.
+     *
+     * @return array<int>
+     */
+    private function deviceTypeIdsForCategory(string $category): array
+    {
+        if ('' === $category) {
+            return [];
+        }
+
+        return array_map(
+            fn (\App\Entity\DeviceType $dt): int => $dt->getId(),
+            $this->deviceTypeRepo->findByDisplayCategory($category)
+        );
+    }
+
+    /**
      * Convert wizard state to device listing filters.
      *
      * @return array<string, mixed>
@@ -253,11 +310,9 @@ class WizardController extends AbstractController
         $filters = [];
 
         // Map category to device type IDs
-        if (!empty($state['category'])) {
-            $deviceTypes = $this->deviceTypeRepo->findByDisplayCategory($state['category']);
-            if ([] !== $deviceTypes) {
-                $filters['device_types'] = array_map(fn ($dt): int => $dt->getId(), $deviceTypes);
-            }
+        $deviceTypeIds = $this->deviceTypeIdsForCategory((string) $state['category']);
+        if ([] !== $deviceTypeIds) {
+            $filters['device_types'] = $deviceTypeIds;
         }
 
         // Pass through connectivity filter

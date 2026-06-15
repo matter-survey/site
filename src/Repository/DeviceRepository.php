@@ -522,14 +522,20 @@ class DeviceRepository
      * For capabilities without feature requirements, a simple cluster presence check is used.
      * For capabilities with features, we check V3 telemetry when available, with V2 fallback.
      *
+     * When $deviceTypeIds is provided, counts are scoped to devices that expose one of
+     * those device types — this lets the wizard show only the capabilities that are
+     * actually relevant to a chosen category.
+     *
+     * @param array<int>|null $deviceTypeIds Optional device-type ids to scope counts to
+     *
      * @return array<array{key: string, label: string, count: int}>
      */
-    public function getCapabilityFacets(): array
+    public function getCapabilityFacets(?array $deviceTypeIds = null): array
     {
         $facets = [];
 
         foreach (self::CAPABILITY_FILTERS as $key => $config) {
-            $count = $this->countDevicesWithCapability($config['clusters']);
+            $count = $this->countDevicesWithCapability($config['clusters'], $deviceTypeIds);
             $facets[] = [
                 'key' => $key,
                 'label' => $config['label'],
@@ -546,9 +552,10 @@ class DeviceRepository
     /**
      * Count devices that have the specified clusters (and optionally features).
      *
-     * @param array<int> $clusters Cluster IDs (any match counts)
+     * @param array<int>      $clusters      Cluster IDs (any match counts)
+     * @param array<int>|null $deviceTypeIds Optional device-type ids to scope the count to
      */
-    private function countDevicesWithCapability(array $clusters): int
+    private function countDevicesWithCapability(array $clusters, ?array $deviceTypeIds = null): int
     {
         if ([] === $clusters) {
             return 0;
@@ -566,6 +573,27 @@ class DeviceRepository
         }
         $clusterList = implode(', ', $clusterPlaceholders);
 
+        // Optionally constrain to devices that expose one of the given device types.
+        $deviceTypeClause = '';
+        if (null !== $deviceTypeIds && [] !== $deviceTypeIds) {
+            $deviceTypeConditions = [];
+            foreach (array_values($deviceTypeIds) as $i => $typeId) {
+                $paramName = 'dt_'.$i;
+                $deviceTypeConditions[] = "json_extract(value, \"$.id\") = :{$paramName}";
+                $params[$paramName] = $typeId;
+                $types[$paramName] = \Doctrine\DBAL\ParameterType::INTEGER;
+            }
+            $deviceTypeClause = '
+                AND pe.device_id IN (
+                    SELECT DISTINCT dpe.device_id
+                    FROM product_endpoints dpe
+                    WHERE EXISTS (
+                        SELECT 1 FROM json_each(dpe.device_types)
+                        WHERE '.implode(' OR ', $deviceTypeConditions).'
+                    )
+                )';
+        }
+
         // Simple cluster presence check (works for all data)
         $sql = "
             SELECT COUNT(DISTINCT pe.device_id)
@@ -573,7 +601,7 @@ class DeviceRepository
             WHERE EXISTS (
                 SELECT 1 FROM json_each(pe.server_clusters)
                 WHERE value IN ({$clusterList})
-            )
+            ){$deviceTypeClause}
         ";
 
         return (int) $this->db->executeQuery($sql, $params, $types)->fetchOne();

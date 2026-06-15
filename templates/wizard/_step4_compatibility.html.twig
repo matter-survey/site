@@ -1,7 +1,7 @@
-<h2 class="wizard-title">{{ 'wizard.step3.title'|trans({}, 'wizard') }}</h2>
-<p class="wizard-subtitle">{{ 'wizard.step3.subtitle'|trans({}, 'wizard') }}</p>
+<h2 class="wizard-title">{{ 'wizard.step4.title'|trans({}, 'wizard') }}</h2>
+<p class="wizard-subtitle">{{ 'wizard.step4.subtitle'|trans({}, 'wizard') }}</p>
 
-<form method="get" action="{{ path('wizard_results') }}" id="wizard-form-step3">
+<form method="get" action="{{ path('wizard_results') }}" id="wizard-form-step4">
     {# Pass through previous state #}
     <input type="hidden" name="category" value="{{ wizardState.category }}">
     {% for conn in wizardState.connectivity %}
@@ -19,11 +19,11 @@
 
     {# Device search with autocomplete - controller wraps both search and selected list #}
     <div class="feature-section" data-controller="device-search" data-device-search-url-value="{{ path('wizard_device_search') }}">
-        <h3>{{ 'wizard.step3.search.title'|trans({}, 'wizard') }}</h3>
+        <h3>{{ 'wizard.step4.search.title'|trans({}, 'wizard') }}</h3>
         <div class="device-search-container">
             <input type="text"
                    class="device-search-input"
-                   placeholder="{{ 'wizard.step3.search.placeholder'|trans({}, 'wizard') }}"
+                   placeholder="{{ 'wizard.step4.search.placeholder'|trans({}, 'wizard') }}"
                    data-device-search-target="input"
                    data-action="input->device-search#search focus->device-search#search keydown->device-search#onKeydown"
                    autocomplete="off">
@@ -44,7 +44,7 @@
 
     <div class="wizard-nav">
         <a href="{{ path('wizard_index', {
-            step: 2,
+            step: 3,
             category: wizardState.category,
             connectivity: wizardState.connectivity,
             capabilities: wizardState.capabilities,
