@@ -50,6 +50,12 @@
     flex: 1;
 }
 
+a.wizard-step {
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+}
+
 .wizard-step-number {
     width: 2.5rem;
     height: 2.5rem;
@@ -139,8 +145,19 @@
     background: var(--blue-100);
 }
 
+/* Visually hidden but still focusable, so keyboard/screen-reader users
+   can select a category card. */
 .category-card input[type="radio"] {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.category-card:has(input:focus-visible) {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
 }
 
 .category-icon {
@@ -185,6 +202,23 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
+}
+
+.feature-options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+}
+
+/* Live match count shown above the wizard actions */
+.wizard-match-count {
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    margin-top: 1.5rem;
+}
+
+.wizard-match-count strong {
+    color: var(--gray-700);
 }
 
 .feature-option {
@@ -384,21 +418,38 @@
 {% endblock %}
 
 {% block body %}
-<div class="wizard-container" data-controller="wizard">
+<div class="wizard-container">
+    {# Carries the full wizard state so completed steps are revisitable. #}
+    {% set navState = {
+        category: wizardState.category,
+        connectivity: wizardState.connectivity,
+        capabilities: wizardState.capabilities,
+        min_rating: wizardState.min_rating,
+        binding: wizardState.binding
+    } %}
+
     {# Progress indicator #}
     <div class="wizard-progress">
         {% for i in 1..totalSteps %}
-            <div class="wizard-step {{ i == step ? 'active' : '' }} {{ i < step ? 'completed' : '' }}">
-                <div class="wizard-step-number">
-                    {% if i < step %}&#10003;{% else %}{{ i }}{% endif %}
+            {% set stepClasses = (i == step ? 'active' : '') ~ ' ' ~ (i < step ? 'completed' : '') %}
+            {% set stepLabel %}
+                {% if i == 1 %}{{ 'wizard.step1.label'|trans({}, 'wizard') }}
+                {% elseif i == 2 %}{{ 'wizard.step2.label'|trans({}, 'wizard') }}
+                {% else %}{{ 'wizard.step3.label'|trans({}, 'wizard') }}
+                {% endif %}
+            {% endset %}
+            {% set stepNumber %}{% if i < step %}&#10003;{% else %}{{ i }}{% endif %}{% endset %}
+            {% if i < step %}
+                <a href="{{ path('wizard_index', navState|merge({step: i})) }}" class="wizard-step {{ stepClasses }}">
+                    <div class="wizard-step-number">{{ stepNumber|raw }}</div>
+                    <span class="wizard-step-label">{{ stepLabel }}</span>
+                </a>
+            {% else %}
+                <div class="wizard-step {{ stepClasses }}">
+                    <div class="wizard-step-number">{{ stepNumber|raw }}</div>
+                    <span class="wizard-step-label">{{ stepLabel }}</span>
                 </div>
-                <span class="wizard-step-label">
-                    {% if i == 1 %}{{ 'wizard.step1.label'|trans({}, 'wizard') }}
-                    {% elseif i == 2 %}{{ 'wizard.step2.label'|trans({}, 'wizard') }}
-                    {% else %}{{ 'wizard.step3.label'|trans({}, 'wizard') }}
-                    {% endif %}
-                </span>
-            </div>
+            {% endif %}
         {% endfor %}
     </div>
 
@@ -411,5 +462,11 @@
             {% include 'wizard/_step3_compatibility.html.twig' %}
         {% endif %}
     </div>
+
+    {% if step >= 2 %}
+        <p class="wizard-match-count">
+            {{ 'wizard.match_count'|trans({'%count%': matchingCount}, 'wizard')|raw }}
+        </p>
+    {% endif %}
 </div>
 {% endblock %}

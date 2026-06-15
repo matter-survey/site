@@ -7,6 +7,7 @@ wizard:
     back: "Back"
     skip: "Skip"
     find_devices: "Find Devices"
+    match_count: "{0}No devices match these selections|{1}<strong>1</strong> device matches your selections|]1,Inf[<strong>%count%</strong> devices match your selections"
 
     step1:
         label: "Category"
