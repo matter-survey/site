@@ -149,9 +149,9 @@ final class ApiTokenAuthenticatorTest extends TestCase
         $this->assertInstanceOf(Response::class, $response);
 
         $this->assertSame(Response::HTTP_UNAUTHORIZED, $response->getStatusCode(), (string) $response->getContent());
-        $this->assertJson($response->getContent());
+        $this->assertJson((string) $response->getContent());
 
-        $data = json_decode($response->getContent(), true);
+        $data = json_decode((string) $response->getContent(), true);
         $this->assertEquals('error', $data['status']);
         $this->assertEquals('Test error message', $data['error']);
     }
@@ -163,9 +163,9 @@ final class ApiTokenAuthenticatorTest extends TestCase
         $response = $this->authenticator->start($request);
 
         $this->assertSame(Response::HTTP_UNAUTHORIZED, $response->getStatusCode(), (string) $response->getContent());
-        $this->assertJson($response->getContent());
+        $this->assertJson((string) $response->getContent());
 
-        $data = json_decode($response->getContent(), true);
+        $data = json_decode((string) $response->getContent(), true);
         $this->assertEquals('error', $data['status']);
         $this->assertStringContainsString('Authentication required', (string) $data['error']);
     }

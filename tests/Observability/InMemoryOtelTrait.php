@@ -100,7 +100,7 @@ trait InMemoryOtelTrait
     {
         $this->otelTracerProvider->forceFlush();
 
-        return iterator_to_array($this->otelSpanStorage->getIterator());
+        return array_values(iterator_to_array($this->otelSpanStorage->getIterator()));
     }
 
     /**
@@ -124,6 +124,6 @@ trait InMemoryOtelTrait
     {
         $this->otelLoggerProvider->forceFlush();
 
-        return iterator_to_array($this->otelLogStorage->getIterator());
+        return array_values(iterator_to_array($this->otelLogStorage->getIterator()));
     }
 }

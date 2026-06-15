@@ -586,7 +586,7 @@ class DeviceRepository
      */
     public function getVendorFacets(int $limit = 20): array
     {
-        return $this->db->executeQuery('
+        $rows = $this->db->executeQuery('
             SELECT v.id, v.name, v.slug, COUNT(p.id) as count
             FROM vendors v
             JOIN products p ON p.vendor_fk = v.id
@@ -595,6 +595,13 @@ class DeviceRepository
             ORDER BY count DESC
             LIMIT :limit
         ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+
+        return array_map(static fn (array $row): array => [
+            'id' => (int) $row['id'],
+            'name' => (string) $row['name'],
+            'slug' => (string) $row['slug'],
+            'count' => (int) $row['count'],
+        ], $rows);
     }
 
     /**
@@ -605,7 +612,7 @@ class DeviceRepository
      */
     public function getDeviceTypeFacets(int $limit = 15): array
     {
-        return $this->db->executeQuery('
+        $rows = $this->db->executeQuery('
             SELECT
                 dt.id,
                 dt.name,
@@ -620,6 +627,12 @@ class DeviceRepository
             ORDER BY count DESC
             LIMIT :limit
         ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+
+        return array_map(static fn (array $row): array => [
+            'id' => (int) $row['id'],
+            'name' => (string) $row['name'],
+            'count' => (int) $row['count'],
+        ], $rows);
     }
 
     public function getDevice(int $id): ?array
@@ -973,7 +986,7 @@ class DeviceRepository
             $versionStats[$specVersion] += (int) $dt['product_count'];
         }
 
-        uksort($versionStats, version_compare(...));
+        uksort($versionStats, static fn (string $a, string $b): int => version_compare($a, $b));
 
         return $versionStats;
     }
@@ -1433,13 +1446,16 @@ class DeviceRepository
             FROM products p
             LEFT JOIN device_summary ds ON p.id = ds.id
             WHERE p.vendor_fk = :vendor_fk
-        ', ['vendor_fk' => $vendorFk])->fetchAssociative();
+        ', ['vendor_fk' => $vendorFk])->fetchAssociative() ?: [];
+
+        $total = (int) ($result['total'] ?? 0);
+        $withBinding = (int) ($result['with_binding'] ?? 0);
 
         return [
-            'total' => (int) $result['total'],
-            'withBinding' => (int) $result['with_binding'],
-            'percentage' => $result['total'] > 0
-                ? round(($result['with_binding'] / $result['total']) * 100, 1)
+            'total' => $total,
+            'withBinding' => $withBinding,
+            'percentage' => $total > 0
+                ? round(($withBinding / $total) * 100, 1)
                 : 0,
         ];
     }
@@ -1494,11 +1510,14 @@ class DeviceRepository
         ])->fetchAllAssociative();
 
         // Add pairing strength (percentage of source installations that include this product)
-        foreach ($rows as &$row) {
-            $row['pairing_strength'] = round(((int) $row['shared_installations'] / $sourceInstallations) * 100, 1);
-        }
-
-        return $rows;
+        return array_map(static fn (array $row): array => [
+            'id' => (int) $row['id'],
+            'slug' => (string) $row['slug'],
+            'vendor_name' => (string) $row['vendor_name'],
+            'product_name' => (string) $row['product_name'],
+            'shared_installations' => (int) $row['shared_installations'],
+            'pairing_strength' => round(((int) $row['shared_installations'] / $sourceInstallations) * 100, 1),
+        ], $rows);
     }
 
     /**
@@ -1517,11 +1536,11 @@ class DeviceRepository
      * Get top product pairings across all installations.
      * Uses the product_cooccurrence view for efficiency.
      *
-     * @return array<array{product_a: int, product_b: int, shared_installations: int, product_a_name: string, product_b_name: string}>
+     * @return array<array{product_a: int, product_b: int, shared_installations: int, product_a_name: string, product_a_vendor: string, product_a_slug: string, product_b_name: string, product_b_vendor: string, product_b_slug: string}>
      */
     public function getTopProductPairings(int $limit = 20): array
     {
-        return $this->db->executeQuery('
+        $rows = $this->db->executeQuery('
             SELECT
                 pc.product_a,
                 pc.product_b,
@@ -1538,6 +1557,18 @@ class DeviceRepository
             ORDER BY pc.shared_installations DESC
             LIMIT :limit
         ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+
+        return array_map(static fn (array $row): array => [
+            'product_a' => (int) $row['product_a'],
+            'product_b' => (int) $row['product_b'],
+            'shared_installations' => (int) $row['shared_installations'],
+            'product_a_name' => (string) $row['product_a_name'],
+            'product_a_vendor' => (string) $row['product_a_vendor'],
+            'product_a_slug' => (string) $row['product_a_slug'],
+            'product_b_name' => (string) $row['product_b_name'],
+            'product_b_vendor' => (string) $row['product_b_vendor'],
+            'product_b_slug' => (string) $row['product_b_slug'],
+        ], $rows);
     }
 
     /**
@@ -1582,11 +1613,11 @@ class DeviceRepository
      * Get products that are commonly the "hub" of installations
      * (appear in the most multi-product installations).
      *
-     * @return array<array{id: int, product_name: string, vendor_name: string, installation_count: int, unique_pairings: int}>
+     * @return array<array{id: int, slug: string, product_name: string, vendor_name: string, installation_count: int, unique_pairings: int}>
      */
     public function getMostConnectedProducts(int $limit = 10): array
     {
-        return $this->db->executeQuery('
+        $rows = $this->db->executeQuery('
             SELECT
                 ds.id,
                 ds.slug,
@@ -1611,16 +1642,25 @@ class DeviceRepository
             ORDER BY unique_pairings DESC, installation_count DESC
             LIMIT :limit
         ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+
+        return array_map(static fn (array $row): array => [
+            'id' => (int) $row['id'],
+            'slug' => (string) $row['slug'],
+            'product_name' => (string) $row['product_name'],
+            'vendor_name' => (string) $row['vendor_name'],
+            'installation_count' => (int) $row['installation_count'],
+            'unique_pairings' => (int) $row['unique_pairings'],
+        ], $rows);
     }
 
     /**
      * Get vendor pairings - which vendors' products are commonly used together.
      *
-     * @return array<array{vendor_a: string, vendor_b: string, shared_installations: int}>
+     * @return array<array{vendor_a: string, vendor_a_slug: string, vendor_b: string, vendor_b_slug: string, shared_installations: int}>
      */
     public function getVendorPairings(int $limit = 15): array
     {
-        return $this->db->executeQuery('
+        $rows = $this->db->executeQuery('
             SELECT
                 va.name as vendor_a,
                 va.slug as vendor_a_slug,
@@ -1639,6 +1679,14 @@ class DeviceRepository
             ORDER BY shared_installations DESC
             LIMIT :limit
         ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+
+        return array_map(static fn (array $row): array => [
+            'vendor_a' => (string) $row['vendor_a'],
+            'vendor_a_slug' => (string) $row['vendor_a_slug'],
+            'vendor_b' => (string) $row['vendor_b'],
+            'vendor_b_slug' => (string) $row['vendor_b_slug'],
+            'shared_installations' => (int) $row['shared_installations'],
+        ], $rows);
     }
 
     // ========================================
@@ -1783,7 +1831,7 @@ class DeviceRepository
                 (SELECT COUNT(*) FROM vendors) as total_vendors,
                 (SELECT COUNT(*) FROM products) as total_products,
                 (SELECT COUNT(*) FROM vendors WHERE device_count > 0) as vendors_with_devices
-        ')->fetchAssociative();
+        ')->fetchAssociative() ?: [];
 
         // Get top 10 vendors' product count
         $top10Products = $this->db->executeQuery('
@@ -1795,9 +1843,9 @@ class DeviceRepository
             )
         ')->fetchOne();
 
-        $totalProducts = (int) $stats['total_products'];
-        $totalVendors = (int) $stats['total_vendors'];
-        $vendorsWithDevices = (int) $stats['vendors_with_devices'];
+        $totalProducts = (int) ($stats['total_products'] ?? 0);
+        $totalVendors = (int) ($stats['total_vendors'] ?? 0);
+        $vendorsWithDevices = (int) ($stats['vendors_with_devices'] ?? 0);
 
         return [
             'totalVendors' => $totalVendors,

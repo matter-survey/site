@@ -60,12 +60,15 @@ final class RequestTracingSubscriber implements EventSubscriberInterface
             ArrayAccessGetterSetter::getInstance(),
         );
 
+        $method = strtoupper($request->getMethod());
+        $spanName = '' === $method ? 'HTTP' : $method;
+
         $span = Globals::tracerProvider()
             ->getTracer(self::TRACER_NAME)
-            ->spanBuilder(strtoupper($request->getMethod()))
+            ->spanBuilder($spanName)
             ->setSpanKind(SpanKind::KIND_SERVER)
             ->setParent($parentContext)
-            ->setAttribute('http.request.method', strtoupper($request->getMethod()))
+            ->setAttribute('http.request.method', $method)
             ->setAttribute('url.path', $request->getPathInfo())
             ->setAttribute('url.scheme', $request->getScheme())
             ->setAttribute('server.address', $request->getHost())

@@ -101,7 +101,7 @@ final class WizardControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('Content-Type', 'application/json');
 
-        $response = json_decode($client->getResponse()->getContent(), true);
+        $response = json_decode((string) $client->getResponse()->getContent(), true);
         $this->assertArrayHasKey('results', $response);
         $this->assertIsArray($response['results']);
     }
@@ -113,7 +113,7 @@ final class WizardControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
 
-        $response = json_decode($client->getResponse()->getContent(), true);
+        $response = json_decode((string) $client->getResponse()->getContent(), true);
         $this->assertArrayHasKey('results', $response);
         $this->assertEmpty($response['results']);
     }

@@ -130,6 +130,6 @@ final class DoctrineTracingTest extends TestCase
      */
     private function getSpans(): array
     {
-        return iterator_to_array($this->storage->getIterator());
+        return array_values(iterator_to_array($this->storage->getIterator()));
     }
 }

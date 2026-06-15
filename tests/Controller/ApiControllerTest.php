@@ -27,7 +27,7 @@ final class ApiControllerTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
 
-        $response = json_decode($client->getResponse()->getContent(), true);
+        $response = json_decode((string) $client->getResponse()->getContent(), true);
         $this->assertEquals('error', $response['status']);
         $this->assertStringContainsString('Empty request body', (string) $response['error']);
     }
@@ -41,7 +41,7 @@ final class ApiControllerTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
 
-        $response = json_decode($client->getResponse()->getContent(), true);
+        $response = json_decode((string) $client->getResponse()->getContent(), true);
         $this->assertEquals('error', $response['status']);
         $this->assertStringContainsString('Invalid JSON', (string) $response['error']);
     }
@@ -51,11 +51,11 @@ final class ApiControllerTest extends WebTestCase
         $client = self::createClient();
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode(['devices' => []]));
+        ], (string) json_encode(['devices' => []]));
 
         $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
 
-        $response = json_decode($client->getResponse()->getContent(), true);
+        $response = json_decode((string) $client->getResponse()->getContent(), true);
         $this->assertEquals('error', $response['status']);
         $this->assertStringContainsString('installation_id', (string) $response['error']);
     }
@@ -65,14 +65,14 @@ final class ApiControllerTest extends WebTestCase
         $client = self::createClient();
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode([
+        ], (string) json_encode([
             'installation_id' => 'not-a-uuid',
             'devices' => [],
         ]));
 
         $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
 
-        $response = json_decode($client->getResponse()->getContent(), true);
+        $response = json_decode((string) $client->getResponse()->getContent(), true);
         $this->assertEquals('error', $response['status']);
         $this->assertStringContainsString('installation_id', (string) $response['error']);
     }
@@ -82,13 +82,13 @@ final class ApiControllerTest extends WebTestCase
         $client = self::createClient();
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode([
+        ], (string) json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440000',
         ]));
 
         $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
 
-        $response = json_decode($client->getResponse()->getContent(), true);
+        $response = json_decode((string) $client->getResponse()->getContent(), true);
         $this->assertEquals('error', $response['status']);
         $this->assertStringContainsString('devices', (string) $response['error']);
     }
@@ -98,14 +98,14 @@ final class ApiControllerTest extends WebTestCase
         $client = self::createClient();
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode([
+        ], (string) json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440000',
             'devices' => [],
         ]));
 
         $this->assertResponseIsSuccessful();
 
-        $response = json_decode($client->getResponse()->getContent(), true);
+        $response = json_decode((string) $client->getResponse()->getContent(), true);
         $this->assertEquals('ok', $response['status']);
         $this->assertEquals(0, $response['devices_processed']);
     }
@@ -115,7 +115,7 @@ final class ApiControllerTest extends WebTestCase
         $client = self::createClient();
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode([
+        ], (string) json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440001',
             'schema_version' => 2,
             'devices' => [
@@ -140,7 +140,7 @@ final class ApiControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
 
-        $response = json_decode($client->getResponse()->getContent(), true);
+        $response = json_decode((string) $client->getResponse()->getContent(), true);
         $this->assertEquals('ok', $response['status']);
         $this->assertEquals(1, $response['devices_processed']);
     }
@@ -160,7 +160,7 @@ final class ApiControllerTest extends WebTestCase
         // Submit version 1.0
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode([
+        ], (string) json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440010',
             'schema_version' => 2,
             'devices' => [
@@ -187,7 +187,7 @@ final class ApiControllerTest extends WebTestCase
         // Submit version 2.0 with additional cluster (Binding)
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode([
+        ], (string) json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440010',
             'schema_version' => 2,
             'devices' => [
@@ -235,7 +235,7 @@ final class ApiControllerTest extends WebTestCase
         // First submission
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode([
+        ], (string) json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440011',
             'schema_version' => 2,
             'devices' => [
@@ -258,13 +258,13 @@ final class ApiControllerTest extends WebTestCase
             ],
         ]));
         $this->assertResponseIsSuccessful();
-        $response1 = json_decode($client->getResponse()->getContent(), true);
+        $response1 = json_decode((string) $client->getResponse()->getContent(), true);
         $this->assertEquals(1, $response1['devices_processed']);
 
         // Second submission with same version - should update, not duplicate
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode([
+        ], (string) json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440012', // Different installation
             'schema_version' => 2,
             'devices' => [
@@ -287,7 +287,7 @@ final class ApiControllerTest extends WebTestCase
             ],
         ]));
         $this->assertResponseIsSuccessful();
-        $response2 = json_decode($client->getResponse()->getContent(), true);
+        $response2 = json_decode((string) $client->getResponse()->getContent(), true);
         $this->assertEquals(1, $response2['devices_processed']);
 
         // Device page should show the endpoint only once for this version
@@ -299,7 +299,7 @@ final class ApiControllerTest extends WebTestCase
 
             // Count occurrences of "Endpoint 1" - should appear only once per version
             $content = $client->getResponse()->getContent();
-            $this->assertSame(1, substr_count($content, 'SW: 1.0.0'));
+            $this->assertSame(1, substr_count((string) $content, 'SW: 1.0.0'));
         }
     }
 
@@ -310,7 +310,7 @@ final class ApiControllerTest extends WebTestCase
         // Submit device with both server and client clusters
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode([
+        ], (string) json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440013',
             'schema_version' => 2,
             'devices' => [
@@ -356,7 +356,7 @@ final class ApiControllerTest extends WebTestCase
         // Submit version 1.0 with basic clusters
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode([
+        ], (string) json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440020',
             'schema_version' => 2,
             'devices' => [
@@ -383,7 +383,7 @@ final class ApiControllerTest extends WebTestCase
         // Submit version 2.0 with added Binding cluster and OnOff client
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode([
+        ], (string) json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440020',
             'schema_version' => 2,
             'devices' => [
@@ -458,7 +458,7 @@ final class ApiControllerTest extends WebTestCase
         // Submit a bridge device with root, aggregator, and bridged node endpoints
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode([
+        ], (string) json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440030',
             'schema_version' => 2,
             'devices' => [
@@ -538,7 +538,7 @@ final class ApiControllerTest extends WebTestCase
         // Submit a device with proper endpoint data for scoring
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode([
+        ], (string) json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440040',
             'schema_version' => 2,
             'devices' => [
@@ -562,7 +562,7 @@ final class ApiControllerTest extends WebTestCase
         ]));
 
         $this->assertResponseIsSuccessful();
-        $response = json_decode($client->getResponse()->getContent(), true);
+        $response = json_decode((string) $client->getResponse()->getContent(), true);
         $this->assertEquals(1, $response['devices_processed']);
 
         // Verify score was cached by checking the database directly
@@ -596,7 +596,7 @@ final class ApiControllerTest extends WebTestCase
         // Submit device with v3 schema - clusters have full details
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode([
+        ], (string) json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440050',
             'schema_version' => 3,
             'devices' => [
@@ -650,7 +650,7 @@ final class ApiControllerTest extends WebTestCase
         ]));
 
         $this->assertResponseIsSuccessful();
-        $response = json_decode($client->getResponse()->getContent(), true);
+        $response = json_decode((string) $client->getResponse()->getContent(), true);
         $this->assertEquals(1, $response['devices_processed']);
 
         // Verify cluster details were stored in database
@@ -699,7 +699,7 @@ final class ApiControllerTest extends WebTestCase
         // Submit without schema_version but with v3 cluster format
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode([
+        ], (string) json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440051',
             // No schema_version - should auto-detect v3 from cluster format
             'devices' => [
@@ -736,6 +736,7 @@ final class ApiControllerTest extends WebTestCase
              WHERE p.vendor_id = ? AND p.product_id = ?',
             [0x3334, 0x0051]
         );
+        $this->assertNotFalse($endpoint, 'Endpoint should exist');
         $this->assertEquals(3, $endpoint['schema_version'], 'Schema version should be auto-detected as 3');
         $this->assertNotNull($endpoint['server_cluster_details'], 'Cluster details should be stored');
     }
@@ -750,7 +751,7 @@ final class ApiControllerTest extends WebTestCase
         // First: Submit with v3 schema
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode([
+        ], (string) json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440052',
             'schema_version' => 3,
             'devices' => [
@@ -779,7 +780,7 @@ final class ApiControllerTest extends WebTestCase
         // Second: Submit with v2 schema (same device, same version)
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode([
+        ], (string) json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440053',
             'schema_version' => 2,
             'devices' => [
@@ -813,6 +814,7 @@ final class ApiControllerTest extends WebTestCase
              WHERE p.vendor_id = ? AND p.product_id = ?',
             [0x3335, 0x0052]
         );
+        $this->assertNotFalse($endpoint, 'Endpoint should exist');
 
         // Schema version should remain 3 (MAX behavior)
         $this->assertEquals(3, $endpoint['schema_version'], 'Schema version should remain 3 after v2 submission');
@@ -833,7 +835,7 @@ final class ApiControllerTest extends WebTestCase
         // Submit device with v3 schema
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode([
+        ], (string) json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440054',
             'schema_version' => 3,
             'devices' => [
@@ -901,7 +903,7 @@ final class ApiControllerTest extends WebTestCase
 
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
             'CONTENT_TYPE' => 'application/json',
-        ], json_encode([
+        ], (string) json_encode([
             'installation_id' => '550e8400-e29b-41d4-a716-446655440055',
             'schema_version' => 3,
             'devices' => [

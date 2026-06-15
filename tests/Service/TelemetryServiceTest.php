@@ -272,6 +272,7 @@ final class TelemetryServiceTest extends KernelTestCase
             'SELECT vendor_name, product_name FROM products WHERE vendor_id = ? AND product_id = ?',
             [0x2006, 0x0047]
         );
+        $this->assertNotFalse($row);
         $this->assertSame('HelloWorld', $row['vendor_name']);
         $this->assertSame(255, strlen((string) $row['product_name']));
     }

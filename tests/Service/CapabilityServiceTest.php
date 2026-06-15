@@ -409,6 +409,7 @@ final class CapabilityServiceTest extends KernelTestCase
         $this->assertNotEmpty($onOffCapability);
 
         $capability = reset($onOffCapability);
+        $this->assertNotFalse($capability);
         $this->assertArrayHasKey('specVersion', $capability);
     }
 

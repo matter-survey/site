@@ -353,11 +353,16 @@ class TelemetryService
 
         foreach ($endpoints as $endpoint) {
             foreach ($endpoint['server_clusters'] ?? [] as $cluster) {
-                // Handle both v2 (integer) and v3 (object with 'id') formats
-                $clusterId = \is_array($cluster) ? $cluster['id'] ?? null : $cluster;
+                // Handle both v2 (integer) and v3 (object with 'id') formats.
+                // Cluster IDs may arrive as ints or numeric strings; normalise
+                // to an int key before the lookup.
+                $rawClusterId = \is_array($cluster) ? $cluster['id'] ?? null : $cluster;
 
-                if (null !== $clusterId && isset(self::CONNECTIVITY_CLUSTERS[$clusterId])) {
-                    $types[] = self::CONNECTIVITY_CLUSTERS[$clusterId];
+                if (is_numeric($rawClusterId)) {
+                    $clusterId = (int) $rawClusterId;
+                    if (isset(self::CONNECTIVITY_CLUSTERS[$clusterId])) {
+                        $types[] = self::CONNECTIVITY_CLUSTERS[$clusterId];
+                    }
                 }
             }
         }

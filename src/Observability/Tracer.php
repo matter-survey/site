@@ -18,6 +18,7 @@ final class Tracer
     public const string TRACER_NAME = 'app.matter-survey';
 
     /**
+     * @param non-empty-string                         $name
      * @param array<string, scalar|array<scalar>|null> $attributes
      * @param SpanKind::KIND_*                         $kind
      */

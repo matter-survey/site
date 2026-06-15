@@ -84,6 +84,7 @@ final class ZapBackfillCommand extends Command
 
                 return Command::FAILURE;
             }
+            $only = (string) $only;
             $versions = [$only => $versions[$only]];
         }
 
