@@ -142,7 +142,7 @@ final class AeoIntegrationTest extends WebTestCase
         yield 'dashboard' => ['/dashboard'];
         yield 'clusters' => ['/clusters'];
         yield 'device-types' => ['/device-types'];
-        yield 'binding' => ['/binding'];
+        yield 'coordination' => ['/coordination'];
         yield 'pairings' => ['/pairings'];
         yield 'commissioning' => ['/commissioning'];
         yield 'market' => ['/market'];

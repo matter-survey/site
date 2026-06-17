@@ -11,6 +11,16 @@ class DeviceRepository
 {
     private const int BINDING_CLUSTER_ID = 30; // 0x001E
 
+    private const int GROUPS_CLUSTER_ID = 4; // 0x0004
+
+    /**
+     * Scenes is detected via either the current Scenes Management cluster (0x0062,
+     * Matter 1.4+) or the deprecated Scenes cluster (0x0005) it replaced.
+     *
+     * @var list<int>
+     */
+    private const array SCENES_CLUSTER_IDS = [98, 5]; // 0x0062, 0x0005
+
     /**
      * Capability filter definitions mapping user-friendly keys to cluster requirements.
      * Each capability defines:
@@ -213,6 +223,8 @@ class DeviceRepository
      * @param array{
      *     connectivity?: array<string>,
      *     binding?: bool|string|null,
+     *     groups?: bool|string|null,
+     *     scenes?: bool|string|null,
      *     vendor?: int|null,
      *     search?: string|null,
      *     device_types?: array<int>,
@@ -246,6 +258,8 @@ class DeviceRepository
      * @param array{
      *     connectivity?: array<string>,
      *     binding?: bool|string|null,
+     *     groups?: bool|string|null,
+     *     scenes?: bool|string|null,
      *     vendor?: int|null,
      *     search?: string|null,
      *     device_types?: array<int>,
@@ -284,11 +298,13 @@ class DeviceRepository
             $sql .= ' AND ('.implode(' OR ', $connectivityConditions).')';
         }
 
-        // Binding filter
-        if (isset($filters['binding'])) {
-            $sql .= ' AND supports_binding = :binding';
-            $params['binding'] = $filters['binding'] ? 1 : 0;
-            $types['binding'] = \Doctrine\DBAL\ParameterType::INTEGER;
+        // Coordination filters (binding, groups, scenes)
+        foreach (['binding', 'groups', 'scenes'] as $coordFeature) {
+            if (isset($filters[$coordFeature])) {
+                $sql .= " AND supports_{$coordFeature} = :{$coordFeature}";
+                $params[$coordFeature] = $filters[$coordFeature] ? 1 : 0;
+                $types[$coordFeature] = \Doctrine\DBAL\ParameterType::INTEGER;
+            }
         }
 
         // Vendor filter
@@ -465,22 +481,40 @@ class DeviceRepository
     }
 
     /**
-     * Get binding support facets.
+     * Get coordination-feature support facets (binding, groups, scenes).
      *
-     * @return array{with_binding: int, without_binding: int}
+     * @return array{
+     *     binding: array{with: int, without: int},
+     *     groups: array{with: int, without: int},
+     *     scenes: array{with: int, without: int}
+     * }
      */
-    public function getBindingFacets(): array
+    public function getCoordinationFacets(): array
     {
         $result = $this->db->executeQuery('
             SELECT
                 SUM(CASE WHEN supports_binding = 1 THEN 1 ELSE 0 END) as with_binding,
-                SUM(CASE WHEN supports_binding = 0 THEN 1 ELSE 0 END) as without_binding
+                SUM(CASE WHEN supports_binding = 0 THEN 1 ELSE 0 END) as without_binding,
+                SUM(CASE WHEN supports_groups = 1 THEN 1 ELSE 0 END) as with_groups,
+                SUM(CASE WHEN supports_groups = 0 THEN 1 ELSE 0 END) as without_groups,
+                SUM(CASE WHEN supports_scenes = 1 THEN 1 ELSE 0 END) as with_scenes,
+                SUM(CASE WHEN supports_scenes = 0 THEN 1 ELSE 0 END) as without_scenes
             FROM device_summary
         ')->fetchAssociative();
 
         return [
-            'with_binding' => (int) ($result['with_binding'] ?? 0),
-            'without_binding' => (int) ($result['without_binding'] ?? 0),
+            'binding' => [
+                'with' => (int) ($result['with_binding'] ?? 0),
+                'without' => (int) ($result['without_binding'] ?? 0),
+            ],
+            'groups' => [
+                'with' => (int) ($result['with_groups'] ?? 0),
+                'without' => (int) ($result['without_groups'] ?? 0),
+            ],
+            'scenes' => [
+                'with' => (int) ($result['with_scenes'] ?? 0),
+                'without' => (int) ($result['without_scenes'] ?? 0),
+            ],
         ];
     }
 
@@ -773,9 +807,11 @@ class DeviceRepository
             $row['server_cluster_details'] = $row['server_cluster_details'] ? json_decode((string) $row['server_cluster_details'], true) : null;
             $row['client_cluster_details'] = $row['client_cluster_details'] ? json_decode((string) $row['client_cluster_details'], true) : null;
             $row['schema_version'] = (int) ($row['schema_version'] ?? 2);
-            // Derive binding support from either server or client clusters
+            // Derive coordination-feature support from the endpoint clusters
             $row['has_binding_cluster'] = \in_array(self::BINDING_CLUSTER_ID, $row['server_clusters'], true)
                 || \in_array(self::BINDING_CLUSTER_ID, $row['client_clusters'], true);
+            $row['has_groups_cluster'] = \in_array(self::GROUPS_CLUSTER_ID, $row['server_clusters'], true);
+            $row['has_scenes_cluster'] = [] !== array_intersect(self::SCENES_CLUSTER_IDS, $row['server_clusters']);
             $endpoints[] = $row;
         }
 
@@ -810,6 +846,8 @@ class DeviceRepository
             $row['client_cluster_details'] = json_decode($row['client_cluster_details'] ?? 'null', true);
             $row['has_binding_cluster'] = \in_array(self::BINDING_CLUSTER_ID, $row['server_clusters'], true)
                 || \in_array(self::BINDING_CLUSTER_ID, $row['client_clusters'], true);
+            $row['has_groups_cluster'] = \in_array(self::GROUPS_CLUSTER_ID, $row['server_clusters'], true);
+            $row['has_scenes_cluster'] = [] !== array_intersect(self::SCENES_CLUSTER_IDS, $row['server_clusters']);
             $endpoints[] = $row;
         }
 
@@ -1071,23 +1109,37 @@ class DeviceRepository
     }
 
     /**
-     * Get devices that support binding (have cluster 30).
+     * Get devices that support a given coordination feature.
+     *
+     * @param string $feature one of 'binding', 'groups', or 'scenes'
+     *
+     * @throws \InvalidArgumentException when $feature is not a known coordination feature
      */
-    public function getBindingCapableDevices(int $limit = 50): array
+    public function getCoordinationCapableDevices(string $feature, int $limit = 50): array
     {
-        return $this->db->executeQuery('
+        if (!\in_array($feature, ['binding', 'groups', 'scenes'], true)) {
+            throw new \InvalidArgumentException("Unknown coordination feature: {$feature}");
+        }
+
+        return $this->db->executeQuery("
             SELECT * FROM device_summary
-            WHERE supports_binding = 1
+            WHERE supports_{$feature} = 1
             ORDER BY submission_count DESC
             LIMIT :limit
-        ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+        ", ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
     }
 
     /**
-     * Get binding support breakdown by category.
+     * Get coordination support breakdown by category for binding, groups, and scenes.
      * Device types are stored as JSON arrays of objects with 'id' and 'revision' fields.
+     *
+     * @return array<string, array{
+     *     total: int,
+     *     binding: int, groups: int, scenes: int,
+     *     binding_pct: float, groups_pct: float, scenes_pct: float
+     * }>
      */
-    public function getBindingByCategory(\App\Service\MatterRegistry $registry): array
+    public function getCoordinationByCategory(\App\Service\MatterRegistry $registry): array
     {
         $rows = $this->db->executeQuery('
             SELECT
@@ -1097,7 +1149,13 @@ class DeviceRepository
                     SELECT 1 FROM json_each(pe.server_clusters) WHERE value = 30
                 ) OR EXISTS (
                     SELECT 1 FROM json_each(pe.client_clusters) WHERE value = 30
-                ) THEN 1 ELSE 0 END) as has_binding
+                ) THEN 1 ELSE 0 END) as has_binding,
+                MAX(CASE WHEN EXISTS (
+                    SELECT 1 FROM json_each(pe.server_clusters) WHERE value = 4
+                ) THEN 1 ELSE 0 END) as has_groups,
+                MAX(CASE WHEN EXISTS (
+                    SELECT 1 FROM json_each(pe.server_clusters) WHERE value IN (98, 5)
+                ) THEN 1 ELSE 0 END) as has_scenes
             FROM product_endpoints pe, json_each(pe.device_types)
             WHERE json_extract(json_each.value, "$.id") IS NOT NULL
             GROUP BY pe.device_id, json_extract(json_each.value, "$.id")
@@ -1109,20 +1167,26 @@ class DeviceRepository
             $displayCategory = $metadata['displayCategory'] ?? 'Unknown';
 
             if (!isset($categoryStats[$displayCategory])) {
-                $categoryStats[$displayCategory] = ['total' => 0, 'with_binding' => 0];
+                $categoryStats[$displayCategory] = ['total' => 0, 'binding' => 0, 'groups' => 0, 'scenes' => 0];
             }
             ++$categoryStats[$displayCategory]['total'];
-            if ($row['has_binding']) {
-                ++$categoryStats[$displayCategory]['with_binding'];
+            foreach (['binding', 'groups', 'scenes'] as $feature) {
+                if ($row['has_'.$feature]) {
+                    ++$categoryStats[$displayCategory][$feature];
+                }
             }
         }
 
         // Calculate percentages (total is always >= 1 since we only create entries when there's a row)
         foreach ($categoryStats as &$stat) {
-            $stat['percentage'] = round(($stat['with_binding'] / $stat['total']) * 100, 1);
+            foreach (['binding', 'groups', 'scenes'] as $feature) {
+                $stat[$feature.'_pct'] = round(($stat[$feature] / $stat['total']) * 100, 1);
+            }
         }
+        unset($stat);
 
-        uasort($categoryStats, fn ($a, $b): int => $b['percentage'] <=> $a['percentage']);
+        // Sort by overall coordination prevalence (binding leads, consistent with prior behavior)
+        uasort($categoryStats, fn ($a, $b): int => $b['binding_pct'] <=> $a['binding_pct']);
 
         return $categoryStats;
     }

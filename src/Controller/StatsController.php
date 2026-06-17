@@ -337,23 +337,49 @@ class StatsController extends AbstractController
         ]);
     }
 
+    #[Route('/coordination', name: 'stats_coordination', methods: ['GET'])]
+    public function coordination(): Response
+    {
+        $stats = $this->telemetryService->getStats();
+        $byCategory = $this->deviceRepo->getCoordinationByCategory($this->matterRegistry);
+
+        return $this->render('stats/coordination.html.twig', [
+            'stats' => $stats,
+            'byCategory' => $byCategory,
+            'features' => [
+                'binding' => [
+                    'label' => 'Binding',
+                    'role' => 'Controls other devices directly (no hub required)',
+                    'devices' => $this->deviceRepo->getCoordinationCapableDevices('binding', 50),
+                    'count' => $stats['bindable_devices'] ?? 0,
+                ],
+                'groups' => [
+                    'label' => 'Group control',
+                    'role' => 'Can be addressed in bulk as part of a group',
+                    'devices' => $this->deviceRepo->getCoordinationCapableDevices('groups', 50),
+                    'count' => $stats['groups_devices'] ?? 0,
+                ],
+                'scenes' => [
+                    'label' => 'Scene control',
+                    'role' => 'Can save and recall preset states as scenes',
+                    'devices' => $this->deviceRepo->getCoordinationCapableDevices('scenes', 50),
+                    'count' => $stats['scenes_devices'] ?? 0,
+                ],
+            ],
+            'matterRegistry' => $this->matterRegistry,
+            'aeoDataset' => $this->datasetDescriptor(
+                'Matter Coordination Feature Support Statistics',
+                'Aggregate statistics on Matter device support for the multi-device coordination features — Binding, Groups, and Scenes — broken down by device category.',
+            ),
+        ]);
+    }
+
     #[Route('/binding', name: 'stats_binding', methods: ['GET'])]
     public function binding(): Response
     {
-        $stats = $this->telemetryService->getStats();
-        $bindingDevices = $this->deviceRepo->getBindingCapableDevices(50);
-        $bindingByCategory = $this->deviceRepo->getBindingByCategory($this->matterRegistry);
-
-        return $this->render('stats/binding.html.twig', [
-            'stats' => $stats,
-            'bindingDevices' => $bindingDevices,
-            'bindingByCategory' => $bindingByCategory,
-            'matterRegistry' => $this->matterRegistry,
-            'aeoDataset' => $this->datasetDescriptor(
-                'Matter Binding Cluster Support Statistics',
-                'Aggregate statistics on Matter device support for the Binding cluster, broken down by device category.',
-            ),
-        ]);
+        // Binding folded into the unified coordination page; preserve inbound links.
+        return $this->redirectToRoute('stats_coordination', [], Response::HTTP_MOVED_PERMANENTLY)
+            ->setTargetUrl($this->generateUrl('stats_coordination').'#binding');
     }
 
     #[Route('/cluster/{hexId}', name: 'stats_cluster_show', requirements: ['hexId' => '0x[0-9A-Fa-f]+'], methods: ['GET'])]

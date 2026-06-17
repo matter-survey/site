@@ -387,8 +387,8 @@ final class DeviceControllerTest extends WebTestCase
         // Check vendor filters exist
         $this->assertSelectorTextContains('.filter-sidebar', 'Vendor');
 
-        // Check binding filters exist
-        $this->assertSelectorTextContains('.filter-sidebar', 'Binding Support');
+        // Check coordination filters exist
+        $this->assertSelectorTextContains('.filter-sidebar', 'Coordination');
     }
 
     public function testIndexPageFilterByConnectivityThread(): void
@@ -443,6 +443,39 @@ final class DeviceControllerTest extends WebTestCase
         // Should show active filter pill for binding (with capital B)
         $this->assertSelectorExists('.active-filters');
         $this->assertSelectorTextContains('.active-filter', 'Without Binding');
+    }
+
+    public function testIndexPageFilterByGroups(): void
+    {
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['groups' => '1']);
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorExists('.active-filters');
+        $this->assertSelectorTextContains('.active-filter', 'With Group control');
+    }
+
+    public function testIndexPageFilterByScenes(): void
+    {
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['scenes' => '1']);
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorExists('.active-filters');
+        $this->assertSelectorTextContains('.active-filter', 'With Scene control');
+    }
+
+    public function testIndexPageCombinedCoordinationFilters(): void
+    {
+        $client = self::createClient();
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', [
+            'groups' => '1',
+            'scenes' => '1',
+        ]);
+
+        $this->assertResponseIsSuccessful();
+        $activeFilters = $crawler->filter('.active-filter');
+        $this->assertGreaterThanOrEqual(2, $activeFilters->count(), 'Both coordination filters should be active');
     }
 
     public function testIndexPageClearAllFilters(): void

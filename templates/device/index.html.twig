@@ -581,25 +581,24 @@
                     {% endfor %}
                 </div>
 
-                {# Binding filter #}
+                {# Coordination filter — binding, groups, scenes as independent toggles #}
                 <div class="filter-section">
-                    <h4>Binding Support</h4>
+                    <h4>Coordination</h4>
                     <label class="filter-option {{ (filters.binding ?? null) is same as(true) ? 'active' : '' }}">
-                        <input type="radio" name="binding" value="1" {{ (filters.binding ?? null) is same as(true) ? 'checked' : '' }} onchange="this.form.submit()">
-                        <span>Supports Binding</span>
-                        <span class="count">{{ facets.binding.with_binding }}</span>
+                        <input type="checkbox" name="binding" value="1" {{ (filters.binding ?? null) is same as(true) ? 'checked' : '' }} onchange="this.form.submit()">
+                        <span title="Controls other devices directly">Binding</span>
+                        <span class="count">{{ facets.coordination.binding.with }}</span>
                     </label>
-                    <label class="filter-option {{ (filters.binding ?? null) is same as(false) ? 'active' : '' }}">
-                        <input type="radio" name="binding" value="0" {{ (filters.binding ?? null) is same as(false) ? 'checked' : '' }} onchange="this.form.submit()">
-                        <span>No Binding</span>
-                        <span class="count">{{ facets.binding.without_binding }}</span>
+                    <label class="filter-option {{ (filters.groups ?? null) is same as(true) ? 'active' : '' }}">
+                        <input type="checkbox" name="groups" value="1" {{ (filters.groups ?? null) is same as(true) ? 'checked' : '' }} onchange="this.form.submit()">
+                        <span title="Can be controlled in bulk as part of a group">Group control</span>
+                        <span class="count">{{ facets.coordination.groups.with }}</span>
                     </label>
-                    {% if filters.binding is defined %}
-                        <label class="filter-option">
-                            <input type="radio" name="binding" value="" onchange="this.form.submit()">
-                            <span style="color: var(--gray-500);">Any</span>
-                        </label>
-                    {% endif %}
+                    <label class="filter-option {{ (filters.scenes ?? null) is same as(true) ? 'active' : '' }}">
+                        <input type="checkbox" name="scenes" value="1" {{ (filters.scenes ?? null) is same as(true) ? 'checked' : '' }} onchange="this.form.submit()">
+                        <span title="Can save and recall preset states as scenes">Scene control</span>
+                        <span class="count">{{ facets.coordination.scenes.with }}</span>
+                    </label>
                 </div>
 
                 {# Star rating filter #}
@@ -702,12 +701,14 @@
                                 <a href="{{ path('device_index', filters|merge({connectivity: filters.connectivity|filter(v => v != type)})) }}" title="Remove">&times;</a>
                             </span>
                         {% endfor %}
-                        {% if filters.binding is defined %}
-                            <span class="active-filter">
-                                {{ filters.binding ? 'With' : 'Without' }} Binding
-                                <a href="{{ path('device_index', filters|filter((v, k) => k != 'binding')) }}" title="Remove">&times;</a>
-                            </span>
-                        {% endif %}
+                        {% for coordKey, coordLabel in {'binding': 'Binding', 'groups': 'Group control', 'scenes': 'Scene control'} %}
+                            {% if filters[coordKey] is defined %}
+                                <span class="active-filter">
+                                    {{ filters[coordKey] ? 'With' : 'Without' }} {{ coordLabel }}
+                                    <a href="{{ path('device_index', filters|filter((v, k) => k != coordKey)) }}" title="Remove">&times;</a>
+                                </span>
+                            {% endif %}
+                        {% endfor %}
                         {% if filters.vendor is defined %}
                             {% set vendorName = facets.vendors|filter(v => v.id == filters.vendor)|first %}
                             <span class="active-filter">
@@ -808,6 +809,12 @@
                                 {% endif %}
                                 {% if device.supports_binding %}
                                     <span class="badge badge-binding">Binding</span>
+                                {% endif %}
+                                {% if device.supports_groups %}
+                                    <span class="badge badge-groups">Groups</span>
+                                {% endif %}
+                                {% if device.supports_scenes %}
+                                    <span class="badge badge-scenes">Scenes</span>
                                 {% endif %}
                                 {% if device.connectivity_types %}
                                     {% set connTypes = device.connectivity_types|json_decode %}

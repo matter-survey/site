@@ -49,7 +49,7 @@ class DeviceController extends AbstractController
         // Get facet data for filters
         $facets = [
             'connectivity' => $this->deviceRepo->getConnectivityFacets(),
-            'binding' => $this->deviceRepo->getBindingFacets(),
+            'coordination' => $this->deviceRepo->getCoordinationFacets(),
             'vendors' => $this->deviceRepo->getVendorFacets(15),
             'device_types' => $this->deviceRepo->getDeviceTypeFacets(15),
             'star_ratings' => $this->deviceRepo->getStarRatingFacets(),
@@ -101,12 +101,14 @@ class DeviceController extends AbstractController
             $filters['connectivity'] = array_filter($connectivity, fn ($v): bool => \in_array($v, ['thread', 'wifi', 'ethernet'], true));
         }
 
-        // Binding filter
-        $binding = $request->query->get('binding');
-        if ('1' === $binding) {
-            $filters['binding'] = true;
-        } elseif ('0' === $binding) {
-            $filters['binding'] = false;
+        // Coordination filters (binding, groups, scenes) — independent toggles
+        foreach (['binding', 'groups', 'scenes'] as $coordFeature) {
+            $value = $request->query->get($coordFeature);
+            if ('1' === $value) {
+                $filters[$coordFeature] = true;
+            } elseif ('0' === $value) {
+                $filters[$coordFeature] = false;
+            }
         }
 
         // Vendor filter (check for non-empty before getInt to avoid error on empty string)
@@ -157,6 +159,8 @@ class DeviceController extends AbstractController
     {
         return !empty($filters['connectivity'])
             || isset($filters['binding'])
+            || isset($filters['groups'])
+            || isset($filters['scenes'])
             || !empty($filters['vendor'])
             || !empty($filters['device_types'])
             || !empty($filters['search'])

@@ -67,7 +67,7 @@ class SitemapController extends AbstractController
             ['route' => 'stats_dashboard', 'params' => [], 'priority' => 0.7, 'changefreq' => 'weekly'],
             ['route' => 'stats_clusters', 'params' => [], 'priority' => 0.7, 'changefreq' => 'weekly'],
             ['route' => 'stats_device_types', 'params' => [], 'priority' => 0.7, 'changefreq' => 'weekly'],
-            ['route' => 'stats_binding', 'params' => [], 'priority' => 0.6, 'changefreq' => 'weekly'],
+            ['route' => 'stats_coordination', 'params' => [], 'priority' => 0.6, 'changefreq' => 'weekly'],
             ['route' => 'stats_versions', 'params' => [], 'priority' => 0.6, 'changefreq' => 'weekly'],
             ['route' => 'stats_pairings', 'params' => [], 'priority' => 0.6, 'changefreq' => 'weekly'],
             ['route' => 'page_about', 'params' => [], 'priority' => 0.5, 'changefreq' => 'monthly'],
