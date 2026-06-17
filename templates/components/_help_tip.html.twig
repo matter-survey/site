@@ -1,0 +1,17 @@
+{#
+  Small "?" help icon that reveals a styled tooltip on hover/focus.
+
+  Usage:
+    {% from 'components/_help_tip.html.twig' import helpTip %}
+    {{ helpTip('Explanation of what this thing does.', 'Short label') }}
+
+  The trigger is keyboard-focusable and exposes the text via aria-label so the
+  explanation is available to screen readers, not just on hover.
+#}
+{% macro helpTip(text, label) %}
+    {# stop click propagation so the icon never activates a surrounding control (e.g. a filter <label>) #}
+    <span class="help-tip" tabindex="0" role="note" aria-label="{{ label ? label ~ ': ' : '' }}{{ text }}" onclick="event.preventDefault();event.stopPropagation();">
+        <span class="help-tip-icon" aria-hidden="true">?</span>
+        <span class="help-tip-bubble" role="tooltip">{{ text }}</span>
+    </span>
+{% endmacro %}
