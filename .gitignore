@@ -48,3 +48,7 @@ Thumbs.db
 # php-cs-fixer cache (the binary lives in tools/php-cs-fixer/ but the
 # cache is still written at the project root, where the config lives).
 /.php-cs-fixer.cache
+
+# Release version, stamped at deploy time (`git describe`) and rsynced to the
+# server. Generated, never committed; absent in dev/test (falls back to 'dev').
+/config/version.php

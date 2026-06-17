@@ -29,7 +29,9 @@ services:
         arguments:
             $serviceName: '%env(OTEL_SERVICE_NAME)%'
             $serviceNamespace: '%env(OTEL_SERVICE_NAMESPACE)%'
-            $serviceVersion: '%env(OTEL_SERVICE_VERSION)%'
+            # Release version: single source shared with the Faro app.version
+            # meta tag (see config/packages/app_version.php).
+            $serviceVersion: '%app.version%'
             $environment: '%kernel.environment%'
             $disabled: '%env(bool:OTEL_SDK_DISABLED)%'
 
