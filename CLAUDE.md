@@ -21,7 +21,7 @@ php bin/phpunit --filter testMethodName  # Run specific test method
 # Linting & Static Analysis
 make lint                    # Check code style (php-cs-fixer dry-run)
 make lint-fix                # Fix code style issues
-make analyse                 # Run PHPStan (level 6)
+make analyse                 # Run PHPStan (level 7)
 make rector                  # Check for pending Rector refactors (dry-run)
 make rector-fix              # Apply Rector refactors
 
@@ -83,6 +83,21 @@ php bin/console doctrine:migrations:migrate
 - `app:zap:backfill` - Snapshot Matter cluster spec per release tag into `fixtures/clusters/{1.0..1.5,master}.yaml`. Run `--matter-version=master` daily (scheduled in CI) to keep master fresh; the released-version tags are frozen.
 - `app:scores:rebuild` - Rebuild the device scores cache table (used in deployment)
 - `app:otel:doctor` - Print resolved OpenTelemetry configuration (env vars, providers, sampler) and exit non-zero on misconfiguration when the SDK is enabled
+- `app:user:create` - Create an admin user (form-login credential for the `/admin` area)
+- `app:api-token:create` / `app:api-token:list` / `app:api-token:revoke` - Manage stateless API tokens used by the `/api` firewall
+
+### Authentication & Authorization
+
+Two firewalls are configured in `config/packages/security.yaml`:
+
+- **`/api`** - stateless, token-based. `App\Security\ApiTokenAuthenticator` validates a bearer token against the `ApiToken` entity. Mint/list/revoke tokens with the `app:api-token:*` commands.
+- **Main (`/admin`)** - session-based form login. `^/admin` requires `ROLE_ADMIN`; successful login redirects to `admin_dashboard`. Admin UI lives in `src/Controller/Admin/`. Create users with `app:user:create`.
+
+`SecurityHeadersSubscriber` (in `src/EventSubscriber/`) injects security headers on responses.
+
+### Internationalization
+
+The site is bilingual (English/German). `LocaleSubscriber` resolves the request locale; translations live in `translations/` split by domain (`messages`, `navigation`, `wizard`, `faq`, `glossary`) with `.en`/`.de` variants. User-facing strings belong in these catalogs, not hard-coded in templates.
 
 ### Matter Registry Data
 
@@ -166,7 +181,7 @@ Single workflow in `.github/workflows/ci.yml`:
 - `code-quality` job: composer validate, security audit, php-cs-fixer, Rector (dry-run), PHPStan analysis
 - `deploy` job: runs after test/code-quality pass, only on main branch push
 
-PHPStan is configured at level 6 with a baseline (`phpstan-baseline.neon`) for existing issues.
+PHPStan is configured at level 7 with a baseline (`phpstan-baseline.neon`) for existing issues.
 
 ## Structured Data & SEO
 
@@ -217,6 +232,14 @@ core invariants:
   comment carries a `# Last reviewed:` date — update it when changing the
   policy. This is a public-good Matter registry, so retrieval AND training
   crawlers are intentionally permitted.
+
+## Spec-Driven Changes (OpenSpec)
+
+Larger features are planned as OpenSpec changes under `openspec/changes/<name>/`
+(proposal, design, tasks, and per-capability specs). The canonical capability
+specs live under `openspec/specs/`. Use the `openspec-*` / `opsx:*` skills to
+propose, apply, and archive changes; consult an in-progress change's `tasks.md`
+before implementing related work.
 
 ## Commit Guidelines
 
