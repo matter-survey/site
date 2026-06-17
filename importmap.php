@@ -40,4 +40,46 @@ return [
     'web-vitals/attribution' => [
         'version' => '5.3.0',
     ],
+    '@grafana/faro-web-tracing' => [
+        'version' => '2.7.1',
+    ],
+    '@opentelemetry/core' => [
+        'version' => '2.7.1',
+    ],
+    '@opentelemetry/otlp-transformer/build/src/common/utils' => [
+        'version' => '0.218.0',
+    ],
+    '@opentelemetry/otlp-transformer/build/src/trace/internal' => [
+        'version' => '0.218.0',
+    ],
+    '@opentelemetry/otlp-transformer/build/src/trace/internal-types' => [
+        'version' => '0.218.0',
+    ],
+    '@opentelemetry/instrumentation-fetch' => [
+        'version' => '0.218.0',
+    ],
+    '@opentelemetry/instrumentation-xml-http-request' => [
+        'version' => '0.218.0',
+    ],
+    '@opentelemetry/api' => [
+        'version' => '1.9.1',
+    ],
+    '@opentelemetry/instrumentation' => [
+        'version' => '0.218.0',
+    ],
+    '@opentelemetry/resources' => [
+        'version' => '2.7.1',
+    ],
+    '@opentelemetry/sdk-trace-web' => [
+        'version' => '2.7.1',
+    ],
+    '@opentelemetry/semantic-conventions' => [
+        'version' => '1.41.1',
+    ],
+    '@opentelemetry/api-logs' => [
+        'version' => '0.218.0',
+    ],
+    '@opentelemetry/sdk-trace-base' => [
+        'version' => '2.7.1',
+    ],
 ];
