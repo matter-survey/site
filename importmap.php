@@ -28,4 +28,16 @@ return [
     '@hotwired/turbo' => [
         'version' => '7.3.0',
     ],
+    '@grafana/faro-web-sdk' => [
+        'version' => '2.7.1',
+    ],
+    '@grafana/faro-core' => [
+        'version' => '2.7.1',
+    ],
+    'ua-parser-js' => [
+        'version' => '1.0.41',
+    ],
+    'web-vitals/attribution' => [
+        'version' => '5.3.0',
+    ],
 ];

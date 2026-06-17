@@ -2,3 +2,4 @@ twig:
     default_path: '%kernel.project_dir%/templates'
     globals:
         canonical_base_url: '%env(CANONICAL_BASE_URL)%'
+        faro_collector_url: '%env(FARO_COLLECTOR_URL)%'

@@ -24,6 +24,15 @@
     {# Standard meta description #}
     <meta name="description" content="{{ block('og_description') }}">
 
+    {# Grafana Faro frontend observability. Only rendered when a collector URL is
+       configured (prod, via FARO_COLLECTOR_URL). assets/faro.js reads these and
+       stays inert when the URL tag is absent. #}
+    {% if faro_collector_url %}
+    <meta name="faro-collector-url" content="{{ faro_collector_url }}">
+    <meta name="faro-app-name" content="matter-survey.org">
+    <meta name="faro-environment" content="{{ app.environment }}">
+    {% endif %}
+
     {# JSON-LD Structured Data #}
     {% block structured_data %}{% endblock %}
 
