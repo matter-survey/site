@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { trackEvent } from '../observability.js';
 
 /**
  * Autocomplete controller for search inputs with API-powered suggestions.
@@ -41,6 +42,11 @@ export default class extends Controller {
                 const response = await fetch(`${this.urlValue}?q=${encodeURIComponent(query)}`);
                 const data = await response.json();
                 this.render(data.results);
+                trackEvent('search_submitted', {
+                    query,
+                    result_count: String(data.results.length),
+                    surface: 'autocomplete',
+                });
             } catch (e) {
                 this.hide();
             }

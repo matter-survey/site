@@ -157,15 +157,29 @@ Database views: `product_summary` (aliased as `device_summary`), `cluster_stats`
 Manual instrumentation via the pure-PHP OpenTelemetry SDK. No PHP extension required.
 
 - **Default state:** disabled. `.env` ships `OTEL_SDK_DISABLED=true`.
-- **Enable in prod:** set in `.env.local`:
+- **Enable in prod:** set in `.env.local` (prod exports to the Grafana Cloud OTLP gateway, same stack as the Faro collector, so frontend and backend traces share one Tempo):
   ```
   OTEL_SDK_DISABLED=false
-  OTEL_EXPORTER_OTLP_ENDPOINT=https://your-otlp-endpoint/
-  OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer <token>
+  OTEL_EXPORTER_OTLP_ENDPOINT=https://otlp-gateway-<zone>.grafana.net/otlp
+  OTEL_EXPORTER_OTLP_HEADERS=Authorization=Basic%20<base64(instanceID:token)>
   ```
-- **Transport pinned to** `http/json` (avoids `ext-protobuf`/`ext-grpc`).
+  Grafana Cloud uses **Basic** auth (base64 of `instanceID:token`), percent-encoded — the OTLP exporter `rawurldecode`s header values.
+- **Transport pinned to** `http/json` (avoids `ext-protobuf`/`ext-grpc`; verified accepted by the Grafana gateway).
 - **Non-blocking export:** spans are batched and flushed via `fastcgi_finish_request()` after the response is sent (PHP-FPM only; falls back to synchronous shutdown export on other SAPIs).
 - **Verify config:** `php bin/console app:otel:doctor` prints resolved env, active providers, and exits non-zero on misconfiguration.
+- **Service identity:** `service.name`/`service.namespace`/`service.version`/`deployment.environment.name` come from the environment. `OtelBootstrap::mergeResourceAttributes()` reads existing attrs from `$_SERVER`/`$_ENV` (not just `getenv()`, which Symfony Dotenv leaves empty), so operator-set `OTEL_RESOURCE_ATTRIBUTES` (e.g. `service.namespace`) survive boot.
+- **OTLP log level:** `OtelLogsHandler` enforces an INFO+ minimum in its constructor — MonologBundle ignores `level:` for `type: service` handlers, so the threshold can't live in `monolog.yaml`.
+- **Document-load correlation:** `ServerTimingSubscriber` adds `Server-Timing: traceparent;…` on sampled responses so the browser can link the initial page load to its backend trace.
+
+### Frontend Observability (Grafana Faro)
+
+Browser instrumentation via the Faro Web SDK, vendored into the AssetMapper importmap (`@grafana/faro-web-sdk` + `@grafana/faro-web-tracing`). Init lives in `assets/faro.js` (first import in `assets/app.js`).
+
+- **Gating:** Faro initializes only when the server renders a `<meta name="faro-collector-url">` tag, emitted from `FARO_COLLECTOR_URL` (prod `.env.local`). Inert in dev/test.
+- **Distributed tracing:** `TracingInstrumentation` injects W3C `traceparent` on same-origin fetch/XHR (incl. Turbo's fetch-based navigations); the backend `RequestTracingSubscriber` continues the trace. Frontend and backend traces share one Grafana Cloud Tempo.
+- **Turbo views:** `assets/faro.js` calls `faro.api.setView()` on `turbo:load` so telemetry isn't all attributed to the first-loaded URL.
+- **Version:** `app.version` and backend `service.version` share one source — `config/version.php`, stamped at deploy (`git describe`, see the Makefile) and exposed via the `app.version` container parameter (`config/packages/app_version.php`). Absent in dev → `dev`.
+- **Events:** domain events go through `trackEvent()` in `assets/observability.js` (`faro.api.pushEvent`, no-op until init). **Privacy:** never set a user identity; pass only allowlisted, non-PII fields. Search query text is intentionally captured (device-search input, not personal data).
 
 ## Environment Files
 

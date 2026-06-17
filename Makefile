@@ -150,6 +150,8 @@ deploy:
 	@test -n "$(SFTP_HOST)" || (echo "SFTP_HOST not set in .env" && exit 1)
 	@test -n "$(SFTP_PATH)" || (echo "SFTP_PATH not set in .env" && exit 1)
 	@echo "Deploying to $(SFTP_USER)@$(SFTP_HOST):$(SFTP_PATH)"
+	@printf "<?php return '%s';\n" "$$(git describe --tags --always --dirty 2>/dev/null || echo dev)" > config/version.php
+	@echo "Stamped release version: $$(php -r 'echo require "config/version.php";')"
 	rsync -avz --delete \
 		--exclude='.git' \
 		--exclude='.env' \

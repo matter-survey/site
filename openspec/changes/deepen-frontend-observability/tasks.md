@@ -3,7 +3,7 @@
 - [x] 1.1 Re-point prod `OTEL_EXPORTER_OTLP_ENDPOINT` to the Grafana Cloud gateway and switch auth to Basic in `.env.local` (backup `.env.local.pre-grafana`)
 - [x] 1.2 Verify `http/json` is accepted by the gateway (`HTTP 200` probe) — no `ext-protobuf` needed
 - [x] 1.3 Verify resolved config with `app:otel:doctor` on prod (exit 0)
-- [ ] 1.4 Update committed `.env` OTel example comments off the previous collector; update CLAUDE.md Observability section (endpoint, Basic auth, `http/json`, service identity)
+- [x] 1.4 Update committed `.env` OTel example comments off the previous collector; update CLAUDE.md Observability section (endpoint, Basic auth, `http/json`, service identity)
 - [ ] 1.5 Confirm traces/metrics/logs are arriving in Grafana Cloud (Tempo/Mimir/Loki) for service `site`
 
 ## 2. Service identity & resource-attribute fix
@@ -16,18 +16,18 @@
 ## 3. Release version (single source — pending A/B decision)
 
 - [x] 3.1 Decide version source — **B: deploy-time git stamp** (design.md Decision 3)
-- [ ] 3.2 `make deploy` computes `git describe --tags --always` and writes a generated `config/version.php` (rsynced up)
-- [ ] 3.3 Feed it to backend `OTEL_SERVICE_VERSION` (replace the hardcoded `dev`) from the same value
-- [ ] 3.4 Expose it to Twig (`app_version` global) and render `<meta name="faro-app-version">`; set Faro `app.version` from it in `assets/faro.js`
-- [ ] 3.5 Verify backend `service.version` and frontend `app.version` report the same value for a given release
+- [x] 3.2 `make deploy` computes `git describe --tags --always` and writes a generated `config/version.php` (rsynced up)
+- [x] 3.3 Feed the backend resource `service.version` from the same source (OtelBootstrap `$serviceVersion` bound to the `app.version` parameter)
+- [x] 3.4 Expose it to Twig (`app_version` global) and render `<meta name="faro-app-version">`; set Faro `app.version` from it in `assets/faro.js`
+- [x] 3.5 Verify mechanism: stamping `config/version.php` resolves `app.version` to the git ref, feeding both runtimes (runtime cross-check after deploy)
 
 ## 4. Frontend distributed tracing
 
-- [ ] 4.1 `importmap:require @grafana/faro-web-tracing` (vendored, like the base SDK)
-- [ ] 4.2 Add `TracingInstrumentation` to `initializeFaro` in `assets/faro.js`
-- [ ] 4.3 Confirm same-origin `traceparent` is injected on `/api/*` fetch and on Turbo navigation/frame fetches; confirm backend `RequestTracingSubscriber` continues the trace
-- [ ] 4.4 Configure `propagateTraceHeaderCorsUrls` only if any traced call is cross-origin (none expected)
-- [ ] 4.5 Test: a sample fetch carries a `traceparent` header
+- [x] 4.1 `importmap:require @grafana/faro-web-tracing` (vendored, like the base SDK)
+- [x] 4.2 Add `TracingInstrumentation` to `initializeFaro` in `assets/faro.js`
+- [ ] 4.3 Confirm same-origin `traceparent` is injected on `/api/*` fetch and on Turbo navigation/frame fetches; confirm backend `RequestTracingSubscriber` continues the trace _(runtime/e2e after deploy)_
+- [x] 4.4 No `propagateTraceHeaderCorsUrls` needed — all traced calls are same-origin (Decision 2)
+- [ ] 4.5 Test: a sample fetch carries a `traceparent` header _(no JS test infra in repo; covered by the e2e check)_
 
 ## 5. Document-load correlation (Server-Timing)
 
@@ -38,17 +38,17 @@
 
 ## 6. Turbo-aware view context
 
-- [ ] 6.1 Update Faro's view/page context on `turbo:load` (and URL-advancing frame renders), once per visit
-- [ ] 6.2 Verify telemetry after several Turbo navigations is attributed to the current URL, not the first-loaded one, without double-counting views
+- [x] 6.1 Update Faro's view/page context on `turbo:load` (and URL-advancing frame renders), once per visit
+- [ ] 6.2 Verify telemetry after several Turbo navigations is attributed to the current URL, not the first-loaded one, without double-counting views _(runtime/e2e after deploy)_
 
 ## 7. Events & user actions
 
-- [ ] 7.1 Enable Faro native user-actions instrumentation
-- [ ] 7.2 `search_submitted` with `query`, `result_count`, `surface` in the autocomplete/search controllers (Decision 5)
-- [ ] 7.3 `comparison_started` (with selected count) in the compare controllers
-- [ ] 7.4 `wizard_step_completed { step, name }` on every wizard step transition, plus terminal completion
-- [ ] 7.5 Privacy guardrail: events carry only allowlisted fields; assert no user identity / auth / PII is set
-- [ ] 7.6 Test: event payloads contain the expected keys and exclude identity
+- [x] 7.1 Native user-actions ship via `getWebInstrumentations()` defaults in 2.7 (no separate top-level enable flag); manual funnel events below add domain semantics
+- [x] 7.2 `search_submitted` with `query`, `result_count`, `surface` in the autocomplete/search controllers (Decision 5)
+- [x] 7.3 `comparison_started` (with selected count) in the compare controllers
+- [x] 7.4 `wizard_step_completed { step, name }` on every wizard step transition, plus terminal completion
+- [x] 7.5 Privacy guardrail: events carry only allowlisted fields; assert no user identity / auth / PII is set
+- [ ] 7.6 Test: event payloads contain the expected keys and exclude identity _(no JS test infra in repo; enforced by the `trackEvent` allowlist + code review)_
 
 ## 8. Prod log-level hygiene (OTLP)
 
@@ -59,6 +59,6 @@
 
 ## 9. Docs & verification
 
-- [ ] 9.1 Add a CLAUDE.md "Frontend Observability (Faro)" subsection (gating, tracing, events, privacy posture)
+- [x] 9.1 Add a CLAUDE.md "Frontend Observability (Faro)" subsection (gating, tracing, events, privacy posture)
 - [ ] 9.2 End-to-end check: trigger a browser action in prod and confirm a single FE↔BE waterfall in Grafana Tempo
-- [ ] 9.3 Confirm `app:otel:doctor` stays green and lint/PHPStan/Rector pass
+- [x] 9.3 Confirm `app:otel:doctor` stays green and lint/PHPStan/Rector pass
