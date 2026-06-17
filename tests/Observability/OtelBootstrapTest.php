@@ -68,7 +68,7 @@ final class OtelBootstrapTest extends TestCase
     {
         $providerBefore = Globals::tracerProvider();
 
-        $bootstrap = new OtelBootstrap('matter-survey', 'dev', 'test', disabled: true);
+        $bootstrap = new OtelBootstrap('matter-survey', 'matter-survey', 'dev', 'test', disabled: true);
         $bootstrap->boot();
 
         $this->assertTrue($bootstrap->isBooted());
@@ -82,7 +82,7 @@ final class OtelBootstrapTest extends TestCase
         putenv('OTEL_LOGS_EXPORTER=none');
         putenv('OTEL_PHP_TRACES_PROCESSOR=simple');
 
-        $bootstrap = new OtelBootstrap('matter-survey', '1.2.3', 'prod', disabled: false);
+        $bootstrap = new OtelBootstrap('matter-survey', 'matter-survey', '1.2.3', 'prod', disabled: false);
         $bootstrap->boot();
 
         $this->assertTrue($bootstrap->isBooted());
@@ -100,7 +100,7 @@ final class OtelBootstrapTest extends TestCase
         putenv('OTEL_LOGS_EXPORTER=none');
         putenv('OTEL_PHP_TRACES_PROCESSOR=simple');
 
-        $bootstrap = new OtelBootstrap('matter-survey', '1.0.0', 'test', disabled: false);
+        $bootstrap = new OtelBootstrap('matter-survey', 'matter-survey', '1.0.0', 'test', disabled: false);
         $bootstrap->boot();
         $first = Globals::tracerProvider();
         $bootstrap->boot();
@@ -116,12 +116,48 @@ final class OtelBootstrapTest extends TestCase
         putenv('OTEL_PHP_TRACES_PROCESSOR=simple');
         putenv('OTEL_RESOURCE_ATTRIBUTES=service.version=9.9.9,custom.tag=keep');
 
-        $bootstrap = new OtelBootstrap('matter-survey', '1.0.0', 'prod', disabled: false);
+        $bootstrap = new OtelBootstrap('matter-survey', 'matter-survey', '1.0.0', 'prod', disabled: false);
         $bootstrap->boot();
 
         $resolved = (string) getenv('OTEL_RESOURCE_ATTRIBUTES');
         $this->assertStringContainsString('service.version=9.9.9', $resolved);
         $this->assertStringContainsString('custom.tag=keep', $resolved);
         $this->assertStringContainsString('deployment.environment.name=prod', $resolved);
+    }
+
+    /**
+     * Regression: Symfony Dotenv writes to $_SERVER/$_ENV but not getenv().
+     * The bootstrap must read existing attributes from those sources so an
+     * operator-provided service.namespace survives the boot-time merge.
+     */
+    public function testServerProvidedResourceAttributesArePreserved(): void
+    {
+        putenv('OTEL_TRACES_EXPORTER=none');
+        putenv('OTEL_METRICS_EXPORTER=none');
+        putenv('OTEL_LOGS_EXPORTER=none');
+        putenv('OTEL_PHP_TRACES_PROCESSOR=simple');
+        // Set ONLY via $_SERVER (the Dotenv path), not putenv().
+        $_SERVER['OTEL_RESOURCE_ATTRIBUTES'] = 'service.namespace=matter-survey';
+
+        $bootstrap = new OtelBootstrap('site', 'matter-survey', '1.0.0', 'prod', disabled: false);
+        $bootstrap->boot();
+
+        $resolved = (string) getenv('OTEL_RESOURCE_ATTRIBUTES');
+        $this->assertStringContainsString('service.namespace=matter-survey', $resolved);
+        $this->assertStringContainsString('service.version=1.0.0', $resolved);
+        $this->assertStringContainsString('deployment.environment.name=prod', $resolved);
+    }
+
+    public function testServiceNamespaceDefaultIsApplied(): void
+    {
+        putenv('OTEL_TRACES_EXPORTER=none');
+        putenv('OTEL_METRICS_EXPORTER=none');
+        putenv('OTEL_LOGS_EXPORTER=none');
+        putenv('OTEL_PHP_TRACES_PROCESSOR=simple');
+
+        $bootstrap = new OtelBootstrap('site', 'matter-survey', '1.0.0', 'prod', disabled: false);
+        $bootstrap->boot();
+
+        $this->assertStringContainsString('service.namespace=matter-survey', (string) getenv('OTEL_RESOURCE_ATTRIBUTES'));
     }
 }

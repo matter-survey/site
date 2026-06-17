@@ -28,6 +28,7 @@ final class OtelBootstrap implements EventSubscriberInterface
 
     public function __construct(
         private readonly string $serviceName,
+        private readonly string $serviceNamespace,
         private readonly string $serviceVersion,
         private readonly string $environment,
         private readonly bool $disabled,
@@ -55,6 +56,7 @@ final class OtelBootstrap implements EventSubscriberInterface
 
         $this->ensureEnv('OTEL_SERVICE_NAME', $this->serviceName);
         $this->mergeResourceAttributes([
+            'service.namespace' => $this->serviceNamespace,
             'service.version' => $this->serviceVersion,
             'deployment.environment.name' => $this->environment,
         ]);
@@ -91,7 +93,8 @@ final class OtelBootstrap implements EventSubscriberInterface
 
     private function ensureEnv(string $name, string $value): void
     {
-        if (false !== getenv($name) && '' !== getenv($name)) {
+        $current = $this->readEnv($name);
+        if (false !== $current && '' !== $current) {
             return;
         }
         putenv($name.'='.$value);
@@ -100,18 +103,39 @@ final class OtelBootstrap implements EventSubscriberInterface
     }
 
     /**
+     * Reads an env var from the same sources Symfony Dotenv populates
+     * ($_SERVER/$_ENV) before falling back to getenv(). Dotenv does not call
+     * putenv() by default, so getenv() alone misses values from .env* files.
+     */
+    private function readEnv(string $name): string|false
+    {
+        if (isset($_SERVER[$name]) && '' !== $_SERVER[$name]) {
+            return (string) $_SERVER[$name];
+        }
+        if (isset($_ENV[$name]) && '' !== $_ENV[$name]) {
+            return (string) $_ENV[$name];
+        }
+
+        return getenv($name);
+    }
+
+    /**
      * @param array<string, string> $additions
      */
     private function mergeResourceAttributes(array $additions): void
     {
-        $existing = getenv('OTEL_RESOURCE_ATTRIBUTES');
+        $existing = $this->readEnv('OTEL_RESOURCE_ATTRIBUTES');
         $existing = false === $existing ? '' : $existing;
 
         $missing = [];
         foreach ($additions as $key => $value) {
-            if (!str_contains($existing, $key.'=')) {
-                $missing[] = $key.'='.$value;
+            if ('' === $value) {
+                continue;
             }
+            if (str_contains($existing, $key.'=')) {
+                continue;
+            }
+            $missing[] = $key.'='.$value;
         }
 
         if ([] === $missing) {

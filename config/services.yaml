@@ -9,6 +9,7 @@ parameters:
     # whose .env isn't synced). Operators override via .env.local on prod.
     env(OTEL_SDK_DISABLED): 'true'
     env(OTEL_SERVICE_NAME): 'matter-survey'
+    env(OTEL_SERVICE_NAMESPACE): 'matter-survey'
     env(OTEL_SERVICE_VERSION): 'dev'
 
 services:
@@ -27,6 +28,7 @@ services:
     App\Observability\Bootstrap\OtelBootstrap:
         arguments:
             $serviceName: '%env(OTEL_SERVICE_NAME)%'
+            $serviceNamespace: '%env(OTEL_SERVICE_NAMESPACE)%'
             $serviceVersion: '%env(OTEL_SERVICE_VERSION)%'
             $environment: '%kernel.environment%'
             $disabled: '%env(bool:OTEL_SDK_DISABLED)%'
