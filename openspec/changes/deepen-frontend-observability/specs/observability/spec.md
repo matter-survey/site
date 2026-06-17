@@ -33,3 +33,19 @@ The application SHALL derive its service identity — `service.name`, `service.n
 #### Scenario: Defaults when unset
 - **WHEN** no `OTEL_RESOURCE_ATTRIBUTES` is provided
 - **THEN** the resource still includes the default `service.version` and `deployment.environment.name` derived at boot
+
+### Requirement: OTLP log export excludes debug records
+
+When Monolog records are bridged to the OpenTelemetry LoggerProvider, the bridge SHALL enforce a minimum severity of INFO in the handler itself, because the MonologBundle `level:` key is ignored for `type: service` handlers. Debug-level records SHALL NOT be exported to the OTLP backend.
+
+#### Scenario: Debug record is not exported
+- **WHEN** a `DEBUG` Monolog record is produced while OTLP log export is enabled
+- **THEN** it is not emitted to the OpenTelemetry LoggerProvider
+
+#### Scenario: Info and above are exported
+- **WHEN** an `INFO`, `WARNING`, or `ERROR` Monolog record is produced while OTLP log export is enabled
+- **THEN** it is emitted to the OpenTelemetry LoggerProvider with the corresponding severity
+
+#### Scenario: Threshold holds under default construction
+- **WHEN** the bridge handler is constructed with no explicit level (as the service-aliased handler is in production)
+- **THEN** its minimum level is INFO, not the Monolog DEBUG default

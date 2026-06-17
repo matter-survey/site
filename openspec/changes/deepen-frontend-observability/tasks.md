@@ -9,9 +9,9 @@
 ## 2. Service identity & resource-attribute fix
 
 - [x] 2.1 Set prod `OTEL_SERVICE_NAME=site` and `OTEL_RESOURCE_ATTRIBUTES=service.namespace=matter-survey` in `.env.local`
-- [ ] 2.2 Fix `OtelBootstrap::mergeResourceAttributes()` to read existing attributes from `$_SERVER ?? $_ENV ?? getenv()` so env-provided attributes (e.g. `service.namespace`) are preserved, not clobbered
-- [ ] 2.3 (Optional) Add a `service.namespace` constructor param/binding mirroring `service.name`/`service.version`, for parity
-- [ ] 2.4 Test: an `OTEL_RESOURCE_ATTRIBUTES` value set via env survives boot and appears in the resource; `app:otel:doctor` shows `service.namespace=matter-survey` on prod after deploy
+- [x] 2.2 Fix `OtelBootstrap::mergeResourceAttributes()` to read existing attributes from `$_SERVER ?? $_ENV ?? getenv()` so env-provided attributes (e.g. `service.namespace`) are preserved, not clobbered
+- [x] 2.3 (Optional) Add a `service.namespace` constructor param/binding mirroring `service.name`/`service.version`, for parity
+- [x] 2.4 Test: an `OTEL_RESOURCE_ATTRIBUTES` value set via env survives boot and appears in the resource; `app:otel:doctor` shows `service.namespace=matter-survey` on prod after deploy
 
 ## 3. Release version (single source — pending A/B decision)
 
@@ -31,10 +31,10 @@
 
 ## 5. Document-load correlation (Server-Timing)
 
-- [ ] 5.1 Add a response listener (new subscriber or extend `SecurityHeadersSubscriber`) that, on sampled requests, sets `Server-Timing: traceparent;desc="00-<traceId>-<spanId>-<flags>"` from the active server span
-- [ ] 5.2 Emit only when the request is sampled/traced; never on a request without an active recorded span
+- [x] 5.1 Add a response listener (new subscriber or extend `SecurityHeadersSubscriber`) that, on sampled requests, sets `Server-Timing: traceparent;desc="00-<traceId>-<spanId>-<flags>"` from the active server span
+- [x] 5.2 Emit only when the request is sampled/traced; never on a request without an active recorded span
 - [ ] 5.3 Verify Faro links the initial document load to the backend trace; add a small navigation-span reader only if Faro doesn't auto-consume `Server-Timing`
-- [ ] 5.4 Test: a sampled response includes `Server-Timing` with the active span's trace id; unsampled requests omit it
+- [x] 5.4 Test: a sampled response includes `Server-Timing` with the active span's trace id; unsampled requests omit it
 
 ## 6. Turbo-aware view context
 
@@ -50,8 +50,15 @@
 - [ ] 7.5 Privacy guardrail: events carry only allowlisted fields; assert no user identity / auth / PII is set
 - [ ] 7.6 Test: event payloads contain the expected keys and exclude identity
 
-## 8. Docs & verification
+## 8. Prod log-level hygiene (OTLP)
 
-- [ ] 8.1 Add a CLAUDE.md "Frontend Observability (Faro)" subsection (gating, tracing, events, privacy posture)
-- [ ] 8.2 End-to-end check: trigger a browser action in prod and confirm a single FE↔BE waterfall in Grafana Tempo
-- [ ] 8.3 Confirm `app:otel:doctor` stays green and lint/PHPStan/Rector pass
+- [x] 8.1 Enforce INFO+ in `OtelLogsHandler` constructor (MonologBundle ignores `level:` for `type: service` handlers, so prod was bridging DEBUG to OTLP)
+- [x] 8.2 Drop the misleading `level: info` from the `otel` handler in `monolog.yaml`; document that the threshold lives in the handler
+- [x] 8.3 Test: default (no-arg) handler construction filters DEBUG and bridges INFO+
+- [ ] 8.4 After deploy, confirm DEBUG records no longer reach Grafana Loki for service `site`
+
+## 9. Docs & verification
+
+- [ ] 9.1 Add a CLAUDE.md "Frontend Observability (Faro)" subsection (gating, tracing, events, privacy posture)
+- [ ] 9.2 End-to-end check: trigger a browser action in prod and confirm a single FE↔BE waterfall in Grafana Tempo
+- [ ] 9.3 Confirm `app:otel:doctor` stays green and lint/PHPStan/Rector pass
