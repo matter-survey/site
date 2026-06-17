@@ -198,4 +198,80 @@ final class DeviceRepositoryTest extends KernelTestCase
         $this->assertNotNull($bySlug);
         $this->assertTrue((bool) $bySlug['is_name_ambiguous']);
     }
+
+    public function testCoordinationClusterDetection(): void
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $vendor = $em->getRepository(Vendor::class)->findOneBy(['specId' => 4874]);
+        $this->assertNotNull($vendor);
+
+        $isNew = false;
+        // Device with Groups (4), current Scenes Management (98), and Binding (30, client).
+        $modernId = $this->repository->upsertDevice([
+            'vendor_id' => 4874,
+            'vendor_name' => $vendor->getName(),
+            'vendor_fk' => $vendor->getId(),
+            'product_id' => 41001,
+            'product_name' => 'Eve Coordination Modern',
+        ], $isNew);
+        $this->repository->upsertEndpoint($modernId, [
+            'endpoint_id' => 1,
+            'device_types' => [['id' => 256, 'revision' => 1]],
+            'server_clusters' => [6, 4, 98],
+            'client_clusters' => [30],
+        ]);
+
+        // Device with the deprecated Scenes cluster (5) only — no 98, no groups.
+        $legacyId = $this->repository->upsertDevice([
+            'vendor_id' => 4874,
+            'vendor_name' => $vendor->getName(),
+            'vendor_fk' => $vendor->getId(),
+            'product_id' => 41002,
+            'product_name' => 'Eve Coordination Legacy',
+        ], $isNew);
+        $this->repository->upsertEndpoint($legacyId, [
+            'endpoint_id' => 1,
+            'device_types' => [['id' => 256, 'revision' => 1]],
+            'server_clusters' => [6, 5],
+            'client_clusters' => [],
+        ]);
+
+        // Device with no coordination clusters.
+        $plainId = $this->repository->upsertDevice([
+            'vendor_id' => 4874,
+            'vendor_name' => $vendor->getName(),
+            'vendor_fk' => $vendor->getId(),
+            'product_id' => 41003,
+            'product_name' => 'Eve Coordination None',
+        ], $isNew);
+        $this->repository->upsertEndpoint($plainId, [
+            'endpoint_id' => 1,
+            'device_types' => [['id' => 256, 'revision' => 1]],
+            'server_clusters' => [6],
+            'client_clusters' => [],
+        ]);
+
+        // Per-endpoint derivation flags.
+        $modernEndpoints = $this->repository->getDeviceEndpoints($modernId);
+        $this->assertTrue((bool) $modernEndpoints[0]['has_groups_cluster']);
+        $this->assertTrue((bool) $modernEndpoints[0]['has_scenes_cluster']);
+        $this->assertTrue((bool) $modernEndpoints[0]['has_binding_cluster']);
+
+        $legacyEndpoints = $this->repository->getDeviceEndpoints($legacyId);
+        $this->assertTrue((bool) $legacyEndpoints[0]['has_scenes_cluster'], 'Deprecated Scenes cluster (5) must count as scenes support');
+        $this->assertFalse((bool) $legacyEndpoints[0]['has_groups_cluster']);
+
+        // View-backed support columns via the coordination filters.
+        $withGroups = $this->repository->getFilteredDevices(['groups' => true], 500, 0);
+        $groupNames = array_column($withGroups, 'product_name');
+        $this->assertContains('Eve Coordination Modern', $groupNames);
+        $this->assertNotContains('Eve Coordination Legacy', $groupNames);
+        $this->assertNotContains('Eve Coordination None', $groupNames);
+
+        $withScenes = $this->repository->getFilteredDevices(['scenes' => true], 500, 0);
+        $sceneNames = array_column($withScenes, 'product_name');
+        $this->assertContains('Eve Coordination Modern', $sceneNames);
+        $this->assertContains('Eve Coordination Legacy', $sceneNames, 'Legacy scenes device must match the scenes filter');
+        $this->assertNotContains('Eve Coordination None', $sceneNames);
+    }
 }

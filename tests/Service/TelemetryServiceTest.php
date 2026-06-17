@@ -301,7 +301,7 @@ final class TelemetryServiceTest extends KernelTestCase
     {
         $stats = $this->service->getStats();
         $this->assertSame(
-            ['total_devices', 'total_vendors', 'total_installations', 'total_submissions', 'bindable_devices'],
+            ['total_devices', 'total_vendors', 'total_installations', 'total_submissions', 'bindable_devices', 'groups_devices', 'scenes_devices'],
             array_keys($stats),
         );
         foreach ($stats as $value) {

@@ -351,90 +351,72 @@ final class StatsControllerTest extends WebTestCase
 
     // === Binding Page Tests ===
 
-    public function testBindingPageLoads(): void
+    public function testBindingRouteRedirectsToCoordination(): void
     {
         $client = self::createClient();
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/binding');
+
+        $this->assertResponseStatusCodeSame(301);
+        $this->assertResponseHeaderSame('Location', '/coordination#binding');
+    }
+
+    public function testCoordinationPageLoads(): void
+    {
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/coordination');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('html');
     }
 
-    public function testBindingPageShowsCorrectBindingCount(): void
+    public function testCoordinationPageEmitsDatasetJsonLd(): void
     {
         $client = self::createClient();
-        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/binding');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/coordination');
 
         $this->assertResponseIsSuccessful();
 
-        // 4 devices have binding cluster (30): Eve Motion, Eve Energy, Philips bulb, Nanoleaf
-        $this->assertSelectorTextContains('.stats-row', '4');
+        $jsonLd = $crawler->filter('script[type="application/ld+json"]')->text();
+        $this->assertStringContainsString('Dataset', $jsonLd);
+        $this->assertStringContainsString('creativecommons.org/publicdomain/zero', $jsonLd);
     }
 
-    public function testBindingPageShowsBindingCapableDevices(): void
+    public function testCoordinationPageShowsBindingCapableDevices(): void
     {
         $client = self::createClient();
-        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/binding');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/coordination');
 
         $this->assertResponseIsSuccessful();
 
-        // Should list binding-capable devices
-        $deviceTable = $crawler->filter('.device-table');
-        $this->assertGreaterThan(0, $deviceTable->count());
-
-        // Should include Eve Motion (has binding cluster)
-        $this->assertStringContainsString('Eve Motion', $deviceTable->text());
+        // Should list binding-capable devices in the binding section
+        $bindingSection = $crawler->filter('#binding');
+        $this->assertGreaterThan(0, $bindingSection->count());
+        $this->assertStringContainsString('Eve Motion', $bindingSection->text());
     }
 
-    public function testBindingPageShowsPhilipsHueBulb(): void
+    public function testCoordinationPageHasAllThreeFeatureSections(): void
     {
         $client = self::createClient();
-        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/binding');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/coordination');
 
         $this->assertResponseIsSuccessful();
 
-        // Philips Hue bulb has binding cluster
-        $deviceTable = $crawler->filter('.device-table');
-        $this->assertStringContainsString('Hue', $deviceTable->text());
+        $this->assertGreaterThan(0, $crawler->filter('#binding')->count());
+        $this->assertGreaterThan(0, $crawler->filter('#groups')->count());
+        $this->assertGreaterThan(0, $crawler->filter('#scenes')->count());
     }
 
-    public function testBindingPageShowsNanoleaf(): void
+    public function testCoordinationPageShowsCategoryBreakdown(): void
     {
         $client = self::createClient();
-        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/binding');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/coordination');
 
         $this->assertResponseIsSuccessful();
 
-        // Nanoleaf has binding cluster
-        $deviceTable = $crawler->filter('.device-table');
-        $this->assertStringContainsString('Nanoleaf', $deviceTable->text());
-    }
-
-    public function testBindingPageShowsCategoryBreakdown(): void
-    {
-        $client = self::createClient();
-        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/binding');
-
-        $this->assertResponseIsSuccessful();
-
-        // Should show binding by category
         $categoryGrid = $crawler->filter('.category-grid');
         $this->assertGreaterThan(0, $categoryGrid->count());
-
-        // Lights category should have high binding rate (Philips bulb, Nanoleaf both have binding)
         $categoryCards = $crawler->filter('.category-card');
         $this->assertGreaterThan(0, $categoryCards->count());
-    }
-
-    public function testBindingPageShowsPercentage(): void
-    {
-        $client = self::createClient();
-        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/binding');
-
-        $this->assertResponseIsSuccessful();
-
-        // Should show percentage of devices with binding (actual % varies with DCL data)
-        $this->assertSelectorTextContains('.stats-row', 'Of All Devices');
     }
 
     // === Versions Page Tests ===
@@ -514,18 +496,18 @@ final class StatsControllerTest extends WebTestCase
         $this->assertSelectorTextContains('.dashboard-nav a.active', 'Device Types');
     }
 
-    public function testNavigationFromDashboardToBinding(): void
+    public function testNavigationFromDashboardToCoordination(): void
     {
         $client = self::createClient();
         $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/dashboard');
 
         $this->assertResponseIsSuccessful();
 
-        $bindingLink = $crawler->filter('.dashboard-nav a:contains("Binding")');
-        $client->click($bindingLink->link());
+        $coordinationLink = $crawler->filter('.dashboard-nav a:contains("Coordination")');
+        $client->click($coordinationLink->link());
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('.dashboard-nav a.active', 'Binding');
+        $this->assertSelectorTextContains('.dashboard-nav a.active', 'Coordination');
     }
 
     public function testNavigationFromDashboardToVersions(): void
@@ -572,14 +554,14 @@ final class StatsControllerTest extends WebTestCase
         }
     }
 
-    public function testBindingPageLinkToDeviceDetail(): void
+    public function testCoordinationPageLinkToDeviceDetail(): void
     {
         $client = self::createClient();
-        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/binding');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/coordination');
 
         $this->assertResponseIsSuccessful();
 
-        // Click on a device in the binding table
+        // Click on a device in one of the coordination tables
         $deviceLink = $crawler->filter('.device-table tbody a')->first();
         if ($deviceLink->count() > 0) {
             $client->click($deviceLink->link());

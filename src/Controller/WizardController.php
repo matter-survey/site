@@ -255,7 +255,7 @@ class WizardController extends AbstractController
 
         return [
             'connectivityOptions' => $this->deviceRepo->getConnectivityFacets(),
-            'bindingOptions' => $this->deviceRepo->getBindingFacets(),
+            'bindingOptions' => $this->deviceRepo->getCoordinationFacets()['binding'],
             'guide' => $guide,
         ];
     }

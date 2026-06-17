@@ -128,17 +128,22 @@ final class DeviceRepositoryExtraTest extends KernelTestCase
         $this->assertIsArray($bySpec);
     }
 
-    public function testGetConnectivityAndBindingFacets(): void
+    public function testGetConnectivityAndCoordinationFacets(): void
     {
         $connectivity = $this->repository->getConnectivityFacets();
-        $binding = $this->repository->getBindingFacets();
+        $coordination = $this->repository->getCoordinationFacets();
         $star = $this->repository->getStarRatingFacets();
         $capability = $this->repository->getCapabilityFacets();
         $vendor = $this->repository->getVendorFacets(20);
         $deviceType = $this->repository->getDeviceTypeFacets(15);
 
         $this->assertIsArray($connectivity);
-        $this->assertIsArray($binding);
+        $this->assertIsArray($coordination);
+        $this->assertArrayHasKey('binding', $coordination);
+        $this->assertArrayHasKey('groups', $coordination);
+        $this->assertArrayHasKey('scenes', $coordination);
+        $this->assertArrayHasKey('with', $coordination['groups']);
+        $this->assertArrayHasKey('without', $coordination['scenes']);
         $this->assertIsArray($star);
         $this->assertIsArray($capability);
         $this->assertIsArray($vendor);
@@ -183,13 +188,21 @@ final class DeviceRepositoryExtraTest extends KernelTestCase
         $this->assertIsInt($count);
     }
 
-    public function testBindingHelpers(): void
+    public function testCoordinationHelpers(): void
     {
-        $devices = $this->repository->getBindingCapableDevices(10);
-        $byCategory = $this->repository->getBindingByCategory($this->matterRegistry);
+        foreach (['binding', 'groups', 'scenes'] as $feature) {
+            $devices = $this->repository->getCoordinationCapableDevices($feature, 10);
+            $this->assertIsArray($devices);
+        }
 
-        $this->assertIsArray($devices);
+        $byCategory = $this->repository->getCoordinationByCategory($this->matterRegistry);
         $this->assertIsArray($byCategory);
+    }
+
+    public function testCoordinationCapableDevicesRejectsUnknownFeature(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->repository->getCoordinationCapableDevices('bogus', 10);
     }
 
     public function testVersionAndMultiVersionHelpers(): void

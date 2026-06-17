@@ -420,6 +420,8 @@ class TelemetryService
             'total_installations' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM installations')->fetchOne(),
             'total_submissions' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM submissions')->fetchOne(),
             'bindable_devices' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM product_summary WHERE supports_binding = 1')->fetchOne(),
+            'groups_devices' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM product_summary WHERE supports_groups = 1')->fetchOne(),
+            'scenes_devices' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM product_summary WHERE supports_scenes = 1')->fetchOne(),
         ];
     }
 }
