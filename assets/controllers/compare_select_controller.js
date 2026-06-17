@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { trackEvent } from '../observability.js';
 
 /**
  * Compare selection controller for the device listing page.
@@ -73,6 +74,7 @@ export default class extends Controller {
 
     compare() {
         if (this.selectedSlugs.length >= 2) {
+            trackEvent('comparison_started', { count: String(this.selectedSlugs.length) });
             window.location.href = `${this.compareUrlValue}/${this.selectedSlugs.join(',')}`;
         }
     }

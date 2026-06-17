@@ -478,7 +478,10 @@ a.wizard-step {
 {% endblock %}
 
 {% block body %}
-<div class="wizard-container">
+<div class="wizard-container"
+     data-controller="wizard-telemetry"
+     data-wizard-telemetry-step-value="{{ step }}"
+     data-wizard-telemetry-name-value="{{ {1: 'category', 2: 'capabilities', 3: 'home', 4: 'compatibility'}[step] ?? 'unknown' }}">
     {# Carries the full wizard state so completed steps are revisitable. #}
     {% set navState = {
         category: wizardState.category,
