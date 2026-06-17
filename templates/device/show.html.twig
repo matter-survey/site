@@ -2,6 +2,7 @@
 
 {% from 'components/_star_rating.html.twig' import stars, starsCompact, starsBadge %}
 {% from 'components/_device_name.html.twig' import deviceName %}
+{% from 'components/_help_tip.html.twig' import helpTip %}
 
 {# Macro for rendering cluster tag with tooltip showing spec info or actual telemetry data #}
 {% macro clusterTag(clusterId, matterRegistry, isClient, clusterDetails) %}
@@ -1603,15 +1604,15 @@
             </div>
             {# Coordination & interoperability — role-aware: binding is controller-side, groups/scenes are controlled-side #}
             {% if device.supports_binding %}
-                <span class="badge badge-binding" title="This device can directly control other Matter devices via binding (device-to-device automation without a hub)">Controls devices directly ℹ️</span>
+                <span class="badge badge-binding">Controls devices directly {{ helpTip('Via the Binding cluster, this device can directly control other Matter devices — for example a switch driving a light — without routing through a hub.', 'Binding') }}</span>
             {% else %}
-                <span class="badge badge-no-binding" title="This device cannot directly control other devices. It can only be controlled by a hub or controller." style="background: var(--gray-100); color: var(--gray-500);">No Binding</span>
+                <span class="badge badge-no-binding" style="background: var(--gray-100); color: var(--gray-500);">No Binding {{ helpTip('This device cannot directly control other devices. It can only be controlled by a hub or controller.', 'No binding') }}</span>
             {% endif %}
             {% if device.supports_groups %}
-                <span class="badge badge-groups" title="This device can be addressed as part of a group, so one command can control it alongside other devices simultaneously.">Group control</span>
+                <span class="badge badge-groups">Group control {{ helpTip('Via the Groups cluster, this device can be addressed as part of a group, so a single command can control it alongside other devices at once.', 'Group control') }}</span>
             {% endif %}
             {% if device.supports_scenes %}
-                <span class="badge badge-scenes" title="This device can save and recall preset states as scenes (e.g. 'movie night').">Scene control</span>
+                <span class="badge badge-scenes">Scene control {{ helpTip('Via the Scenes cluster, this device can save and recall preset states — for example a "movie night" scene that sets brightness and color in one step.', 'Scene control') }}</span>
             {% endif %}
             {% if device.connectivity_types %}
                 {% set connTypes = device.connectivity_types|json_decode %}

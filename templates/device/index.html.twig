@@ -2,6 +2,7 @@
 
 {% from 'components/_star_rating.html.twig' import starsBadge %}
 {% from 'components/_device_name.html.twig' import deviceName %}
+{% from 'components/_help_tip.html.twig' import helpTip %}
 
 {% block title %}Matter Survey - Device Index{% endblock %}
 
@@ -586,17 +587,17 @@
                     <h4>Coordination</h4>
                     <label class="filter-option {{ (filters.binding ?? null) is same as(true) ? 'active' : '' }}">
                         <input type="checkbox" name="binding" value="1" {{ (filters.binding ?? null) is same as(true) ? 'checked' : '' }} onchange="this.form.submit()">
-                        <span title="Controls other devices directly">Binding</span>
+                        <span>Binding {{ helpTip('Controls other Matter devices directly — e.g. a switch driving a light — without routing through a hub.', 'Binding') }}</span>
                         <span class="count">{{ facets.coordination.binding.with }}</span>
                     </label>
                     <label class="filter-option {{ (filters.groups ?? null) is same as(true) ? 'active' : '' }}">
                         <input type="checkbox" name="groups" value="1" {{ (filters.groups ?? null) is same as(true) ? 'checked' : '' }} onchange="this.form.submit()">
-                        <span title="Can be controlled in bulk as part of a group">Group control</span>
+                        <span>Group control {{ helpTip('Can be addressed as part of a group, so a single command controls it alongside other devices at once.', 'Group control') }}</span>
                         <span class="count">{{ facets.coordination.groups.with }}</span>
                     </label>
                     <label class="filter-option {{ (filters.scenes ?? null) is same as(true) ? 'active' : '' }}">
                         <input type="checkbox" name="scenes" value="1" {{ (filters.scenes ?? null) is same as(true) ? 'checked' : '' }} onchange="this.form.submit()">
-                        <span title="Can save and recall preset states as scenes">Scene control</span>
+                        <span>Scene control {{ helpTip('Can save and recall preset states as scenes — e.g. a "movie night" scene that sets brightness and color in one step.', 'Scene control') }}</span>
                         <span class="count">{{ facets.coordination.scenes.with }}</span>
                     </label>
                 </div>
