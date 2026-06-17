@@ -57,7 +57,9 @@ when@prod:
                 # Bridges Monolog INFO+ records to the OpenTelemetry LoggerProvider.
                 # No-op when OTEL_LOGS_EXPORTER=none (default) since the global
                 # provider is then a Noop. Flip OTEL_LOGS_EXPORTER=otlp to enable.
+                # NOTE: MonologBundle ignores `level:` for `type: service` handlers
+                # (it only aliases the service), so the INFO+ threshold is enforced
+                # in the handler constructor (OtelLogsHandler), not here.
                 type: service
                 id: App\Observability\Monolog\OtelLogsHandler
-                level: info
                 channels: ["!event", "!deprecation"]
