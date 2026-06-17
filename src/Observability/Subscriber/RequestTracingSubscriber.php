@@ -15,6 +15,7 @@ use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\Event\TerminateEvent;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 final class RequestTracingSubscriber implements EventSubscriberInterface
@@ -108,8 +109,19 @@ final class RequestTracingSubscriber implements EventSubscriberInterface
         }
         $span = $this->state[$request]['span'];
 
-        $span->recordException($event->getThrowable());
-        $span->setStatus(StatusCode::STATUS_ERROR, $event->getThrowable()->getMessage());
+        $throwable = $event->getThrowable();
+        $statusCode = $throwable instanceof HttpExceptionInterface ? $throwable->getStatusCode() : 500;
+
+        // Per the OTel HTTP semantic conventions, a SERVER span is only marked
+        // Error for 5xx responses. Client errors (4xx — e.g. a 404 from an
+        // unknown path) are expected outcomes, not server faults, so we leave
+        // the span status unset and skip the noisy exception event.
+        if ($statusCode < 500) {
+            return;
+        }
+
+        $span->recordException($throwable);
+        $span->setStatus(StatusCode::STATUS_ERROR, $throwable->getMessage());
     }
 
     public function onKernelTerminate(TerminateEvent $event): void

@@ -91,6 +91,28 @@ final class RequestTracingTest extends WebTestCase
         }
     }
 
+    public function testClientErrorDoesNotMarkServerSpanAsError(): void
+    {
+        // A 404 is a client error, not a server fault. Per the OTel HTTP
+        // semantic conventions the SERVER span status must stay UNSET for 4xx.
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/this-path-does-not-exist');
+        $this->assertResponseStatusCodeSame(404);
+
+        $this->tracerProvider->forceFlush();
+
+        /** @var list<ImmutableSpan> $spans */
+        $spans = iterator_to_array($this->storage->getIterator());
+        $serverSpans = array_values(array_filter($spans, static fn (ImmutableSpan $s): bool => SpanKind::KIND_SERVER === $s->getKind()));
+
+        $this->assertCount(1, $serverSpans);
+        $span = $serverSpans[0];
+
+        $this->assertSame(\OpenTelemetry\API\Trace\StatusCode::STATUS_UNSET, $span->getStatus()->getCode());
+        $this->assertSame(404, $span->getAttributes()->toArray()['http.response.status_code'] ?? null);
+        $this->assertCount(0, $span->getEvents(), 'No exception event should be recorded for a 4xx');
+    }
+
     public function testIncomingTraceparentIsHonored(): void
     {
         $traceId = '0af7651916cd43dd8448eb211c80319c';
