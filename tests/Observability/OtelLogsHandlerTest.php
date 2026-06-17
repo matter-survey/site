@@ -92,4 +92,23 @@ final class OtelLogsHandlerTest extends TestCase
 
         $this->assertCount(0, $records, 'DEBUG should be below INFO threshold');
     }
+
+    /**
+     * Production registers this handler as a `type: service`, which MonologBundle
+     * aliases without applying the yaml `level:` — so it is constructed with no
+     * arguments. The handler's own default must therefore filter DEBUG, otherwise
+     * prod ships debug logs to the OTLP backend.
+     */
+    public function testDefaultConstructionFiltersDebug(): void
+    {
+        $logger = new Logger('app', [new OtelLogsHandler()]);
+        $logger->debug('not bridged');
+        $logger->info('bridged');
+
+        $this->loggerProvider->forceFlush();
+        $records = iterator_to_array($this->logStorage->getIterator());
+
+        $this->assertCount(1, $records, 'Default handler must bridge INFO+ only, not DEBUG');
+        $this->assertSame('bridged', $records[0]->getBody());
+    }
 }
