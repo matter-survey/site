@@ -15,9 +15,9 @@
 
 ## 3. Release version (single source — pending A/B decision)
 
-- [ ] 3.1 Decide version source: A (composer.json `version`) or B (deploy-time git stamp) — see design.md Decision 3
-- [ ] 3.2 Implement the chosen source and expose it once
-- [ ] 3.3 Feed it to backend `OTEL_SERVICE_VERSION` (replace the hardcoded `dev`)
+- [x] 3.1 Decide version source — **B: deploy-time git stamp** (design.md Decision 3)
+- [ ] 3.2 `make deploy` computes `git describe --tags --always` and writes a generated `config/version.php` (rsynced up)
+- [ ] 3.3 Feed it to backend `OTEL_SERVICE_VERSION` (replace the hardcoded `dev`) from the same value
 - [ ] 3.4 Expose it to Twig (`app_version` global) and render `<meta name="faro-app-version">`; set Faro `app.version` from it in `assets/faro.js`
 - [ ] 3.5 Verify backend `service.version` and frontend `app.version` report the same value for a given release
 

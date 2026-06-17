@@ -48,15 +48,12 @@ initial cold document load      →  Server-Timing RESPONSE header (backend → 
 - **Verify in implementation:** whether Faro's `TracingInstrumentation` auto-consumes `Server-Timing` to create the linked navigation span, or whether a small reader over `performance.getEntriesByType('navigation')[0].serverTiming` is needed.
 - **Same-origin**, so no `Timing-Allow-Origin` needed. **Caveat:** don't emit a stale trace id on HTTP-cached responses (low risk — pages are dynamic).
 
-### Decision 3: Single release version, both runtimes — OPEN (A vs B)
-One version identifier must feed both `OTEL_SERVICE_VERSION` (backend) and the Faro `app.version` meta. The deploy strips `.git`, so Composer can't auto-derive the SHA in prod. Two viable single-source options:
+### Decision 3: Single release version via deploy-time git stamp (decided: B)
+One version identifier feeds both `OTEL_SERVICE_VERSION` (backend) and the Faro `app.version` meta. The deploy strips `.git`, so Composer can't auto-derive the SHA in prod — so the version is stamped at deploy time on the dev machine (where `.git` exists) and shipped.
 
-| Option | Mechanism | Pros | Cons |
-| --- | --- | --- | --- |
-| **A. composer.json `version`** | add `"version"`, read via `Composer\InstalledVersions` → meta + `OTEL_SERVICE_VERSION` | one static source, no deploy plumbing | manual bump; CI `composer validate` may warn on root `version` |
-| **B. deploy-time git stamp** (recommended) | `make deploy`: `git describe --tags --always` → generated `config/version.php` (read by Twig + OTel) and `OTEL_SERVICE_VERSION` | auto per-deploy, real ref | small Makefile plumbing |
-
-- **Recommendation: B** — accurate per-deploy versioning with no manual step. **This is the one open decision for the user to confirm before implementation.**
+- **Chosen — B:** `make deploy` computes `git describe --tags --always` and writes it to a generated file (e.g. `config/version.php`) that is rsynced up; the deploy also sets `OTEL_SERVICE_VERSION` from the same value. A Twig global (`app_version`) reads the file for the Faro `app.version` meta. One value, both runtimes, auto-updated per deploy.
+- **Rejected — A (composer.json `version`):** a static `"version"` read via `Composer\InstalledVersions` is simpler but requires a manual bump that drifts from actual deploys, and risks a `composer validate` warning on a root `version`.
+- **Why B:** accurate per-deploy versioning with no manual step; the small Makefile plumbing is worth it for trustworthy regression attribution.
 
 ### Decision 4: Fix env-sourced resource attributes; set service identity
 `OtelBootstrap::mergeResourceAttributes()` reads `getenv('OTEL_RESOURCE_ATTRIBUTES')`, which Symfony Dotenv leaves empty, then overwrites `$_SERVER` — silently dropping any `.env.local`-provided attribute (confirmed: `service.namespace=matter-survey` set on prod is dropped; `cache:clear` does not help).
@@ -87,7 +84,6 @@ The find-your-gear wizard emits `wizard_step_completed { step, name }` on each s
 
 ## Open Questions / Risks
 
-- **Version A vs B** — the one decision blocking the version slice (Decision 3).
 - **Faro Server-Timing consumption** — auto vs. small reader (Decision 2); verify against faro-web-tracing behavior during implementation.
 - **Turbo view double-counting** — ensure the view hook fires once per visit, not per frame render, to avoid inflated view counts.
 - **PII in error payloads** — exception messages could theoretically contain user input; rely on Faro's defaults and the no-identity stance; revisit if noisy.
