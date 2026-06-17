@@ -17,6 +17,11 @@ security_controllers:
     resource: ../src/Controller/SecurityController.php
     type: attribute
 
+# Redirect the bare `/en` prefix (default locale is un-prefixed) to canonical
+locale_redirect_controllers:
+    resource: ../src/Controller/LocaleRedirectController.php
+    type: attribute
+
 admin_controllers:
     resource: ../src/Controller/Admin/
     type: attribute
