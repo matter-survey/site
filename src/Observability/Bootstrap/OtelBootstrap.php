@@ -59,6 +59,7 @@ final class OtelBootstrap implements EventSubscriberInterface
             'service.namespace' => $this->serviceNamespace,
             'service.version' => $this->serviceVersion,
             'deployment.environment.name' => $this->environment,
+            'grafana.host.id' => 'shared',
         ]);
 
         $tracerProvider = new TracerProviderFactory()->create();
