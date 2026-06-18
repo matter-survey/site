@@ -111,13 +111,15 @@ class DeviceRepository
     public function upsertDevice(array $deviceData, bool &$isNew = false): int
     {
         // Check if device already exists
-        $existing = $this->db->executeQuery(
-            'SELECT id, connectivity_types FROM products WHERE vendor_id = :vendor_id AND product_id = :product_id',
-            [
-                'vendor_id' => $deviceData['vendor_id'],
-                'product_id' => $deviceData['product_id'],
-            ]
-        )->fetchAssociative();
+        $existing = $this->db->createQueryBuilder()
+            ->select('id', 'connectivity_types')
+            ->from('products')
+            ->where('vendor_id = :vendor_id')
+            ->andWhere('product_id = :product_id')
+            ->setParameter('vendor_id', $deviceData['vendor_id'])
+            ->setParameter('product_id', $deviceData['product_id'])
+            ->executeQuery()
+            ->fetchAssociative();
 
         $isNew = (false === $existing);
 
@@ -1011,11 +1013,12 @@ class DeviceRepository
      */
     public function getClusterStats(): array
     {
-        return $this->db->executeQuery('
-            SELECT cluster_id, cluster_type, product_count
-            FROM cluster_stats
-            ORDER BY product_count DESC
-        ')->fetchAllAssociative();
+        return $this->db->createQueryBuilder()
+            ->select('cluster_id', 'cluster_type', 'product_count')
+            ->from('cluster_stats')
+            ->orderBy('product_count', 'DESC')
+            ->executeQuery()
+            ->fetchAllAssociative();
     }
 
     /**
@@ -1024,15 +1027,18 @@ class DeviceRepository
      */
     public function getDeviceTypeStats(): array
     {
-        return $this->db->executeQuery('
-            SELECT
-                json_extract(json_each.value, "$.id") as device_type_id,
-                COUNT(DISTINCT pe.device_id) as product_count
-            FROM product_endpoints pe, json_each(pe.device_types)
-            WHERE json_extract(json_each.value, "$.id") IS NOT NULL
-            GROUP BY json_extract(json_each.value, "$.id")
-            ORDER BY product_count DESC
-        ')->fetchAllAssociative();
+        return $this->db->createQueryBuilder()
+            ->select(
+                'json_extract(json_each.value, "$.id") as device_type_id',
+                'COUNT(DISTINCT pe.device_id) as product_count',
+            )
+            ->from('product_endpoints', 'pe')
+            ->from('json_each(pe.device_types)')
+            ->where('json_extract(json_each.value, "$.id") IS NOT NULL')
+            ->groupBy('json_extract(json_each.value, "$.id")')
+            ->orderBy('product_count', 'DESC')
+            ->executeQuery()
+            ->fetchAllAssociative();
     }
 
     /**
@@ -1169,19 +1175,21 @@ class DeviceRepository
      */
     public function getClusterCoOccurrence(int $limit = 15): array
     {
-        return $this->db->executeQuery('
-            SELECT
-                c1.value as cluster_a,
-                c2.value as cluster_b,
-                COUNT(DISTINCT pe.device_id) as co_occurrence_count
-            FROM product_endpoints pe,
-                 json_each(pe.server_clusters) c1,
-                 json_each(pe.server_clusters) c2
-            WHERE c1.value < c2.value
-            GROUP BY c1.value, c2.value
-            ORDER BY co_occurrence_count DESC
-            LIMIT :limit
-        ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+        return $this->db->createQueryBuilder()
+            ->select(
+                'c1.value as cluster_a',
+                'c2.value as cluster_b',
+                'COUNT(DISTINCT pe.device_id) as co_occurrence_count',
+            )
+            ->from('product_endpoints', 'pe')
+            ->from('json_each(pe.server_clusters)', 'c1')
+            ->from('json_each(pe.server_clusters)', 'c2')
+            ->where('c1.value < c2.value')
+            ->groupBy('c1.value', 'c2.value')
+            ->orderBy('co_occurrence_count', 'DESC')
+            ->setMaxResults($limit)
+            ->executeQuery()
+            ->fetchAllAssociative();
     }
 
     /**
@@ -1219,25 +1227,28 @@ class DeviceRepository
      */
     public function getCoordinationByCategory(\App\Service\MatterRegistry $registry): array
     {
-        $rows = $this->db->executeQuery('
-            SELECT
-                pe.device_id,
-                json_extract(json_each.value, "$.id") as device_type_id,
-                MAX(CASE WHEN EXISTS (
+        $rows = $this->db->createQueryBuilder()
+            ->select(
+                'pe.device_id',
+                'json_extract(json_each.value, "$.id") as device_type_id',
+                'MAX(CASE WHEN EXISTS (
                     SELECT 1 FROM json_each(pe.server_clusters) WHERE value = 30
                 ) OR EXISTS (
                     SELECT 1 FROM json_each(pe.client_clusters) WHERE value = 30
-                ) THEN 1 ELSE 0 END) as has_binding,
-                MAX(CASE WHEN EXISTS (
+                ) THEN 1 ELSE 0 END) as has_binding',
+                'MAX(CASE WHEN EXISTS (
                     SELECT 1 FROM json_each(pe.server_clusters) WHERE value = 4
-                ) THEN 1 ELSE 0 END) as has_groups,
-                MAX(CASE WHEN EXISTS (
+                ) THEN 1 ELSE 0 END) as has_groups',
+                'MAX(CASE WHEN EXISTS (
                     SELECT 1 FROM json_each(pe.server_clusters) WHERE value IN (98, 5)
-                ) THEN 1 ELSE 0 END) as has_scenes
-            FROM product_endpoints pe, json_each(pe.device_types)
-            WHERE json_extract(json_each.value, "$.id") IS NOT NULL
-            GROUP BY pe.device_id, json_extract(json_each.value, "$.id")
-        ')->fetchAllAssociative();
+                ) THEN 1 ELSE 0 END) as has_scenes',
+            )
+            ->from('product_endpoints', 'pe')
+            ->from('json_each(pe.device_types)')
+            ->where('json_extract(json_each.value, "$.id") IS NOT NULL')
+            ->groupBy('pe.device_id', 'json_extract(json_each.value, "$.id")')
+            ->executeQuery()
+            ->fetchAllAssociative();
 
         $categoryStats = [];
         foreach ($rows as $row) {
@@ -1274,23 +1285,26 @@ class DeviceRepository
      */
     public function getProductsWithMultipleVersions(int $limit = 30): array
     {
-        return $this->db->executeQuery('
-            SELECT
-                p.id,
-                p.vendor_name,
-                p.product_name,
-                v.slug as vendor_slug,
-                COUNT(DISTINCT pv.software_version) as software_version_count,
-                COUNT(DISTINCT pv.hardware_version) as hardware_version_count,
-                GROUP_CONCAT(DISTINCT pv.software_version) as software_versions
-            FROM products p
-            LEFT JOIN vendors v ON p.vendor_fk = v.id
-            JOIN product_versions pv ON p.id = pv.device_id
-            GROUP BY p.id
-            HAVING software_version_count > 1 OR hardware_version_count > 1
-            ORDER BY software_version_count DESC, hardware_version_count DESC
-            LIMIT :limit
-        ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+        return $this->db->createQueryBuilder()
+            ->select(
+                'p.id',
+                'p.vendor_name',
+                'p.product_name',
+                'v.slug as vendor_slug',
+                'COUNT(DISTINCT pv.software_version) as software_version_count',
+                'COUNT(DISTINCT pv.hardware_version) as hardware_version_count',
+                'GROUP_CONCAT(DISTINCT pv.software_version) as software_versions',
+            )
+            ->from('products', 'p')
+            ->leftJoin('p', 'vendors', 'v', 'p.vendor_fk = v.id')
+            ->join('p', 'product_versions', 'pv', 'p.id = pv.device_id')
+            ->groupBy('p.id')
+            ->having('software_version_count > 1 OR hardware_version_count > 1')
+            ->orderBy('software_version_count', 'DESC')
+            ->addOrderBy('hardware_version_count', 'DESC')
+            ->setMaxResults($limit)
+            ->executeQuery()
+            ->fetchAllAssociative();
     }
 
     /**
@@ -1298,16 +1312,28 @@ class DeviceRepository
      */
     public function getVersionStats(): array
     {
-        $totalProducts = (int) $this->db->executeQuery('SELECT COUNT(*) FROM products')->fetchOne();
-        $productsWithVersions = (int) $this->db->executeQuery('
-            SELECT COUNT(DISTINCT device_id) FROM product_versions
-        ')->fetchOne();
-        $uniqueSoftwareVersions = (int) $this->db->executeQuery('
-            SELECT COUNT(DISTINCT software_version) FROM product_versions WHERE software_version IS NOT NULL
-        ')->fetchOne();
-        $uniqueHardwareVersions = (int) $this->db->executeQuery('
-            SELECT COUNT(DISTINCT hardware_version) FROM product_versions WHERE hardware_version IS NOT NULL
-        ')->fetchOne();
+        $totalProducts = (int) $this->db->createQueryBuilder()
+            ->select('COUNT(*)')
+            ->from('products')
+            ->executeQuery()
+            ->fetchOne();
+        $productsWithVersions = (int) $this->db->createQueryBuilder()
+            ->select('COUNT(DISTINCT device_id)')
+            ->from('product_versions')
+            ->executeQuery()
+            ->fetchOne();
+        $uniqueSoftwareVersions = (int) $this->db->createQueryBuilder()
+            ->select('COUNT(DISTINCT software_version)')
+            ->from('product_versions')
+            ->where('software_version IS NOT NULL')
+            ->executeQuery()
+            ->fetchOne();
+        $uniqueHardwareVersions = (int) $this->db->createQueryBuilder()
+            ->select('COUNT(DISTINCT hardware_version)')
+            ->from('product_versions')
+            ->where('hardware_version IS NOT NULL')
+            ->executeQuery()
+            ->fetchOne();
 
         return [
             'total_products' => $totalProducts,
@@ -1448,19 +1474,14 @@ class DeviceRepository
      */
     public function countDevicesByCluster(int $clusterId): int
     {
-        return (int) $this->db->executeQuery('
-            SELECT COUNT(DISTINCT pe.device_id)
-            FROM product_endpoints pe
-            WHERE EXISTS (
-                SELECT 1 FROM json_each(pe.server_clusters) WHERE value = :cluster_id
-            ) OR EXISTS (
-                SELECT 1 FROM json_each(pe.client_clusters) WHERE value = :cluster_id
-            )
-        ', [
-            'cluster_id' => $clusterId,
-        ], [
-            'cluster_id' => \Doctrine\DBAL\ParameterType::INTEGER,
-        ])->fetchOne();
+        return (int) $this->db->createQueryBuilder()
+            ->select('COUNT(DISTINCT pe.device_id)')
+            ->from('product_endpoints', 'pe')
+            ->where('EXISTS (SELECT 1 FROM json_each(pe.server_clusters) WHERE value = :cluster_id)'
+                .' OR EXISTS (SELECT 1 FROM json_each(pe.client_clusters) WHERE value = :cluster_id)')
+            ->setParameter('cluster_id', $clusterId, ParameterType::INTEGER)
+            ->executeQuery()
+            ->fetchOne();
     }
 
     /**
@@ -1524,18 +1545,22 @@ class DeviceRepository
      */
     public function getDeviceTypeDistributionByVendor(int $vendorFk): array
     {
-        return $this->db->executeQuery('
-            SELECT
-                CAST(json_extract(json_each.value, "$.id") AS INTEGER) as device_type_id,
-                COUNT(DISTINCT pe.device_id) as product_count
-            FROM product_endpoints pe
-            JOIN products p ON pe.device_id = p.id, json_each(pe.device_types)
-            WHERE p.vendor_fk = :vendor_fk
-              AND json_extract(json_each.value, "$.id") IS NOT NULL
-              AND CAST(json_extract(json_each.value, "$.id") AS INTEGER) >= 256
-            GROUP BY CAST(json_extract(json_each.value, "$.id") AS INTEGER)
-            ORDER BY product_count DESC
-        ', ['vendor_fk' => $vendorFk])->fetchAllAssociative();
+        return $this->db->createQueryBuilder()
+            ->select(
+                'CAST(json_extract(json_each.value, "$.id") AS INTEGER) as device_type_id',
+                'COUNT(DISTINCT pe.device_id) as product_count',
+            )
+            ->from('product_endpoints', 'pe')
+            ->from('json_each(pe.device_types)')
+            ->join('pe', 'products', 'p', 'pe.device_id = p.id')
+            ->where('p.vendor_fk = :vendor_fk')
+            ->andWhere('json_extract(json_each.value, "$.id") IS NOT NULL')
+            ->andWhere('CAST(json_extract(json_each.value, "$.id") AS INTEGER) >= 256')
+            ->groupBy('CAST(json_extract(json_each.value, "$.id") AS INTEGER)')
+            ->orderBy('product_count', 'DESC')
+            ->setParameter('vendor_fk', $vendorFk, ParameterType::INTEGER)
+            ->executeQuery()
+            ->fetchAllAssociative();
     }
 
     /**
@@ -1549,8 +1574,9 @@ class DeviceRepository
      */
     public function getClusterCapabilitiesByVendor(int $vendorFk): array
     {
-        return $this->db->executeQuery('
-            SELECT cluster_id, type, count FROM (
+        return $this->db->createQueryBuilder()
+            ->select('cluster_id', 'type', 'count')
+            ->from('(
                 SELECT CAST(json_each.value AS INTEGER) as cluster_id, "server" as type, COUNT(DISTINCT pe.device_id) as count
                 FROM product_endpoints pe
                 JOIN products p ON pe.device_id = p.id, json_each(pe.server_clusters)
@@ -1566,10 +1592,12 @@ class DeviceRepository
                 WHERE p.vendor_fk = :vendor_fk
                   AND (c.category IS NULL OR c.category != "utility")
                 GROUP BY CAST(json_each.value AS INTEGER)
-            )
-            ORDER BY count DESC
-            LIMIT 20
-        ', ['vendor_fk' => $vendorFk])->fetchAllAssociative();
+            )')
+            ->orderBy('count', 'DESC')
+            ->setMaxResults(20)
+            ->setParameter('vendor_fk', $vendorFk, ParameterType::INTEGER)
+            ->executeQuery()
+            ->fetchAllAssociative();
     }
 
     /**
@@ -1578,14 +1606,17 @@ class DeviceRepository
      */
     public function getBindingSupportByVendor(int $vendorFk): array
     {
-        $result = $this->db->executeQuery('
-            SELECT
-                COUNT(DISTINCT p.id) as total,
-                COUNT(DISTINCT CASE WHEN ds.supports_binding = 1 THEN p.id END) as with_binding
-            FROM products p
-            LEFT JOIN device_summary ds ON p.id = ds.id
-            WHERE p.vendor_fk = :vendor_fk
-        ', ['vendor_fk' => $vendorFk])->fetchAssociative() ?: [];
+        $result = $this->db->createQueryBuilder()
+            ->select(
+                'COUNT(DISTINCT p.id) as total',
+                'COUNT(DISTINCT CASE WHEN ds.supports_binding = 1 THEN p.id END) as with_binding',
+            )
+            ->from('products', 'p')
+            ->leftJoin('p', 'device_summary', 'ds', 'p.id = ds.id')
+            ->where('p.vendor_fk = :vendor_fk')
+            ->setParameter('vendor_fk', $vendorFk, ParameterType::INTEGER)
+            ->executeQuery()
+            ->fetchAssociative() ?: [];
 
         $total = (int) ($result['total'] ?? 0);
         $withBinding = (int) ($result['with_binding'] ?? 0);
@@ -1621,32 +1652,28 @@ class DeviceRepository
             return [];
         }
 
-        $rows = $this->db->executeQuery('
-            SELECT
-                ds.id,
-                ds.slug,
-                ds.vendor_name,
-                ds.product_name,
-                ds.vendor_slug,
-                COUNT(DISTINCT ip1.installation_id) as shared_installations
-            FROM installation_products ip1
-            JOIN installation_products ip2 ON ip1.installation_id = ip2.installation_id
-            JOIN device_summary ds ON ip2.product_id = ds.id
-            WHERE ip1.product_id = :product_id
-              AND ip2.product_id != :product_id
-            GROUP BY ip2.product_id
-            HAVING shared_installations >= :min_shared
-            ORDER BY shared_installations DESC
-            LIMIT :limit
-        ', [
-            'product_id' => $productId,
-            'min_shared' => $minSharedInstallations,
-            'limit' => $limit,
-        ], [
-            'product_id' => \Doctrine\DBAL\ParameterType::INTEGER,
-            'min_shared' => \Doctrine\DBAL\ParameterType::INTEGER,
-            'limit' => \Doctrine\DBAL\ParameterType::INTEGER,
-        ])->fetchAllAssociative();
+        $rows = $this->db->createQueryBuilder()
+            ->select(
+                'ds.id',
+                'ds.slug',
+                'ds.vendor_name',
+                'ds.product_name',
+                'ds.vendor_slug',
+                'COUNT(DISTINCT ip1.installation_id) as shared_installations',
+            )
+            ->from('installation_products', 'ip1')
+            ->join('ip1', 'installation_products', 'ip2', 'ip1.installation_id = ip2.installation_id')
+            ->join('ip2', 'device_summary', 'ds', 'ip2.product_id = ds.id')
+            ->where('ip1.product_id = :product_id')
+            ->andWhere('ip2.product_id != :product_id')
+            ->groupBy('ip2.product_id')
+            ->having('shared_installations >= :min_shared')
+            ->orderBy('shared_installations', 'DESC')
+            ->setMaxResults($limit)
+            ->setParameter('product_id', $productId, ParameterType::INTEGER)
+            ->setParameter('min_shared', $minSharedInstallations, ParameterType::INTEGER)
+            ->executeQuery()
+            ->fetchAllAssociative();
 
         // Add pairing strength (percentage of source installations that include this product)
         return array_map(static fn (array $row): array => [
@@ -1664,11 +1691,13 @@ class DeviceRepository
      */
     public function getProductInstallationCount(int $productId): int
     {
-        return (int) $this->db->executeQuery(
-            'SELECT COUNT(DISTINCT installation_id) FROM installation_products WHERE product_id = :product_id',
-            ['product_id' => $productId],
-            ['product_id' => \Doctrine\DBAL\ParameterType::INTEGER]
-        )->fetchOne();
+        return (int) $this->db->createQueryBuilder()
+            ->select('COUNT(DISTINCT installation_id)')
+            ->from('installation_products')
+            ->where('product_id = :product_id')
+            ->setParameter('product_id', $productId, ParameterType::INTEGER)
+            ->executeQuery()
+            ->fetchOne();
     }
 
     /**
@@ -1679,23 +1708,25 @@ class DeviceRepository
      */
     public function getTopProductPairings(int $limit = 20): array
     {
-        $rows = $this->db->executeQuery('
-            SELECT
-                pc.product_a,
-                pc.product_b,
-                pc.shared_installations,
-                pa.product_name as product_a_name,
-                pa.vendor_name as product_a_vendor,
-                pa.slug as product_a_slug,
-                pb.product_name as product_b_name,
-                pb.vendor_name as product_b_vendor,
-                pb.slug as product_b_slug
-            FROM product_cooccurrence pc
-            JOIN device_summary pa ON pc.product_a = pa.id
-            JOIN device_summary pb ON pc.product_b = pb.id
-            ORDER BY pc.shared_installations DESC
-            LIMIT :limit
-        ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+        $rows = $this->db->createQueryBuilder()
+            ->select(
+                'pc.product_a',
+                'pc.product_b',
+                'pc.shared_installations',
+                'pa.product_name as product_a_name',
+                'pa.vendor_name as product_a_vendor',
+                'pa.slug as product_a_slug',
+                'pb.product_name as product_b_name',
+                'pb.vendor_name as product_b_vendor',
+                'pb.slug as product_b_slug',
+            )
+            ->from('product_cooccurrence', 'pc')
+            ->join('pc', 'device_summary', 'pa', 'pc.product_a = pa.id')
+            ->join('pc', 'device_summary', 'pb', 'pc.product_b = pb.id')
+            ->orderBy('pc.shared_installations', 'DESC')
+            ->setMaxResults($limit)
+            ->executeQuery()
+            ->fetchAllAssociative();
 
         return array_map(static fn (array $row): array => [
             'product_a' => (int) $row['product_a'],
@@ -1717,28 +1748,33 @@ class DeviceRepository
      */
     public function getPairingStats(): array
     {
-        $result = $this->db->executeQuery('
-            SELECT
-                COUNT(DISTINCT installation_id) as total_installations,
-                (SELECT COUNT(DISTINCT installation_id)
+        $result = $this->db->createQueryBuilder()
+            ->select(
+                'COUNT(DISTINCT installation_id) as total_installations',
+                '(SELECT COUNT(DISTINCT installation_id)
                  FROM installation_products
                  GROUP BY installation_id
-                 HAVING COUNT(product_id) > 1) as multi_product_installations
-            FROM installation_products
-        ')->fetchAssociative();
+                 HAVING COUNT(product_id) > 1) as multi_product_installations',
+            )
+            ->from('installation_products')
+            ->executeQuery()
+            ->fetchAssociative();
 
-        $avgProducts = $this->db->executeQuery('
-            SELECT AVG(product_count) as avg_products
-            FROM (
+        $avgProducts = $this->db->createQueryBuilder()
+            ->select('AVG(product_count) as avg_products')
+            ->from('(
                 SELECT installation_id, COUNT(product_id) as product_count
                 FROM installation_products
                 GROUP BY installation_id
-            )
-        ')->fetchOne();
+            )')
+            ->executeQuery()
+            ->fetchOne();
 
-        $totalPairings = $this->db->executeQuery('
-            SELECT COUNT(*) FROM product_cooccurrence
-        ')->fetchOne();
+        $totalPairings = $this->db->createQueryBuilder()
+            ->select('COUNT(*)')
+            ->from('product_cooccurrence')
+            ->executeQuery()
+            ->fetchOne();
 
         return [
             'total_installations' => (int) ($result['total_installations'] ?? 0),
@@ -1756,31 +1792,34 @@ class DeviceRepository
      */
     public function getMostConnectedProducts(int $limit = 10): array
     {
-        $rows = $this->db->executeQuery('
-            SELECT
-                ds.id,
-                ds.slug,
-                ds.product_name,
-                ds.vendor_name,
-                ds.vendor_slug,
-                COUNT(DISTINCT ip.installation_id) as installation_count,
-                (SELECT COUNT(DISTINCT ip2.product_id)
+        $rows = $this->db->createQueryBuilder()
+            ->select(
+                'ds.id',
+                'ds.slug',
+                'ds.product_name',
+                'ds.vendor_name',
+                'ds.vendor_slug',
+                'COUNT(DISTINCT ip.installation_id) as installation_count',
+                '(SELECT COUNT(DISTINCT ip2.product_id)
                  FROM installation_products ip2
                  WHERE ip2.installation_id IN (
                      SELECT installation_id FROM installation_products WHERE product_id = ds.id
                  ) AND ip2.product_id != ds.id
-                ) as unique_pairings
-            FROM device_summary ds
-            JOIN installation_products ip ON ds.id = ip.product_id
-            WHERE EXISTS (
+                ) as unique_pairings',
+            )
+            ->from('device_summary', 'ds')
+            ->join('ds', 'installation_products', 'ip', 'ds.id = ip.product_id')
+            ->where('EXISTS (
                 SELECT 1 FROM installation_products ip3
                 WHERE ip3.installation_id = ip.installation_id
                   AND ip3.product_id != ip.product_id
-            )
-            GROUP BY ds.id
-            ORDER BY unique_pairings DESC, installation_count DESC
-            LIMIT :limit
-        ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+            )')
+            ->groupBy('ds.id')
+            ->orderBy('unique_pairings', 'DESC')
+            ->addOrderBy('installation_count', 'DESC')
+            ->setMaxResults($limit)
+            ->executeQuery()
+            ->fetchAllAssociative();
 
         return array_map(static fn (array $row): array => [
             'id' => (int) $row['id'],
@@ -1799,25 +1838,27 @@ class DeviceRepository
      */
     public function getVendorPairings(int $limit = 15): array
     {
-        $rows = $this->db->executeQuery('
-            SELECT
-                va.name as vendor_a,
-                va.slug as vendor_a_slug,
-                vb.name as vendor_b,
-                vb.slug as vendor_b_slug,
-                COUNT(DISTINCT ip1.installation_id) as shared_installations
-            FROM installation_products ip1
-            JOIN installation_products ip2 ON ip1.installation_id = ip2.installation_id
-            JOIN products pa ON ip1.product_id = pa.id
-            JOIN products pb ON ip2.product_id = pb.id
-            JOIN vendors va ON pa.vendor_fk = va.id
-            JOIN vendors vb ON pb.vendor_fk = vb.id
-            WHERE va.id < vb.id
-            GROUP BY va.id, vb.id
-            HAVING shared_installations >= 2
-            ORDER BY shared_installations DESC
-            LIMIT :limit
-        ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+        $rows = $this->db->createQueryBuilder()
+            ->select(
+                'va.name as vendor_a',
+                'va.slug as vendor_a_slug',
+                'vb.name as vendor_b',
+                'vb.slug as vendor_b_slug',
+                'COUNT(DISTINCT ip1.installation_id) as shared_installations',
+            )
+            ->from('installation_products', 'ip1')
+            ->join('ip1', 'installation_products', 'ip2', 'ip1.installation_id = ip2.installation_id')
+            ->join('ip1', 'products', 'pa', 'ip1.product_id = pa.id')
+            ->join('ip2', 'products', 'pb', 'ip2.product_id = pb.id')
+            ->join('pa', 'vendors', 'va', 'pa.vendor_fk = va.id')
+            ->join('pb', 'vendors', 'vb', 'pb.vendor_fk = vb.id')
+            ->where('va.id < vb.id')
+            ->groupBy('va.id', 'vb.id')
+            ->having('shared_installations >= 2')
+            ->orderBy('shared_installations', 'DESC')
+            ->setMaxResults($limit)
+            ->executeQuery()
+            ->fetchAllAssociative();
 
         return array_map(static fn (array $row): array => [
             'vendor_a' => (string) $row['vendor_a'],
@@ -1849,18 +1890,22 @@ class DeviceRepository
         // alias. SQLite collapses to a single row per vendor when the alias is
         // used with a json_each cross-join, so every vendor previously surfaced
         // only one device type — usually Root Node from endpoint 0.
-        $rows = $this->db->executeQuery('
-            SELECT
-                p.vendor_fk,
-                CAST(json_extract(json_each.value, "$.id") AS INTEGER) as device_type_id,
-                COUNT(DISTINCT pe.device_id) as product_count
-            FROM product_endpoints pe
-            JOIN products p ON pe.device_id = p.id, json_each(pe.device_types)
-            WHERE json_extract(json_each.value, "$.id") IS NOT NULL
-              AND CAST(json_extract(json_each.value, "$.id") AS INTEGER) >= 256
-            GROUP BY p.vendor_fk, CAST(json_extract(json_each.value, "$.id") AS INTEGER)
-            ORDER BY p.vendor_fk, product_count DESC
-        ')->fetchAllAssociative();
+        $rows = $this->db->createQueryBuilder()
+            ->select(
+                'p.vendor_fk',
+                'CAST(json_extract(json_each.value, "$.id") AS INTEGER) as device_type_id',
+                'COUNT(DISTINCT pe.device_id) as product_count',
+            )
+            ->from('product_endpoints', 'pe')
+            ->from('json_each(pe.device_types)')
+            ->join('pe', 'products', 'p', 'pe.device_id = p.id')
+            ->where('json_extract(json_each.value, "$.id") IS NOT NULL')
+            ->andWhere('CAST(json_extract(json_each.value, "$.id") AS INTEGER) >= 256')
+            ->groupBy('p.vendor_fk', 'CAST(json_extract(json_each.value, "$.id") AS INTEGER)')
+            ->orderBy('p.vendor_fk')
+            ->addOrderBy('product_count', 'DESC')
+            ->executeQuery()
+            ->fetchAllAssociative();
 
         // Group by vendor and take top N per vendor
         $result = [];
@@ -1921,25 +1966,34 @@ class DeviceRepository
             }
 
             // Find the most popular product with this device type
-            $placeholders = implode(',', array_fill(0, \count($categoryDeviceTypeIds), '?'));
-            $result = $this->db->executeQuery("
-                SELECT
-                    ds.id as product_id,
-                    ds.product_name,
-                    ds.vendor_name,
-                    ds.slug,
-                    ds.vendor_slug,
-                    COUNT(DISTINCT pe.device_id) as count
-                FROM device_summary ds
-                JOIN product_endpoints pe ON ds.id = pe.device_id
-                WHERE EXISTS (
-                    SELECT 1 FROM json_each(pe.device_types)
-                    WHERE json_extract(value, \"\$.id\") IN ({$placeholders})
+            $qb = $this->db->createQueryBuilder();
+            $placeholders = [];
+            foreach ($categoryDeviceTypeIds as $i => $deviceTypeId) {
+                $name = 'dt_'.$i;
+                $placeholders[] = ':'.$name;
+                $qb->setParameter($name, $deviceTypeId, ParameterType::INTEGER);
+            }
+            $result = $qb
+                ->select(
+                    'ds.id as product_id',
+                    'ds.product_name',
+                    'ds.vendor_name',
+                    'ds.slug',
+                    'ds.vendor_slug',
+                    'COUNT(DISTINCT pe.device_id) as count',
                 )
-                GROUP BY ds.id
-                ORDER BY count DESC, ds.submission_count DESC
-                LIMIT 1
-            ", $categoryDeviceTypeIds)->fetchAssociative();
+                ->from('device_summary', 'ds')
+                ->join('ds', 'product_endpoints', 'pe', 'ds.id = pe.device_id')
+                ->where('EXISTS (
+                    SELECT 1 FROM json_each(pe.device_types)
+                    WHERE json_extract(value, "$.id") IN ('.implode(', ', $placeholders).')
+                )')
+                ->groupBy('ds.id')
+                ->orderBy('count', 'DESC')
+                ->addOrderBy('ds.submission_count', 'DESC')
+                ->setMaxResults(1)
+                ->executeQuery()
+                ->fetchAssociative();
 
             if ($result) {
                 $highlights[] = [
@@ -1965,22 +2019,25 @@ class DeviceRepository
     public function getVendorMarketInsights(): array
     {
         // Get basic counts
-        $stats = $this->db->executeQuery('
-            SELECT
-                (SELECT COUNT(*) FROM vendors) as total_vendors,
-                (SELECT COUNT(*) FROM products) as total_products,
-                (SELECT COUNT(*) FROM vendors WHERE device_count > 0) as vendors_with_devices
-        ')->fetchAssociative() ?: [];
+        $stats = $this->db->createQueryBuilder()
+            ->select(
+                '(SELECT COUNT(*) FROM vendors) as total_vendors',
+                '(SELECT COUNT(*) FROM products) as total_products',
+                '(SELECT COUNT(*) FROM vendors WHERE device_count > 0) as vendors_with_devices',
+            )
+            ->executeQuery()
+            ->fetchAssociative() ?: [];
 
         // Get top 10 vendors' product count
-        $top10Products = $this->db->executeQuery('
-            SELECT COALESCE(SUM(device_count), 0) as top10_products
-            FROM (
+        $top10Products = $this->db->createQueryBuilder()
+            ->select('COALESCE(SUM(device_count), 0) as top10_products')
+            ->from('(
                 SELECT device_count FROM vendors
                 ORDER BY device_count DESC
                 LIMIT 10
-            )
-        ')->fetchOne();
+            )')
+            ->executeQuery()
+            ->fetchOne();
 
         $totalProducts = (int) ($stats['total_products'] ?? 0);
         $totalVendors = (int) ($stats['total_vendors'] ?? 0);
@@ -2013,67 +2070,83 @@ class DeviceRepository
         $specVersions = $this->getSpecVersionDistribution($registry);
 
         // Connectivity type distribution
-        $connectivity = $this->db->executeQuery("
-            SELECT
-                CASE
+        $connectivity = $this->db->createQueryBuilder()
+            ->select(
+                "CASE
                     WHEN connectivity_types LIKE '%thread%' THEN 'Thread'
                     WHEN connectivity_types LIKE '%wifi%' THEN 'WiFi'
                     WHEN connectivity_types LIKE '%ethernet%' THEN 'Ethernet'
                     ELSE 'Unknown'
-                END as conn_type,
-                COUNT(*) as count
-            FROM products
-            WHERE connectivity_types IS NOT NULL
-            GROUP BY conn_type
-            ORDER BY count DESC
-        ")->fetchAllAssociative();
+                END as conn_type",
+                'COUNT(*) as count',
+            )
+            ->from('products')
+            ->where('connectivity_types IS NOT NULL')
+            ->groupBy('conn_type')
+            ->orderBy('count', 'DESC')
+            ->executeQuery()
+            ->fetchAllAssociative();
 
         // Binding support stats
-        $bindingStats = $this->db->executeQuery('
-            SELECT
-                SUM(CASE WHEN supports_binding = 1 THEN 1 ELSE 0 END) as with_binding,
-                SUM(CASE WHEN supports_binding = 0 OR supports_binding IS NULL THEN 1 ELSE 0 END) as without_binding
-            FROM device_summary
-        ')->fetchAssociative();
+        $bindingStats = $this->db->createQueryBuilder()
+            ->select(
+                'SUM(CASE WHEN supports_binding = 1 THEN 1 ELSE 0 END) as with_binding',
+                'SUM(CASE WHEN supports_binding = 0 OR supports_binding IS NULL THEN 1 ELSE 0 END) as without_binding',
+            )
+            ->from('device_summary')
+            ->executeQuery()
+            ->fetchAssociative();
 
         // Top vendors by market share
-        $topVendors = $this->db->executeQuery('
-            SELECT v.name, v.device_count,
-                   ROUND(v.device_count * 100.0 / (SELECT SUM(device_count) FROM vendors WHERE device_count > 0), 1) as market_share
-            FROM vendors v
-            WHERE v.device_count > 0
-            ORDER BY v.device_count DESC
-            LIMIT 15
-        ')->fetchAllAssociative();
+        $topVendors = $this->db->createQueryBuilder()
+            ->select(
+                'v.name',
+                'v.device_count',
+                'ROUND(v.device_count * 100.0 / (SELECT SUM(device_count) FROM vendors WHERE device_count > 0), 1) as market_share',
+            )
+            ->from('vendors', 'v')
+            ->where('v.device_count > 0')
+            ->orderBy('v.device_count', 'DESC')
+            ->setMaxResults(15)
+            ->executeQuery()
+            ->fetchAllAssociative();
 
         // Monthly certification growth (prefer certification_date, fall back to first_seen)
-        $monthlyGrowth = $this->db->executeQuery("
-            SELECT strftime('%Y-%m', COALESCE(certification_date, first_seen)) as month, COUNT(*) as new_products
-            FROM products
-            WHERE COALESCE(certification_date, first_seen) IS NOT NULL
-            GROUP BY month
-            ORDER BY month DESC
-            LIMIT 24
-        ")->fetchAllAssociative();
+        $monthlyGrowth = $this->db->createQueryBuilder()
+            ->select(
+                "strftime('%Y-%m', COALESCE(certification_date, first_seen)) as month",
+                'COUNT(*) as new_products',
+            )
+            ->from('products')
+            ->where('COALESCE(certification_date, first_seen) IS NOT NULL')
+            ->groupBy('month')
+            ->orderBy('month', 'DESC')
+            ->setMaxResults(24)
+            ->executeQuery()
+            ->fetchAllAssociative();
 
         // Count products with actual certification dates vs first_seen
-        $certificationCounts = $this->db->executeQuery('
-            SELECT
-                SUM(CASE WHEN certification_date IS NOT NULL THEN 1 ELSE 0 END) as with_cert_date,
-                SUM(CASE WHEN certification_date IS NULL AND first_seen IS NOT NULL THEN 1 ELSE 0 END) as with_first_seen_only
-            FROM products
-        ')->fetchAssociative();
+        $certificationCounts = $this->db->createQueryBuilder()
+            ->select(
+                'SUM(CASE WHEN certification_date IS NOT NULL THEN 1 ELSE 0 END) as with_cert_date',
+                'SUM(CASE WHEN certification_date IS NULL AND first_seen IS NOT NULL THEN 1 ELSE 0 END) as with_first_seen_only',
+            )
+            ->from('products')
+            ->executeQuery()
+            ->fetchAssociative();
 
         // Discovery capabilities distribution
-        $discoveryStats = $this->db->executeQuery('
-            SELECT
-                SUM(CASE WHEN discovery_capabilities_bitmask & 1 THEN 1 ELSE 0 END) as softap,
-                SUM(CASE WHEN discovery_capabilities_bitmask & 2 THEN 1 ELSE 0 END) as ble,
-                SUM(CASE WHEN discovery_capabilities_bitmask & 4 THEN 1 ELSE 0 END) as on_network,
-                COUNT(*) as total
-            FROM products
-            WHERE discovery_capabilities_bitmask IS NOT NULL
-        ')->fetchAssociative();
+        $discoveryStats = $this->db->createQueryBuilder()
+            ->select(
+                'SUM(CASE WHEN discovery_capabilities_bitmask & 1 THEN 1 ELSE 0 END) as softap',
+                'SUM(CASE WHEN discovery_capabilities_bitmask & 2 THEN 1 ELSE 0 END) as ble',
+                'SUM(CASE WHEN discovery_capabilities_bitmask & 4 THEN 1 ELSE 0 END) as on_network',
+                'COUNT(*) as total',
+            )
+            ->from('products')
+            ->where('discovery_capabilities_bitmask IS NOT NULL')
+            ->executeQuery()
+            ->fetchAssociative();
 
         return [
             'categoryDistribution' => $categoryDistribution,
@@ -2095,73 +2168,78 @@ class DeviceRepository
     public function getVersionTimeline(): array
     {
         // Products with multiple versions (actively updated)
-        $activelyUpdated = $this->db->executeQuery('
-            SELECT
-                ds.product_name,
-                ds.vendor_name,
-                ds.slug,
-                COUNT(DISTINCT pv.software_version) as version_count,
-                MIN(pv.first_seen) as first_version_date,
-                MAX(pv.last_seen) as latest_version_date
-            FROM device_summary ds
-            JOIN product_versions pv ON ds.id = pv.device_id
-            GROUP BY ds.id
-            HAVING version_count > 1
-            ORDER BY version_count DESC
-            LIMIT 30
-        ')->fetchAllAssociative();
+        $activelyUpdated = $this->db->createQueryBuilder()
+            ->select(
+                'ds.product_name',
+                'ds.vendor_name',
+                'ds.slug',
+                'COUNT(DISTINCT pv.software_version) as version_count',
+                'MIN(pv.first_seen) as first_version_date',
+                'MAX(pv.last_seen) as latest_version_date',
+            )
+            ->from('device_summary', 'ds')
+            ->join('ds', 'product_versions', 'pv', 'ds.id = pv.device_id')
+            ->groupBy('ds.id')
+            ->having('version_count > 1')
+            ->orderBy('version_count', 'DESC')
+            ->setMaxResults(30)
+            ->executeQuery()
+            ->fetchAllAssociative();
 
         // Version distribution stats
-        $versionStats = $this->db->executeQuery('
-            SELECT
-                version_count,
-                COUNT(*) as product_count
-            FROM (
+        $versionStats = $this->db->createQueryBuilder()
+            ->select('version_count', 'COUNT(*) as product_count')
+            ->from('(
                 SELECT ds.id, COUNT(DISTINCT pv.software_version) as version_count
                 FROM device_summary ds
                 JOIN product_versions pv ON ds.id = pv.device_id
                 GROUP BY ds.id
-            )
-            GROUP BY version_count
-            ORDER BY version_count
-        ')->fetchAllAssociative();
+            )')
+            ->groupBy('version_count')
+            ->orderBy('version_count')
+            ->executeQuery()
+            ->fetchAllAssociative();
 
         // Recent version updates (last 30 days)
-        $recentUpdates = $this->db->executeQuery("
-            SELECT
-                ds.product_name,
-                ds.vendor_name,
-                ds.slug,
-                pv.software_version,
-                pv.hardware_version,
-                pv.first_seen,
-                pv.count as submission_count
-            FROM product_versions pv
-            JOIN device_summary ds ON ds.id = pv.device_id
-            WHERE pv.first_seen >= date('now', '-30 days')
-            ORDER BY pv.first_seen DESC
-            LIMIT 50
-        ")->fetchAllAssociative();
+        $recentUpdates = $this->db->createQueryBuilder()
+            ->select(
+                'ds.product_name',
+                'ds.vendor_name',
+                'ds.slug',
+                'pv.software_version',
+                'pv.hardware_version',
+                'pv.first_seen',
+                'pv.count as submission_count',
+            )
+            ->from('product_versions', 'pv')
+            ->join('pv', 'device_summary', 'ds', 'ds.id = pv.device_id')
+            ->where("pv.first_seen >= date('now', '-30 days')")
+            ->orderBy('pv.first_seen', 'DESC')
+            ->setMaxResults(50)
+            ->executeQuery()
+            ->fetchAllAssociative();
 
         // Average versions per product by vendor
-        $vendorUpdateFrequency = $this->db->executeQuery('
-            SELECT
-                v.name as vendor_name,
-                v.slug as vendor_slug,
-                ROUND(AVG(version_counts.version_count), 1) as avg_versions,
-                COUNT(*) as product_count
-            FROM vendors v
-            JOIN (
+        $vendorUpdateFrequency = $this->db->createQueryBuilder()
+            ->select(
+                'v.name as vendor_name',
+                'v.slug as vendor_slug',
+                'ROUND(AVG(version_counts.version_count), 1) as avg_versions',
+                'COUNT(*) as product_count',
+            )
+            ->from('vendors', 'v')
+            ->join('v', '(
                 SELECT ds.vendor_fk, COUNT(DISTINCT pv.software_version) as version_count
                 FROM device_summary ds
                 JOIN product_versions pv ON ds.id = pv.device_id
                 GROUP BY ds.id
-            ) version_counts ON v.id = version_counts.vendor_fk
-            GROUP BY v.id
-            HAVING product_count >= 3
-            ORDER BY avg_versions DESC
-            LIMIT 20
-        ')->fetchAllAssociative();
+            )', 'version_counts', 'v.id = version_counts.vendor_fk')
+            ->groupBy('v.id')
+            ->having('product_count >= 3')
+            ->orderBy('avg_versions', 'DESC')
+            ->setMaxResults(20)
+            ->executeQuery()
+            ->fetchAllAssociative();
 
         return [
             'activelyUpdated' => $activelyUpdated,
