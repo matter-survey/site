@@ -6,7 +6,32 @@ namespace App\Repository;
 
 use App\Service\DatabaseService;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\ParameterType;
+use Doctrine\DBAL\Query\QueryBuilder;
 
+/**
+ * Data access for devices, versions, endpoints, stats, and faceted search.
+ *
+ * Queries are built with the DBAL {@see QueryBuilder} (`$this->db->createQueryBuilder()`)
+ * rather than string concatenation. The repository targets database views
+ * (`device_summary`, `cluster_stats`) and raw tables, so the DBAL builder is used
+ * instead of ORM/DQL — DQL cannot express these views or the SQLite JSON functions
+ * (`json_each`, `json_extract`) and `INTERSECT` the filters rely on. Fixed upsert
+ * statements (`INSERT ... ON CONFLICT ... RETURNING`) stay as raw `executeStatement`
+ * calls because the builder cannot represent them.
+ *
+ * SQLite-specific filter SQL lives in named private `*Fragment()` helpers. Each helper
+ * takes the shared QueryBuilder, binds its own parameters, and returns the SQL fragment
+ * string for `->andWhere(...)`.
+ *
+ * Parameter-naming convention (prevents collisions on the shared builder):
+ *   - Each fragment helper / filter loop owns a short namespace prefix
+ *     (`conn`, `dt`, `cap{i}_cl{j}`, `compat`, `cluster`) and names parameters
+ *     `{$ns}_{$i}`. Distinct prefixes guarantee no two filters overwrite each other.
+ *   - The emitted SQL of the two highest-risk fragments (capability `INTERSECT`,
+ *     connectivity JSON-array `LIKE`) is pinned by golden-SQL tests, so those keep
+ *     explicit, stable parameter names.
+ */
 class DeviceRepository
 {
     private const int BINDING_CLUSTER_ID = 30; // 0x001E
@@ -235,20 +260,18 @@ class DeviceRepository
      */
     public function getFilteredDevices(array $filters, int $limit = 100, int $offset = 0): array
     {
-        $sql = 'SELECT * FROM device_summary WHERE 1=1';
-        $params = [];
-        $types = [];
+        $qb = $this->db->createQueryBuilder()
+            ->select('*')
+            ->from('device_summary')
+            ->orderBy('submission_count', 'DESC')
+            ->addOrderBy('last_seen', 'DESC')
+            ->setMaxResults($limit)
+            ->setFirstResult($offset);
 
-        $sql = $this->applyFilters($sql, $filters, $params, $types);
-
-        $sql .= ' ORDER BY submission_count DESC, last_seen DESC LIMIT :limit OFFSET :offset';
-        $params['limit'] = $limit;
-        $params['offset'] = $offset;
-        $types['limit'] = \Doctrine\DBAL\ParameterType::INTEGER;
-        $types['offset'] = \Doctrine\DBAL\ParameterType::INTEGER;
+        $this->applyFilters($qb, $filters);
 
         return $this->attachNameAmbiguity(
-            $this->db->executeQuery($sql, $params, $types)->fetchAllAssociative()
+            $qb->executeQuery()->fetchAllAssociative()
         );
     }
 
@@ -270,143 +293,191 @@ class DeviceRepository
      */
     public function getFilteredDeviceCount(array $filters): int
     {
-        $sql = 'SELECT COUNT(*) FROM device_summary WHERE 1=1';
-        $params = [];
-        $types = [];
+        $qb = $this->db->createQueryBuilder()
+            ->select('COUNT(*)')
+            ->from('device_summary');
 
-        $sql = $this->applyFilters($sql, $filters, $params, $types);
+        $this->applyFilters($qb, $filters);
 
-        return (int) $this->db->executeQuery($sql, $params, $types)->fetchOne();
+        return (int) $qb->executeQuery()->fetchOne();
     }
 
     /**
-     * Apply filters to SQL query.
+     * Apply the optional device filters to a `device_summary` query builder.
      *
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $types
+     * Scalar predicates are added inline via `andWhere()`; SQLite-specific subqueries
+     * (JSON-array LIKE, json_each device-type matching, capability INTERSECT) are
+     * delegated to named `*Fragment()` helpers that bind their own parameters.
+     *
+     * @param array<string, mixed> $filters
      */
-    private function applyFilters(string $sql, array $filters, array &$params, array &$types): string
+    private function applyFilters(QueryBuilder $qb, array $filters): void
     {
-        // Connectivity filter
+        // Connectivity filter (JSON-array LIKE, OR over the requested types)
         if (!empty($filters['connectivity'])) {
-            $connectivityConditions = [];
-            foreach ($filters['connectivity'] as $i => $type) {
-                $paramName = 'conn_'.$i;
-                $connectivityConditions[] = "connectivity_types LIKE :{$paramName}";
-                $params[$paramName] = '%"'.$type.'"%';
-            }
-            $sql .= ' AND ('.implode(' OR ', $connectivityConditions).')';
+            $qb->andWhere($this->connectivityLikeFragment($qb, $filters['connectivity']));
         }
 
         // Coordination filters (binding, groups, scenes)
         foreach (['binding', 'groups', 'scenes'] as $coordFeature) {
             if (isset($filters[$coordFeature])) {
-                $sql .= " AND supports_{$coordFeature} = :{$coordFeature}";
-                $params[$coordFeature] = $filters[$coordFeature] ? 1 : 0;
-                $types[$coordFeature] = \Doctrine\DBAL\ParameterType::INTEGER;
+                $qb->andWhere("supports_{$coordFeature} = :{$coordFeature}")
+                    ->setParameter($coordFeature, $filters[$coordFeature] ? 1 : 0, ParameterType::INTEGER);
             }
         }
 
         // Vendor filter
         if (!empty($filters['vendor'])) {
-            $sql .= ' AND vendor_fk = :vendor';
-            $params['vendor'] = $filters['vendor'];
-            $types['vendor'] = \Doctrine\DBAL\ParameterType::INTEGER;
+            $qb->andWhere('vendor_fk = :vendor')
+                ->setParameter('vendor', $filters['vendor'], ParameterType::INTEGER);
         }
 
         // Device types filter (array of IDs)
         if (!empty($filters['device_types'])) {
-            $deviceTypeConditions = [];
-            foreach ($filters['device_types'] as $i => $typeId) {
-                $paramName = 'device_type_'.$i;
-                $deviceTypeConditions[] = "json_extract(value, \"$.id\") = :{$paramName}";
-                $params[$paramName] = $typeId;
-                $types[$paramName] = \Doctrine\DBAL\ParameterType::INTEGER;
-            }
-            $sql .= ' AND id IN (
-                SELECT DISTINCT pe.device_id
-                FROM product_endpoints pe
-                WHERE EXISTS (
-                    SELECT 1 FROM json_each(pe.device_types)
-                    WHERE '.implode(' OR ', $deviceTypeConditions).'
-                )
-            )';
+            $qb->andWhere($this->deviceTypeSubqueryFragment($qb, $filters['device_types'], 'id', 'device_type'));
         }
 
         // Search filter
         if (!empty($filters['search'])) {
-            $sql .= ' AND (vendor_name LIKE :search OR product_name LIKE :search
-                      OR CAST(vendor_id AS TEXT) LIKE :search OR CAST(product_id AS TEXT) LIKE :search)';
-            $params['search'] = '%'.$filters['search'].'%';
+            $qb->andWhere(
+                '(vendor_name LIKE :search OR product_name LIKE :search'
+                .' OR CAST(vendor_id AS TEXT) LIKE :search OR CAST(product_id AS TEXT) LIKE :search)'
+            )->setParameter('search', '%'.$filters['search'].'%');
         }
 
         // Minimum star rating filter
         if (!empty($filters['min_rating'])) {
-            $sql .= ' AND id IN (
-                SELECT device_id FROM device_scores
-                WHERE star_rating >= :min_rating
-            )';
-            $params['min_rating'] = $filters['min_rating'];
-            $types['min_rating'] = \Doctrine\DBAL\ParameterType::INTEGER;
+            $qb->andWhere('id IN (SELECT device_id FROM device_scores WHERE star_rating >= :min_rating)')
+                ->setParameter('min_rating', $filters['min_rating'], ParameterType::INTEGER);
         }
 
         // Compatible with owned devices filter
         if (!empty($filters['compatible_with'])) {
-            $compatibleIds = $this->findCompatibleDevices($filters['compatible_with']);
-            if ([] !== $compatibleIds) {
-                $placeholders = [];
-                foreach ($compatibleIds as $i => $id) {
-                    $paramName = 'compat_'.$i;
-                    $placeholders[] = ':'.$paramName;
-                    $params[$paramName] = $id;
-                    $types[$paramName] = \Doctrine\DBAL\ParameterType::INTEGER;
-                }
-                $sql .= ' AND id IN ('.implode(', ', $placeholders).')';
-            } else {
-                // No compatible devices found - return no results
-                $sql .= ' AND 1=0';
-            }
+            $qb->andWhere($this->compatibleWithFragment($qb, $filters['compatible_with']));
         }
 
-        // Capability filters (array of capability keys)
-        // Device must have ALL selected capabilities (AND logic)
+        // Capability filters: device must have ALL selected capabilities (AND logic)
         if (!empty($filters['capabilities'])) {
-            $capabilitySubqueries = [];
-            foreach ($filters['capabilities'] as $i => $capKey) {
-                if (!isset(self::CAPABILITY_FILTERS[$capKey])) {
-                    continue;
-                }
-                $config = self::CAPABILITY_FILTERS[$capKey];
-                $clusters = $config['clusters'];
+            $fragment = $this->capabilityIntersectFragment($qb, $filters['capabilities']);
+            if (null !== $fragment) {
+                $qb->andWhere($fragment);
+            }
+        }
+    }
 
-                // Build cluster placeholders for this capability
-                $clusterPlaceholders = [];
-                foreach ($clusters as $ci => $clusterId) {
-                    $paramName = "cap_{$i}_cluster_{$ci}";
-                    $clusterPlaceholders[] = ':'.$paramName;
-                    $params[$paramName] = $clusterId;
-                    $types[$paramName] = \Doctrine\DBAL\ParameterType::INTEGER;
-                }
-                $clusterList = implode(', ', $clusterPlaceholders);
+    /**
+     * Build the connectivity JSON-array `LIKE` predicate (OR over the requested types).
+     *
+     * A connectivity type is stored as a JSON-array element and matched via
+     * `LIKE '%"type"%'`. The emitted SQL is pinned by a golden-SQL test — keep the
+     * explicit `conn_{i}` parameter names.
+     *
+     * @param array<int, string> $connectivityTypes
+     */
+    private function connectivityLikeFragment(QueryBuilder $qb, array $connectivityTypes): string
+    {
+        $conditions = [];
+        foreach (array_values($connectivityTypes) as $i => $type) {
+            $name = 'conn_'.$i;
+            $conditions[] = "connectivity_types LIKE :{$name}";
+            $qb->setParameter($name, '%"'.$type.'"%');
+        }
 
-                // Subquery to find devices with this capability (by cluster presence)
-                $capabilitySubqueries[] = "
+        return '('.implode(' OR ', $conditions).')';
+    }
+
+    /**
+     * Build a `{$column} IN (...)` subquery matching devices whose endpoints declare one
+     * of the given Matter device-type ids (via json_each / json_extract over device_types).
+     *
+     * @param array<int, int> $deviceTypeIds
+     * @param string          $column        Outer column to constrain (e.g. `id`, `pe.device_id`)
+     * @param string          $ns            Parameter-name namespace prefix
+     */
+    private function deviceTypeSubqueryFragment(QueryBuilder $qb, array $deviceTypeIds, string $column, string $ns): string
+    {
+        $conditions = [];
+        foreach (array_values($deviceTypeIds) as $i => $typeId) {
+            $name = $ns.'_'.$i;
+            $conditions[] = 'json_extract(value, "$.id") = :'.$name;
+            $qb->setParameter($name, $typeId, ParameterType::INTEGER);
+        }
+
+        return $column.' IN (
+                SELECT DISTINCT dtpe.device_id
+                FROM product_endpoints dtpe
+                WHERE EXISTS (
+                    SELECT 1 FROM json_each(dtpe.device_types)
+                    WHERE '.implode(' OR ', $conditions).'
+                )
+            )';
+    }
+
+    /**
+     * Build the `id IN (... INTERSECT ...)` fragment requiring a device to expose ALL
+     * selected capabilities (one server-cluster presence subquery per capability,
+     * combined with INTERSECT). Returns null when no selected key maps to a known
+     * capability, so the caller can skip the predicate entirely.
+     *
+     * The emitted SQL is pinned by a golden-SQL test — keep the explicit
+     * `cap{i}_cl{j}` parameter names.
+     *
+     * @param array<int, string> $capabilityKeys
+     */
+    private function capabilityIntersectFragment(QueryBuilder $qb, array $capabilityKeys): ?string
+    {
+        $subqueries = [];
+        foreach (array_values($capabilityKeys) as $i => $capKey) {
+            if (!isset(self::CAPABILITY_FILTERS[$capKey])) {
+                continue;
+            }
+
+            $clusterPlaceholders = [];
+            foreach (self::CAPABILITY_FILTERS[$capKey]['clusters'] as $ci => $clusterId) {
+                $name = "cap{$i}_cl{$ci}";
+                $clusterPlaceholders[] = ':'.$name;
+                $qb->setParameter($name, $clusterId, ParameterType::INTEGER);
+            }
+
+            $subqueries[] = '
                     SELECT DISTINCT pe.device_id
                     FROM product_endpoints pe
                     WHERE EXISTS (
                         SELECT 1 FROM json_each(pe.server_clusters)
-                        WHERE value IN ({$clusterList})
+                        WHERE value IN ('.implode(', ', $clusterPlaceholders).')
                     )
-                ";
-            }
-
-            if ([] !== $capabilitySubqueries) {
-                // INTERSECT to ensure device has ALL selected capabilities
-                $sql .= ' AND id IN ('.implode(' INTERSECT ', $capabilitySubqueries).')';
-            }
+                ';
         }
 
-        return $sql;
+        if ([] === $subqueries) {
+            return null;
+        }
+
+        return 'id IN ('.implode(' INTERSECT ', $subqueries).')';
+    }
+
+    /**
+     * Build the `id IN (...)` fragment restricting results to products compatible with the
+     * given owned device ids (co-occurrence in installations). Returns `1 = 0` when no
+     * compatible devices exist, so the query yields no rows.
+     *
+     * @param array<int, int> $ownedDeviceIds
+     */
+    private function compatibleWithFragment(QueryBuilder $qb, array $ownedDeviceIds): string
+    {
+        $compatibleIds = $this->findCompatibleDevices($ownedDeviceIds);
+        if ([] === $compatibleIds) {
+            return '1 = 0';
+        }
+
+        $placeholders = [];
+        foreach (array_values($compatibleIds) as $i => $id) {
+            $name = 'compat_'.$i;
+            $placeholders[] = ':'.$name;
+            $qb->setParameter($name, $id, ParameterType::INTEGER);
+        }
+
+        return 'id IN ('.implode(', ', $placeholders).')';
     }
 
     /**
@@ -424,38 +495,31 @@ class DeviceRepository
             return [];
         }
 
-        // Build placeholders for IN clause
+        // Build placeholders for the owned-device IN clause (used twice, with/without NOT)
         $placeholders = [];
-        $params = [];
-        foreach ($ownedDeviceIds as $i => $id) {
-            $placeholders[] = ':owned_'.$i;
-            $params['owned_'.$i] = $id;
+        $qb = $this->db->createQueryBuilder();
+        foreach (array_values($ownedDeviceIds) as $i => $id) {
+            $name = 'owned_'.$i;
+            $placeholders[] = ':'.$name;
+            $qb->setParameter($name, $id, ParameterType::INTEGER);
         }
         $inClause = implode(', ', $placeholders);
 
         // Find products that frequently appear in the same installations as owned products
-        $sql = "
-            SELECT ip2.product_id, COUNT(DISTINCT ip1.installation_id) as shared_count
-            FROM installation_products ip1
-            JOIN installation_products ip2 ON ip1.installation_id = ip2.installation_id
-            WHERE ip1.product_id IN ({$inClause})
-              AND ip2.product_id NOT IN ({$inClause})
-            GROUP BY ip2.product_id
-            HAVING shared_count >= 1
-            ORDER BY shared_count DESC
-            LIMIT :limit
-        ";
-        $params['limit'] = $limit;
+        $results = $qb
+            ->select('ip2.product_id', 'COUNT(DISTINCT ip1.installation_id) as shared_count')
+            ->from('installation_products', 'ip1')
+            ->join('ip1', 'installation_products', 'ip2', 'ip1.installation_id = ip2.installation_id')
+            ->where('ip1.product_id IN ('.$inClause.')')
+            ->andWhere('ip2.product_id NOT IN ('.$inClause.')')
+            ->groupBy('ip2.product_id')
+            ->having('shared_count >= 1')
+            ->orderBy('shared_count', 'DESC')
+            ->setMaxResults($limit)
+            ->executeQuery()
+            ->fetchAllAssociative();
 
-        $types = [];
-        foreach (array_keys($ownedDeviceIds) as $i) {
-            $types['owned_'.$i] = \Doctrine\DBAL\ParameterType::INTEGER;
-        }
-        $types['limit'] = \Doctrine\DBAL\ParameterType::INTEGER;
-
-        $results = $this->db->executeQuery($sql, $params, $types)->fetchAllAssociative();
-
-        return array_map(fn (array $row): int => (int) $row['product_id'], $results);
+        return array_map(static fn (array $row): int => (int) $row['product_id'], $results);
     }
 
     /**
@@ -465,13 +529,15 @@ class DeviceRepository
      */
     public function getConnectivityFacets(): array
     {
-        $result = $this->db->executeQuery("
-            SELECT
-                SUM(CASE WHEN connectivity_types LIKE '%\"thread\"%' THEN 1 ELSE 0 END) as thread,
-                SUM(CASE WHEN connectivity_types LIKE '%\"wifi\"%' THEN 1 ELSE 0 END) as wifi,
-                SUM(CASE WHEN connectivity_types LIKE '%\"ethernet\"%' THEN 1 ELSE 0 END) as ethernet
-            FROM products
-        ")->fetchAssociative();
+        $result = $this->db->createQueryBuilder()
+            ->select(
+                "SUM(CASE WHEN connectivity_types LIKE '%\"thread\"%' THEN 1 ELSE 0 END) as thread",
+                "SUM(CASE WHEN connectivity_types LIKE '%\"wifi\"%' THEN 1 ELSE 0 END) as wifi",
+                "SUM(CASE WHEN connectivity_types LIKE '%\"ethernet\"%' THEN 1 ELSE 0 END) as ethernet",
+            )
+            ->from('products')
+            ->executeQuery()
+            ->fetchAssociative();
 
         return [
             'thread' => (int) ($result['thread'] ?? 0),
@@ -491,16 +557,18 @@ class DeviceRepository
      */
     public function getCoordinationFacets(): array
     {
-        $result = $this->db->executeQuery('
-            SELECT
-                SUM(CASE WHEN supports_binding = 1 THEN 1 ELSE 0 END) as with_binding,
-                SUM(CASE WHEN supports_binding = 0 THEN 1 ELSE 0 END) as without_binding,
-                SUM(CASE WHEN supports_groups = 1 THEN 1 ELSE 0 END) as with_groups,
-                SUM(CASE WHEN supports_groups = 0 THEN 1 ELSE 0 END) as without_groups,
-                SUM(CASE WHEN supports_scenes = 1 THEN 1 ELSE 0 END) as with_scenes,
-                SUM(CASE WHEN supports_scenes = 0 THEN 1 ELSE 0 END) as without_scenes
-            FROM device_summary
-        ')->fetchAssociative();
+        $result = $this->db->createQueryBuilder()
+            ->select(
+                'SUM(CASE WHEN supports_binding = 1 THEN 1 ELSE 0 END) as with_binding',
+                'SUM(CASE WHEN supports_binding = 0 THEN 1 ELSE 0 END) as without_binding',
+                'SUM(CASE WHEN supports_groups = 1 THEN 1 ELSE 0 END) as with_groups',
+                'SUM(CASE WHEN supports_groups = 0 THEN 1 ELSE 0 END) as without_groups',
+                'SUM(CASE WHEN supports_scenes = 1 THEN 1 ELSE 0 END) as with_scenes',
+                'SUM(CASE WHEN supports_scenes = 0 THEN 1 ELSE 0 END) as without_scenes',
+            )
+            ->from('device_summary')
+            ->executeQuery()
+            ->fetchAssociative();
 
         return [
             'binding' => [
@@ -525,12 +593,13 @@ class DeviceRepository
      */
     public function getStarRatingFacets(): array
     {
-        $results = $this->db->executeQuery('
-            SELECT star_rating, COUNT(*) as count
-            FROM device_scores
-            GROUP BY star_rating
-            ORDER BY star_rating DESC
-        ')->fetchAllAssociative();
+        $results = $this->db->createQueryBuilder()
+            ->select('star_rating', 'COUNT(*) as count')
+            ->from('device_scores')
+            ->groupBy('star_rating')
+            ->orderBy('star_rating', 'DESC')
+            ->executeQuery()
+            ->fetchAllAssociative();
 
         $facets = [];
         foreach ($results as $row) {
@@ -595,50 +664,28 @@ class DeviceRepository
             return 0;
         }
 
-        // Build cluster placeholders for IN clause
+        $qb = $this->db->createQueryBuilder()
+            ->select('COUNT(DISTINCT pe.device_id)')
+            ->from('product_endpoints', 'pe');
+
+        // Cluster presence check (works for all data)
         $clusterPlaceholders = [];
-        $params = [];
-        $types = [];
-        foreach ($clusters as $i => $clusterId) {
-            $paramName = 'cluster_'.$i;
-            $clusterPlaceholders[] = ':'.$paramName;
-            $params[$paramName] = $clusterId;
-            $types[$paramName] = \Doctrine\DBAL\ParameterType::INTEGER;
+        foreach (array_values($clusters) as $i => $clusterId) {
+            $name = 'cluster_'.$i;
+            $clusterPlaceholders[] = ':'.$name;
+            $qb->setParameter($name, $clusterId, ParameterType::INTEGER);
         }
-        $clusterList = implode(', ', $clusterPlaceholders);
+        $qb->andWhere('EXISTS (
+                SELECT 1 FROM json_each(pe.server_clusters)
+                WHERE value IN ('.implode(', ', $clusterPlaceholders).')
+            )');
 
         // Optionally constrain to devices that expose one of the given device types.
-        $deviceTypeClause = '';
         if (null !== $deviceTypeIds && [] !== $deviceTypeIds) {
-            $deviceTypeConditions = [];
-            foreach (array_values($deviceTypeIds) as $i => $typeId) {
-                $paramName = 'dt_'.$i;
-                $deviceTypeConditions[] = "json_extract(value, \"$.id\") = :{$paramName}";
-                $params[$paramName] = $typeId;
-                $types[$paramName] = \Doctrine\DBAL\ParameterType::INTEGER;
-            }
-            $deviceTypeClause = '
-                AND pe.device_id IN (
-                    SELECT DISTINCT dpe.device_id
-                    FROM product_endpoints dpe
-                    WHERE EXISTS (
-                        SELECT 1 FROM json_each(dpe.device_types)
-                        WHERE '.implode(' OR ', $deviceTypeConditions).'
-                    )
-                )';
+            $qb->andWhere($this->deviceTypeSubqueryFragment($qb, $deviceTypeIds, 'pe.device_id', 'dt'));
         }
 
-        // Simple cluster presence check (works for all data)
-        $sql = "
-            SELECT COUNT(DISTINCT pe.device_id)
-            FROM product_endpoints pe
-            WHERE EXISTS (
-                SELECT 1 FROM json_each(pe.server_clusters)
-                WHERE value IN ({$clusterList})
-            ){$deviceTypeClause}
-        ";
-
-        return (int) $this->db->executeQuery($sql, $params, $types)->fetchOne();
+        return (int) $qb->executeQuery()->fetchOne();
     }
 
     /**
@@ -648,15 +695,16 @@ class DeviceRepository
      */
     public function getVendorFacets(int $limit = 20): array
     {
-        $rows = $this->db->executeQuery('
-            SELECT v.id, v.name, v.slug, COUNT(p.id) as count
-            FROM vendors v
-            JOIN products p ON p.vendor_fk = v.id
-            GROUP BY v.id
-            HAVING count > 0
-            ORDER BY count DESC
-            LIMIT :limit
-        ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+        $rows = $this->db->createQueryBuilder()
+            ->select('v.id', 'v.name', 'v.slug', 'COUNT(p.id) as count')
+            ->from('vendors', 'v')
+            ->join('v', 'products', 'p', 'p.vendor_fk = v.id')
+            ->groupBy('v.id')
+            ->having('count > 0')
+            ->orderBy('count', 'DESC')
+            ->setMaxResults($limit)
+            ->executeQuery()
+            ->fetchAllAssociative();
 
         return array_map(static fn (array $row): array => [
             'id' => (int) $row['id'],
@@ -674,21 +722,19 @@ class DeviceRepository
      */
     public function getDeviceTypeFacets(int $limit = 15): array
     {
-        $rows = $this->db->executeQuery('
-            SELECT
-                dt.id,
-                dt.name,
-                COUNT(DISTINCT pe.device_id) as count
-            FROM device_types dt
-            JOIN product_endpoints pe ON EXISTS (
+        $rows = $this->db->createQueryBuilder()
+            ->select('dt.id', 'dt.name', 'COUNT(DISTINCT pe.device_id) as count')
+            ->from('device_types', 'dt')
+            ->join('dt', 'product_endpoints', 'pe', 'EXISTS (
                 SELECT 1 FROM json_each(pe.device_types)
                 WHERE json_extract(value, "$.id") = dt.id
-            )
-            GROUP BY dt.id
-            HAVING count > 0
-            ORDER BY count DESC
-            LIMIT :limit
-        ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+            )')
+            ->groupBy('dt.id')
+            ->having('count > 0')
+            ->orderBy('count', 'DESC')
+            ->setMaxResults($limit)
+            ->executeQuery()
+            ->fetchAllAssociative();
 
         return array_map(static fn (array $row): array => [
             'id' => (int) $row['id'],
