@@ -100,7 +100,7 @@ final class WizardAnalyticsRepositoryTest extends KernelTestCase
         $this->repository->save($this->makeRecord('s1', 1, connectivity: ['wifi']));
         $this->repository->save($this->makeRecord('s2', 1, connectivity: ['wifi', 'thread']));
         $this->repository->save($this->makeRecord('s3', 1, connectivity: ['thread']));
-        $this->repository->save($this->makeRecord('s4', 1, connectivity: null));
+        $this->repository->save($this->makeRecord('s4', 1));
         $this->entityManager->flush();
 
         $demand = $this->repository->getConnectivityDemand();
