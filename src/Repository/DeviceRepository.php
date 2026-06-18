@@ -224,22 +224,24 @@ class DeviceRepository
 
     public function getAllDevices(int $limit = 100, int $offset = 0): array
     {
-        return $this->db->executeQuery('
-            SELECT * FROM device_summary
-            ORDER BY submission_count DESC, last_seen DESC
-            LIMIT :limit OFFSET :offset
-        ', [
-            'limit' => $limit,
-            'offset' => $offset,
-        ], [
-            'limit' => \Doctrine\DBAL\ParameterType::INTEGER,
-            'offset' => \Doctrine\DBAL\ParameterType::INTEGER,
-        ])->fetchAllAssociative();
+        return $this->db->createQueryBuilder()
+            ->select('*')
+            ->from('device_summary')
+            ->orderBy('submission_count', 'DESC')
+            ->addOrderBy('last_seen', 'DESC')
+            ->setMaxResults($limit)
+            ->setFirstResult($offset)
+            ->executeQuery()
+            ->fetchAllAssociative();
     }
 
     public function getDeviceCount(): int
     {
-        return (int) $this->db->executeQuery('SELECT COUNT(*) FROM products')->fetchOne();
+        return (int) $this->db->createQueryBuilder()
+            ->select('COUNT(*)')
+            ->from('products')
+            ->executeQuery()
+            ->fetchOne();
     }
 
     /**
@@ -745,10 +747,13 @@ class DeviceRepository
 
     public function getDevice(int $id): ?array
     {
-        $result = $this->db->executeQuery(
-            'SELECT * FROM device_summary WHERE id = :id',
-            ['id' => $id]
-        )->fetchAssociative();
+        $result = $this->db->createQueryBuilder()
+            ->select('*')
+            ->from('device_summary')
+            ->where('id = :id')
+            ->setParameter('id', $id, ParameterType::INTEGER)
+            ->executeQuery()
+            ->fetchAssociative();
 
         if (!$result) {
             return null;
@@ -759,10 +764,13 @@ class DeviceRepository
 
     public function getDeviceBySlug(string $slug): ?array
     {
-        $result = $this->db->executeQuery(
-            'SELECT * FROM device_summary WHERE slug = :slug',
-            ['slug' => $slug]
-        )->fetchAssociative();
+        $result = $this->db->createQueryBuilder()
+            ->select('*')
+            ->from('device_summary')
+            ->where('slug = :slug')
+            ->setParameter('slug', $slug)
+            ->executeQuery()
+            ->fetchAssociative();
 
         if (!$result) {
             return null;
@@ -804,19 +812,23 @@ class DeviceRepository
 
         $duplicates = [];
         if ([] !== $pairs) {
+            $qb = $this->db->createQueryBuilder();
             $conditions = [];
-            $params = [];
             foreach (array_values($pairs) as $i => [$fk, $name]) {
                 $conditions[] = "(vendor_fk = :nfk_$i AND product_name = :nname_$i)";
-                $params['nfk_'.$i] = $fk;
-                $params['nname_'.$i] = $name;
+                $qb->setParameter('nfk_'.$i, $fk, ParameterType::INTEGER);
+                $qb->setParameter('nname_'.$i, $name);
             }
-            $sql = 'SELECT vendor_fk, product_name FROM products
-                    WHERE ('.implode(' OR ', $conditions).')
-                      AND product_name IS NOT NULL AND product_name != \'\'
-                    GROUP BY vendor_fk, product_name
-                    HAVING COUNT(*) > 1';
-            foreach ($this->db->executeQuery($sql, $params)->fetchAllAssociative() as $dup) {
+            $dupRows = $qb
+                ->select('vendor_fk', 'product_name')
+                ->from('products')
+                ->where('('.implode(' OR ', $conditions).')')
+                ->andWhere("product_name IS NOT NULL AND product_name != ''")
+                ->groupBy('vendor_fk', 'product_name')
+                ->having('COUNT(*) > 1')
+                ->executeQuery()
+                ->fetchAllAssociative();
+            foreach ($dupRows as $dup) {
                 $duplicates[$dup['vendor_fk'].':'.$dup['product_name']] = true;
             }
         }
@@ -836,14 +848,20 @@ class DeviceRepository
      */
     public function getDeviceEndpoints(int $deviceId): array
     {
-        $rows = $this->db->executeQuery('
-            SELECT endpoint_id, hardware_version, software_version, device_types, server_clusters, client_clusters,
-                   server_cluster_details, client_cluster_details, schema_version,
-                   first_seen, last_seen, submission_count
-            FROM product_endpoints
-            WHERE device_id = :device_id
-            ORDER BY software_version DESC, hardware_version DESC, endpoint_id
-        ', ['device_id' => $deviceId])->fetchAllAssociative();
+        $rows = $this->db->createQueryBuilder()
+            ->select(
+                'endpoint_id', 'hardware_version', 'software_version', 'device_types', 'server_clusters', 'client_clusters',
+                'server_cluster_details', 'client_cluster_details', 'schema_version',
+                'first_seen', 'last_seen', 'submission_count',
+            )
+            ->from('product_endpoints')
+            ->where('device_id = :device_id')
+            ->setParameter('device_id', $deviceId, ParameterType::INTEGER)
+            ->orderBy('software_version', 'DESC')
+            ->addOrderBy('hardware_version', 'DESC')
+            ->addOrderBy('endpoint_id')
+            ->executeQuery()
+            ->fetchAllAssociative();
 
         $endpoints = [];
         foreach ($rows as $row) {
@@ -869,19 +887,21 @@ class DeviceRepository
      */
     public function getDeviceEndpointsByVersion(int $deviceId, ?string $hardwareVersion, ?string $softwareVersion): array
     {
-        $rows = $this->db->executeQuery('
-            SELECT endpoint_id, hardware_version, software_version, device_types, server_clusters, client_clusters,
-                   server_cluster_details, client_cluster_details, first_seen, last_seen, submission_count
-            FROM product_endpoints
-            WHERE device_id = :device_id
-              AND (hardware_version = :hardware_version OR (hardware_version IS NULL AND :hardware_version IS NULL))
-              AND (software_version = :software_version OR (software_version IS NULL AND :software_version IS NULL))
-            ORDER BY endpoint_id
-        ', [
-            'device_id' => $deviceId,
-            'hardware_version' => $hardwareVersion,
-            'software_version' => $softwareVersion,
-        ])->fetchAllAssociative();
+        $rows = $this->db->createQueryBuilder()
+            ->select(
+                'endpoint_id', 'hardware_version', 'software_version', 'device_types', 'server_clusters', 'client_clusters',
+                'server_cluster_details', 'client_cluster_details', 'first_seen', 'last_seen', 'submission_count',
+            )
+            ->from('product_endpoints')
+            ->where('device_id = :device_id')
+            ->andWhere('(hardware_version = :hardware_version OR (hardware_version IS NULL AND :hardware_version IS NULL))')
+            ->andWhere('(software_version = :software_version OR (software_version IS NULL AND :software_version IS NULL))')
+            ->orderBy('endpoint_id')
+            ->setParameter('device_id', $deviceId, ParameterType::INTEGER)
+            ->setParameter('hardware_version', $hardwareVersion)
+            ->setParameter('software_version', $softwareVersion)
+            ->executeQuery()
+            ->fetchAllAssociative();
 
         $endpoints = [];
         foreach ($rows as $row) {
@@ -905,43 +925,50 @@ class DeviceRepository
      */
     public function getDeviceEndpointVersions(int $deviceId): array
     {
-        return $this->db->executeQuery('
-            SELECT DISTINCT hardware_version, software_version,
-                   MIN(first_seen) as first_seen, MAX(last_seen) as last_seen,
-                   SUM(submission_count) as total_submissions
-            FROM product_endpoints
-            WHERE device_id = :device_id
-            GROUP BY hardware_version, software_version
-            ORDER BY software_version DESC, hardware_version DESC
-        ', ['device_id' => $deviceId])->fetchAllAssociative();
+        return $this->db->createQueryBuilder()
+            ->select(
+                'DISTINCT hardware_version', 'software_version',
+                'MIN(first_seen) as first_seen', 'MAX(last_seen) as last_seen',
+                'SUM(submission_count) as total_submissions',
+            )
+            ->from('product_endpoints')
+            ->where('device_id = :device_id')
+            ->setParameter('device_id', $deviceId, ParameterType::INTEGER)
+            ->groupBy('hardware_version', 'software_version')
+            ->orderBy('software_version', 'DESC')
+            ->addOrderBy('hardware_version', 'DESC')
+            ->executeQuery()
+            ->fetchAllAssociative();
     }
 
     public function getDeviceVersions(int $deviceId): array
     {
-        return $this->db->executeQuery('
-            SELECT hardware_version, software_version, count, first_seen, last_seen
-            FROM product_versions
-            WHERE device_id = :device_id
-            ORDER BY count DESC
-        ', ['device_id' => $deviceId])->fetchAllAssociative();
+        return $this->db->createQueryBuilder()
+            ->select('hardware_version', 'software_version', 'count', 'first_seen', 'last_seen')
+            ->from('product_versions')
+            ->where('device_id = :device_id')
+            ->setParameter('device_id', $deviceId, ParameterType::INTEGER)
+            ->orderBy('count', 'DESC')
+            ->executeQuery()
+            ->fetchAllAssociative();
     }
 
     public function searchDevices(string $query, int $limit = 50): array
     {
-        return $this->attachNameAmbiguity($this->db->executeQuery('
-            SELECT * FROM device_summary
-            WHERE vendor_name LIKE :query
-               OR product_name LIKE :query
-               OR CAST(vendor_id AS TEXT) LIKE :query
-               OR CAST(product_id AS TEXT) LIKE :query
-            ORDER BY submission_count DESC
-            LIMIT :limit
-        ', [
-            'query' => "%$query%",
-            'limit' => $limit,
-        ], [
-            'limit' => \Doctrine\DBAL\ParameterType::INTEGER,
-        ])->fetchAllAssociative());
+        $rows = $this->db->createQueryBuilder()
+            ->select('*')
+            ->from('device_summary')
+            ->where('vendor_name LIKE :query')
+            ->orWhere('product_name LIKE :query')
+            ->orWhere('CAST(vendor_id AS TEXT) LIKE :query')
+            ->orWhere('CAST(product_id AS TEXT) LIKE :query')
+            ->orderBy('submission_count', 'DESC')
+            ->setMaxResults($limit)
+            ->setParameter('query', "%$query%")
+            ->executeQuery()
+            ->fetchAllAssociative();
+
+        return $this->attachNameAmbiguity($rows);
     }
 
     /**
@@ -949,19 +976,19 @@ class DeviceRepository
      */
     public function getDevicesByVendor(int $vendorFk, int $limit = 100, int $offset = 0): array
     {
-        return $this->attachNameAmbiguity($this->db->executeQuery('
-            SELECT * FROM device_summary
-            WHERE vendor_fk = :vendor_fk
-            ORDER BY submission_count DESC, last_seen DESC
-            LIMIT :limit OFFSET :offset
-        ', [
-            'vendor_fk' => $vendorFk,
-            'limit' => $limit,
-            'offset' => $offset,
-        ], [
-            'limit' => \Doctrine\DBAL\ParameterType::INTEGER,
-            'offset' => \Doctrine\DBAL\ParameterType::INTEGER,
-        ])->fetchAllAssociative());
+        $rows = $this->db->createQueryBuilder()
+            ->select('*')
+            ->from('device_summary')
+            ->where('vendor_fk = :vendor_fk')
+            ->setParameter('vendor_fk', $vendorFk, ParameterType::INTEGER)
+            ->orderBy('submission_count', 'DESC')
+            ->addOrderBy('last_seen', 'DESC')
+            ->setMaxResults($limit)
+            ->setFirstResult($offset)
+            ->executeQuery()
+            ->fetchAllAssociative();
+
+        return $this->attachNameAmbiguity($rows);
     }
 
     /**
@@ -969,10 +996,13 @@ class DeviceRepository
      */
     public function getDeviceCountByVendor(int $vendorFk): int
     {
-        return (int) $this->db->executeQuery(
-            'SELECT COUNT(*) FROM products WHERE vendor_fk = :vendor_fk',
-            ['vendor_fk' => $vendorFk]
-        )->fetchOne();
+        return (int) $this->db->createQueryBuilder()
+            ->select('COUNT(*)')
+            ->from('products')
+            ->where('vendor_fk = :vendor_fk')
+            ->setParameter('vendor_fk', $vendorFk, ParameterType::INTEGER)
+            ->executeQuery()
+            ->fetchOne();
     }
 
     /**
@@ -1017,25 +1047,20 @@ class DeviceRepository
             default => 'ds.submission_count DESC, ds.last_seen DESC',
         };
 
-        return $this->db->executeQuery("
-            SELECT DISTINCT ds.*
-            FROM device_summary ds
-            JOIN product_endpoints pe ON ds.id = pe.device_id
-            WHERE EXISTS (
+        return $this->db->createQueryBuilder()
+            ->select('DISTINCT ds.*')
+            ->from('device_summary', 'ds')
+            ->join('ds', 'product_endpoints', 'pe', 'ds.id = pe.device_id')
+            ->where('EXISTS (
                 SELECT 1 FROM json_each(pe.device_types)
-                WHERE json_extract(value, \"$.id\") = :device_type_id
-            )
-            ORDER BY {$orderBy}
-            LIMIT :limit OFFSET :offset
-        ", [
-            'device_type_id' => $deviceTypeId,
-            'limit' => $limit,
-            'offset' => $offset,
-        ], [
-            'device_type_id' => \Doctrine\DBAL\ParameterType::INTEGER,
-            'limit' => \Doctrine\DBAL\ParameterType::INTEGER,
-            'offset' => \Doctrine\DBAL\ParameterType::INTEGER,
-        ])->fetchAllAssociative();
+                WHERE json_extract(value, "$.id") = :device_type_id
+            )')
+            ->orderBy($orderBy)
+            ->setMaxResults($limit)
+            ->setFirstResult($offset)
+            ->setParameter('device_type_id', $deviceTypeId, ParameterType::INTEGER)
+            ->executeQuery()
+            ->fetchAllAssociative();
     }
 
     /**
@@ -1043,18 +1068,16 @@ class DeviceRepository
      */
     public function countDevicesByDeviceType(int $deviceTypeId): int
     {
-        return (int) $this->db->executeQuery('
-            SELECT COUNT(DISTINCT pe.device_id)
-            FROM product_endpoints pe
-            WHERE EXISTS (
+        return (int) $this->db->createQueryBuilder()
+            ->select('COUNT(DISTINCT pe.device_id)')
+            ->from('product_endpoints', 'pe')
+            ->where('EXISTS (
                 SELECT 1 FROM json_each(pe.device_types)
                 WHERE json_extract(value, "$.id") = :device_type_id
-            )
-        ', [
-            'device_type_id' => $deviceTypeId,
-        ], [
-            'device_type_id' => \Doctrine\DBAL\ParameterType::INTEGER,
-        ])->fetchOne();
+            )')
+            ->setParameter('device_type_id', $deviceTypeId, ParameterType::INTEGER)
+            ->executeQuery()
+            ->fetchOne();
     }
 
     /**
@@ -1108,18 +1131,23 @@ class DeviceRepository
      */
     public function getTopVendors(int $limit = 10): array
     {
-        $placeholders = implode(',', array_fill(0, \count(\App\Entity\Vendor::TEST_VENDOR_IDS), '?'));
-        $params = [...\App\Entity\Vendor::TEST_VENDOR_IDS, $limit];
-        $types = array_fill(0, \count(\App\Entity\Vendor::TEST_VENDOR_IDS) + 1, \Doctrine\DBAL\ParameterType::INTEGER);
+        $qb = $this->db->createQueryBuilder();
+        $placeholders = [];
+        foreach (\App\Entity\Vendor::TEST_VENDOR_IDS as $i => $vendorId) {
+            $name = 'test_vendor_'.$i;
+            $placeholders[] = ':'.$name;
+            $qb->setParameter($name, $vendorId, ParameterType::INTEGER);
+        }
 
-        return $this->db->executeQuery("
-            SELECT v.id, v.name, v.slug, v.spec_id, v.device_count
-            FROM vendors v
-            WHERE v.device_count > 0
-              AND (v.spec_id IS NULL OR v.spec_id NOT IN ($placeholders))
-            ORDER BY v.device_count DESC
-            LIMIT ?
-        ", $params, $types)->fetchAllAssociative();
+        return $qb
+            ->select('v.id', 'v.name', 'v.slug', 'v.spec_id', 'v.device_count')
+            ->from('vendors', 'v')
+            ->where('v.device_count > 0')
+            ->andWhere('(v.spec_id IS NULL OR v.spec_id NOT IN ('.implode(', ', $placeholders).'))')
+            ->orderBy('v.device_count', 'DESC')
+            ->setMaxResults($limit)
+            ->executeQuery()
+            ->fetchAllAssociative();
     }
 
     /**
@@ -1127,11 +1155,13 @@ class DeviceRepository
      */
     public function getRecentDevices(int $limit = 5): array
     {
-        return $this->db->executeQuery('
-            SELECT * FROM device_summary
-            ORDER BY first_seen DESC
-            LIMIT :limit
-        ', ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+        return $this->db->createQueryBuilder()
+            ->select('*')
+            ->from('device_summary')
+            ->orderBy('first_seen', 'DESC')
+            ->setMaxResults($limit)
+            ->executeQuery()
+            ->fetchAllAssociative();
     }
 
     /**
@@ -1167,12 +1197,14 @@ class DeviceRepository
             throw new \InvalidArgumentException("Unknown coordination feature: {$feature}");
         }
 
-        return $this->db->executeQuery("
-            SELECT * FROM device_summary
-            WHERE supports_{$feature} = 1
-            ORDER BY submission_count DESC
-            LIMIT :limit
-        ", ['limit' => $limit], ['limit' => \Doctrine\DBAL\ParameterType::INTEGER])->fetchAllAssociative();
+        return $this->db->createQueryBuilder()
+            ->select('*')
+            ->from('device_summary')
+            ->where("supports_{$feature} = 1")
+            ->orderBy('submission_count', 'DESC')
+            ->setMaxResults($limit)
+            ->executeQuery()
+            ->fetchAllAssociative();
     }
 
     /**
@@ -1297,29 +1329,23 @@ class DeviceRepository
      */
     public function getDevicesWithServerCluster(int $clusterId, ?int $excludeDeviceId = null, int $limit = 10): array
     {
-        $sql = '
-            SELECT DISTINCT ds.*
-            FROM device_summary ds
-            JOIN product_endpoints pe ON ds.id = pe.device_id
-            WHERE pe.server_clusters IS NOT NULL
-              AND pe.server_clusters != \'\'
-              AND EXISTS (
-                SELECT 1 FROM json_each(pe.server_clusters) WHERE value = :cluster_id
-            )
-        ';
-
-        $params = ['cluster_id' => $clusterId, 'limit' => $limit];
-        $types = ['cluster_id' => \Doctrine\DBAL\ParameterType::INTEGER, 'limit' => \Doctrine\DBAL\ParameterType::INTEGER];
+        $qb = $this->db->createQueryBuilder()
+            ->select('DISTINCT ds.*')
+            ->from('device_summary', 'ds')
+            ->join('ds', 'product_endpoints', 'pe', 'ds.id = pe.device_id')
+            ->where('pe.server_clusters IS NOT NULL')
+            ->andWhere("pe.server_clusters != ''")
+            ->andWhere('EXISTS (SELECT 1 FROM json_each(pe.server_clusters) WHERE value = :cluster_id)')
+            ->orderBy('ds.submission_count', 'DESC')
+            ->setMaxResults($limit)
+            ->setParameter('cluster_id', $clusterId, ParameterType::INTEGER);
 
         if (null !== $excludeDeviceId) {
-            $sql .= ' AND ds.id != :exclude_id';
-            $params['exclude_id'] = $excludeDeviceId;
-            $types['exclude_id'] = \Doctrine\DBAL\ParameterType::INTEGER;
+            $qb->andWhere('ds.id != :exclude_id')
+                ->setParameter('exclude_id', $excludeDeviceId, ParameterType::INTEGER);
         }
 
-        $sql .= ' ORDER BY ds.submission_count DESC LIMIT :limit';
-
-        return $this->db->executeQuery($sql, $params, $types)->fetchAllAssociative();
+        return $qb->executeQuery()->fetchAllAssociative();
     }
 
     /**
@@ -1327,27 +1353,21 @@ class DeviceRepository
      */
     public function countDevicesWithServerCluster(int $clusterId, ?int $excludeDeviceId = null): int
     {
-        $sql = '
-            SELECT COUNT(DISTINCT ds.id)
-            FROM device_summary ds
-            JOIN product_endpoints pe ON ds.id = pe.device_id
-            WHERE pe.server_clusters IS NOT NULL
-              AND pe.server_clusters != \'\'
-              AND EXISTS (
-                SELECT 1 FROM json_each(pe.server_clusters) WHERE value = :cluster_id
-            )
-        ';
-
-        $params = ['cluster_id' => $clusterId];
-        $types = ['cluster_id' => \Doctrine\DBAL\ParameterType::INTEGER];
+        $qb = $this->db->createQueryBuilder()
+            ->select('COUNT(DISTINCT ds.id)')
+            ->from('device_summary', 'ds')
+            ->join('ds', 'product_endpoints', 'pe', 'ds.id = pe.device_id')
+            ->where('pe.server_clusters IS NOT NULL')
+            ->andWhere("pe.server_clusters != ''")
+            ->andWhere('EXISTS (SELECT 1 FROM json_each(pe.server_clusters) WHERE value = :cluster_id)')
+            ->setParameter('cluster_id', $clusterId, ParameterType::INTEGER);
 
         if (null !== $excludeDeviceId) {
-            $sql .= ' AND ds.id != :exclude_id';
-            $params['exclude_id'] = $excludeDeviceId;
-            $types['exclude_id'] = \Doctrine\DBAL\ParameterType::INTEGER;
+            $qb->andWhere('ds.id != :exclude_id')
+                ->setParameter('exclude_id', $excludeDeviceId, ParameterType::INTEGER);
         }
 
-        return (int) $this->db->executeQuery($sql, $params, $types)->fetchOne();
+        return (int) $qb->executeQuery()->fetchOne();
     }
 
     /**
@@ -1362,29 +1382,23 @@ class DeviceRepository
      */
     public function getDevicesWithClientCluster(int $clusterId, ?int $excludeDeviceId = null, int $limit = 10): array
     {
-        $sql = '
-            SELECT DISTINCT ds.*
-            FROM device_summary ds
-            JOIN product_endpoints pe ON ds.id = pe.device_id
-            WHERE pe.client_clusters IS NOT NULL
-              AND pe.client_clusters != \'\'
-              AND EXISTS (
-                SELECT 1 FROM json_each(pe.client_clusters) WHERE value = :cluster_id
-            )
-        ';
-
-        $params = ['cluster_id' => $clusterId, 'limit' => $limit];
-        $types = ['cluster_id' => \Doctrine\DBAL\ParameterType::INTEGER, 'limit' => \Doctrine\DBAL\ParameterType::INTEGER];
+        $qb = $this->db->createQueryBuilder()
+            ->select('DISTINCT ds.*')
+            ->from('device_summary', 'ds')
+            ->join('ds', 'product_endpoints', 'pe', 'ds.id = pe.device_id')
+            ->where('pe.client_clusters IS NOT NULL')
+            ->andWhere("pe.client_clusters != ''")
+            ->andWhere('EXISTS (SELECT 1 FROM json_each(pe.client_clusters) WHERE value = :cluster_id)')
+            ->orderBy('ds.submission_count', 'DESC')
+            ->setMaxResults($limit)
+            ->setParameter('cluster_id', $clusterId, ParameterType::INTEGER);
 
         if (null !== $excludeDeviceId) {
-            $sql .= ' AND ds.id != :exclude_id';
-            $params['exclude_id'] = $excludeDeviceId;
-            $types['exclude_id'] = \Doctrine\DBAL\ParameterType::INTEGER;
+            $qb->andWhere('ds.id != :exclude_id')
+                ->setParameter('exclude_id', $excludeDeviceId, ParameterType::INTEGER);
         }
 
-        $sql .= ' ORDER BY ds.submission_count DESC LIMIT :limit';
-
-        return $this->db->executeQuery($sql, $params, $types)->fetchAllAssociative();
+        return $qb->executeQuery()->fetchAllAssociative();
     }
 
     /**
@@ -1392,27 +1406,21 @@ class DeviceRepository
      */
     public function countDevicesWithClientCluster(int $clusterId, ?int $excludeDeviceId = null): int
     {
-        $sql = '
-            SELECT COUNT(DISTINCT ds.id)
-            FROM device_summary ds
-            JOIN product_endpoints pe ON ds.id = pe.device_id
-            WHERE pe.client_clusters IS NOT NULL
-              AND pe.client_clusters != \'\'
-              AND EXISTS (
-                SELECT 1 FROM json_each(pe.client_clusters) WHERE value = :cluster_id
-            )
-        ';
-
-        $params = ['cluster_id' => $clusterId];
-        $types = ['cluster_id' => \Doctrine\DBAL\ParameterType::INTEGER];
+        $qb = $this->db->createQueryBuilder()
+            ->select('COUNT(DISTINCT ds.id)')
+            ->from('device_summary', 'ds')
+            ->join('ds', 'product_endpoints', 'pe', 'ds.id = pe.device_id')
+            ->where('pe.client_clusters IS NOT NULL')
+            ->andWhere("pe.client_clusters != ''")
+            ->andWhere('EXISTS (SELECT 1 FROM json_each(pe.client_clusters) WHERE value = :cluster_id)')
+            ->setParameter('cluster_id', $clusterId, ParameterType::INTEGER);
 
         if (null !== $excludeDeviceId) {
-            $sql .= ' AND ds.id != :exclude_id';
-            $params['exclude_id'] = $excludeDeviceId;
-            $types['exclude_id'] = \Doctrine\DBAL\ParameterType::INTEGER;
+            $qb->andWhere('ds.id != :exclude_id')
+                ->setParameter('exclude_id', $excludeDeviceId, ParameterType::INTEGER);
         }
 
-        return (int) $this->db->executeQuery($sql, $params, $types)->fetchOne();
+        return (int) $qb->executeQuery()->fetchOne();
     }
 
     /**
@@ -1420,26 +1428,19 @@ class DeviceRepository
      */
     public function getDevicesByCluster(int $clusterId, int $limit = 50, int $offset = 0): array
     {
-        return $this->db->executeQuery('
-            SELECT DISTINCT ds.*
-            FROM device_summary ds
-            JOIN product_endpoints pe ON ds.id = pe.device_id
-            WHERE EXISTS (
-                SELECT 1 FROM json_each(pe.server_clusters) WHERE value = :cluster_id
-            ) OR EXISTS (
-                SELECT 1 FROM json_each(pe.client_clusters) WHERE value = :cluster_id
-            )
-            ORDER BY ds.submission_count DESC, ds.last_seen DESC
-            LIMIT :limit OFFSET :offset
-        ', [
-            'cluster_id' => $clusterId,
-            'limit' => $limit,
-            'offset' => $offset,
-        ], [
-            'cluster_id' => \Doctrine\DBAL\ParameterType::INTEGER,
-            'limit' => \Doctrine\DBAL\ParameterType::INTEGER,
-            'offset' => \Doctrine\DBAL\ParameterType::INTEGER,
-        ])->fetchAllAssociative();
+        return $this->db->createQueryBuilder()
+            ->select('DISTINCT ds.*')
+            ->from('device_summary', 'ds')
+            ->join('ds', 'product_endpoints', 'pe', 'ds.id = pe.device_id')
+            ->where('EXISTS (SELECT 1 FROM json_each(pe.server_clusters) WHERE value = :cluster_id)'
+                .' OR EXISTS (SELECT 1 FROM json_each(pe.client_clusters) WHERE value = :cluster_id)')
+            ->orderBy('ds.submission_count', 'DESC')
+            ->addOrderBy('ds.last_seen', 'DESC')
+            ->setMaxResults($limit)
+            ->setFirstResult($offset)
+            ->setParameter('cluster_id', $clusterId, ParameterType::INTEGER)
+            ->executeQuery()
+            ->fetchAllAssociative();
     }
 
     /**
@@ -1467,9 +1468,10 @@ class DeviceRepository
      */
     public function getDeviceTypesRequiringCluster(int $clusterId): array
     {
-        return $this->db->executeQuery('
-            SELECT dt.id, dt.hex_id, dt.name, dt.display_category, dt.icon,
-                   CASE
+        return $this->db->createQueryBuilder()
+            ->select(
+                'dt.id', 'dt.hex_id', 'dt.name', 'dt.display_category', 'dt.icon',
+                'CASE
                        WHEN EXISTS (
                            SELECT 1 FROM json_each(dt.mandatory_server_clusters)
                            WHERE json_extract(value, "$.id") = :cluster_id
@@ -1486,9 +1488,10 @@ class DeviceRepository
                            SELECT 1 FROM json_each(dt.optional_client_clusters)
                            WHERE json_extract(value, "$.id") = :cluster_id
                        ) THEN "optional_client"
-                   END as requirement_type
-            FROM device_types dt
-            WHERE EXISTS (
+                   END as requirement_type',
+            )
+            ->from('device_types', 'dt')
+            ->where('EXISTS (
                 SELECT 1 FROM json_each(dt.mandatory_server_clusters)
                 WHERE json_extract(value, "$.id") = :cluster_id
             ) OR EXISTS (
@@ -1500,13 +1503,11 @@ class DeviceRepository
             ) OR EXISTS (
                 SELECT 1 FROM json_each(dt.optional_client_clusters)
                 WHERE json_extract(value, "$.id") = :cluster_id
-            )
-            ORDER BY dt.name
-        ', [
-            'cluster_id' => $clusterId,
-        ], [
-            'cluster_id' => \Doctrine\DBAL\ParameterType::INTEGER,
-        ])->fetchAllAssociative();
+            )')
+            ->orderBy('dt.name')
+            ->setParameter('cluster_id', $clusterId, ParameterType::INTEGER)
+            ->executeQuery()
+            ->fetchAllAssociative();
     }
 
     /**
@@ -2175,7 +2176,11 @@ class DeviceRepository
      */
     public function countDevices(): int
     {
-        return (int) $this->db->executeQuery('SELECT COUNT(*) FROM products')->fetchOne();
+        return (int) $this->db->createQueryBuilder()
+            ->select('COUNT(*)')
+            ->from('products')
+            ->executeQuery()
+            ->fetchOne();
     }
 
     /**
@@ -2183,6 +2188,10 @@ class DeviceRepository
      */
     public function countVendors(): int
     {
-        return (int) $this->db->executeQuery('SELECT COUNT(*) FROM vendors')->fetchOne();
+        return (int) $this->db->createQueryBuilder()
+            ->select('COUNT(*)')
+            ->from('vendors')
+            ->executeQuery()
+            ->fetchOne();
     }
 }
