@@ -318,4 +318,94 @@ final class DeviceRepositoryExtraTest extends KernelTestCase
 
         $this->assertCount(count($allDevices), $devices);
     }
+
+    /**
+     * Characterization guard for the dynamic filter path: combining several filters
+     * in one call MUST return exactly the intersection of each filter applied alone.
+     *
+     * This is the regression net for the QueryBuilder refactor — if two filters'
+     * bound parameters were to collide on the shared builder, the combined result
+     * would diverge from the per-filter intersection and this test would fail.
+     *
+     * Data is built hermetically (own vendor-scoped products with known connectivity
+     * and clusters) so the intersection is deterministic, not fixture-dependent. The
+     * dama/doctrine-test-bundle transaction rolls these inserts back after the test.
+     */
+    public function testGetFilteredDevicesCombinesFiltersAsIntersection(): void
+    {
+        $vendorFk = $this->seedFilterFixture();
+
+        $idsFor = function (array $filters) use ($vendorFk): array {
+            $ids = array_map(
+                static fn (array $d): int => (int) $d['id'],
+                $this->repository->getFilteredDevices(array_merge($filters, ['vendor' => $vendorFk]), 500, 0),
+            );
+            sort($ids);
+
+            return $ids;
+        };
+
+        // connectivity=wifi (P1, P2) ∩ capability=dimming/cluster 8 (P1, P3) = {P1}.
+        // These two use the most param-heavy paths (connectivity LIKE loop +
+        // capability INTERSECT loop) — where a param collision would surface.
+        $connIds = $idsFor(['connectivity' => ['wifi']]);
+        $capIds = $idsFor(['capabilities' => ['dimming']]);
+        $expected = array_values(array_intersect($connIds, $capIds));
+        sort($expected);
+
+        $this->assertNotEmpty($expected, 'Seed data should produce a non-empty wifi∩dimming intersection');
+
+        $merged = ['connectivity' => ['wifi'], 'capabilities' => ['dimming']];
+        $this->assertSame($expected, $idsFor($merged), 'Combined filters must equal per-filter intersection');
+
+        // Count path must agree with the row path for the combined query.
+        $combinedFilters = array_merge($merged, ['vendor' => $vendorFk]);
+        $this->assertCount(
+            $this->repository->getFilteredDeviceCount($combinedFilters),
+            $this->repository->getFilteredDevices($combinedFilters, 500, 0),
+        );
+    }
+
+    /**
+     * Seed three vendor-scoped products with known connectivity + server clusters:
+     *   P1: wifi   + cluster 8 (dimming)   → matches connectivity=wifi AND capability=dimming
+     *   P2: wifi   + cluster 6 (on/off)    → matches connectivity=wifi only
+     *   P3: thread + cluster 8 (dimming)   → matches capability=dimming only
+     *
+     * @return int the vendor_fk the seeded products are scoped to
+     */
+    private function seedFilterFixture(): int
+    {
+        $em = self::getContainer()->get(\Doctrine\ORM\EntityManagerInterface::class);
+        $vendor = $em->getRepository(\App\Entity\Vendor::class)->findOneBy(['specId' => 4874]);
+        $this->assertNotNull($vendor, 'Eve fixture vendor (specId 4874) should exist');
+        $vendorFk = $vendor->getId();
+
+        $seed = [
+            [880001, ['wifi'], 8],
+            [880002, ['wifi'], 6],
+            [880003, ['thread'], 8],
+        ];
+
+        $isNew = false;
+        foreach ($seed as [$productId, $connectivity, $clusterId]) {
+            $deviceId = $this->repository->upsertDevice([
+                'vendor_id' => 4874,
+                'vendor_name' => $vendor->getName(),
+                'vendor_fk' => $vendorFk,
+                'product_id' => $productId,
+                'product_name' => 'Filter Combo '.$productId,
+                'connectivity_types' => $connectivity,
+            ], $isNew);
+
+            $this->repository->upsertEndpoint($deviceId, [
+                'endpoint_id' => 1,
+                'device_types' => [['id' => 256, 'revision' => 1]],
+                'server_clusters' => [$clusterId],
+                'client_clusters' => [],
+            ]);
+        }
+
+        return $vendorFk;
+    }
 }
