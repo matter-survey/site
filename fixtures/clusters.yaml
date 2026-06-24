@@ -736,6 +736,12 @@
   category: network
   isGlobal: false
 -
+  id: 1109
+  name: 'Commissioning Proxy'
+  description: 'This cluster provides a proxy service allowing a Commissioner to utilize commissioning transports not supported locally, or to extend the commissioning range of the Commissioner.'
+  category: null
+  isGlobal: false
+-
   id: 1283
   name: 'Wake on LAN'
   description: 'Enables remote wake-up of media devices over the network.'
