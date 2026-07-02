@@ -826,6 +826,12 @@
   category: media
   isGlobal: false
 -
+  id: 1298
+  name: 'Audio Control'
+  description: 'This cluster provides attributes and commands to control the audio output volume and frequency corrections of a device.'
+  category: null
+  isGlobal: false
+-
   id: 1360
   name: 'Zone Management'
   description: 'Defines and manages spatial zones (e.g. motion / detection zones) for cameras and presence sensors.'
