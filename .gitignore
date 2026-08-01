@@ -52,3 +52,6 @@ Thumbs.db
 # Release version, stamped at deploy time (`git describe`) and rsynced to the
 # server. Generated, never committed; absent in dev/test (falls back to 'dev').
 /config/version.php
+
+# Serena tooling (local only)
+.serena/
