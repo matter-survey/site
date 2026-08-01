@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller;
 
+use App\Repository\ClusterRepository;
+use App\Repository\ClusterVersionRepository;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
@@ -692,14 +694,35 @@ final class StatsControllerTest extends WebTestCase
     public function testClusterShowRendersClusterLevelProvisionalBadge(): void
     {
         $client = self::createClient();
-        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/cluster/0x0104');
+        $container = self::getContainer();
+        $versions = $container->get(ClusterVersionRepository::class);
+        $clusters = $container->get(ClusterRepository::class);
 
+        // Which cluster is flagged apiMaturity="provisional" drifts as upstream
+        // graduates clusters to stable (e.g. Closure Control 0x0104, once
+        // provisional, graduated at clusterRevision 2). Resolve a currently
+        // provisional cluster from the loaded spec data instead of hard-coding a
+        // hexId that goes stale on every Matter data refresh. See the matter-sync
+        // workflow for why this test must tolerate spec drift.
+        $latest = $versions->findLatestMatterVersion();
+        $this->assertNotNull($latest, 'Expected at least one ClusterVersion row in fixtures');
+
+        $hexId = null;
+        foreach ($versions->findBy(['matterVersion' => $latest, 'apiMaturity' => 'provisional']) as $snapshot) {
+            $cluster = $clusters->find($snapshot->getClusterId());
+            if (null !== $cluster) {
+                $hexId = $cluster->getHexId();
+                break;
+            }
+        }
+        $this->assertNotNull($hexId, 'Expected at least one provisional cluster with an annotation row');
+
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/cluster/'.$hexId);
         $this->assertResponseIsSuccessful();
 
-        // Closure Control (0x0104) is flagged apiMaturity="provisional" upstream.
         // Badge sits in the cluster header next to the category/global badges.
         $headerBadges = $crawler->filter('.cluster-header .badge-provisional');
-        $this->assertGreaterThan(0, $headerBadges->count(), 'Expected provisional badge in Closure Control header');
+        $this->assertGreaterThan(0, $headerBadges->count(), sprintf('Expected provisional badge in %s header', $hexId));
     }
 
     public function testClusterShowRendersFeatureProvisionalBadge(): void
