@@ -161,5 +161,5 @@ deploy:
 		--exclude='/vendor/' \
 		--exclude='.claude/' \
 		./ $(SFTP_USER)@$(SFTP_HOST):$(SFTP_PATH)/
-	ssh $(SFTP_USER)@$(SFTP_HOST) "cd $(SFTP_PATH) && composer install --no-dev --optimize-autoloader && php bin/console importmap:install && php bin/console asset-map:compile && php bin/console cache:clear --env=prod && php bin/console doctrine:migrations:migrate --no-interaction && php bin/console doctrine:fixtures:load --group=matter --append --no-interaction && php bin/console app:scores:rebuild"
+	ssh $(SFTP_USER)@$(SFTP_HOST) "cd $(SFTP_PATH) && export OTEL_SDK_DISABLED=true && composer install --no-dev --optimize-autoloader && php bin/console importmap:install && php bin/console asset-map:compile && php bin/console cache:clear --env=prod && php bin/console doctrine:migrations:migrate --no-interaction && php bin/console doctrine:fixtures:load --group=matter --append --no-interaction && php bin/console app:scores:rebuild"
 	@echo "Deployment complete"
