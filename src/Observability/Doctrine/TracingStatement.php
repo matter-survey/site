@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Observability\Doctrine;
 
+use App\Observability\SemConvMetrics;
 use Doctrine\DBAL\Driver\Middleware\AbstractStatementMiddleware;
 use Doctrine\DBAL\Driver\Result;
 use Doctrine\DBAL\Driver\Statement;
@@ -11,6 +12,8 @@ use Doctrine\DBAL\ParameterType;
 use OpenTelemetry\API\Globals;
 use OpenTelemetry\API\Trace\SpanKind;
 use OpenTelemetry\API\Trace\StatusCode;
+use OpenTelemetry\SemConv\TraceAttributes;
+use OpenTelemetry\SemConv\TraceAttributeValues;
 
 final class TracingStatement extends AbstractStatementMiddleware
 {
@@ -48,19 +51,24 @@ final class TracingStatement extends AbstractStatementMiddleware
             }
         }
 
+        $startNs = hrtime(true);
         try {
-            $result = parent::execute();
+            return parent::execute();
         } catch (\Throwable $e) {
             $span->recordException($e);
             $span->setStatus(StatusCode::STATUS_ERROR, $e->getMessage());
-            $span->end();
 
             throw $e;
+        } finally {
+            $span->end();
+            SemConvMetrics::dbClientOperationDuration()->record(
+                (hrtime(true) - $startNs) / 1_000_000_000,
+                [
+                    TraceAttributes::DB_SYSTEM_NAME => TraceAttributeValues::DB_SYSTEM_NAME_SQLITE,
+                    TraceAttributes::DB_OPERATION_NAME => SqlSpanNamer::operationFor($this->sql),
+                ],
+            );
         }
-
-        $span->end();
-
-        return $result;
     }
 
     private function parameterCaptureEnabled(): bool

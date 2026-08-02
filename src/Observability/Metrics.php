@@ -23,10 +23,14 @@ final class Metrics
             ->createCounter($name, $unit, $description);
     }
 
-    public static function histogram(string $name, ?string $unit = null, ?string $description = null): HistogramInterface
+    /**
+     * @param array<string, mixed> $advisory advisory hints such as
+     *                                       ['ExplicitBucketBoundaries' => [0.25, 0.5, 1, 5]]
+     */
+    public static function histogram(string $name, ?string $unit = null, ?string $description = null, array $advisory = []): HistogramInterface
     {
         return Globals::meterProvider()
             ->getMeter(self::METER_NAME)
-            ->createHistogram($name, $unit, $description);
+            ->createHistogram($name, $unit, $description, $advisory);
     }
 }

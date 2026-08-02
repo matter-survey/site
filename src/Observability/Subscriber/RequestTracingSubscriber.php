@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Observability\Subscriber;
 
+use App\Observability\SemConvMetrics;
 use OpenTelemetry\API\Globals;
 use OpenTelemetry\API\Trace\SpanInterface;
 use OpenTelemetry\API\Trace\SpanKind;
 use OpenTelemetry\API\Trace\StatusCode;
 use OpenTelemetry\Context\Propagation\ArrayAccessGetterSetter;
 use OpenTelemetry\Context\ScopeInterface;
+use OpenTelemetry\SemConv\TraceAttributes;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
@@ -29,7 +31,7 @@ final class RequestTracingSubscriber implements EventSubscriberInterface
      * objects carry circular references that explode `UrlGenerator`'s recursive
      * `get_object_vars` walk on PHP 8.4's tighter `zend.max_allowed_stack_size`.
      *
-     * @var \SplObjectStorage<\Symfony\Component\HttpFoundation\Request, array{span: SpanInterface, scope: ScopeInterface}>
+     * @var \SplObjectStorage<\Symfony\Component\HttpFoundation\Request, array{span: SpanInterface, scope: ScopeInterface, start: int}>
      */
     private \SplObjectStorage $state;
 
@@ -54,6 +56,7 @@ final class RequestTracingSubscriber implements EventSubscriberInterface
             return;
         }
 
+        $start = (int) hrtime(true);
         $request = $event->getRequest();
 
         $parentContext = Globals::propagator()->extract(
@@ -75,7 +78,7 @@ final class RequestTracingSubscriber implements EventSubscriberInterface
             ->setAttribute('server.address', $request->getHost())
             ->startSpan();
 
-        $this->state[$request] = ['span' => $span, 'scope' => $span->activate()];
+        $this->state[$request] = ['span' => $span, 'scope' => $span->activate(), 'start' => $start];
     }
 
     public function onKernelController(ControllerEvent $event): void
@@ -130,14 +133,44 @@ final class RequestTracingSubscriber implements EventSubscriberInterface
 
         if (isset($this->state[$request])) {
             $entry = $this->state[$request];
-            $entry['span']->setAttribute('http.response.status_code', $event->getResponse()->getStatusCode());
+            $statusCode = $event->getResponse()->getStatusCode();
+            $entry['span']->setAttribute('http.response.status_code', $statusCode);
             $entry['span']->end();
             $entry['scope']->detach();
             unset($this->state[$request]);
+
+            $this->recordServerDuration($request, $statusCode, $entry['start']);
         }
 
         if (\function_exists('fastcgi_finish_request')) {
             fastcgi_finish_request();
         }
+    }
+
+    /**
+     * Emit the http.server.request.duration histogram (seconds) with the
+     * semantic-convention attributes available at request completion.
+     */
+    private function recordServerDuration(\Symfony\Component\HttpFoundation\Request $request, int $statusCode, int $start): void
+    {
+        $attributes = [
+            TraceAttributes::HTTP_REQUEST_METHOD => strtoupper($request->getMethod()),
+            TraceAttributes::URL_SCHEME => $request->getScheme(),
+            TraceAttributes::HTTP_RESPONSE_STATUS_CODE => $statusCode,
+        ];
+
+        $route = $request->attributes->get('_route');
+        if (\is_string($route) && '' !== $route) {
+            $attributes[TraceAttributes::HTTP_ROUTE] = $route;
+        }
+
+        if ($statusCode >= 500) {
+            $attributes[TraceAttributes::ERROR_TYPE] = (string) $statusCode;
+        }
+
+        SemConvMetrics::httpServerRequestDuration()->record(
+            (hrtime(true) - $start) / 1_000_000_000,
+            $attributes,
+        );
     }
 }

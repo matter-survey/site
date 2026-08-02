@@ -41,6 +41,37 @@ final class SqlSpanNamer
         return '' === $firstWord ? 'db' : $firstWord;
     }
 
+    /**
+     * The operation token alone (SELECT, INSERT, BEGIN, CREATE TABLE, …), without
+     * the table. Suitable as a low-cardinality `db.operation.name` metric
+     * dimension.
+     *
+     * @return non-empty-string
+     */
+    public static function operationFor(string $sql): string
+    {
+        $trimmed = ltrim($sql);
+        if ('' === $trimmed) {
+            return 'UNKNOWN';
+        }
+
+        if (1 === preg_match('/^(?<op>SELECT|INSERT|UPDATE|DELETE|REPLACE)\b/i', $trimmed, $m)) {
+            return strtoupper($m['op']);
+        }
+
+        if (1 === preg_match('/^(?<op>BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE)\b/i', $trimmed, $m)) {
+            return strtoupper($m['op']);
+        }
+
+        if (1 === preg_match('/^(?<op>CREATE|DROP|ALTER|TRUNCATE)\s+(?<obj>TABLE|INDEX|VIEW)/i', $trimmed, $m)) {
+            return strtoupper($m['op'].' '.$m['obj']);
+        }
+
+        $firstWord = strtoupper((string) (preg_split('/\s+/', $trimmed, 2)[0] ?? ''));
+
+        return '' === $firstWord ? 'UNKNOWN' : $firstWord;
+    }
+
     private static function extractTable(string $op, string $sql): ?string
     {
         $pattern = match ($op) {
