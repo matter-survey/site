@@ -134,6 +134,57 @@ final class DomainSpansTest extends KernelTestCase
         $this->assertInstanceOf(Metric::class, $duration, 'submissions.duration_ms histogram expected');
     }
 
+    public function testTelemetrySubmissionInstrumentsWritePath(): void
+    {
+        $service = self::getContainer()->get(\App\Service\TelemetryService::class);
+
+        $payload = [
+            'installation_id' => '550e8400-e29b-41d4-a716-446655440001',
+            'schema_version' => 3,
+            'devices' => [
+                [
+                    'vendor_id' => 4660,
+                    'product_id' => 22200,
+                    'vendor_name' => 'TestVendor',
+                    'product_name' => 'Write Path A',
+                    'endpoints' => [
+                        ['endpoint_id' => 1, 'device_types' => [256], 'server_clusters' => [6], 'client_clusters' => []],
+                    ],
+                ],
+                [
+                    'vendor_id' => 4660,
+                    'product_id' => 22201,
+                    'vendor_name' => 'TestVendor',
+                    'product_name' => 'Write Path B',
+                    'endpoints' => [
+                        ['endpoint_id' => 1, 'device_types' => [256], 'server_clusters' => [6], 'client_clusters' => []],
+                    ],
+                ],
+            ],
+        ];
+
+        $result = $service->processSubmission($payload, 'test-ip');
+        $this->assertTrue($result['success'] ?? false, 'Submission should succeed: '.json_encode($result));
+
+        $this->tracerProvider->forceFlush();
+        $spans = iterator_to_array($this->spanStorage->getIterator());
+        $names = array_map(static fn (ImmutableSpan $s): string => $s->getName(), $spans);
+
+        // The opaque telemetry.submit span is now decomposable: the transaction
+        // boundary and each device are their own spans.
+        $this->assertContains('telemetry.begin_transaction', $names);
+        $this->assertContains('telemetry.commit', $names);
+
+        $deviceSpans = array_values(array_filter($spans, static fn (ImmutableSpan $s): bool => 'telemetry.process_device' === $s->getName()));
+        $this->assertCount(2, $deviceSpans, 'one telemetry.process_device span per submitted device');
+        $this->assertSame(4660, $deviceSpans[0]->getAttributes()->toArray()['device.vendor_id'] ?? null);
+
+        // Write-path spans must nest under the telemetry.submit span.
+        $submitSpans = array_values(array_filter($spans, static fn (ImmutableSpan $s): bool => 'telemetry.submit' === $s->getName()));
+        $this->assertCount(1, $submitSpans);
+        $this->assertSame($submitSpans[0]->getContext()->getSpanId(), $deviceSpans[0]->getParentSpanId());
+    }
+
     /**
      * @return array<string, Metric>
      */

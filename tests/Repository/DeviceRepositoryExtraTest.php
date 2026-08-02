@@ -6,6 +6,7 @@ namespace App\Tests\Repository;
 
 use App\Repository\DeviceRepository;
 use App\Service\MatterRegistry;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
@@ -188,6 +189,53 @@ final class DeviceRepositoryExtraTest extends KernelTestCase
         $this->assertIsInt($count);
     }
 
+    public function testCountDevicesWithClientClustersBatchesPerClusterCounts(): void
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $vendor = $em->getRepository(\App\Entity\Vendor::class)->findOneBy(['specId' => 4874]);
+        $this->assertNotNull($vendor, 'Eve fixture vendor (specId 4874) should exist');
+
+        // Seed with cluster ids well outside the Matter spec range so fixtures
+        // never collide. 8801: devices A + B; 8802: devices A + (excluded C).
+        $seedDevice = function (int $productId, array $clientClusters) use ($vendor): int {
+            $isNew = false;
+            $deviceId = $this->repository->upsertDevice([
+                'vendor_id' => 4874,
+                'vendor_name' => $vendor->getName(),
+                'vendor_fk' => $vendor->getId(),
+                'product_id' => $productId,
+                'product_name' => 'Client Combo '.$productId,
+            ], $isNew);
+            $this->repository->upsertEndpoint($deviceId, [
+                'endpoint_id' => 1,
+                'device_types' => [['id' => 256, 'revision' => 1]],
+                'server_clusters' => [6],
+                'client_clusters' => $clientClusters,
+            ]);
+
+            return $deviceId;
+        };
+
+        $seedDevice(990001, [8801, 8802]);
+        $seedDevice(990002, [8801]);
+        $excludedDeviceId = $seedDevice(990003, [8802]);
+
+        $counts = $this->repository->countDevicesWithClientClusters([8801, 8802], $excludedDeviceId);
+
+        $this->assertSame(2, $counts[8801] ?? null);
+        $this->assertSame(1, $counts[8802] ?? null);
+
+        // A single batched call must agree with the per-cluster method it replaces.
+        $this->assertSame(
+            $this->repository->countDevicesWithClientCluster(8801, $excludedDeviceId),
+            $counts[8801],
+        );
+
+        // Clusters with no matches are simply absent, and empty input is a no-op.
+        $this->assertArrayNotHasKey(8899, $this->repository->countDevicesWithClientClusters([8899]));
+        $this->assertSame([], $this->repository->countDevicesWithClientClusters([]));
+    }
+
     public function testCoordinationHelpers(): void
     {
         foreach (['binding', 'groups', 'scenes'] as $feature) {
@@ -223,7 +271,7 @@ final class DeviceRepositoryExtraTest extends KernelTestCase
 
     public function testGetFilteredDevicesByVendorFk(): void
     {
-        $em = self::getContainer()->get(\Doctrine\ORM\EntityManagerInterface::class);
+        $em = self::getContainer()->get(EntityManagerInterface::class);
         $vendor = $em->getRepository(\App\Entity\Vendor::class)->findOneBy(['specId' => 4874]);
         $this->assertNotNull($vendor);
 
@@ -376,7 +424,7 @@ final class DeviceRepositoryExtraTest extends KernelTestCase
      */
     private function seedFilterFixture(): int
     {
-        $em = self::getContainer()->get(\Doctrine\ORM\EntityManagerInterface::class);
+        $em = self::getContainer()->get(EntityManagerInterface::class);
         $vendor = $em->getRepository(\App\Entity\Vendor::class)->findOneBy(['specId' => 4874]);
         $this->assertNotNull($vendor, 'Eve fixture vendor (specId 4874) should exist');
         $vendorFk = $vendor->getId();

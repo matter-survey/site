@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Service\DatabaseService;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Query\QueryBuilder;
@@ -1447,6 +1448,46 @@ class DeviceRepository
         }
 
         return (int) $qb->executeQuery()->fetchOne();
+    }
+
+    /**
+     * Count devices that have each of the given clusters as a CLIENT, in a
+     * single query. Replaces N per-cluster {@see countDevicesWithClientCluster}
+     * calls on the device page's compatibility section.
+     *
+     * @param int[] $clusterIds
+     *
+     * @return array<int, int> clusterId => device count; clusters with no
+     *                         matching devices are omitted
+     */
+    public function countDevicesWithClientClusters(array $clusterIds, ?int $excludeDeviceId = null): array
+    {
+        if ([] === $clusterIds) {
+            return [];
+        }
+
+        // The non-empty guard lives on the product_endpoints join so json_each
+        // never sees NULL/'' (which would raise "malformed JSON") for endpoints
+        // that carry no client clusters.
+        $qb = $this->db->createQueryBuilder()
+            ->select('je.value AS cluster_id', 'COUNT(DISTINCT ds.id) AS device_count')
+            ->from('device_summary', 'ds')
+            ->join('ds', 'product_endpoints', 'pe', "ds.id = pe.device_id AND pe.client_clusters IS NOT NULL AND pe.client_clusters != ''")
+            ->join('pe', 'json_each(pe.client_clusters)', 'je', 'je.value IN (:cluster_ids)')
+            ->groupBy('je.value')
+            ->setParameter('cluster_ids', $clusterIds, ArrayParameterType::INTEGER);
+
+        if (null !== $excludeDeviceId) {
+            $qb->andWhere('ds.id != :exclude_id')
+                ->setParameter('exclude_id', $excludeDeviceId, ParameterType::INTEGER);
+        }
+
+        $counts = [];
+        foreach ($qb->executeQuery()->fetchAllAssociative() as $row) {
+            $counts[(int) $row['cluster_id']] = (int) $row['device_count'];
+        }
+
+        return $counts;
     }
 
     /**
