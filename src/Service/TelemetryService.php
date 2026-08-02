@@ -68,7 +68,10 @@ class TelemetryService
         $startNs = hrtime(true);
 
         try {
-            $this->db->beginTransaction();
+            // Wrap the transaction boundary in its own span: on a contended
+            // SQLite writer this is where a submission can sit waiting for the
+            // write lock, which was previously invisible inside telemetry.submit.
+            $this->traced('telemetry.begin_transaction', [], fn () => $this->db->beginTransaction());
 
             $this->recordInstallation($installationId);
             $this->logSubmission($installationId, count($devices), $ipHash);
@@ -78,7 +81,11 @@ class TelemetryService
             $processedCount = 0;
             $processedDeviceIds = [];
             foreach ($devices as $device) {
-                $productId = $this->processDevice($device, $schemaVersion);
+                $productId = $this->traced('telemetry.process_device', [
+                    'device.vendor_id' => isset($device['vendor_id']) ? (int) $device['vendor_id'] : null,
+                    'device.product_id' => isset($device['product_id']) ? (int) $device['product_id'] : null,
+                    'device.endpoint_count' => \count($device['endpoints'] ?? []),
+                ], fn (): ?int => $this->processDevice($device, $schemaVersion));
                 if (null !== $productId) {
                     $this->recordInstallationProduct($installationId, $productId);
                     $processedDeviceIds[] = $productId;
@@ -86,23 +93,27 @@ class TelemetryService
                 }
             }
 
-            // Flush ORM changes (vendors)
-            $this->em->flush();
-
-            $this->db->commit();
+            // Flush ORM changes (vendors) and commit — the fsync-heavy tail of
+            // the write path.
+            $this->traced('telemetry.commit', ['submission.devices_processed' => $processedCount], function (): void {
+                $this->em->flush();
+                $this->db->commit();
+            });
 
             // Update score cache for processed devices (after commit to ensure data is persisted)
-            foreach ($processedDeviceIds as $deviceId) {
-                try {
-                    $this->deviceScoreService->updateDeviceScoreCache($deviceId);
-                } catch (\Throwable $e) {
-                    // Log but don't fail the submission if score update fails
-                    $this->logger->warning('Failed to update device score cache', [
-                        'device_id' => $deviceId,
-                        'error' => $e->getMessage(),
-                    ]);
+            $this->traced('telemetry.update_scores', ['submission.devices_processed' => \count($processedDeviceIds)], function () use ($processedDeviceIds): void {
+                foreach ($processedDeviceIds as $deviceId) {
+                    try {
+                        $this->deviceScoreService->updateDeviceScoreCache($deviceId);
+                    } catch (\Throwable $e) {
+                        // Log but don't fail the submission if score update fails
+                        $this->logger->warning('Failed to update device score cache', [
+                            'device_id' => $deviceId,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
                 }
-            }
+            });
 
             $this->logger->info('Telemetry submission processed', [
                 'installation_id' => $installationId,
@@ -131,6 +142,36 @@ class TelemetryService
         } finally {
             \App\Observability\Metrics::histogram('submissions.duration_ms', 'ms', 'Wall time spent processing a submission')
                 ->record((hrtime(true) - $startNs) / 1_000_000.0, ['submission.schema_version' => (int) $schemaVersionAttr]);
+            $scope->detach();
+            $span->end();
+        }
+    }
+
+    /**
+     * Run $operation inside a child span of the currently-active span, always
+     * ending the span and detaching its scope even if $operation throws.
+     *
+     * @template T
+     *
+     * @param non-empty-string                         $name
+     * @param array<string, scalar|array<scalar>|null> $attributes
+     * @param callable(): T                            $operation
+     *
+     * @return T
+     */
+    private function traced(string $name, array $attributes, callable $operation): mixed
+    {
+        $span = \App\Observability\Tracer::start($name, $attributes);
+        $scope = $span->activate();
+
+        try {
+            return $operation();
+        } catch (\Throwable $e) {
+            $span->recordException($e);
+            $span->setStatus(\OpenTelemetry\API\Trace\StatusCode::STATUS_ERROR, $e->getMessage());
+
+            throw $e;
+        } finally {
             $scope->detach();
             $span->end();
         }
