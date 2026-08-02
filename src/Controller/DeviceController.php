@@ -470,18 +470,25 @@ class DeviceController extends AbstractController
             }
         }
 
-        $compatibilityMap = [];
-        foreach (array_keys($serverClusters) as $clusterId) {
-            $devices = $this->deviceRepo->getDevicesWithClientCluster($clusterId, $deviceId, 10);
-            $total = $this->deviceRepo->countDevicesWithClientCluster($clusterId, $deviceId);
+        // Count matches for every candidate cluster in one query, then fetch
+        // sample devices only for the clusters that actually have any — instead
+        // of a count+select pair per cluster (an N+1 that dominated the device
+        // page's query time).
+        $clusterIds = array_keys($serverClusters);
+        $totals = $this->deviceRepo->countDevicesWithClientClusters($clusterIds, $deviceId);
 
-            if ($total > 0) {
-                $compatibilityMap[$clusterId] = [
-                    'name' => $this->matterRegistry->getClusterName($clusterId),
-                    'devices' => $devices,
-                    'total' => $total,
-                ];
+        $compatibilityMap = [];
+        foreach ($clusterIds as $clusterId) {
+            $total = $totals[$clusterId] ?? 0;
+            if ($total <= 0) {
+                continue;
             }
+
+            $compatibilityMap[$clusterId] = [
+                'name' => $this->matterRegistry->getClusterName($clusterId),
+                'devices' => $this->deviceRepo->getDevicesWithClientCluster($clusterId, $deviceId, 10),
+                'total' => $total,
+            ];
         }
 
         return $compatibilityMap;
