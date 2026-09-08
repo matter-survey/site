@@ -27,7 +27,7 @@ use Symfony\Component\Yaml\Yaml;
  */
 #[AsCommand(
     name: 'app:zap:backfill',
-    description: 'Snapshot Matter cluster spec into per-version fixture files (fixtures/clusters/{1.0..1.5}.yaml)',
+    description: 'Snapshot Matter cluster spec into per-version fixture files (fixtures/clusters/{1.0..1.6}.yaml)',
 )]
 final class ZapBackfillCommand extends Command
 {
@@ -44,6 +44,7 @@ final class ZapBackfillCommand extends Command
         '1.3' => 'v1.3.0.0',
         '1.4' => 'v1.4.2.0',
         '1.5' => 'v1.5.1.0',
+        '1.6' => 'v1.6.0.0',
         'master' => 'master',
     ];
 
