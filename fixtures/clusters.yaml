@@ -370,6 +370,12 @@
   category: utility
   isGlobal: false
 -
+  id: 99
+  name: 'Thermostat Mode'
+  description: 'This cluster is derived from the Mode Base cluster, defining additional mode tags and namespaced enumerated values for thermostat devices.'
+  category: null
+  isGlobal: false
+-
   id: 101
   name: Groupcast
   description: 'Provides multicast/groupcast delivery primitives for sending commands to groups of devices.'
