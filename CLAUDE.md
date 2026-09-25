@@ -213,6 +213,9 @@ All public-facing pages should include structured data markup:
 | Vendor | `Organization` | `vendor/show.html.twig` |
 | DeviceType | `DefinedTerm` | `stats/device_type_show.html.twig` |
 | Homepage | `WebSite` + `SearchAction` | `device/index.html.twig` |
+| FAQ | `FAQPage` (from `faq` catalog) | `page/faq.html.twig` |
+| Glossary | `DefinedTermSet` (from `glossary` catalog) | `page/glossary.html.twig` |
+| Vendor index | `CollectionPage` | `vendor/index.html.twig` |
 
 When creating new pages with entities, include appropriate JSON-LD in the `structured_data` block and OpenGraph tags in the `og_meta` block.
 

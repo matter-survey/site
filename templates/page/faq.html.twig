@@ -5,6 +5,12 @@
 {% block og_title %}{{ 'meta_title'|trans({}, 'faq') }}{% endblock %}
 {% block og_description %}{{ 'meta_description'|trans({}, 'faq') }}{% endblock %}
 
+{% block structured_data %}
+<script type="application/ld+json">
+{{ structured_data_faq()|json_encode(constant('JSON_UNESCAPED_SLASHES'))|raw }}
+</script>
+{% endblock %}
+
 {% block extra_styles %}
     .faq-content {
         max-width: 800px;

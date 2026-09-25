@@ -2,6 +2,12 @@
 
 {% block title %}{{ 'title.vendors'|trans }}{% endblock %}
 
+{% block structured_data %}
+<script type="application/ld+json">
+{{ structured_data_collection_page('vendor.heading'|trans, 'vendor.subtitle'|trans({'%count%': insights.totalVendors}), canonical_base_url ~ path('vendor_index'), vendors|length)|json_encode(constant('JSON_UNESCAPED_SLASHES'))|raw }}
+</script>
+{% endblock %}
+
 {# Macro for device type icons using Unicode symbols #}
 {% macro deviceIcon(icon) %}
     {%- set icons = {
