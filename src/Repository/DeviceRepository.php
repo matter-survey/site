@@ -708,10 +708,19 @@ class DeviceRepository
      */
     public function getVendorFacets(int $limit = 20): array
     {
-        $rows = $this->db->createQueryBuilder()
+        $qb = $this->db->createQueryBuilder();
+        $placeholders = [];
+        foreach (\App\Entity\Vendor::TEST_VENDOR_IDS as $i => $vendorId) {
+            $name = 'test_vendor_'.$i;
+            $placeholders[] = ':'.$name;
+            $qb->setParameter($name, $vendorId, ParameterType::INTEGER);
+        }
+
+        $rows = $qb
             ->select('v.id', 'v.name', 'v.slug', 'COUNT(p.id) as count')
             ->from('vendors', 'v')
             ->join('v', 'products', 'p', 'p.vendor_fk = v.id')
+            ->where('(v.spec_id IS NULL OR v.spec_id NOT IN ('.implode(', ', $placeholders).'))')
             ->groupBy('v.id')
             ->having('count > 0')
             ->orderBy('count', 'DESC')
