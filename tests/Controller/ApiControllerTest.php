@@ -444,6 +444,10 @@ final class ApiControllerTest extends WebTestCase
         $oldestVersionGroup = $versionGroups->last();
         $this->assertStringContainsString('1.0.0', $oldestVersionGroup->text());
         $this->assertStringNotContainsString('Changes from previous version', $oldestVersionGroup->text());
+
+        // Hover details are only rendered for the latest version to keep page size bounded
+        $this->assertGreaterThan(0, $latestVersionGroup->filter('.cluster-details')->count());
+        $this->assertSame(0, $oldestVersionGroup->filter('.cluster-details')->count());
     }
 
     /**
