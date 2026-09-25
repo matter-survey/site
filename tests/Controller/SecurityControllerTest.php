@@ -29,7 +29,7 @@ final class SecurityControllerTest extends KernelTestCase
         $this->browser()
             ->visit('/login')
             ->assertSuccessful()
-            ->assertSeeIn('h2', 'Sign In');
+            ->assertSeeIn('h1', 'Sign In');
     }
 
     public function testLoginWithInvalidCredentials(): void
