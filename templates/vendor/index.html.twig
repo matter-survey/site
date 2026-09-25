@@ -4,7 +4,7 @@
 
 {% block structured_data %}
 <script type="application/ld+json">
-{{ structured_data_collection_page('Matter Vendors', 'Directory of ' ~ insights.totalVendors ~ ' vendors building Matter-compatible smart home devices.', canonical_base_url ~ path('vendor_index'), vendors|length)|json_encode(constant('JSON_UNESCAPED_SLASHES'))|raw }}
+{{ structured_data_collection_page('vendor.heading'|trans, 'vendor.subtitle'|trans({'%count%': insights.totalVendors}), canonical_base_url ~ path('vendor_index'), vendors|length)|json_encode(constant('JSON_UNESCAPED_SLASHES'))|raw }}
 </script>
 {% endblock %}
 
