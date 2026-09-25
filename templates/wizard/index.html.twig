@@ -1,5 +1,7 @@
 {% extends 'base.html.twig' %}
 
+{% block site_title_tag %}h1{% endblock %}
+
 {% block title %}{{ 'wizard.title'|trans({}, 'wizard') }} - {{ 'wizard.step'|trans({'%step%': step, '%total%': totalSteps}, 'wizard') }}{% endblock %}
 
 {% block og_title %}{{ 'wizard.og_title'|trans({}, 'wizard') }}{% endblock %}

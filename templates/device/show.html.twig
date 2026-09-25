@@ -215,7 +215,7 @@
         flex-wrap: wrap;
     }
 
-    .device-header h2 {
+    .device-header h1 {
         font-size: 1.5rem;
         margin-bottom: 0.5rem;
     }
@@ -1574,7 +1574,7 @@
 
     <div class="device-header">
         <div class="device-header-title">
-            <h2>{{ deviceName(device) }}</h2>
+            <h1>{{ deviceName(device) }}</h1>
             {% if deviceScore and deviceScore.scoresByType|length > 0 %}
                 <div class="device-rating">
                     {{ stars(deviceScore.starRating, deviceScore.overallScore, true, deviceScore.isCompliant) }}
