@@ -25,7 +25,7 @@ final class LocalizedTitlesTest extends WebTestCase
     public function testPageTitleIsLocalized(string $url, string $expectedTitle): void
     {
         $client = self::createClient();
-        $client->request('GET', $url);
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, $url);
 
         $this->assertResponseIsSuccessful();
         $this->assertPageTitleSame($expectedTitle);
@@ -34,7 +34,7 @@ final class LocalizedTitlesTest extends WebTestCase
     public function testGermanVendorIndexIsTranslated(): void
     {
         $client = self::createClient();
-        $crawler = $client->request('GET', '/de/vendors');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/de/vendors');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('.page-header h1', 'Matter-Hersteller');
