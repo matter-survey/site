@@ -27,7 +27,7 @@ final class HeadingStructureTest extends WebTestCase
     public function testPageHasExactlyOneH1(string $url): void
     {
         $client = self::createClient();
-        $crawler = $client->request('GET', $url);
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, $url);
 
         $this->assertResponseIsSuccessful();
         $this->assertCount(1, $crawler->filter('h1'), \sprintf('%s should have exactly one <h1>', $url));
@@ -36,7 +36,7 @@ final class HeadingStructureTest extends WebTestCase
     public function testDevicePageHasExactlyOneH1(): void
     {
         $client = self::createClient();
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/');
         $link = $crawler->filter('a[href^="/device/"]')->first();
         $this->assertCount(1, $link);
 
