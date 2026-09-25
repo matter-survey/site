@@ -160,6 +160,33 @@ final class DeviceControllerTest extends WebTestCase
         $this->assertResponseStatusCodeSame(Response::HTTP_MOVED_PERMANENTLY);
     }
 
+    public function testDeviceShowMalformedSlugRedirectsToCanonicalSlug(): void
+    {
+        $client = self::createClient();
+
+        $product = self::getContainer()->get(\Doctrine\ORM\EntityManagerInterface::class)
+            ->getRepository(\App\Entity\Product::class)
+            ->findOneBy([], ['id' => 'ASC']);
+        $this->assertNotNull($product, 'Expected at least one fixture product');
+
+        // Shape of the slugs the old SQL backfill produced (issue #413), e.g.
+        // "radiator-thermostat-ii-[+m]-4617-12306" or "fritz!smart-gateway-4757-265".
+        $client->request(
+            \Symfony\Component\HttpFoundation\Request::METHOD_GET,
+            \sprintf('/device/some-name-%%5B+m%%5D!-(x)-%d-%d', $product->getVendorId(), $product->getProductId()),
+        );
+
+        $this->assertResponseRedirects('/device/'.$product->getSlug(), Response::HTTP_MOVED_PERMANENTLY);
+    }
+
+    public function testDeviceShowMalformedSlugForUnknownProductReturns404(): void
+    {
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device/nope-%5B+m%5D-65000-65000');
+
+        $this->assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+    }
+
     public function testDeviceShowSlugBasedUrlWorks(): void
     {
         $client = self::createClient();
