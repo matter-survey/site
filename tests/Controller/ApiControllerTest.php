@@ -447,7 +447,7 @@ final class ApiControllerTest extends WebTestCase
 
         // Hover details are only rendered for the latest version to keep page size bounded
         $this->assertGreaterThan(0, $latestVersionGroup->filter('.cluster-details')->count());
-        $this->assertSame(0, $oldestVersionGroup->filter('.cluster-details')->count());
+        $this->assertCount(0, $oldestVersionGroup->filter('.cluster-details'));
     }
 
     /**
