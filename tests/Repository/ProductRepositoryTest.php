@@ -274,7 +274,10 @@ final class ProductRepositoryTest extends KernelTestCase
 
         $grouped = $this->repository->findGroupedByComplexity();
         $this->assertArrayHasKey(2, $grouped);
-        $this->assertNotEmpty($grouped[2]);
+        $this->assertGreaterThanOrEqual(1, $grouped[2]['count']);
+        $names = array_map(fn (Product $p): ?string => $p->getProductName(), $grouped[2]['products']);
+        $this->assertContains('WithInstructions', $names);
+        $this->assertNotContains('Plain', $names);
 
         $stats = $this->repository->getCommissioningStats();
         $this->assertArrayHasKey('total', $stats);
