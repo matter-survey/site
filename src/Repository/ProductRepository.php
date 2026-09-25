@@ -307,24 +307,42 @@ class ProductRepository extends ServiceEntityRepository
     }
 
     /**
-     * Get products grouped by commissioning complexity.
+     * Get products grouped by commissioning complexity: the total per hint
+     * plus the first $perGroup products (by name) of each group. Only the
+     * displayed products are hydrated; hydrating every product made the
+     * commissioning page take several seconds.
      *
-     * @return array<int, Product[]>
+     * @return array<int, array{count: int, products: Product[]}>
      */
-    public function findGroupedByComplexity(): array
+    public function findGroupedByComplexity(int $perGroup = 50): array
     {
-        $products = $this->createQueryBuilder('p')
+        $counts = $this->createQueryBuilder('p')
+            ->select('COALESCE(p.commissioningInitialStepsHint, 0) AS hint', 'COUNT(p.id) AS total')
             ->where('p.commissioningInitialStepsHint IS NOT NULL')
             ->orWhere('p.commissioningInitialStepsInstruction IS NOT NULL')
-            ->orderBy('p.commissioningInitialStepsHint', 'ASC')
-            ->addOrderBy('p.productName', 'ASC')
+            ->groupBy('hint')
+            ->orderBy('hint', 'ASC')
             ->getQuery()
-            ->getResult();
+            ->getArrayResult();
 
         $grouped = [];
-        foreach ($products as $product) {
-            $hint = $product->getCommissioningInitialStepsHint() ?? 0;
-            $grouped[$hint][] = $product;
+        foreach ($counts as $row) {
+            $hint = (int) $row['hint'];
+            $qb = $this->createQueryBuilder('p');
+            if (0 === $hint) {
+                $qb->where('p.commissioningInitialStepsHint = 0 OR (p.commissioningInitialStepsHint IS NULL AND p.commissioningInitialStepsInstruction IS NOT NULL)');
+            } else {
+                $qb->where('p.commissioningInitialStepsHint = :hint')->setParameter('hint', $hint);
+            }
+
+            $grouped[$hint] = [
+                'count' => (int) $row['total'],
+                'products' => $qb
+                    ->orderBy('p.productName', 'ASC')
+                    ->setMaxResults($perGroup)
+                    ->getQuery()
+                    ->getResult(),
+            ];
         }
 
         return $grouped;
