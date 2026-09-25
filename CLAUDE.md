@@ -80,7 +80,7 @@ php bin/console doctrine:migrations:migrate
 ### Console Commands
 
 - `app:dcl:sync` - Fetch vendor/product data from Matter DCL API and generate YAML fixtures
-- `app:zap:backfill` - Snapshot Matter cluster spec per release tag into `fixtures/clusters/{1.0..1.5,master}.yaml`. Run `--matter-version=master` daily (scheduled in CI) to keep master fresh; the released-version tags are frozen.
+- `app:zap:backfill` - Snapshot Matter cluster spec per release tag into `fixtures/clusters/{1.0..1.6,master}.yaml`. Run `--matter-version=master` daily (scheduled in CI) to keep master fresh; the released-version tags are frozen.
 - `app:scores:rebuild` - Rebuild the device scores cache table (used in deployment)
 - `app:otel:doctor` - Print resolved OpenTelemetry configuration (env vars, providers, sampler) and exit non-zero on misconfiguration when the SDK is enabled
 - `app:user:create` - Create an admin user (form-login credential for the `/admin` area)
@@ -109,7 +109,7 @@ All Matter specification data (clusters, device types) is stored in the database
 
 **Entities:**
 - `Cluster` - id, hexId, name, description, category, isGlobal. Hand-curated annotation layer only — spec data (attributes/commands/features/apiMaturity/ClusterRevision) lives on `ClusterVersion`.
-- `ClusterVersion` - (clusterId, matterVersion) → name, description, clusterRevision, apiMaturity, attributes (JSON), commands (JSON), features (JSON). One row per Matter release (1.0..1.5 + master) the cluster appeared in.
+- `ClusterVersion` - (clusterId, matterVersion) → name, description, clusterRevision, apiMaturity, attributes (JSON), commands (JSON), features (JSON). One row per Matter release (1.0..1.6 + master) the cluster appeared in.
 - `DeviceType` - id, hexId, name, description, specVersion, category, displayCategory, deviceClass, scope, superset, icon, mandatoryServerClusters (JSON), optionalServerClusters (JSON), mandatoryClientClusters (JSON), optionalClientClusters (JSON), scoringWeights (JSON)
 
 **Fixture Groups:**

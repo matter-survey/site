@@ -821,9 +821,9 @@ final class StatsControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
 
-        // 6 released versions (1.0..1.5) + 1 master card
+        // 7 released versions (1.0..1.6) + 1 master card
         $cards = $crawler->filter('.release-card');
-        $this->assertCount(7, $cards, 'Expected one release card per Matter version plus master');
+        $this->assertCount(8, $cards, 'Expected one release card per Matter version plus master');
     }
 
     public function testMatterHubLinksToConceptIndexes(): void
@@ -885,11 +885,11 @@ final class StatsControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
 
-        // On/Off has shipped in every Matter release (1.0..1.5) — timeline should render.
+        // On/Off has shipped in every Matter release (1.0..1.6) — timeline should render.
         $this->assertSelectorExists('.version-timeline');
         $timeline = $crawler->filter('.version-timeline')->text();
         $this->assertStringContainsString('Matter 1.0', $timeline);
-        $this->assertStringContainsString('Matter 1.5', $timeline);
+        $this->assertStringContainsString('Matter 1.6', $timeline);
 
         // "Introduced in Matter X" line in the header
         $this->assertStringContainsString('Introduced in', $crawler->filter('.cluster-meta')->text());
