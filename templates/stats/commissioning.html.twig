@@ -2,7 +2,7 @@
 
 {% block structured_data %}{{ include('stats/_dataset_jsonld.html.twig') }}{% endblock %}
 
-{% block title %}Commissioning Guides - Matter Survey{% endblock %}
+{% block title %}{{ 'title.commissioning'|trans }}{% endblock %}
 
 {% block og_title %}Matter Device Commissioning Guides{% endblock %}
 {% block og_description %}Setup instructions and commissioning guides for {{ stats.withInstructions }} Matter devices. Find factory reset steps, ICD wake-up instructions, and setup complexity ratings.{% endblock %}
