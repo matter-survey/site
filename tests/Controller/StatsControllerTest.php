@@ -686,9 +686,25 @@ final class StatsControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
 
-        // On/Off Off command (0x00) has rich SHALL-text description upstream.
-        $cmdPanel = $crawler->filter('#tab-commands')->html();
-        $this->assertStringContainsString('On receipt of this command', $cmdPanel);
+        // Upstream rewrites command descriptions between Matter data refreshes
+        // (the Off text went from SHALL-prose to a one-liner), so read the
+        // expected text from the loaded spec data instead of hard-coding it.
+        $versions = self::getContainer()->get(ClusterVersionRepository::class);
+        $latest = $versions->findLatestMatterVersion();
+        $this->assertNotNull($latest, 'Expected at least one ClusterVersion row in fixtures');
+        $snapshot = $versions->findOneBy(['clusterId' => 6, 'matterVersion' => $latest]);
+        $this->assertNotNull($snapshot, 'Expected an On/Off snapshot for the latest Matter version');
+
+        $description = null;
+        foreach ($snapshot->getCommands() ?? [] as $command) {
+            if (0 === ($command['code'] ?? null) && '' !== ($command['description'] ?? '')) {
+                $description = $command['description'];
+                break;
+            }
+        }
+        $this->assertNotNull($description, 'Expected the On/Off Off command to carry a description');
+
+        $this->assertStringContainsString($description, $crawler->filter('#tab-commands')->text());
     }
 
     public function testClusterShowRendersClusterLevelProvisionalBadge(): void
@@ -728,13 +744,35 @@ final class StatsControllerTest extends WebTestCase
     public function testClusterShowRendersFeatureProvisionalBadge(): void
     {
         $client = self::createClient();
-        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/cluster/0x0008');
+        $container = self::getContainer();
+        $versions = $container->get(ClusterVersionRepository::class);
+        $clusters = $container->get(ClusterRepository::class);
 
+        // Provisional features graduate upstream (Level Control's FQ Frequency
+        // feature did), so resolve a cluster with a currently provisional
+        // feature from the loaded spec data, as the cluster-level test does.
+        $latest = $versions->findLatestMatterVersion();
+        $this->assertNotNull($latest, 'Expected at least one ClusterVersion row in fixtures');
+
+        $hexId = null;
+        foreach ($versions->findBy(['matterVersion' => $latest]) as $snapshot) {
+            $provisionalFeatures = array_filter(
+                $snapshot->getFeatures() ?? [],
+                static fn (array $feature): bool => 'provisional' === ($feature['apiMaturity'] ?? null),
+            );
+            $cluster = [] !== $provisionalFeatures ? $clusters->find($snapshot->getClusterId()) : null;
+            if (null !== $cluster) {
+                $hexId = $cluster->getHexId();
+                break;
+            }
+        }
+        $this->assertNotNull($hexId, 'Expected at least one cluster with a provisional feature and an annotation row');
+
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/cluster/'.$hexId);
         $this->assertResponseIsSuccessful();
 
-        // Level Control's FQ Frequency feature is flagged apiMaturity="provisional" upstream
         $provisional = $crawler->filter('#tab-features .badge-provisional');
-        $this->assertGreaterThan(0, $provisional->count(), 'Expected a provisional feature badge on Level Control');
+        $this->assertGreaterThan(0, $provisional->count(), sprintf('Expected a provisional feature badge on %s', $hexId));
     }
 
     public function testClusterShowRendersCommandProvisionalBadge(): void
