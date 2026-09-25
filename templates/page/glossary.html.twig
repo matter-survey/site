@@ -5,6 +5,12 @@
 {% block og_title %}{{ 'meta_title'|trans({}, 'glossary') }}{% endblock %}
 {% block og_description %}{{ 'meta_description'|trans({}, 'glossary') }}{% endblock %}
 
+{% block structured_data %}
+<script type="application/ld+json">
+{{ structured_data_glossary('meta_title'|trans({}, 'glossary'), 'meta_description'|trans({}, 'glossary'), canonical_base_url ~ path('page_glossary'))|json_encode(constant('JSON_UNESCAPED_SLASHES'))|raw }}
+</script>
+{% endblock %}
+
 {% block extra_styles %}
     .glossary-content {
         max-width: 800px;
