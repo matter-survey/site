@@ -18,6 +18,14 @@ final class DeviceControllerTest extends WebTestCase
         $this->assertSelectorExists('html');
     }
 
+    public function testIndexPageBeyondLastPageReturns404(): void
+    {
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/?page=9999');
+
+        $this->assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+    }
+
     public function testIndexPageShowsFixtureDevices(): void
     {
         $client = self::createClient();
@@ -81,7 +89,7 @@ final class DeviceControllerTest extends WebTestCase
     public function testIndexPageWithPagination(): void
     {
         $client = self::createClient();
-        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['page' => '2']);
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/', ['page' => '1']);
 
         $this->assertResponseIsSuccessful();
     }
