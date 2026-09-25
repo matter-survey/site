@@ -727,19 +727,20 @@ class DeviceRepository
      */
     public function getDeviceTypeFacets(int $limit = 15): array
     {
-        $rows = $this->db->createQueryBuilder()
-            ->select('dt.id', 'dt.name', 'COUNT(DISTINCT pe.device_id) as count')
-            ->from('device_types', 'dt')
-            ->join('dt', 'product_endpoints', 'pe', 'EXISTS (
-                SELECT 1 FROM json_each(pe.device_types)
-                WHERE json_extract(value, "$.id") = dt.id
-            )')
-            ->groupBy('dt.id')
-            ->having('count > 0')
-            ->orderBy('count', 'DESC')
-            ->setMaxResults($limit)
-            ->executeQuery()
-            ->fetchAllAssociative();
+        // Count per device-type id in a single pass over the endpoints' JSON,
+        // then attach names. Joining device_types against an EXISTS(json_each)
+        // predicate instead re-scanned every endpoint once per device type.
+        $rows = $this->db->executeQuery('
+            SELECT dt.id, dt.name, counts.count
+            FROM (
+                SELECT json_extract(j.value, "$.id") AS device_type_id, COUNT(DISTINCT pe.device_id) AS count
+                FROM product_endpoints pe, json_each(pe.device_types) j
+                GROUP BY device_type_id
+            ) counts
+            JOIN device_types dt ON dt.id = counts.device_type_id
+            ORDER BY counts.count DESC, dt.id ASC
+            LIMIT :limit
+        ', ['limit' => $limit], ['limit' => ParameterType::INTEGER])->fetchAllAssociative();
 
         return array_map(static fn (array $row): array => [
             'id' => (int) $row['id'],
