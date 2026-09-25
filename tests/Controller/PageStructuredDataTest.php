@@ -29,7 +29,7 @@ final class PageStructuredDataTest extends WebTestCase
 
         $types = [];
         foreach ($crawler->filter('script[type="application/ld+json"]') as $node) {
-            $data = json_decode((string) $node->textContent, true, 512, \JSON_THROW_ON_ERROR);
+            $data = json_decode($node->textContent, true, 512, \JSON_THROW_ON_ERROR);
             $this->assertIsArray($data);
             $types[] = $data['@type'] ?? null;
         }
@@ -43,7 +43,7 @@ final class PageStructuredDataTest extends WebTestCase
         $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/faq');
 
         $visible = $crawler->filter('.faq-question')->each(static fn ($node): string => trim($node->text()));
-        $jsonLd = json_decode((string) $crawler->filter('script[type="application/ld+json"]')->first()->text(), true, 512, \JSON_THROW_ON_ERROR);
+        $jsonLd = json_decode($crawler->filter('script[type="application/ld+json"]')->first()->text(), true, 512, \JSON_THROW_ON_ERROR);
         $this->assertIsArray($jsonLd);
         $this->assertIsArray($jsonLd['mainEntity']);
 
