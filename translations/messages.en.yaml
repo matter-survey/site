@@ -2,17 +2,20 @@
 
 # Page titles
 title:
-    dashboard: "Matter Survey - Dashboard"
-    clusters: "Matter Survey - Cluster Statistics"
-    device_types: "Matter Survey - Device Types"
-    binding: "Matter Survey - Binding Compatibility"
-    versions: "Matter Survey - Version Landscape"
-    pairings: "Matter Survey - Device Pairings"
-    devices: "Matter Survey - Device Browser"
-    vendors: "Matter Survey - Vendors"
+    dashboard: "Dashboard - Matter Survey"
+    clusters: "Cluster Analytics - Matter Survey"
+    device_types: "Device Types - Matter Survey"
+    binding: "Coordination Features - Matter Survey"
+    versions: "Firmware & Versions - Matter Survey"
+    pairings: "Device Pairings - Matter Survey"
+    devices: "Matter Device Index - Matter Survey"
+    vendors: "Vendors - Matter Survey"
     about: "About - Matter Survey"
     faq: "FAQ - Matter Survey"
     glossary: "Glossary - Matter Survey"
+    commissioning: "Commissioning Guides - Matter Survey"
+    market: "Market Analysis - Matter Survey"
+    clusters_next: "Coming in the next Matter release - Matter Survey"
 
 # Page subtitles
 subtitle:
@@ -173,6 +176,21 @@ device_detail:
 
 # Vendor pages
 vendor:
+    heading: "Matter Vendors"
+    subtitle: "Explore %count% vendors building Matter-compatible smart home devices"
+    total_vendors: "Total Vendors"
+    with_devices_seen: "With Devices Seen"
+    total_products: "Total Products"
+    top10_share: "Top 10 Share"
+    search_placeholder: "Search vendors..."
+    sort_popularity: "By Popularity"
+    sort_products: "By Products"
+    sort_name: "A-Z"
+    top_vendors: "Top Vendors by Devices Seen"
+    showing: "Showing %shown% of %total% vendors"
+    no_devices_yet: "No devices yet"
+    empty: "No vendors in the database yet."
+    no_match: "No vendors match your search."
     products: "Products"
     product: "product"
     no_vendors_found: "No vendors found."

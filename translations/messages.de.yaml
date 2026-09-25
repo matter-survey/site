@@ -2,17 +2,20 @@
 
 # Page titles
 title:
-    dashboard: "Matter Survey - Dashboard"
-    clusters: "Matter Survey - Cluster-Statistiken"
-    device_types: "Matter Survey - Gerätetypen"
-    binding: "Matter Survey - Binding-Kompatibilität"
-    versions: "Matter Survey - Versionsübersicht"
-    pairings: "Matter Survey - Gerätekombinationen"
-    devices: "Matter Survey - Gerätebrowser"
-    vendors: "Matter Survey - Hersteller"
+    dashboard: "Dashboard - Matter Survey"
+    clusters: "Cluster-Statistiken - Matter Survey"
+    device_types: "Gerätetypen - Matter Survey"
+    binding: "Koordinationsfunktionen - Matter Survey"
+    versions: "Firmware & Versionen - Matter Survey"
+    pairings: "Gerätekombinationen - Matter Survey"
+    devices: "Matter-Geräteverzeichnis - Matter Survey"
+    vendors: "Hersteller - Matter Survey"
     about: "Über uns - Matter Survey"
     faq: "FAQ - Matter Survey"
     glossary: "Glossar - Matter Survey"
+    commissioning: "Einrichtungsanleitungen - Matter Survey"
+    market: "Marktanalyse - Matter Survey"
+    clusters_next: "Im nächsten Matter-Release - Matter Survey"
 
 # Page subtitles
 subtitle:
@@ -173,6 +176,21 @@ device_detail:
 
 # Vendor pages
 vendor:
+    heading: "Matter-Hersteller"
+    subtitle: "%count% Hersteller, die Matter-kompatible Smart-Home-Geräte entwickeln"
+    total_vendors: "Hersteller gesamt"
+    with_devices_seen: "Mit gesichteten Geräten"
+    total_products: "Produkte gesamt"
+    top10_share: "Anteil Top 10"
+    search_placeholder: "Hersteller suchen..."
+    sort_popularity: "Nach Beliebtheit"
+    sort_products: "Nach Produkten"
+    sort_name: "A–Z"
+    top_vendors: "Top-Hersteller nach gesichteten Geräten"
+    showing: "%shown% von %total% Herstellern"
+    no_devices_yet: "Noch keine Geräte"
+    empty: "Noch keine Hersteller in der Datenbank."
+    no_match: "Keine Hersteller entsprechen Ihrer Suche."
     products: "Produkte"
     product: "Produkt"
     no_vendors_found: "Keine Hersteller gefunden."
