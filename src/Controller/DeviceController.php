@@ -44,6 +44,10 @@ class DeviceController extends AbstractController
         $totalDevices = $this->deviceRepo->getFilteredDeviceCount($filters);
 
         $totalPages = max(1, (int) ceil($totalDevices / $perPage));
+        if ($page > $totalPages) {
+            throw $this->createNotFoundException(\sprintf('Page %d does not exist (last page is %d).', $page, $totalPages));
+        }
+
         $stats = $this->telemetryService->getStats();
 
         // Get facet data for filters
