@@ -15,7 +15,7 @@ final class CompareControllerTest extends WebTestCase
         $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/compare');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('h2', 'Compare Devices');
+        $this->assertSelectorTextContains('h1', 'Compare Devices');
         $this->assertSelectorTextContains('.compare-empty', 'Start Comparing Devices');
     }
 

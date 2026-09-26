@@ -2,7 +2,7 @@
 
 {% block structured_data %}{{ include('stats/_dataset_jsonld.html.twig') }}{% endblock %}
 
-{% block title %}Firmware & Versions - Matter Survey{% endblock %}
+{% block title %}{{ 'title.versions'|trans }}{% endblock %}
 
 {% block og_title %}Matter Device Firmware Timeline{% endblock %}
 {% block og_description %}Track firmware updates and version history for Matter devices. See which devices get frequent updates, recent firmware releases, and vendor update patterns.{% endblock %}

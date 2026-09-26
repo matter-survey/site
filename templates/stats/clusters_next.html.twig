@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Coming in the next Matter release - Matter Survey{% endblock %}
+{% block title %}{{ 'title.clusters_next'|trans }}{% endblock %}
 
 {% block og_title %}Upcoming Matter cluster changes ({{ releasedVersion }} → next){% endblock %}
 {% block og_description %}{{ newClusters|length }} new clusters and {{ revisionBumps|length }} ClusterRevision bumps queued for the next Matter release, derived from connectedhomeip master.{% endblock %}

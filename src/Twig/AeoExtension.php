@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Twig;
 
 use App\Service\AeoLedeService;
+use App\Service\CatalogStructuredContent;
 use App\Service\StructuredDataService;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
@@ -25,6 +26,7 @@ final class AeoExtension extends AbstractExtension
     public function __construct(
         private readonly AeoLedeService $lede,
         private readonly StructuredDataService $structuredData,
+        private readonly CatalogStructuredContent $catalogContent,
     ) {
     }
 
@@ -46,6 +48,9 @@ final class AeoExtension extends AbstractExtension
             new TwigFunction('structured_data_device_type', $this->structuredData->deviceTypeJsonLd(...)),
             new TwigFunction('structured_data_dataset', $this->structuredData->datasetJsonLd(...)),
             new TwigFunction('structured_data_breadcrumb', $this->structuredData->breadcrumbListJsonLd(...)),
+            new TwigFunction('structured_data_faq', fn (): array => $this->structuredData->faqPageJsonLd($this->catalogContent->faqEntries())),
+            new TwigFunction('structured_data_glossary', fn (string $name, string $description, string $url): array => $this->structuredData->definedTermSetJsonLd($name, $description, $url, $this->catalogContent->glossaryTerms())),
+            new TwigFunction('structured_data_collection_page', $this->structuredData->collectionPageJsonLd(...)),
         ];
     }
 }

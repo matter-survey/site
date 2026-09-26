@@ -1,10 +1,12 @@
 {% extends 'base.html.twig' %}
 
+{% block site_title_tag %}h1{% endblock %}
+
 {% from 'components/_star_rating.html.twig' import starsBadge %}
 {% from 'components/_device_name.html.twig' import deviceName %}
 {% from 'components/_help_tip.html.twig' import helpTip %}
 
-{% block title %}Matter Survey - Device Index{% endblock %}
+{% block title %}{{ 'title.devices'|trans }}{% endblock %}
 
 {% block og_title %}Matter Survey - Smart Home Device Database{% endblock %}
 {% block og_description %}Community-driven database of {{ stats.total_devices|number_format }} Matter smart home devices. Search and explore device capabilities, clusters, and binding support from {{ stats.total_installations|number_format }} contributors.{% endblock %}

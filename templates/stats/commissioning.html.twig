@@ -2,7 +2,7 @@
 
 {% block structured_data %}{{ include('stats/_dataset_jsonld.html.twig') }}{% endblock %}
 
-{% block title %}Commissioning Guides - Matter Survey{% endblock %}
+{% block title %}{{ 'title.commissioning'|trans }}{% endblock %}
 
 {% block og_title %}Matter Device Commissioning Guides{% endblock %}
 {% block og_description %}Setup instructions and commissioning guides for {{ stats.withInstructions }} Matter devices. Find factory reset steps, ICD wake-up instructions, and setup complexity ratings.{% endblock %}
@@ -389,17 +389,17 @@
             <h2>Products by Setup Complexity</h2>
         </div>
         <div class="complexity-tabs">
-            {% for hint, products in productsByComplexity %}
+            {% for hint, group in productsByComplexity %}
                 <button class="complexity-tab {{ loop.first ? 'active' : '' }}" data-complexity="{{ hint }}">
                     {{ _self.hintBadges(hint) }}
-                    <span class="count">{{ products|length }}</span>
+                    <span class="count">{{ group.count }}</span>
                 </button>
             {% endfor %}
         </div>
-        {% for hint, products in productsByComplexity %}
+        {% for hint, group in productsByComplexity %}
             <div class="complexity-content {{ loop.first ? '' : 'hidden' }}" data-complexity="{{ hint }}" style="{{ loop.first ? '' : 'display: none;' }}">
                 <div class="product-grid">
-                    {% for product in products|slice(0, 50) %}
+                    {% for product in group.products %}
                         <div class="product-card complexity-{{ product.commissioningInitialStepsHint ?? 0 }}">
                             <div style="margin-bottom: 0.5rem;">
                                 <h3><a href="{{ path('device_show', {slug: product.slug}) }}">{{ product.productName ?? 'Unknown Product' }}</a></h3>
