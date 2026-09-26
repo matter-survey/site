@@ -43,9 +43,7 @@ class DeviceTypeRepository extends ServiceEntityRepository
         $grouped = [];
         foreach ($deviceTypes as $dt) {
             $category = $dt->getDisplayCategory() ?? 'System';
-            if (!isset($grouped[$category])) {
-                $grouped[$category] = [];
-            }
+            $grouped[$category] ??= [];
             $grouped[$category][] = $dt;
         }
 

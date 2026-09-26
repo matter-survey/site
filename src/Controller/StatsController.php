@@ -127,9 +127,7 @@ class StatsController extends AbstractController
         $categories = [];
         foreach ($clusters as $cluster) {
             $cat = $cluster['category'];
-            if (!isset($categories[$cat])) {
-                $categories[$cat] = ['name' => $cat, 'clusters' => [], 'totalDevices' => 0];
-            }
+            $categories[$cat] ??= ['name' => $cat, 'clusters' => [], 'totalDevices' => 0];
             $categories[$cat]['clusters'][] = $cluster;
             $categories[$cat]['totalDevices'] += $cluster['totalCount'];
         }

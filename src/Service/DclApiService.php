@@ -210,14 +210,12 @@ class DclApiService
             foreach ($certifiedModelInfos as $cert) {
                 $key = $cert['vid'].':'.$cert['pid'];
 
-                if (!isset($certifiedModels[$key])) {
-                    $certifiedModels[$key] = [
-                        'vid' => $cert['vid'],
-                        'pid' => $cert['pid'],
-                        'certifiedVersions' => [],
-                        'certificationType' => $cert['certificationType'] ?? 'matter',
-                    ];
-                }
+                $certifiedModels[$key] ??= [
+                    'vid' => $cert['vid'],
+                    'pid' => $cert['pid'],
+                    'certifiedVersions' => [],
+                    'certificationType' => $cert['certificationType'] ?? 'matter',
+                ];
 
                 // Only add if value is true (certified)
                 if (($cert['value'] ?? false) === true && isset($cert['softwareVersion'])) {
