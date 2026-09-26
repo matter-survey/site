@@ -148,34 +148,28 @@ class CompareController extends AbstractController
         // Collect all unique capabilities and their categories
         foreach ($deviceCapabilities as $caps) {
             foreach ($caps['byCategory'] ?? [] as $catKey => $category) {
-                if (!isset($allCategories[$catKey])) {
-                    $allCategories[$catKey] = $category['label'];
-                }
+                $allCategories[$catKey] ??= $category['label'];
 
                 foreach ($category['supported'] ?? [] as $capKey => $cap) {
-                    if (!isset($allCapabilities[$capKey])) {
-                        $allCapabilities[$capKey] = [
-                            'key' => $capKey,
-                            'label' => $cap['label'],
-                            'emoji' => $cap['emoji'] ?? '',
-                            'category' => $cap['category'],
-                            'specVersion' => $cap['specVersion'] ?? null,
-                            'hasDetails' => isset($cap['details']),
-                        ];
-                    }
+                    $allCapabilities[$capKey] ??= [
+                        'key' => $capKey,
+                        'label' => $cap['label'],
+                        'emoji' => $cap['emoji'] ?? '',
+                        'category' => $cap['category'],
+                        'specVersion' => $cap['specVersion'] ?? null,
+                        'hasDetails' => isset($cap['details']),
+                    ];
                 }
 
                 foreach ($category['unsupported'] ?? [] as $capKey => $cap) {
-                    if (!isset($allCapabilities[$capKey])) {
-                        $allCapabilities[$capKey] = [
-                            'key' => $capKey,
-                            'label' => $cap['label'],
-                            'emoji' => $cap['emoji'] ?? '',
-                            'category' => $cap['category'],
-                            'specVersion' => $cap['specVersion'] ?? null,
-                            'hasDetails' => false,
-                        ];
-                    }
+                    $allCapabilities[$capKey] ??= [
+                        'key' => $capKey,
+                        'label' => $cap['label'],
+                        'emoji' => $cap['emoji'] ?? '',
+                        'category' => $cap['category'],
+                        'specVersion' => $cap['specVersion'] ?? null,
+                        'hasDetails' => false,
+                    ];
                 }
             }
         }
@@ -184,12 +178,10 @@ class CompareController extends AbstractController
         $byCategory = [];
         foreach ($allCapabilities as $capKey => $cap) {
             $catKey = $cap['category'];
-            if (!isset($byCategory[$catKey])) {
-                $byCategory[$catKey] = [
-                    'label' => $allCategories[$catKey] ?? ucfirst((string) $catKey),
-                    'capabilities' => [],
-                ];
-            }
+            $byCategory[$catKey] ??= [
+                'label' => $allCategories[$catKey] ?? ucfirst((string) $catKey),
+                'capabilities' => [],
+            ];
             $byCategory[$catKey]['capabilities'][$capKey] = $cap;
         }
 

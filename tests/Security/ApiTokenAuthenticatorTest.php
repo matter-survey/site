@@ -87,7 +87,7 @@ final class ApiTokenAuthenticatorTest extends TestCase
         $request->headers->set('Authorization', 'Bearer ');
 
         $this->expectException(CustomUserMessageAuthenticationException::class);
-        $this->expectExceptionMessage('No API token provided');
+        $this->expectExceptionMessageIsOrContains('No API token provided');
 
         $this->authenticator->authenticate($request);
     }
@@ -104,7 +104,7 @@ final class ApiTokenAuthenticatorTest extends TestCase
         $request->headers->set('Authorization', 'Bearer ms_invalid_token');
 
         $this->expectException(CustomUserMessageAuthenticationException::class);
-        $this->expectExceptionMessage('Invalid or expired API token');
+        $this->expectExceptionMessageIsOrContains('Invalid or expired API token');
 
         $this->authenticator->authenticate($request);
     }
@@ -125,7 +125,7 @@ final class ApiTokenAuthenticatorTest extends TestCase
         $request->headers->set('Authorization', 'Bearer ms_orphan_token');
 
         $this->expectException(CustomUserMessageAuthenticationException::class);
-        $this->expectExceptionMessage('API token has no associated user');
+        $this->expectExceptionMessageIsOrContains('API token has no associated user');
 
         $this->authenticator->authenticate($request);
     }

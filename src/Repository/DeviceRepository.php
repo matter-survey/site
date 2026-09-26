@@ -613,9 +613,7 @@ class DeviceRepository
 
         // Ensure all ratings 1-5 are represented
         for ($i = 5; $i >= 1; --$i) {
-            if (!isset($facets[$i])) {
-                $facets[$i] = 0;
-            }
+            $facets[$i] ??= 0;
         }
 
         krsort($facets);
@@ -1117,9 +1115,7 @@ class DeviceRepository
             $metadata = $registry->getDeviceTypeMetadata((int) $dt['device_type_id']);
             $displayCategory = $metadata['displayCategory'] ?? 'Unknown';
 
-            if (!isset($categoryStats[$displayCategory])) {
-                $categoryStats[$displayCategory] = 0;
-            }
+            $categoryStats[$displayCategory] ??= 0;
             $categoryStats[$displayCategory] += (int) $dt['product_count'];
         }
 
@@ -1140,9 +1136,7 @@ class DeviceRepository
             $metadata = $registry->getDeviceTypeMetadata((int) $dt['device_type_id']);
             $specVersion = $metadata['specVersion'] ?? 'Unknown';
 
-            if (!isset($versionStats[$specVersion])) {
-                $versionStats[$specVersion] = 0;
-            }
+            $versionStats[$specVersion] ??= 0;
             $versionStats[$specVersion] += (int) $dt['product_count'];
         }
 
@@ -1274,9 +1268,7 @@ class DeviceRepository
             $metadata = $registry->getDeviceTypeMetadata((int) $row['device_type_id']);
             $displayCategory = $metadata['displayCategory'] ?? 'Unknown';
 
-            if (!isset($categoryStats[$displayCategory])) {
-                $categoryStats[$displayCategory] = ['total' => 0, 'binding' => 0, 'groups' => 0, 'scenes' => 0];
-            }
+            $categoryStats[$displayCategory] ??= ['total' => 0, 'binding' => 0, 'groups' => 0, 'scenes' => 0];
             ++$categoryStats[$displayCategory]['total'];
             foreach (['binding', 'groups', 'scenes'] as $feature) {
                 if ($row['has_'.$feature]) {
@@ -1974,9 +1966,7 @@ class DeviceRepository
             $vendorFk = (int) $row['vendor_fk'];
             $deviceTypeId = (int) $row['device_type_id'];
 
-            if (!isset($vendorCounts[$vendorFk])) {
-                $vendorCounts[$vendorFk] = 0;
-            }
+            $vendorCounts[$vendorFk] ??= 0;
 
             if ($vendorCounts[$vendorFk] < $maxPerVendor) {
                 $result[$vendorFk][] = $deviceTypeId;
