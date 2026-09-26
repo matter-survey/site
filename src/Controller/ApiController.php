@@ -56,15 +56,25 @@ class ApiController extends AbstractController
             );
         }
 
-        $payload = json_decode($content, true);
-        if (JSON_ERROR_NONE !== json_last_error()) {
+        try {
+            $payload = json_decode($content, true, 512, \JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            // Read the message from the exception: json_last_error_msg() is reset
+            // by any json_encode() in between (e.g. the logger's formatter).
             $this->logger->warning('Invalid JSON in API request', [
                 'ip' => $clientIp,
-                'error' => json_last_error_msg(),
+                'error' => $e->getMessage(),
             ]);
 
             return $this->json(
-                ['status' => 'error', 'error' => 'Invalid JSON: '.json_last_error_msg()],
+                ['status' => 'error', 'error' => 'Invalid JSON: '.$e->getMessage()],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        if (!is_array($payload) || (array_is_list($payload) && [] !== $payload)) {
+            return $this->json(
+                ['status' => 'error', 'error' => 'Request body must be a JSON object'],
                 Response::HTTP_BAD_REQUEST
             );
         }
@@ -107,13 +117,22 @@ class ApiController extends AbstractController
         );
     }
 
+    /**
+     * @param array<mixed> $payload
+     */
     private function mapToSubmission(array $payload): TelemetrySubmission
     {
         $submission = new TelemetrySubmission();
         $submission->installation_id = $payload['installation_id'] ?? null;
+        $submission->devices = $payload['devices'] ?? null;
 
-        if (isset($payload['devices']) && is_array($payload['devices'])) {
-            $submission->devices = array_map(function (array $deviceData): TelemetryDevice {
+        if (is_array($payload['devices'] ?? null)) {
+            // Non-object entries are kept as-is and rejected by the validator.
+            $submission->devices = array_map(static function (mixed $deviceData): mixed {
+                if (!is_array($deviceData)) {
+                    return $deviceData;
+                }
+
                 $device = new TelemetryDevice();
                 $device->vendor_id = $deviceData['vendor_id'] ?? null;
                 $device->vendor_name = $deviceData['vendor_name'] ?? null;
