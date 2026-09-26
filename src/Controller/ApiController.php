@@ -9,6 +9,7 @@ use App\Dto\TelemetrySubmission;
 use App\Service\TelemetryService;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,6 +21,7 @@ class ApiController extends AbstractController
 {
     public function __construct(
         private readonly TelemetryService $telemetryService,
+        #[Target('api_submit')]
         private readonly RateLimiterFactoryInterface $apiSubmitLimiter,
         private readonly LoggerInterface $logger,
         private readonly ValidatorInterface $validator,
