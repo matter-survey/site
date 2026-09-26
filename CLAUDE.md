@@ -192,7 +192,9 @@ Browser instrumentation via the Faro Web SDK, vendored into the AssetMapper impo
 Single workflow in `.github/workflows/ci.yml`:
 
 - `test` job: PHPUnit on PHP 8.5
-- `code-quality` job: composer validate, security audit, php-cs-fixer, Rector (dry-run), PHPStan analysis
+- `code-quality` job: composer validate, Symfony lock consistency (`bin/check-symfony-lock.php`), security audit, php-cs-fixer, Rector (dry-run), PHPStan analysis
+
+`extra.symfony.require` is only enforced by the Flex plugin, and Dependabot resolves without it, so its updates can pull Symfony core components onto a different major. `bin/check-symfony-lock.php` fails CI when that happens; fix by re-resolving locally with Flex enabled: `composer update 'symfony/*' --with-all-dependencies`.
 - `deploy` job: runs after test/code-quality pass, only on main branch push
 
 PHPStan is configured at level 7 with a baseline (`phpstan-baseline.neon`) for existing issues.

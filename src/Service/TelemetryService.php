@@ -309,26 +309,49 @@ class TelemetryService
             $clientClusterIds = $this->extractClusterIds($clientClusters);
 
             return [
-                'endpoint_id' => $endpoint['endpoint_id'] ?? 0,
-                'device_types' => $endpoint['device_types'] ?? [],
+                'endpoint_id' => (int) ($endpoint['endpoint_id'] ?? 0),
+                'device_types' => $this->normalizeIdEntries($endpoint['device_types'] ?? []),
                 'server_clusters' => $serverClusterIds,
                 'client_clusters' => $clientClusterIds,
-                'server_cluster_details' => $serverClusters,
-                'client_cluster_details' => $clientClusters,
+                'server_cluster_details' => $this->normalizeIdEntries($serverClusters),
+                'client_cluster_details' => $this->normalizeIdEntries($clientClusters),
                 'schema_version' => $effectiveVersion,
             ];
         }
 
         // v2 format - just cluster IDs, no details
         return [
-            'endpoint_id' => $endpoint['endpoint_id'] ?? 0,
-            'device_types' => $endpoint['device_types'] ?? [],
-            'server_clusters' => $serverClusters,
-            'client_clusters' => $clientClusters,
+            'endpoint_id' => (int) ($endpoint['endpoint_id'] ?? 0),
+            'device_types' => $this->normalizeIdEntries($endpoint['device_types'] ?? []),
+            'server_clusters' => $this->extractClusterIds($serverClusters),
+            'client_clusters' => $this->extractClusterIds($clientClusters),
             'server_cluster_details' => null,
             'client_cluster_details' => null,
             'schema_version' => $effectiveVersion,
         ];
+    }
+
+    /**
+     * Cast IDs to int in a list of bare IDs or objects with an 'id' field.
+     * Clients may send numeric strings; rendering code expects ints.
+     *
+     * @param array<mixed> $entries
+     *
+     * @return list<mixed>
+     */
+    private function normalizeIdEntries(array $entries): array
+    {
+        return array_values(array_map(static function (mixed $entry): mixed {
+            if (\is_array($entry)) {
+                if (isset($entry['id'])) {
+                    $entry['id'] = (int) $entry['id'];
+                }
+
+                return $entry;
+            }
+
+            return (int) $entry;
+        }, $entries));
     }
 
     /**

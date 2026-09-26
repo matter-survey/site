@@ -948,4 +948,108 @@ final class ApiControllerTest extends WebTestCase
         $connectivity = json_decode((string) $device['connectivity_types'], true);
         $this->assertContains('thread', $connectivity, 'Thread connectivity should be detected from v3 cluster format');
     }
+
+    /**
+     * @return \Iterator<string, array{string, string}>
+     */
+    public static function malformedPayloadProvider(): \Iterator
+    {
+        $id = '550e8400-e29b-41d4-a716-446655440090';
+        $device = static fn (array $overrides): string => (string) json_encode([
+            'installation_id' => $id,
+            'devices' => [array_merge(['vendor_id' => 0xFFF1, 'product_id' => 0x7001], $overrides)],
+        ]);
+        $endpoint = static fn (array $overrides): string => $device(['endpoints' => [array_merge([
+            'endpoint_id' => 1,
+            'device_types' => [0x0100],
+            'server_clusters' => [6],
+            'client_clusters' => [],
+        ], $overrides)]]);
+        yield 'body is a JSON scalar' => ['123', 'Request body must be a JSON object'];
+        yield 'body is JSON null' => ['null', 'Request body must be a JSON object'];
+        yield 'body is a JSON list' => ['[1, 2]', 'Request body must be a JSON object'];
+        yield 'installation_id is not a string' => [(string) json_encode(['installation_id' => 5, 'devices' => []]), 'Invalid installation_id format'];
+        yield 'devices is a string' => [(string) json_encode(['installation_id' => $id, 'devices' => 'x']), 'devices must be an array'];
+        yield 'device entry is a scalar' => [(string) json_encode(['installation_id' => $id, 'devices' => [5]]), 'Each device must be an object'];
+        yield 'vendor_id is a string' => [$device(['vendor_id' => 'abc']), 'vendor_id must be an integer'];
+        yield 'product_name is an array' => [$device(['product_name' => [1]]), 'product_name must be a string'];
+        yield 'endpoints is a string' => [$device(['endpoints' => 'x']), 'endpoints must be an array'];
+        yield 'endpoint entry is a scalar' => [$device(['endpoints' => [5]]), 'Each endpoint must be an object'];
+        yield 'endpoint_id is not numeric' => [$endpoint(['endpoint_id' => 'a']), 'endpoint_id must be an integer'];
+        yield 'server_clusters is a string' => [$endpoint(['server_clusters' => 'x']), 'server_clusters must be an array'];
+        yield 'server_clusters is a JSON object' => [$endpoint(['server_clusters' => ['a' => 6]]), 'server_clusters must be an array'];
+        yield 'cluster ID is not numeric' => [$endpoint(['server_clusters' => ['a']]), 'server_clusters entries must be integer IDs'];
+        yield 'device type object without id' => [$endpoint(['device_types' => [[]]]), 'device_types entries must be integer IDs'];
+        yield 'v3 feature_map is a string' => [$endpoint(['server_clusters' => [['id' => 6, 'feature_map' => 'y']]]), 'feature_map must be an integer'];
+        yield 'v3 attribute_list is not a list' => [$endpoint(['server_clusters' => [['id' => 6, 'attribute_list' => 5]]]), 'attribute_list must be an array of integers'];
+    }
+
+    /**
+     * Malformed input used to surface as a 500 (TypeError), or get stored and
+     * break the public device page on render.
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('malformedPayloadProvider')]
+    public function testSubmitRejectsMalformedPayloadWith400(string $body, string $expectedError): void
+    {
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
+            'CONTENT_TYPE' => 'application/json',
+        ], $body);
+
+        $this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+
+        $response = json_decode((string) $client->getResponse()->getContent(), true);
+        $this->assertSame('error', $response['status']);
+        $this->assertStringContainsString($expectedError, (string) $response['error']);
+    }
+
+    public function testSubmitInvalidJsonReportsParserError(): void
+    {
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
+            'CONTENT_TYPE' => 'application/json',
+        ], 'not valid json {');
+
+        $response = json_decode((string) $client->getResponse()->getContent(), true);
+        // In dev/prod the log formatter's json_encode() reset json_last_error_msg()
+        // before the response read it, yielding "Invalid JSON: No error".
+        $this->assertSame('Invalid JSON: Syntax error', $response['error']);
+    }
+
+    public function testSubmitNormalizesNumericStringIdsAndDevicePageRenders(): void
+    {
+        $client = self::createClient();
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_POST, '/api/submit', [], [], [
+            'CONTENT_TYPE' => 'application/json',
+        ], (string) json_encode([
+            'installation_id' => '550e8400-e29b-41d4-a716-446655440091',
+            'devices' => [[
+                'vendor_id' => 0xFFF1,
+                'vendor_name' => 'Numeric Strings Vendor',
+                'product_id' => 0x7002,
+                'product_name' => 'Numeric Strings Plug',
+                'endpoints' => [[
+                    'endpoint_id' => '1',
+                    'device_types' => ['266'],
+                    'server_clusters' => ['6', '29'],
+                    'client_clusters' => null,
+                ]],
+            ]],
+        ]));
+
+        $this->assertResponseIsSuccessful();
+
+        $db = self::getContainer()->get(\Doctrine\DBAL\Connection::class);
+        $row = $db->fetchAssociative(
+            'SELECT e.endpoint_id, e.device_types, e.server_clusters FROM product_endpoints e JOIN products p ON p.id = e.device_id WHERE p.vendor_id = ? AND p.product_id = ?',
+            [0xFFF1, 0x7002]
+        );
+        $this->assertIsArray($row);
+        $this->assertSame(1, (int) $row['endpoint_id']);
+        $this->assertSame([266], json_decode((string) $row['device_types'], true));
+        $this->assertSame([6, 29], json_decode((string) $row['server_clusters'], true));
+
+        $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/device/numeric-strings-plug-65521-28674');
+        $this->assertResponseIsSuccessful();
+    }
 }

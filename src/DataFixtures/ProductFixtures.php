@@ -75,6 +75,13 @@ class ProductFixtures extends Fixture implements FixtureGroupInterface, Dependen
                 : ($data['productName'] ?? null);
             $product->setProductName($productName);
 
+            // DCL-only products never pass through the telemetry upsert that
+            // assigns slugs; without one they can't be linked (device_show).
+            // Existing slugs are kept so public URLs stay stable.
+            if (null === $product->getSlug() || '' === $product->getSlug()) {
+                $product->setSlug(Product::generateSlug($productName, $vendorId, $productId));
+            }
+
             // Set vendor name from our map
             if (isset($vendorNameMap[$vendorId])) {
                 $product->setVendorName($vendorNameMap[$vendorId]);
