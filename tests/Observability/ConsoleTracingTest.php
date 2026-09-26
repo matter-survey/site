@@ -177,7 +177,7 @@ final class FailingCommand extends Command
 {
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        return \Symfony\Component\Console\Command\Command::INVALID;
+        return Command::INVALID;
     }
 }
 

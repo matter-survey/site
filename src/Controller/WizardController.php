@@ -102,7 +102,7 @@ class WizardController extends AbstractController
                     ->withValue($sessionId)
                     ->withExpires(new \DateTime('+1 hour'))
                     ->withPath('/')
-                    ->withSameSite(\Symfony\Component\HttpFoundation\Cookie::SAMESITE_LAX)
+                    ->withSameSite(Cookie::SAMESITE_LAX)
             );
         }
 
