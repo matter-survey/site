@@ -227,4 +227,70 @@ final readonly class StructuredDataService
             'itemListElement' => $items,
         ];
     }
+
+    /**
+     * @param list<array{question: string, answer: string}> $entries
+     *
+     * @return array<string, mixed>
+     */
+    public function faqPageJsonLd(array $entries): array
+    {
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'FAQPage',
+            'mainEntity' => array_map(static fn (array $entry): array => [
+                '@type' => 'Question',
+                'name' => $entry['question'],
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => $entry['answer'],
+                ],
+            ], $entries),
+        ];
+    }
+
+    /**
+     * @param list<array{name: string, description: string}> $terms
+     *
+     * @return array<string, mixed>
+     */
+    public function definedTermSetJsonLd(string $name, string $description, string $url, array $terms): array
+    {
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'DefinedTermSet',
+            'name' => $name,
+            'description' => $description,
+            'url' => $url,
+            'hasDefinedTerm' => array_map(static fn (array $term): array => [
+                '@type' => 'DefinedTerm',
+                'name' => $term['name'],
+                'description' => $term['description'],
+                'inDefinedTermSet' => $url,
+            ], $terms),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function collectionPageJsonLd(string $name, string $description, string $url, int $numberOfItems): array
+    {
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'CollectionPage',
+            'name' => $name,
+            'description' => $description,
+            'url' => $url,
+            'isPartOf' => [
+                '@type' => 'WebSite',
+                'name' => 'Matter Survey',
+                'url' => $this->canonicalBaseUrl,
+            ],
+            'mainEntity' => [
+                '@type' => 'ItemList',
+                'numberOfItems' => $numberOfItems,
+            ],
+        ];
+    }
 }

@@ -44,6 +44,10 @@ class DeviceController extends AbstractController
         $totalDevices = $this->deviceRepo->getFilteredDeviceCount($filters);
 
         $totalPages = max(1, (int) ceil($totalDevices / $perPage));
+        if ($page > $totalPages) {
+            throw $this->createNotFoundException(\sprintf('Page %d does not exist (last page is %d).', $page, $totalPages));
+        }
+
         $stats = $this->telemetryService->getStats();
 
         // Get facet data for filters
@@ -223,6 +227,26 @@ class DeviceController extends AbstractController
         );
 
         return $this->redirectToRoute('device_show', ['slug' => $slug], Response::HTTP_MOVED_PERMANENTLY);
+    }
+
+    /**
+     * Redirect slugs with characters outside [a-z0-9-] (e.g. "[+m]", "!", "(")
+     * left behind by the original SQL slug backfill to the product's current
+     * slug, resolved from the trailing "-{vendorId}-{productId}" suffix.
+     */
+    #[Route('/device/{slug}', name: 'device_show_malformed_slug', requirements: ['slug' => '[^/]*-\d+-\d+'], methods: ['GET'], priority: -10)]
+    public function showMalformedSlug(string $slug): Response
+    {
+        if (1 !== preg_match('/-(\d+)-(\d+)$/', $slug, $matches)) {
+            throw $this->createNotFoundException('Device not found');
+        }
+
+        $product = $this->productRepo->findByVendorAndProductId((int) $matches[1], (int) $matches[2]);
+        if (!$product instanceof \App\Entity\Product || null === $product->getSlug() || $product->getSlug() === $slug) {
+            throw $this->createNotFoundException('Device not found');
+        }
+
+        return $this->redirectToRoute('device_show', ['slug' => $product->getSlug()], Response::HTTP_MOVED_PERMANENTLY);
     }
 
     #[Route('/device/{slug}', name: 'device_show', requirements: ['slug' => '[a-z0-9-]+'], methods: ['GET'])]

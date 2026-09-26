@@ -101,12 +101,13 @@
             gap: 1rem;
         }
 
-        header h1 {
+        header .site-title {
+            margin: 0;
             font-size: 1.5rem;
             font-weight: 600;
         }
 
-        header h1 a {
+        header .site-title a {
             color: var(--gray-900);
             text-decoration: none;
         }
@@ -402,7 +403,9 @@
         <div class="container">
             <div class="header-content">
                 <div>
-                    <h1><a href="{{ path('device_index') }}">{{ 'site.name'|trans({}, 'navigation') }}</a></h1>
+                    {# Pages provide their own <h1>; only pages without one (the homepage) promote the site name #}
+                    {% set siteTitleTag = block('site_title_tag') is defined ? block('site_title_tag')|trim : 'div' %}
+                    <{{ siteTitleTag }} class="site-title"><a href="{{ path('device_index') }}">{{ 'site.name'|trans({}, 'navigation') }}</a></{{ siteTitleTag }}>
                     {% block header_subtitle %}<p>{{ 'site.tagline'|trans({}, 'navigation') }}</p>{% endblock %}
                 </div>
                 <nav>

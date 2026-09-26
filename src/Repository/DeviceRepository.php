@@ -640,14 +640,24 @@ class DeviceRepository
      */
     public function getCapabilityFacets(?array $deviceTypeIds = null): array
     {
-        $facets = [];
+        // One scan for every capability: fetch the distinct (device, cluster) pairs
+        // for all clusters any capability needs, then count per capability here.
+        // A query per capability re-scanned every endpoint's cluster JSON each time.
+        $clusterDevices = $this->getDevicesByServerCluster(
+            array_merge(...array_column(self::CAPABILITY_FILTERS, 'clusters')),
+            $deviceTypeIds,
+        );
 
+        $facets = [];
         foreach (self::CAPABILITY_FILTERS as $key => $config) {
-            $count = $this->countDevicesWithCapability($config['clusters'], $deviceTypeIds);
+            $devices = [];
+            foreach ($config['clusters'] as $clusterId) {
+                $devices += $clusterDevices[$clusterId] ?? [];
+            }
             $facets[] = [
                 'key' => $key,
                 'label' => $config['label'],
-                'count' => $count,
+                'count' => \count($devices),
             ];
         }
 
@@ -658,39 +668,37 @@ class DeviceRepository
     }
 
     /**
-     * Count devices that have the specified clusters (and optionally features).
+     * Map each of the given server cluster ids to the set of devices exposing it.
      *
-     * @param array<int>      $clusters      Cluster IDs (any match counts)
-     * @param array<int>|null $deviceTypeIds Optional device-type ids to scope the count to
+     * @param array<int>      $clusters      Cluster IDs to look up
+     * @param array<int>|null $deviceTypeIds Optional device-type ids to scope the devices to
+     *
+     * @return array<int, array<int, true>> cluster id => [device id => true]
      */
-    private function countDevicesWithCapability(array $clusters, ?array $deviceTypeIds = null): int
+    private function getDevicesByServerCluster(array $clusters, ?array $deviceTypeIds = null): array
     {
         if ([] === $clusters) {
-            return 0;
+            return [];
         }
 
         $qb = $this->db->createQueryBuilder()
-            ->select('COUNT(DISTINCT pe.device_id)')
-            ->from('product_endpoints', 'pe');
-
-        // Cluster presence check (works for all data)
-        $clusterPlaceholders = [];
-        foreach (array_values($clusters) as $i => $clusterId) {
-            $name = 'cluster_'.$i;
-            $clusterPlaceholders[] = ':'.$name;
-            $qb->setParameter($name, $clusterId, ParameterType::INTEGER);
-        }
-        $qb->andWhere('EXISTS (
-                SELECT 1 FROM json_each(pe.server_clusters)
-                WHERE value IN ('.implode(', ', $clusterPlaceholders).')
-            )');
+            ->select('DISTINCT pe.device_id', 'j.value AS cluster_id')
+            ->from('product_endpoints', 'pe')
+            ->join('pe', 'json_each(pe.server_clusters)', 'j', '1 = 1')
+            ->where('j.value IN (:clusters)')
+            ->setParameter('clusters', array_values(array_unique($clusters)), ArrayParameterType::INTEGER);
 
         // Optionally constrain to devices that expose one of the given device types.
         if (null !== $deviceTypeIds && [] !== $deviceTypeIds) {
             $qb->andWhere($this->deviceTypeSubqueryFragment($qb, $deviceTypeIds, 'pe.device_id', 'dt'));
         }
 
-        return (int) $qb->executeQuery()->fetchOne();
+        $map = [];
+        foreach ($qb->executeQuery()->iterateAssociative() as $row) {
+            $map[(int) $row['cluster_id']][(int) $row['device_id']] = true;
+        }
+
+        return $map;
     }
 
     /**
@@ -700,10 +708,19 @@ class DeviceRepository
      */
     public function getVendorFacets(int $limit = 20): array
     {
-        $rows = $this->db->createQueryBuilder()
+        $qb = $this->db->createQueryBuilder();
+        $placeholders = [];
+        foreach (\App\Entity\Vendor::TEST_VENDOR_IDS as $i => $vendorId) {
+            $name = 'test_vendor_'.$i;
+            $placeholders[] = ':'.$name;
+            $qb->setParameter($name, $vendorId, ParameterType::INTEGER);
+        }
+
+        $rows = $qb
             ->select('v.id', 'v.name', 'v.slug', 'COUNT(p.id) as count')
             ->from('vendors', 'v')
             ->join('v', 'products', 'p', 'p.vendor_fk = v.id')
+            ->where('(v.spec_id IS NULL OR v.spec_id NOT IN ('.implode(', ', $placeholders).'))')
             ->groupBy('v.id')
             ->having('count > 0')
             ->orderBy('count', 'DESC')
@@ -727,19 +744,20 @@ class DeviceRepository
      */
     public function getDeviceTypeFacets(int $limit = 15): array
     {
-        $rows = $this->db->createQueryBuilder()
-            ->select('dt.id', 'dt.name', 'COUNT(DISTINCT pe.device_id) as count')
-            ->from('device_types', 'dt')
-            ->join('dt', 'product_endpoints', 'pe', 'EXISTS (
-                SELECT 1 FROM json_each(pe.device_types)
-                WHERE json_extract(value, "$.id") = dt.id
-            )')
-            ->groupBy('dt.id')
-            ->having('count > 0')
-            ->orderBy('count', 'DESC')
-            ->setMaxResults($limit)
-            ->executeQuery()
-            ->fetchAllAssociative();
+        // Count per device-type id in a single pass over the endpoints' JSON,
+        // then attach names. Joining device_types against an EXISTS(json_each)
+        // predicate instead re-scanned every endpoint once per device type.
+        $rows = $this->db->executeQuery('
+            SELECT dt.id, dt.name, counts.count
+            FROM (
+                SELECT json_extract(j.value, "$.id") AS device_type_id, COUNT(DISTINCT pe.device_id) AS count
+                FROM product_endpoints pe, json_each(pe.device_types) j
+                GROUP BY device_type_id
+            ) counts
+            JOIN device_types dt ON dt.id = counts.device_type_id
+            ORDER BY counts.count DESC, dt.id ASC
+            LIMIT :limit
+        ', ['limit' => $limit], ['limit' => ParameterType::INTEGER])->fetchAllAssociative();
 
         return array_map(static fn (array $row): array => [
             'id' => (int) $row['id'],

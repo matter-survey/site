@@ -455,14 +455,24 @@ class TelemetryService
      */
     public function getStats(): array
     {
+        // One scan of product_summary for all three capability counts; the view
+        // aggregates every endpoint's cluster JSON, so each extra query re-pays it.
+        $capabilities = $this->db->executeQuery('
+            SELECT
+                COALESCE(SUM(supports_binding = 1), 0) AS bindable,
+                COALESCE(SUM(supports_groups = 1), 0) AS groups_count,
+                COALESCE(SUM(supports_scenes = 1), 0) AS scenes
+            FROM product_summary
+        ')->fetchAssociative() ?: [];
+
         return [
             'total_devices' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM products')->fetchOne(),
             'total_vendors' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM vendors')->fetchOne(),
             'total_installations' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM installations')->fetchOne(),
             'total_submissions' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM submissions')->fetchOne(),
-            'bindable_devices' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM product_summary WHERE supports_binding = 1')->fetchOne(),
-            'groups_devices' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM product_summary WHERE supports_groups = 1')->fetchOne(),
-            'scenes_devices' => (int) $this->db->executeQuery('SELECT COUNT(*) FROM product_summary WHERE supports_scenes = 1')->fetchOne(),
+            'bindable_devices' => (int) ($capabilities['bindable'] ?? 0),
+            'groups_devices' => (int) ($capabilities['groups_count'] ?? 0),
+            'scenes_devices' => (int) ($capabilities['scenes'] ?? 0),
         ];
     }
 }

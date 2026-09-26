@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Repository;
 
 use App\Repository\DeviceRepository;
+use App\Repository\VendorRepository;
 use App\Service\MatterRegistry;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -127,6 +128,25 @@ final class DeviceRepositoryExtraTest extends KernelTestCase
 
         $this->assertIsArray($byCategory);
         $this->assertIsArray($bySpec);
+    }
+
+    public function testVendorFacetsExcludeTestVendors(): void
+    {
+        $vendorRepo = self::getContainer()->get(VendorRepository::class);
+        $vendor = $vendorRepo->findOrCreateBySpecId(1234, 'Demo Vendor');
+        self::getContainer()->get(EntityManagerInterface::class)->flush();
+
+        $this->repository->upsertDevice([
+            'vendor_id' => 1234,
+            'vendor_name' => 'Demo Vendor',
+            'vendor_fk' => $vendor->getId(),
+            'product_id' => 1,
+            'product_name' => 'Demo Product',
+        ]);
+
+        $facetVendorIds = array_column($this->repository->getVendorFacets(1000), 'id');
+
+        $this->assertNotContains($vendor->getId(), $facetVendorIds);
     }
 
     public function testGetConnectivityAndCoordinationFacets(): void

@@ -1,6 +1,12 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Vendors - Matter Survey{% endblock %}
+{% block title %}{{ 'title.vendors'|trans }}{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{{ structured_data_collection_page('vendor.heading'|trans, 'vendor.subtitle'|trans({'%count%': insights.totalVendors}), canonical_base_url ~ path('vendor_index'), vendors|length)|json_encode(constant('JSON_UNESCAPED_SLASHES'))|raw }}
+</script>
+{% endblock %}
 
 {# Macro for device type icons using Unicode symbols #}
 {% macro deviceIcon(icon) %}
@@ -350,9 +356,9 @@
 
 {% block body %}
     <div class="page-header">
-        <h1>Matter Vendors</h1>
+        <h1>{{ 'vendor.heading'|trans }}</h1>
         <p class="page-subtitle">
-            Explore {{ insights.totalVendors }} vendors building Matter-compatible smart home devices
+            {{ 'vendor.subtitle'|trans({'%count%': insights.totalVendors}) }}
         </p>
     </div>
 
@@ -360,19 +366,19 @@
     <div class="insights-grid">
         <div class="insight-card">
             <div class="insight-value">{{ insights.totalVendors }}</div>
-            <div class="insight-label">Total Vendors</div>
+            <div class="insight-label">{{ 'vendor.total_vendors'|trans }}</div>
         </div>
         <div class="insight-card">
             <div class="insight-value">{{ insights.vendorsWithDevices }}</div>
-            <div class="insight-label">With Devices Seen</div>
+            <div class="insight-label">{{ 'vendor.with_devices_seen'|trans }}</div>
         </div>
         <div class="insight-card">
             <div class="insight-value">{{ insights.totalProducts|number_format }}</div>
-            <div class="insight-label">Total Products</div>
+            <div class="insight-label">{{ 'vendor.total_products'|trans }}</div>
         </div>
         <div class="insight-card">
             <div class="insight-value">{{ insights.top10ProductShare }}%</div>
-            <div class="insight-label">Top 10 Share</div>
+            <div class="insight-label">{{ 'vendor.top10_share'|trans }}</div>
         </div>
     </div>
 
@@ -384,22 +390,22 @@
         <div class="search-box">
             <input type="text"
                    id="vendor-search"
-                   placeholder="Search vendors..."
+                   placeholder="{{ 'vendor.search_placeholder'|trans }}"
                    autocomplete="off"
                    data-search-filter-target="input"
                    data-action="input->search-filter#filter">
         </div>
         <div class="sort-buttons">
-            <a href="{{ path('vendor_index', {sort: 'devices'}) }}" class="sort-btn {{ sort == 'devices' ? 'active' : '' }}">By Popularity</a>
-            <a href="{{ path('vendor_index', {sort: 'products'}) }}" class="sort-btn {{ sort == 'products' ? 'active' : '' }}">By Products</a>
-            <a href="{{ path('vendor_index', {sort: 'name'}) }}" class="sort-btn {{ sort == 'name' ? 'active' : '' }}">A-Z</a>
+            <a href="{{ path('vendor_index', {sort: 'devices'}) }}" class="sort-btn {{ sort == 'devices' ? 'active' : '' }}">{{ 'vendor.sort_popularity'|trans }}</a>
+            <a href="{{ path('vendor_index', {sort: 'products'}) }}" class="sort-btn {{ sort == 'products' ? 'active' : '' }}">{{ 'vendor.sort_products'|trans }}</a>
+            <a href="{{ path('vendor_index', {sort: 'name'}) }}" class="sort-btn {{ sort == 'name' ? 'active' : '' }}">{{ 'vendor.sort_name'|trans }}</a>
         </div>
     </div>
 
     {# Featured Vendors #}
     {% if topVendors is not empty %}
         <div class="featured-section">
-            <h2 class="section-title">⭐ Top Vendors by Devices Seen</h2>
+            <h2 class="section-title">⭐ {{ 'vendor.top_vendors'|trans }}</h2>
             <div class="featured-grid">
                 {% for vendor in topVendors %}
                     <a href="{{ path('vendor_show', {slug: vendor.slug}) }}" class="featured-card">
@@ -430,7 +436,7 @@
     {# All Vendors List #}
     <div class="vendors-section">
         <div class="vendor-count-display">
-            Showing <span data-search-filter-target="count">{{ vendors|length }}</span> of {{ vendors|length }} vendors
+            {{ 'vendor.showing'|trans({'%shown%': '<span data-search-filter-target="count">' ~ vendors|length ~ '</span>', '%total%': vendors|length})|raw }}
         </div>
 
         {% for vendor in vendors %}
@@ -466,19 +472,19 @@
                     {% endif %}
                     {% if prodCount == 0 and vendor.deviceCount == 0 %}
                         <span class="vendor-stat" style="background: var(--gray-100); color: var(--gray-500);">
-                            No devices yet
+                            {{ 'vendor.no_devices_yet'|trans }}
                         </span>
                     {% endif %}
                 </div>
             </div>
         {% else %}
             <div class="empty-search">
-                <p>No vendors in the database yet.</p>
+                <p>{{ 'vendor.empty'|trans }}</p>
             </div>
         {% endfor %}
 
         <div class="empty-search" data-search-filter-target="empty" style="display: none;">
-            <p>No vendors match your search.</p>
+            <p>{{ 'vendor.no_match'|trans }}</p>
         </div>
     </div>
 
