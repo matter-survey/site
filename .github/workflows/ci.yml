@@ -81,6 +81,9 @@ jobs:
       - name: Validate composer.json
         run: composer validate --strict
 
+      - name: Check Symfony components match extra.symfony.require
+        run: php bin/check-symfony-lock.php
+
       - name: Check for security vulnerabilities
         run: composer audit
 

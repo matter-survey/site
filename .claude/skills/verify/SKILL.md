@@ -34,3 +34,9 @@ php -S 127.0.0.1:8765 -t public public/router.php &
 - Hitting a page before `importmap:install` caches an asset map without vendor deps; afterwards pages
   render but `modulepreload` for stimulus/turbo/chart.js/faro is silently missing. `cache:clear` fixes it.
 - Cache warmup rewrites `config/reference.php`; `git checkout` it before finishing.
+- Rate limiter (10/min, `cache.app`) trips quickly while probing `/api/submit`; reset with
+  `php bin/console cache:pool:clear cache.app`.
+- Stop the dev server by PID, not `pkill -f 'php -S ...'`: the pattern matches the calling shell.
+- `tools/{phpstan,rector}` installs can 403 on api.github.com zipballs in cloud sessions. Workaround:
+  `git clone --depth 1 --branch <locked version>` phpstan/phpstan, phpstan/phpstan-symfony and
+  rectorphp/rector into the `tools/*/vendor/` paths the configs reference (vendor/ is gitignored).
