@@ -1,2 +1,5 @@
 *
 !.gitignore
+# Shared project skills are committed; local settings stay ignored.
+!skills/
+!skills/**
