@@ -162,17 +162,6 @@ final class UserTest extends TestCase
         $this->assertEquals($createdAt, $user->getCreatedAt());
     }
 
-    public function testEraseCredentialsDoesNotThrow(): void
-    {
-        $user = new User();
-        $user->setPassword('test');
-
-        // Should not throw an exception
-        $user->eraseCredentials();
-
-        $this->assertTrue(true);
-    }
-
     public function testFluentInterface(): void
     {
         $user = new User();

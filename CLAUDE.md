@@ -58,7 +58,7 @@ php bin/console doctrine:migrations:migrate
 
 ## Architecture
 
-**Framework:** Symfony 7.4 with MicroKernel (PHP 8.5)
+**Framework:** Symfony 8.1 with MicroKernel (PHP 8.5)
 
 **Request Flow:** `public/index.php` → `Kernel` → Controllers (attribute-based routing)
 
