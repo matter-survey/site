@@ -41,9 +41,7 @@ class ClusterFixtures extends Fixture implements FixtureGroupInterface
 
             // Find existing or create new
             $cluster = $repository->find($id);
-            if (null === $cluster) {
-                $cluster = new Cluster($id);
-            }
+            $cluster ??= new Cluster($id);
 
             $cluster->setHexId($data['hexId'] ?? \sprintf('0x%04X', $id));
             $cluster->setName($data['name']);

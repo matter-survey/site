@@ -197,7 +197,7 @@ final class MatterRegistryLookupsTest extends KernelTestCase
         if ([] === $decoded) {
             $this->markTestSkipped('Color Control cluster has no features in fixture');
         }
-        $bit0Feature = array_find($decoded, fn ($feature) => $feature['enabled']);
+        $bit0Feature = array_find($decoded, fn ($feature): bool => $feature['enabled']);
 
         if (null === $bit0Feature) {
             $this->markTestSkipped('No feature uses bit 0 in fixture');

@@ -1274,13 +1274,11 @@ class MatterRegistry
                     continue;
                 }
 
-                if (!isset($analyses[$deviceTypeId])) {
-                    $analyses[$deviceTypeId] = $this->analyzeClusterGaps(
-                        (int) $deviceTypeId,
-                        $serverClusters,
-                        $clientClusters
-                    );
-                }
+                $analyses[$deviceTypeId] ??= $this->analyzeClusterGaps(
+                    (int) $deviceTypeId,
+                    $serverClusters,
+                    $clientClusters
+                );
             }
         }
 

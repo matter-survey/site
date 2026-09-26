@@ -41,9 +41,7 @@ class DeviceTypeFixtures extends Fixture implements FixtureGroupInterface
 
             // Find existing or create new
             $deviceType = $repository->find($id);
-            if (null === $deviceType) {
-                $deviceType = new DeviceType($id);
-            }
+            $deviceType ??= new DeviceType($id);
 
             $deviceType->setHexId($data['hexId'] ?? \sprintf('0x%04X', $id));
             $deviceType->setName($data['name']);

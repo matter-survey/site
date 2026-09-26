@@ -64,9 +64,7 @@ class ClusterRepository extends ServiceEntityRepository
         $grouped = [];
         foreach ($clusters as $cluster) {
             $category = $cluster->getCategory() ?? 'Other';
-            if (!isset($grouped[$category])) {
-                $grouped[$category] = [];
-            }
+            $grouped[$category] ??= [];
             $grouped[$category][] = $cluster;
         }
 

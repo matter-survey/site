@@ -399,9 +399,7 @@ class DeviceScoreService
      */
     public function calculateDeviceScoreForLatestVersion(int $deviceId, ?array $endpoints = null): DeviceScore
     {
-        if (null === $endpoints) {
-            $endpoints = $this->getLatestVersionEndpoints($deviceId);
-        }
+        $endpoints ??= $this->getLatestVersionEndpoints($deviceId);
 
         return $this->calculateDeviceScore($endpoints);
     }
