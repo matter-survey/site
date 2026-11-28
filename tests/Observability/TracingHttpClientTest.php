@@ -115,7 +115,7 @@ final class TracingHttpClientTest extends TestCase
 
     public function testTransportExceptionRecordedOnSpan(): void
     {
-        $mock = new MockHttpClient(static fn () => throw new \RuntimeException('connection refused'));
+        $mock = new MockHttpClient(static fn (): never => throw new \RuntimeException('connection refused'));
         $client = new TracingHttpClient($mock);
 
         try {

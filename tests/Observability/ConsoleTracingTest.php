@@ -17,6 +17,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Console\EventListener\ErrorListener;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -150,8 +151,11 @@ final class ConsoleTracingTest extends TestCase
 
     private function makeTester(Command $command): ApplicationTester
     {
+        $subscriber = new ConsoleTracingSubscriber();
         $dispatcher = new EventDispatcher();
-        $dispatcher->addSubscriber(new ConsoleTracingSubscriber());
+        $dispatcher->addListener(ConsoleEvents::COMMAND, $subscriber->onCommand(...), 100);
+        $dispatcher->addListener(ConsoleEvents::ERROR, $subscriber->onError(...), 100);
+        $dispatcher->addListener(ConsoleEvents::TERMINATE, $subscriber->onTerminate(...), -100);
         $dispatcher->addSubscriber(new ErrorListener());
 
         $app = new Application();

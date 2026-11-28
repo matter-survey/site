@@ -80,12 +80,18 @@ final class ZapBackfillCommand extends Command
 
         $versions = self::MATTER_VERSIONS;
         if (null !== $only) {
+            if (!\is_string($only)) {
+                $io->error('The --matter-version option accepts a single version string.');
+
+                return Command::FAILURE;
+            }
+
             if (!isset($versions[$only])) {
                 $io->error(\sprintf('Unknown Matter version "%s". Known: %s', $only, implode(', ', array_keys(self::MATTER_VERSIONS))));
 
                 return Command::FAILURE;
             }
-            $only = (string) $only;
+
             $versions = [$only => $versions[$only]];
         }
 

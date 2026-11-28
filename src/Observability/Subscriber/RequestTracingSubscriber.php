@@ -12,7 +12,7 @@ use OpenTelemetry\API\Trace\StatusCode;
 use OpenTelemetry\Context\Propagation\ArrayAccessGetterSetter;
 use OpenTelemetry\Context\ScopeInterface;
 use OpenTelemetry\SemConv\TraceAttributes;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
@@ -20,7 +20,7 @@ use Symfony\Component\HttpKernel\Event\TerminateEvent;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
 
-final class RequestTracingSubscriber implements EventSubscriberInterface
+final class RequestTracingSubscriber
 {
     private const string TRACER_NAME = 'app.matter-survey';
 
@@ -40,16 +40,7 @@ final class RequestTracingSubscriber implements EventSubscriberInterface
         $this->state = new \SplObjectStorage();
     }
 
-    public static function getSubscribedEvents(): array
-    {
-        return [
-            KernelEvents::REQUEST => [['onKernelRequest', 100]],
-            KernelEvents::CONTROLLER => [['onKernelController', 100]],
-            KernelEvents::EXCEPTION => [['onKernelException', 100]],
-            KernelEvents::TERMINATE => [['onKernelTerminate', -100]],
-        ];
-    }
-
+    #[AsEventListener(event: KernelEvents::REQUEST, priority: 100)]
     public function onKernelRequest(RequestEvent $event): void
     {
         if (!$event->isMainRequest()) {
@@ -81,6 +72,7 @@ final class RequestTracingSubscriber implements EventSubscriberInterface
         $this->state[$request] = ['span' => $span, 'scope' => $span->activate(), 'start' => $start];
     }
 
+    #[AsEventListener(event: KernelEvents::CONTROLLER, priority: 100)]
     public function onKernelController(ControllerEvent $event): void
     {
         if (!$event->isMainRequest()) {
@@ -100,6 +92,7 @@ final class RequestTracingSubscriber implements EventSubscriberInterface
         }
     }
 
+    #[AsEventListener(event: KernelEvents::EXCEPTION, priority: 100)]
     public function onKernelException(ExceptionEvent $event): void
     {
         if (!$event->isMainRequest()) {
@@ -127,6 +120,7 @@ final class RequestTracingSubscriber implements EventSubscriberInterface
         $span->setStatus(StatusCode::STATUS_ERROR, $throwable->getMessage());
     }
 
+    #[AsEventListener(event: KernelEvents::TERMINATE, priority: -100)]
     public function onKernelTerminate(TerminateEvent $event): void
     {
         $request = $event->getRequest();
