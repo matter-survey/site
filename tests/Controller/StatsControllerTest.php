@@ -778,13 +778,37 @@ final class StatsControllerTest extends WebTestCase
     public function testClusterShowRendersCommandProvisionalBadge(): void
     {
         $client = self::createClient();
-        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/cluster/0x0030');
+        $container = self::getContainer();
+        $versions = $container->get(ClusterVersionRepository::class);
+        $clusters = $container->get(ClusterRepository::class);
+
+        // Provisional commands graduate upstream (General Commissioning's
+        // SetTCAcknowledgements pair did), so resolve a cluster that still has
+        // one from the loaded spec data, as the cluster- and feature-level
+        // tests do.
+        $latest = $versions->findLatestMatterVersion();
+        $this->assertNotNull($latest, 'Expected at least one ClusterVersion row in fixtures');
+
+        $hexId = null;
+        foreach ($versions->findBy(['matterVersion' => $latest]) as $snapshot) {
+            $provisionalCommands = array_filter(
+                $snapshot->getCommands() ?? [],
+                static fn (array $command): bool => 'provisional' === ($command['apiMaturity'] ?? null),
+            );
+            $cluster = [] !== $provisionalCommands ? $clusters->find($snapshot->getClusterId()) : null;
+            if (null !== $cluster) {
+                $hexId = $cluster->getHexId();
+                break;
+            }
+        }
+        $this->assertNotNull($hexId, 'Expected at least one cluster with a provisional command and an annotation row');
+
+        $crawler = $client->request(\Symfony\Component\HttpFoundation\Request::METHOD_GET, '/cluster/'.$hexId);
 
         $this->assertResponseIsSuccessful();
 
-        // General Commissioning has SetTCAcknowledgements + several TC commands as provisional
         $provisional = $crawler->filter('#tab-commands .badge-provisional');
-        $this->assertGreaterThan(0, $provisional->count(), 'Expected a provisional command badge on General Commissioning');
+        $this->assertGreaterThan(0, $provisional->count(), sprintf('Expected a provisional command badge on %s', $hexId));
     }
 
     public function testClusterShowOmitsRangeForAttributesWithoutBounds(): void
