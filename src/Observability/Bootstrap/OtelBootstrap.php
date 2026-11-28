@@ -11,7 +11,7 @@ use OpenTelemetry\SDK\Propagation\PropagatorFactory;
 use OpenTelemetry\SDK\Sdk;
 use OpenTelemetry\SDK\Trace\TracerProviderFactory;
 use Symfony\Component\Console\ConsoleEvents;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
@@ -22,7 +22,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
  * Subscribes to KernelEvents::REQUEST and ConsoleEvents::COMMAND so that both
  * HTTP and CLI entrypoints initialise the SDK before any user code runs.
  */
-final class OtelBootstrap implements EventSubscriberInterface
+final class OtelBootstrap
 {
     private bool $booted = false;
 
@@ -35,14 +35,8 @@ final class OtelBootstrap implements EventSubscriberInterface
     ) {
     }
 
-    public static function getSubscribedEvents(): array
-    {
-        return [
-            KernelEvents::REQUEST => [['boot', 1024]],
-            ConsoleEvents::COMMAND => [['boot', 1024]],
-        ];
-    }
-
+    #[AsEventListener(event: KernelEvents::REQUEST, priority: 1024)]
+    #[AsEventListener(event: ConsoleEvents::COMMAND, priority: 1024)]
     public function boot(): void
     {
         if ($this->booted) {

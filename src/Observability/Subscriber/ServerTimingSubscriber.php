@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Observability\Subscriber;
 
 use OpenTelemetry\API\Trace\Span;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
@@ -16,15 +16,9 @@ use Symfony\Component\HttpKernel\KernelEvents;
  * backend trace. Only emitted when a valid, sampled span exists for the
  * request; the active span is still current at RESPONSE (it ends at TERMINATE).
  */
-final class ServerTimingSubscriber implements EventSubscriberInterface
+final class ServerTimingSubscriber
 {
-    public static function getSubscribedEvents(): array
-    {
-        return [
-            KernelEvents::RESPONSE => ['onKernelResponse', -10],
-        ];
-    }
-
+    #[AsEventListener(event: KernelEvents::RESPONSE, priority: -10)]
     public function onKernelResponse(ResponseEvent $event): void
     {
         if (!$event->isMainRequest()) {
